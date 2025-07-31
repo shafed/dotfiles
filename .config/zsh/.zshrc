@@ -111,6 +111,7 @@ export PATH=~/.npm-global/bin:$PATH
 export ZDOTDIR="$HOME/.config/zsh"
 
 alias vi="nvim"
+alias open="explorer.exe"
 export PATH="$HOME/.local/bin:$PATH"
 
 # Алиас для синхронизации Alacritty конфига

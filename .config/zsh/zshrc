@@ -118,5 +118,5 @@ alias sync-alacritty="~/.local/bin/sync-alacritty"
 alias sa="~/.local/bin/sync-alacritty"
 alias edit-alacritty="nvim ~/.config/alacritty/alacritty.toml"
 alias ea="nvim ~/.config/alacritty/alacritty.toml"
-alias shell:startup="cd /mnt/c/Users/shapa_qjp3mef/AppData/Roaming/Microsoft/Windows/Start\ Menu/Programs/Startup"
+alias shell:startup="cd /mnt/c/Users/$USERNAME/AppData/Roaming/Microsoft/Windows/Start\ Menu/Programs/Startup"
 bindkey -v

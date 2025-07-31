@@ -106,4 +106,6 @@ RAlt::LAlt
 ::вин::Windows
 ::обси::Obsidian
 ::obsi::Obsidian
-:   *:@mail::shaparenko.fedor@gmail.com
+::tg::Telegram
+::тг::Telegram
+:*:@mail::shaparenko.fedor@gmail.com

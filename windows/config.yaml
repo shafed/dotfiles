@@ -350,7 +350,7 @@ keybindings:
     bindings: ['alt+g']
   - commands:
       [
-        'shell-exec C:\Users\shapa\AppData\Local\Programs\Perplexity\Perplexity.exe',
+        'shell-exec %USERPROFILE%\AppData\Local\Programs\Perplexity\Perplexity.exe',
       ]
     bindings: ['alt+shift+g']
 
@@ -359,16 +359,16 @@ keybindings:
 
   - commands:
       [
-        'shell-exec C:\Users\shapa\AppData\Local\Programs\Microsoft VS Code\Code.exe',
+        'shell-exec %USERPROFILE%\AppData\Local\Programs\Microsoft VS Code\Code.exe',
       ]
     bindings: ['alt+v']
   - commands:
-      ['shell-exec C:\Users\shapa\AppData\Local\Programs\cursor\Cursor.exe']
+      ['shell-exec %USERPROFILE%\AppData\Local\Programs\cursor\Cursor.exe']
     bindings: ['alt+shift+v']
 
   - commands:
       [
-        'shell-exec C:\Users\shapa\AppData\Roaming\Telegram Desktop\Telegram.exe',
+        'shell-exec %USERPROFILE%\AppData\Roaming\Telegram Desktop\Telegram.exe',
       ]
     bindings: ['alt+c']
   - commands:
@@ -377,7 +377,7 @@ keybindings:
       ]
     bindings: ['alt+shift+c']
 
-  - commands: ['shell-exec C:\Users\shapa\AppData\Local\Obsidian\Obsidian.exe']
+  - commands: ['shell-exec %USERPROFILE%\AppData\Local\Obsidian\Obsidian.exe']
     bindings: ['alt+n']
 
   - commands:
@@ -388,7 +388,7 @@ keybindings:
     bindings: ['alt+x']
   - commands:
       [
-        'shell-exec "C:\Program Files\Microsoft Office\root\Office16\EXCEL.EXE" "C:\Users\shapa\Documents\training log.xlsx"',
+        'shell-exec "C:\Program Files\Microsoft Office\root\Office16\EXCEL.EXE" "%USERPROFILE%\Documents\training log.xlsx"',
       ]
     bindings: ['alt+shift+x']
   - commands:
@@ -403,7 +403,7 @@ keybindings:
 
   - commands:
       [
-        'shell-exec C:\Users\shapa\AppData\Local\Reverso\Reverso\Reverso.exe',
+        'shell-exec %USERPROFILE%\AppData\Local\Reverso\Reverso\Reverso.exe',
       ]
     bindings: ['alt+shift+r']
 

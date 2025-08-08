@@ -384,14 +384,6 @@ keybindings:
       - shell-exec explorer.exe shell:AppsFolder\Hiddify.HiddifyNext_pvn3df8hp03bc!Hiddify
     bindings: ['alt+b']
   - commands:
-      ['shell-exec "C:\Program Files\Microsoft Office\root\Office16\EXCEL.EXE"']
-    bindings: ['alt+x']
-  - commands:
-      [
-        'shell-exec "C:\Program Files\Microsoft Office\root\Office16\EXCEL.EXE" "%USERPROFILE%\Documents\training log.xlsx"',
-      ]
-    bindings: ['alt+shift+x']
-  - commands:
       - shell-exec explorer.exe shell:AppsFolder\Chrome._crx_agimnkijcamfeangaknmldooml
     bindings: ['alt+w']
   - commands:
@@ -409,3 +401,6 @@ keybindings:
 
   - commands: ['shell-exec rundll32.exe shell32.dll,#61']
     bindings: ['alt+r']
+
+  - commands: ['shell-exec chrome https://onedrive.live.com/personal/a96ef60ed3018334/_layouts/15/doc.aspx?resid=d3018334-f60e-206e-80a9-730600000000&cid=a96ef60ed3018334&ct=1754639184013&wdOrigin=OFFICECOM-WEB.MAIN.EDGEWORTH&wdPreviousSessionSrc=HarmonyWeb&wdPreviousSession=af08ab68-15bb-4031-864a-c85a3eebcfb1']
+    bindings: ['alt+x']

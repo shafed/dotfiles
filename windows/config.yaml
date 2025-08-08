@@ -163,6 +163,7 @@ window_rules:
   - commands: ['move --workspace 2', 'focus --workspace 2']
     match:
       - window_process: { regex: 'Obsidian' }
+      - window_title: { regex: 'Training Log\.xlsx'}
 
   # Открывать YouTube только в workspace 4
   - commands: ['move --workspace 4', 'focus --workspace 4']
@@ -402,5 +403,5 @@ keybindings:
   - commands: ['shell-exec rundll32.exe shell32.dll,#61']
     bindings: ['alt+r']
 
-  - commands: ['shell-exec chrome https://onedrive.live.com/personal/a96ef60ed3018334/_layouts/15/doc.aspx?resid=d3018334-f60e-206e-80a9-730600000000&cid=a96ef60ed3018334&ct=1754639184013&wdOrigin=OFFICECOM-WEB.MAIN.EDGEWORTH&wdPreviousSessionSrc=HarmonyWeb&wdPreviousSession=af08ab68-15bb-4031-864a-c85a3eebcfb1']
+  - commands: ['shell-exec chrome --new-window https://onedrive.live.com/personal/a96ef60ed3018334/_layouts/15/doc.aspx?resid=d3018334-f60e-206e-80a9-730600000000&cid=a96ef60ed3018334&ct=1754639184013&wdOrigin=OFFICECOM-WEB.MAIN.EDGEWORTH&wdPreviousSessionSrc=HarmonyWeb&wdPreviousSession=af08ab68-15bb-4031-864a-c85a3eebcfb1']
     bindings: ['alt+x']

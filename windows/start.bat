@@ -5,7 +5,7 @@ setlocal enabledelayedexpansion
 start "" "C:\Program Files\glzr.io\GlazeWM\glazewm.exe"
 
 ::Hotkeys
-start "" "C:\Program Files\AutoHotkey\scripts\Hotkeys.ahk"
+start "" "C:\Program Files\AutoHotkey\Hotkeys.ahk"
 
 ::Hiddify
 start "" "C:\Program Files\Hiddify\Hiddify.exe"
@@ -17,7 +17,7 @@ start "" "C:\Program Files\Syncthing\syncthing.exe" --no-console --no-browser
 start "" "C:\Program Files\dual-key-remap-v0.8\dual-key-remap.exe"
 
 ::Razer
-"C:\Program Files\Razer\RazerAppEngine\RazerAppEngine.exe" --url-params=apps=synapse,chroma-app --launch-force-hidden=synapse,chroma-app --autoStart=1
+start "" "C:\Program Files\Razer\RazerAppEngine\RazerAppEngine.exe" --url-params=apps=synapse,chroma-app --launch-force-hidden=synapse,chroma-app --autoStart=1
 
 :: TickTick
 start "" "C:\Program Files (x86)\TickTick\TickTick.exe" -hide

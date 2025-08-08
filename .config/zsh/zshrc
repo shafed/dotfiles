@@ -121,5 +121,3 @@ alias edit-alacritty="nvim ~/.config/alacritty/alacritty.toml"
 alias ea="nvim ~/.config/alacritty/alacritty.toml"
 alias shell:startup="cd /mnt/c/Users/$USERNAME/AppData/Roaming/Microsoft/Windows/Start\ Menu/Programs/Startup"
 bindkey -v
-# Получаем имя пользователя Windows
-export WINUSER=$(cmd.exe /c "echo %USERNAME%" 2>/dev/null | tr -d '\r')

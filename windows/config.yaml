@@ -252,8 +252,8 @@ keybindings:
     bindings: ['alt+shift+space']
 
   # Change the focused window to be tiling.
-  - commands: ['toggle-tiling']
-    bindings: ['alt+t']
+ # - commands: ['toggle-tiling']
+ #  bindings: ['alt+t']
 
   # Change the focused window to be fullscreen.
   - commands: ['toggle-fullscreen']
@@ -283,7 +283,7 @@ keybindings:
   # `shell-exec %ProgramFiles%/Git/git-bash.exe` to start Windows
   # Terminal and Git Bash respectively.
   - commands: ['shell-exec alacritty']
-    bindings: ['alt+enter']
+    bindings: ['alt+t']
 
   # Focus the next/previous active workspace defined in `workspaces` config.
   - commands: ['focus --next-active-workspace']

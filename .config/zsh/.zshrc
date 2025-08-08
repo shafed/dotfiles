@@ -107,17 +107,21 @@ source $ZSH/oh-my-zsh.sh
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 
+bindkey -v
+
 export PATH=~/.npm-global/bin:$PATH
 export ZDOTDIR="$HOME/.config/zsh"
+export PATH="$HOME/.local/bin:$PATH"
+export WIN_USERNAME="$(powershell.exe -c 'echo $env:USERNAME' | tr -d '\r')"
+export WINUSER="/mnt/c/Users/$WIN_USERNAME"
 
+alias shell:startup="cd \"$WINUSER/AppData/Roaming/Microsoft/Windows/Start Menu/Programs/Startup\""
 alias vi="nvim"
 alias open="explorer.exe"
-export PATH="$HOME/.local/bin:$PATH"
-
-# Алиас для синхронизации Alacritty конфига
 alias sync-alacritty="~/.local/bin/sync-alacritty"
 alias sa="~/.local/bin/sync-alacritty"
 alias edit-alacritty="nvim ~/.config/alacritty/alacritty.toml"
 alias ea="nvim ~/.config/alacritty/alacritty.toml"
-alias shell:startup="cd /mnt/c/Users/$USERNAME/AppData/Roaming/Microsoft/Windows/Start\ Menu/Programs/Startup"
-bindkey -v
+alias home="cd ~"
+alias sync-glaze="cp ~/dotfiles/windows/config.yaml $WINUSER/.glzr/glazewm"
+alias sync-zsh="cp ~/dotfiles/.config/zsh/.zshrc ~/"

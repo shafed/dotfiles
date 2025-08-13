@@ -1,7 +1,19 @@
+# --- Среда ---
+[env]
+TERM = "xterm-256color"
+
+# --- Оболочка: сразу в Debian + zsh как login-shell ---
 [terminal.shell]
 program = "wsl.exe"
-args = ["-d", "Debian", "--cd", "~"]
+args = ["-d", "Debian", "--cd", "~", "-e", "zsh", "-l"]
 
+# --- Окно ---
+[window]
+startup_mode = "Maximized"
+dynamic_title = true
+# opacity = 0.98  # если любишь лёгкую прозрачность
+
+# --- Шрифт ---
 [font]
 size = 12
 
@@ -17,8 +29,15 @@ style = "Bold"
 family = "Hack Nerd Font"
 style = "Italic"
 
-# Colors (Gruvbox Material Dark Medium)
+# --- Прокрутка ---
+[scrolling]
+history = 20000   # сделай 5000–20000; 0 = без лимита (медленнее)
 
+# --- Мышь/выделение ---
+[selection]
+save_to_clipboard = true  # выделил — уже в буфере обмена
+
+# --- Цвета ---
 [colors.primary]
 background = '#282828'
 foreground = '#dfbf8e'
@@ -42,3 +61,14 @@ blue    = '#7daea3'
 magenta = '#d3869b'
 cyan    = '#89b482'
 white   = '#dfbf8e'
+
+# --- Горячие клавиши под Windows-стиль ---
+[[keyboard.bindings]]
+key = "C"
+mods = "Control"
+action = "Copy"
+
+[[keyboard.bindings]]
+key = "V"
+mods = "Control"
+action = "Paste"

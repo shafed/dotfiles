@@ -73,10 +73,11 @@ ZSH_THEME="robbyrussell"
 plugins=(
   git
   zsh-autosuggestions
-  zsh-syntax-highlighting
+  fast-syntax-highlighting
 )
 
 source $ZSH/oh-my-zsh.sh
+
 
 # User configuration
 
@@ -110,7 +111,6 @@ source $ZSH/oh-my-zsh.sh
 bindkey -v
 
 export PATH=~/.npm-global/bin:$PATH
-export ZDOTDIR="$HOME/.config/zsh"
 export PATH="$HOME/.local/bin:$PATH"
 export WIN_USERNAME="$(powershell.exe -c 'echo $env:USERNAME' | tr -d '\r')"
 export WINUSER="/mnt/c/Users/$WIN_USERNAME"

@@ -110,10 +110,15 @@ source $ZSH/oh-my-zsh.sh
 bindkey -v
 
 export PATH=~/.npm-global/bin:$PATH
-export ZDOTDIR="$HOME/.config/zsh"
 export PATH="$HOME/.local/bin:$PATH"
 export WIN_USERNAME="$(powershell.exe -c 'echo $env:USERNAME' | tr -d '\r')"
 export WINUSER="/mnt/c/Users/$WIN_USERNAME"
+
+export ahk="/mnt/c/Program Files/AutoHotkey/Hotkeys.ahk"
+export vi=~/.config/nvim/init.lua
+export zsh=~/.zshrc
+export glazewm="/mnt/c/Users/shapa_qjp3mef/.glzr/glazewm/config.yaml"
+export dots=~/dotfiles
 
 alias shell:startup="cd \"$WINUSER/AppData/Roaming/Microsoft/Windows/Start Menu/Programs/Startup\""
 alias vi="nvim"
@@ -123,5 +128,6 @@ alias sa="~/.local/bin/sync-alacritty"
 alias edit-alacritty="nvim ~/.config/alacritty/alacritty.toml"
 alias ea="nvim ~/.config/alacritty/alacritty.toml"
 alias home="cd ~"
+alias h="cd ~"
 alias sync-glaze="cp $WINUSER/.glzr/glazewm/config.yaml ~/dotfiles/windows/"
 alias sync-zsh="cp ~/.zshrc ~/dotfiles/.config/zsh/"

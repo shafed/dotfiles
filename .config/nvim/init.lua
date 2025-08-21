@@ -1,3 +1,15 @@
+-- Langmap
+vim.opt.langmap = table.concat({
+  -- верхний ряд
+  "йq,цw,уe,кr,еt,нy,гu,шi,щo,зp,х[,ъ],",
+  "ЙQ,ЦW,УE,КR,ЕT,НY,ГU,ШI,ЩO,ЗP,Х{,Ъ},",
+  -- средний ряд
+  "фa,ыs,вd,аf,пg,рh,оj,лk,дl,ж\\;,э\\',",
+  "ФA,ЫS,ВD,АF,ПG,РH,ОJ,ЛK,ДL,Ж\\:,Э\\\",",
+  -- нижний ряд
+  "яz,чx,сc,мv,иb,тn,ьm,б\\,,ю\\.,ё\\`,",
+  "ЯZ,ЧX,СC,МV,ИB,ТN,ЬM,Б\\<,Ю\\>,Ё\\~",
+}, "")
 -- Базовые настройки
 vim.opt.number = true
 vim.opt.relativenumber = true
@@ -302,11 +314,21 @@ vim.keymap.set('n', 'gn', ':bnext<CR>', { desc = "Next buffer" })
 vim.keymap.set('n', 'gp', ':bprevious<CR>', { desc = "Previous buffer" })
 vim.keymap.set('n', 'gw', ':bdelete<CR>', { desc = "Close buffer" })
 
+-- Удобные хоткеи для работы с системным буфером 
+-- Копирование в системный буфер
+vim.keymap.set({'n', 'v'}, '<leader>y', '"+y', { desc = "Copy to system clipboard" })
+vim.keymap.set('n', '<leader>Y', '"+Y', { desc = "Copy line to system clipboard" })
+
+-- Вставка из системного буфера
+vim.keymap.set({'n', 'v'}, '<leader>p', '"+p', { desc = "Paste from system clipboard" })
+vim.keymap.set({'n', 'v'}, '<leader>P', '"+P', { desc = "Paste before from system clipboard" })
+
+-- Вырезание в системный буфер
+vim.keymap.set({'n', 'v'}, '<leader>d', '"+d', { desc = "Cut to system clipboard" })
+
 -- ^ -> H, $ -> L
 vim.keymap.set({'n', 'v', 'o'}, 'H', '^', { desc = "Go to first non-blank character" })
 vim.keymap.set({'n', 'v', 'o'}, 'L', '$', { desc = "Go to end of line" })
--- Быстрый выход из insert mode
-vim.keymap.set('i', 'jk', '<Esc>')
 
 -- Отключение подсветки поиска
 vim.keymap.set('n', '<leader><space>', ':nohlsearch<CR>', { desc = "Clear search highlight" })

@@ -263,10 +263,6 @@ require("lazy").setup({
     end,
   },
 
-  {
-    "tmux-plugins/vim-tmux-focus-events",
-    lazy = false,
-  },
 
   -- Цветовые схемы
 

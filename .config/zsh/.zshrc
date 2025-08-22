@@ -129,9 +129,10 @@ alias edit-alacritty="nvim ~/.config/alacritty/alacritty.toml"
 alias ea="nvim ~/.config/alacritty/alacritty.toml"
 alias home="cd ~"
 alias h="cd ~"
-alias sync-glaze-to="cp $WINUSER/.glzr/glazewm/config.yaml ~/dotfiles/windows/"
-alias sync-glaze-from="cp ~/dotfiles/windows/config.yaml $WINUSER/.glzr/glazewm/"
-alias sync-zsh-to="cp ~/.zshrc ~/dotfiles/.config/zsh/"
-alias sync-zsh-from="cp ~/dotfiles/.config/zsh/.zshrc ~/"
-alias sync-vi-to="cp ~/.config/nvim/init.lua ~/dotfiles/.config/nvim"
-alias sync-vi-from="cp ~/dotfiles/.config/nvim/init.lua ~/.config/nvim"
+alias sync-glaze="cp $WINUSER/.glzr/glazewm/config.yaml ~/dotfiles/windows/"
+alias sync-zsh="cp ~/.zshrc ~/dotfiles/.config/zsh/"
+alias sync-vi="cp ~/.config/nvim/init.lua ~/dotfiles/.config/nvim"
+alias sync-all="\
+  cp ~/dotfiles/windows/config.yaml $WINUSER/.glzr/glazewm/config.yaml && \
+  cp ~/dotfiles/.config/zsh/.zshrc ~/.zshrc && \
+  cp ~/dotfiles/.config/nvim/init.lua ~/.config/nvim/init.lua"

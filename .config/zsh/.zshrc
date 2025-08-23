@@ -117,7 +117,7 @@ export WINUSER="/mnt/c/Users/$WIN_USERNAME"
 export ahk="/mnt/c/Program Files/AutoHotkey/Hotkeys.ahk"
 export vi=~/.config/nvim/init.lua
 export zsh=~/.zshrc
-export glazewm="/mnt/c/Users/shapa_qjp3mef/.glzr/glazewm/config.yaml"
+export glaze="$WINUSER/.glzr/glazewm/config.yaml"
 export dots=~/dotfiles
 
 alias shell:startup="cd \"$WINUSER/AppData/Roaming/Microsoft/Windows/Start Menu/Programs/Startup\""

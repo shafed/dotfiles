@@ -7,10 +7,12 @@ vim.opt.shiftwidth = 4
 vim.opt.tabstop = 4
 vim.opt.termguicolors = true
 vim.opt.smartindent = true
-vim.opt.wrap = false
+vim.opt.wrap = true
 vim.opt.ignorecase = true
 vim.opt.smartcase = true
 vim.opt.mouse = "a"
 vim.opt.scrolloff = 8
 vim.opt.swapfile = false
 vim.opt.cursorline = true
+vim.opt.conceallevel = 2
+

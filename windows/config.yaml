@@ -281,8 +281,8 @@ keybindings:
   # Focus the next/previous active workspace defined in `workspaces` config.
   #- commands: ['focus --next-active-workspace']
    # bindings: ['alt+s']
-  - commands: ['focus --prev-active-workspace']
-    bindings: ['alt+a']
+  # - commands: ['focus --prev-active-workspace']
+   #  bindings: ['alt+a']
 
   # Focus the workspace that last had focus.
   - commands: ['focus --recent-workspace']
@@ -360,19 +360,19 @@ keybindings:
 
   - commands:
       ['shell-exec %USERPROFILE%\AppData\Roaming\Telegram Desktop\Telegram.exe']
-    bindings: ['alt+c']
+    bindings: ['alt+t']
   - commands:
       ['shell-exec explorer.exe shell:AppsFolder\5319275A.WhatsAppDesktop_cv1g1gvanyjgm!App']
-    bindings: ['alt+shift+c']
+    bindings: ['alt+w']
 
   - commands: ['shell-exec %USERPROFILE%\AppData\Local\Obsidian\Obsidian.exe']
     bindings: ['alt+n']
 
   - commands:
-      - shell-exec explorer.exe shell:AppsFolder\Chrome._crx_agimnkijcamfeangaknmldooml
+      - ['shell-exec explorer.exe shell:AppsFolder\Chrome._crx_agimnkijcamfeangaknmldooml']
     bindings: ['alt+y']
   - commands:
-      - shell-exec explorer.exe shell:AppsFolder\Chrome._crx_fmgjjmmmlfcabfkddbjimcfncm
+      - ['shell-exec explorer.exe shell:AppsFolder\Chrome._crx_fmgjjmmmlfcabfkddbjimcfncm']
     bindings: ['alt+g']
 
   - commands: ['shell-exec C:\Program Files (x86)\TickTick\TickTick.exe']
@@ -388,5 +388,5 @@ keybindings:
     bindings: ['alt+x']
 
   - commands: ['shell-exec alacritty']
-    bindings: ['alt+t']
+    bindings: ['alt+a']
 

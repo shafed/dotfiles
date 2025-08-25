@@ -152,3 +152,4 @@ _aichat_zsh() {
 }
 zle -N _aichat_zsh
 bindkey '\ee' _aichat_zsh
+alias ai="aichat"

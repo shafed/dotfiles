@@ -113,6 +113,9 @@ export PATH=~/.npm-global/bin:$PATH
 export PATH="$HOME/.local/bin:$PATH"
 export WIN_USERNAME="$(powershell.exe -c 'echo $env:USERNAME' | tr -d '\r')"
 export WINUSER="/mnt/c/Users/$WIN_USERNAME"
+export OPENROUTER_API_KEY="sk-rGiKULn5W3H6Yf8TbzWi4Iu1wnFUTf7y"
+export PATH="$HOME/.local/bin:$PATH"
+export BROWSER=wslview
 
 export ahk="/mnt/c/Program Files/AutoHotkey/Hotkeys.ahk"
 export vi=~/.config/nvim/init.lua
@@ -131,8 +134,21 @@ alias home="cd ~"
 alias h="cd ~"
 alias sync-glaze="cp $WINUSER/.glzr/glazewm/config.yaml ~/dotfiles/windows/"
 alias sync-zsh="cp ~/.zshrc ~/dotfiles/.config/zsh/"
-alias sync-vi="cp ~/.config/nvim/init.lua ~/dotfiles/.config/nvim"
+alias sync-vi="cp -r ~/.config/nvim/ ~/dotfiles/.config/"
 alias sync-all="\
   cp ~/dotfiles/windows/config.yaml $WINUSER/.glzr/glazewm/config.yaml && \
   cp ~/dotfiles/.config/zsh/.zshrc ~/.zshrc && \
-  cp ~/dotfiles/.config/nvim/init.lua ~/.config/nvim/init.lua"
+  cp -r ~/dotfiles/.config/nvim/ ~/.config/"
+
+### aichat ###
+_aichat_zsh() {
+    if [[ -n "$BUFFER" ]]; then
+        local _old=$BUFFER
+        BUFFER+=" ⏳"
+        zle -I && zle redisplay
+        BUFFER=$(command aichat -r '%shell%' "$_old")
+        zle end-of-line
+    fi
+}
+zle -N _aichat_zsh
+bindkey '\ee' _aichat_zsh

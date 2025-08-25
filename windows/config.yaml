@@ -279,8 +279,8 @@ keybindings:
 
 
   # Focus the next/previous active workspace defined in `workspaces` config.
-  - commands: ['focus --next-active-workspace']
-    bindings: ['alt+s']
+  #- commands: ['focus --next-active-workspace']
+   # bindings: ['alt+s']
   - commands: ['focus --prev-active-workspace']
     bindings: ['alt+a']
 
@@ -310,14 +310,14 @@ keybindings:
 
   # Move the focused window's parent workspace to a monitor in a given
   # direction.
-  - commands: ['move-workspace --direction left']
-    bindings: ['alt+shift+a']
-  - commands: ['move-workspace --direction right']
-    bindings: ['alt+shift+f']
-  - commands: ['move-workspace --direction up']
-    bindings: ['alt+shift+d']
-  - commands: ['move-workspace --direction down']
-    bindings: ['alt+shift+s']
+   #- commands: ['move-workspace --direction left']
+   # bindings: ['alt+shift+a']
+  #- commands: ['move-workspace --direction right']
+  #  bindings: ['alt+shift+f']
+  #- commands: ['move-workspace --direction up']
+   # bindings: ['alt+shift+d']
+  #- commands: ['move-workspace --direction down']
+   # bindings: ['alt+shift+s']
 
   # Move focused window to a workspace defined in `workspaces` config.
   - commands: ['move --workspace 1', 'focus --workspace 1']
@@ -341,12 +341,10 @@ keybindings:
 
 # Мои команды
   - commands: ['shell-exec chrome']
-    bindings: ['alt+g']
+    bindings: ['alt+s']
   - commands:
-      [
-        'shell-exec %USERPROFILE%\AppData\Local\Programs\Perplexity\Perplexity.exe',
-      ]
-    bindings: ['alt+shift+g']
+      ['shell-exec %USERPROFILE%\AppData\Local\Programs\Perplexity\Perplexity.exe']
+    bindings: ['alt+shift+s']
 
   - commands: ['shell-exec explorer']
     bindings: ['alt+e']
@@ -361,42 +359,34 @@ keybindings:
     bindings: ['alt+shift+v']
 
   - commands:
-      [
-        'shell-exec %USERPROFILE%\AppData\Roaming\Telegram Desktop\Telegram.exe',
-      ]
+      ['shell-exec %USERPROFILE%\AppData\Roaming\Telegram Desktop\Telegram.exe']
     bindings: ['alt+c']
   - commands:
-      [
-        'shell-exec explorer.exe shell:AppsFolder\5319275A.WhatsAppDesktop_cv1g1gvanyjgm!App',
-      ]
+      ['shell-exec explorer.exe shell:AppsFolder\5319275A.WhatsAppDesktop_cv1g1gvanyjgm!App']
     bindings: ['alt+shift+c']
 
   - commands: ['shell-exec %USERPROFILE%\AppData\Local\Obsidian\Obsidian.exe']
     bindings: ['alt+n']
 
   - commands:
-      - shell-exec explorer.exe shell:AppsFolder\Hiddify.HiddifyNext_pvn3df8hp03bc!Hiddify
-    bindings: ['alt+b']
-  - commands:
       - shell-exec explorer.exe shell:AppsFolder\Chrome._crx_agimnkijcamfeangaknmldooml
-    bindings: ['alt+w']
+    bindings: ['alt+y']
   - commands:
       - shell-exec explorer.exe shell:AppsFolder\Chrome._crx_fmgjjmmmlfcabfkddbjimcfncm
-    bindings: ['alt+shift+w']
+    bindings: ['alt+g']
 
   - commands: ['shell-exec C:\Program Files (x86)\TickTick\TickTick.exe']
     bindings: ['alt+shift+t']
 
-  - commands:
-      [
-        'shell-exec %USERPROFILE%\AppData\Local\Reverso\Reverso\Reverso.exe',
-      ]
-    bindings: ['alt+shift+r']
-
-  - commands: ['shell-exec rundll32.exe shell32.dll,#61']
+  - commands: ['shell-exec rundll32 shell32.dll,#61']
     bindings: ['alt+r']
+  - commands:
+      ['shell-exec %USERPROFILE%\AppData\Local\Reverso\Reverso\Reverso.exe']
+    bindings: ['alt+shift+r']
 
   - commands: ['shell-exec %USERPROFILE%\OneDrive\Training Log.xlsx']
     bindings: ['alt+x']
+
   - commands: ['shell-exec alacritty']
     bindings: ['alt+t']
+

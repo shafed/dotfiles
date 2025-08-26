@@ -396,7 +396,7 @@ keybindings:
     bindings: ['alt+shift+t']
 
     # Excel
-  - commands: ['shell-exec %USERPROFILE%\OneDrive\Training Log.xlsx']
+  - commands: ['shell-exec chrome --new-window "https://onedrive.live.com/personal/a96ef60ed3018334/_layouts/15/doc2.aspx?resid=d3018334-f60e-206e-80a9-730600000000&cid=a96ef60ed3018334&ct=1756228104602&wdOrigin=OFFICECOM-WEB.MAIN.EDGEWORTH&wdPreviousSessionSrc=HarmonyWeb&wdPreviousSession=f8e116b3-fb69-408d-b79a-fa81411fa7ce"']
     bindings: ['alt+x']
 
   # Terminal

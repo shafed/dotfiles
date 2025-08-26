@@ -184,7 +184,7 @@ window_rules:
   - commands: ['move --workspace 6', 'focus --workspace 6']
     match:
       - window_process: { regex: 'Reverso' }
-      - window_process: { regex: '0install-win' }
+      - window_process: { regex: 'DeepL' }
 
 binding_modes:
   # When enabled, the focused window can be resized via arrow keys or HJKL.
@@ -257,7 +257,7 @@ keybindings:
   - commands: ['toggle-floating --centered']
     bindings: ['alt+shift+space']
 
-  # Change the focused window to be fullscreen.
+  # Change the focused window to be fullscreen
   - commands: ['toggle-fullscreen']
     bindings: ['alt+f']
 
@@ -271,7 +271,7 @@ keybindings:
 
   # Kill GlazeWM process safely.
   - commands: ['wm-exit']
-    bindings: ['alt+shift+e']
+    bindings: ['alt+shift+r']
 
   # Re-evaluate configuration file.
   - commands: ['wm-reload-config']
@@ -339,25 +339,29 @@ keybindings:
   - commands: ['move --workspace 9', 'focus --workspace 9']
     bindings: ['alt+shift+9']
 
-# Мои команды
+    # MY COMMANDS
+  # Browser
   - commands: ['shell-exec chrome']
     bindings: ['alt+s']
   - commands:
       ['shell-exec %USERPROFILE%\AppData\Local\Programs\Perplexity\Perplexity.exe']
     bindings: ['alt+shift+s']
 
+    # Win keyremaps
   - commands: ['shell-exec explorer']
     bindings: ['alt+e']
+  - commands: ['shell-exec rundll32 shell32.dll,#61']
+    bindings: ['alt+r']
 
+  # VS Code
   - commands:
-      [
-        'shell-exec %USERPROFILE%\AppData\Local\Programs\Microsoft VS Code\Code.exe',
-      ]
+      [ 'shell-exec %USERPROFILE%\AppData\Local\Programs\Microsoft VS Code\Code.exe']
     bindings: ['alt+v']
   - commands:
       ['shell-exec %USERPROFILE%\AppData\Local\Programs\cursor\Cursor.exe']
     bindings: ['alt+shift+v']
 
+  # Messengers
   - commands:
       ['shell-exec %USERPROFILE%\AppData\Roaming\Telegram Desktop\Telegram.exe']
     bindings: ['alt+d']
@@ -365,28 +369,36 @@ keybindings:
       ['shell-exec explorer.exe shell:AppsFolder\5319275A.WhatsAppDesktop_cv1g1gvanyjgm!App']
     bindings: ['alt+shift+d']
 
+  # Obsidian
   - commands: ['shell-exec %USERPROFILE%\AppData\Local\Obsidian\Obsidian.exe']
     bindings: ['alt+n']
 
+  # Youtube
   - commands:
       - shell-exec explorer.exe shell:AppsFolder\Chrome._crx_agimnkijcamfeangaknmldooml
     bindings: ['alt+y']
+
+    # Mail
   - commands:
       - shell-exec explorer.exe shell:AppsFolder\Chrome._crx_fmgjjmmmlfcabfkddbjimcfncm
-    bindings: ['alt+shift+r']
+    bindings: ['alt+shift+e']
 
+  # TickTick
   - commands: ['shell-exec C:\Program Files (x86)\TickTick\TickTick.exe']
     bindings: ['alt+g']
 
-  - commands: ['shell-exec rundll32 shell32.dll,#61']
-    bindings: ['alt+r']
+    # Translate
   - commands:
       ['shell-exec %USERPROFILE%\AppData\Local\Reverso\Reverso\Reverso.exe']
     bindings: ['alt+t']
+  - commands:
+      ['shell-exec C:\\Program Files\\Zero Install\\0install-win.exe run --no-wait https://appdownload.deepl.com/windows/0install/deepl.xml']
+    bindings: ['alt+shift+t']
 
+    # Excel
   - commands: ['shell-exec %USERPROFILE%\OneDrive\Training Log.xlsx']
     bindings: ['alt+x']
 
+  # Terminal
   - commands: ['shell-exec alacritty']
     bindings: ['alt+a']
-

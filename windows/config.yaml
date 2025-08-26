@@ -363,7 +363,7 @@ keybindings:
     bindings: ['alt+d']
   - commands:
       ['shell-exec explorer.exe shell:AppsFolder\5319275A.WhatsAppDesktop_cv1g1gvanyjgm!App']
-    bindings: ['alt+w']
+    bindings: ['alt+shift+d']
 
   - commands: ['shell-exec %USERPROFILE%\AppData\Local\Obsidian\Obsidian.exe']
     bindings: ['alt+n']

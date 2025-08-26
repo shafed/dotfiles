@@ -59,7 +59,7 @@ window_effects:
     # Highlight the window with a colored border.
     # ** Exclusive to Windows 11 due to API limitations.
     border:
-      enabled: true
+      enabled: false
       color: '#8dbcff'
 
     # Remove the title bar from the window's frame. Note that this can
@@ -84,7 +84,7 @@ window_effects:
   # Visual effects to apply to non-focused windows.
   other_windows:
     border:
-      enabled: true
+      enabled: false
       color: '#a1a1a1'
     hide_title_bar:
       enabled: false
@@ -373,16 +373,16 @@ keybindings:
     bindings: ['alt+y']
   - commands:
       - shell-exec explorer.exe shell:AppsFolder\Chrome._crx_fmgjjmmmlfcabfkddbjimcfncm
-    bindings: ['alt+g']
+    bindings: ['alt+shift+r']
 
   - commands: ['shell-exec C:\Program Files (x86)\TickTick\TickTick.exe']
-    bindings: ['alt+shift+t']
+    bindings: ['alt+g']
 
   - commands: ['shell-exec rundll32 shell32.dll,#61']
     bindings: ['alt+r']
   - commands:
       ['shell-exec %USERPROFILE%\AppData\Local\Reverso\Reverso\Reverso.exe']
-    bindings: ['alt+shift+r']
+    bindings: ['alt+t']
 
   - commands: ['shell-exec %USERPROFILE%\OneDrive\Training Log.xlsx']
     bindings: ['alt+x']

@@ -1,0 +1,15 @@
+
+# ~/.config/aichat/config.yaml
+
+# какую модель использовать по умолчанию
+model: openai:gpt-4o-mini   # или openai:gpt-3.5-turbo
+
+# список провайдеров (клиентов)
+clients:
+  - type: openai            # встроенный клиент OpenAI
+    name: openai            # имя клиента (ссылаемся в model слева)
+    api_key: sk-rGiKULn5W3H6Yf8TbzWi4Iu1wnFUTf7y   # или впиши ключ строкой, но лучше через переменную окружения
+    api_base: https://api.proxyapi.ru/openai/v1
+    models:
+      - name: gpt-4o-mini
+      - name: gpt-3.5-turbo

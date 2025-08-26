@@ -6,16 +6,13 @@ TERM = "xterm-256color"
 [terminal.shell]
 program = "wsl.exe"
 args = ["-d", "Debian", "--cd", "~", "-e", "zsh", "-l"]
-
-# --- Окно ---
-[window]
-startup_mode = "Maximized"
-dynamic_title = true
-# opacity = 0.98  # если любишь лёгкую прозрачность
-
 # --- Шрифт ---
 [font]
 size = 12
+
+# Решение проблем с обрезанием экрана nvim
+[window]
+startup_mode = "Maximized"
 
 [font.normal]
 family = "Hack Nerd Font"
@@ -62,13 +59,4 @@ magenta = '#d3869b'
 cyan    = '#89b482'
 white   = '#dfbf8e'
 
-# --- Горячие клавиши под Windows-стиль ---
-[[keyboard.bindings]]
-key = "C"
-mods = "Control"
-action = "Copy"
 
-[[keyboard.bindings]]
-key = "V"
-mods = "Control"
-action = "Paste"

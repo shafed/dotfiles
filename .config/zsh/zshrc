@@ -108,6 +108,8 @@ source $ZSH/oh-my-zsh.sh
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 
 bindkey -v
+bindkey -M vicmd 'H' vi-first-non-blank  # H → первый непробельный
+bindkey -M vicmd 'L' end-of-line         # L → конец строки
 
 export PATH=~/.npm-global/bin:$PATH
 export PATH="$HOME/.local/bin:$PATH"
@@ -124,8 +126,8 @@ export glaze="$WINUSER/.glzr/glazewm/config.yaml"
 export dots=~/dotfiles
 
 alias shell:startup="cd \"$WINUSER/AppData/Roaming/Microsoft/Windows/Start Menu/Programs/Startup\""
-alias vi="nvim"
 alias open="explorer.exe"
+alias vi="nvim"
 alias sync-alacritty="~/.local/bin/sync-alacritty"
 alias sa="~/.local/bin/sync-alacritty"
 alias edit-alacritty="nvim ~/.config/alacritty/alacritty.toml"
@@ -153,3 +155,30 @@ _aichat_zsh() {
 zle -N _aichat_zsh
 bindkey '\ee' _aichat_zsh
 alias ai="aichat"
+
+
+# Конфигурация im-select: укажите команду и идентификаторы раскладок
+IM_SELECT_CMD="/mnt/c/windows/im-select.exe"
+IM_EN="1033"  
+IM_RU="1049"
+
+set_im() { command "$IM_SELECT_CMD" "$1" >/dev/null 2>&1; }
+get_im() { command "$IM_SELECT_CMD" 2>/dev/null; }
+
+typeset -g IM_LAST=""
+
+zle-im-keymap-select() {
+  # Не трогаем keymap здесь, только переключаем раскладку
+  if [[ $KEYMAP == vicmd ]]; then
+    [[ -z $IM_LAST ]] && IM_LAST=$(get_im)
+    [[ -n $IM_EN ]] && set_im "$IM_EN"
+  else
+    [[ -n $IM_LAST ]] && set_im "$IM_LAST"
+  fi
+}
+zle -N zle-im-keymap-select
+
+# Автопереключение при смене keymap и на старте строки
+zle -N zle-keymap-select zle-im-keymap-select
+zle-line-init() { zle-im-keymap-select; }
+zle -N zle-line-init

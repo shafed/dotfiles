@@ -285,8 +285,8 @@ keybindings:
    #  bindings: ['alt+a']
 
   # Focus the workspace that last had focus.
-  - commands: ['focus --recent-workspace']
-    bindings: ['alt+d']
+  #- commands: ['focus --recent-workspace']
+  #  bindings: ['alt+d']
 
   # Change focus to a workspace defined in `workspaces` config.
   - commands: ['focus --workspace 1']
@@ -360,7 +360,7 @@ keybindings:
 
   - commands:
       ['shell-exec %USERPROFILE%\AppData\Roaming\Telegram Desktop\Telegram.exe']
-    bindings: ['alt+t']
+    bindings: ['alt+d']
   - commands:
       ['shell-exec explorer.exe shell:AppsFolder\5319275A.WhatsAppDesktop_cv1g1gvanyjgm!App']
     bindings: ['alt+w']
@@ -369,10 +369,10 @@ keybindings:
     bindings: ['alt+n']
 
   - commands:
-      - ['shell-exec explorer.exe shell:AppsFolder\Chrome._crx_agimnkijcamfeangaknmldooml']
+      - shell-exec explorer.exe shell:AppsFolder\Chrome._crx_agimnkijcamfeangaknmldooml
     bindings: ['alt+y']
   - commands:
-      - ['shell-exec explorer.exe shell:AppsFolder\Chrome._crx_fmgjjmmmlfcabfkddbjimcfncm']
+      - shell-exec explorer.exe shell:AppsFolder\Chrome._crx_fmgjjmmmlfcabfkddbjimcfncm
     bindings: ['alt+g']
 
   - commands: ['shell-exec C:\Program Files (x86)\TickTick\TickTick.exe']

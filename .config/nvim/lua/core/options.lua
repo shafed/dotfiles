@@ -14,5 +14,16 @@ vim.opt.mouse = "a"
 vim.opt.scrolloff = 8
 vim.opt.swapfile = false
 vim.opt.cursorline = true
+
 vim.opt.conceallevel = 2
 
+-- VimTeX конфигурация
+vim.g.maplocalleader = " "
+vim.g.vimtex_view_method = 'zathura'
+vim.g.vimtex_view_automatic = 0
+vim.g.vimtex_view_forward_search_on_start = 0
+
+-- Компилятор
+vim.g.vimtex_compiler_method = 'latexmk'
+
+vim.g.vimtex_view_general_options = '--fullscreen @pdf'

@@ -26,4 +26,3 @@ require("lazy").setup({
 -- === Цветовая схема (после загрузки плагинов) ===
 vim.cmd.colorscheme("gruvbox-material")
 
-

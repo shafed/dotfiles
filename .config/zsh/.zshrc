@@ -107,21 +107,31 @@ source $ZSH/oh-my-zsh.sh
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 
+# Vim
+export vi=~/.config/nvim/init.lua
 bindkey -v
+bindkey -M vicmd 'H' vi-first-non-blank
+bindkey -M vicmd 'L' end-of-line
+alias vif="nvim ~/.config/nvim"
+alias vip="nvim ~/.config/nvim/lua/plugins"
+alias vi="nvim"
+alias sync-vi="cp -r ~/.config/nvim/ ~/dotfiles/.config/"
+alias sv="cp -r ~/.config/nvim/ ~/dotfiles/.config/"
 
 export PATH=~/.npm-global/bin:$PATH
 export PATH="$HOME/.local/bin:$PATH"
 export WIN_USERNAME="$(powershell.exe -c 'echo $env:USERNAME' | tr -d '\r')"
 export WINUSER="/mnt/c/Users/$WIN_USERNAME"
+export OPENROUTER_API_KEY="sk-rGiKULn5W3H6Yf8TbzWi4Iu1wnFUTf7y"
+export PATH="$HOME/.local/bin:$PATH"
+export BROWSER=wslview
 
 export ahk="/mnt/c/Program Files/AutoHotkey/Hotkeys.ahk"
-export vi=~/.config/nvim/init.lua
 export zsh=~/.zshrc
 export glaze="$WINUSER/.glzr/glazewm/config.yaml"
 export dots=~/dotfiles
 
 alias shell:startup="cd \"$WINUSER/AppData/Roaming/Microsoft/Windows/Start Menu/Programs/Startup\""
-alias vi="nvim"
 alias open="explorer.exe"
 alias sync-alacritty="~/.local/bin/sync-alacritty"
 alias sa="~/.local/bin/sync-alacritty"
@@ -130,9 +140,53 @@ alias ea="nvim ~/.config/alacritty/alacritty.toml"
 alias home="cd ~"
 alias h="cd ~"
 alias sync-glaze="cp $WINUSER/.glzr/glazewm/config.yaml ~/dotfiles/windows/"
+alias sgl="cp $WINUSER/.glzr/glazewm/config.yaml ~/dotfiles/windows/"
 alias sync-zsh="cp ~/.zshrc ~/dotfiles/.config/zsh/"
-alias sync-vi="cp ~/.config/nvim/init.lua ~/dotfiles/.config/nvim"
+alias sz="cp ~/.zshrc ~/dotfiles/.config/zsh/"
 alias sync-all="\
   cp ~/dotfiles/windows/config.yaml $WINUSER/.glzr/glazewm/config.yaml && \
   cp ~/dotfiles/.config/zsh/.zshrc ~/.zshrc && \
-  cp ~/dotfiles/.config/nvim/init.lua ~/.config/nvim/init.lua"
+  cp -r ~/dotfiles/.config/nvim/ ~/.config/"
+
+alias oo="vi /mnt/d/ObsidianSync"
+
+### aichat ###
+_aichat_zsh() {
+    if [[ -n "$BUFFER" ]]; then
+        local _old=$BUFFER
+        BUFFER+=" ⏳"
+        zle -I && zle redisplay
+        BUFFER=$(command aichat -r '%shell%' "$_old")
+        zle end-of-line
+    fi
+}
+zle -N _aichat_zsh
+bindkey '\ee' _aichat_zsh
+alias ai="aichat"
+
+
+# Конфигурация im-select: укажите команду и идентификаторы раскладок
+IM_SELECT_CMD="/mnt/c/windows/im-select.exe"
+IM_EN="1033"  
+IM_RU="1049"
+
+set_im() { command "$IM_SELECT_CMD" "$1" >/dev/null 2>&1; }
+get_im() { command "$IM_SELECT_CMD" 2>/dev/null; }
+
+typeset -g IM_LAST=""
+
+zle-im-keymap-select() {
+  # Не трогаем keymap здесь, только переключаем раскладку
+  if [[ $KEYMAP == vicmd ]]; then
+    [[ -z $IM_LAST ]] && IM_LAST=$(get_im)
+    [[ -n $IM_EN ]] && set_im "$IM_EN"
+  else
+    [[ -n $IM_LAST ]] && set_im "$IM_LAST"
+  fi
+}
+zle -N zle-im-keymap-select
+
+# Автопереключение при смене keymap и на старте строки
+zle -N zle-keymap-select zle-im-keymap-select
+zle-line-init() { zle-im-keymap-select; }
+zle -N zle-line-init

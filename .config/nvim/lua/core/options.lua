@@ -19,11 +19,22 @@ vim.opt.conceallevel = 2
 
 -- VimTeX конфигурация
 vim.g.maplocalleader = " "
-vim.g.vimtex_view_method = 'zathura'
-vim.g.vimtex_view_automatic = 0
-vim.g.vimtex_view_forward_search_on_start = 0
+--vim.g.vimtex_view_method = 'zathura'
+--vim.g.vimtex_view_automatic = 0
+--vim.g.vimtex_view_forward_search_on_start = 0
 
--- Компилятор
+--vim.g.vimtex_compiler_method = 'latexmk'
+
+--vim.g.vimtex_view_general_options = '--fullscreen @pdf'
+
+-- Настройка VimTeX для WSL с SumatraPDF
+vim.g.vimtex_view_method = 'general'
+vim.g.vimtex_view_general_viewer = '/mnt/c/Users/shapa/AppData/Local/SumatraPDF/SumatraPDF.exe'
+vim.g.vimtex_view_general_options = '-reuse-instance @pdf'
+
+-- Дополнительные настройки VimTeX
 vim.g.vimtex_compiler_method = 'latexmk'
+vim.g.vimtex_quickfix_mode = 0
 
-vim.g.vimtex_view_general_options = '--fullscreen @pdf'
+-- Опционально: отключить предупреждения о совместимости
+vim.g.vimtex_compiler_silent = 1

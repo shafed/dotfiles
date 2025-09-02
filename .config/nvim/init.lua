@@ -26,3 +26,13 @@ require("lazy").setup({
 -- === Цветовая схема (после загрузки плагинов) ===
 vim.cmd.colorscheme("gruvbox-material")
 
+
+vim.keymap.set('n', '<leader>q', function()
+  local pdf = vim.fn.expand('%:r') .. '.pdf'
+  -- открыть pdf в zathura
+  vim.fn.jobstart({ 'zathura', pdf }, { detach = true })
+  -- немного подождать и растянуть окно
+  vim.fn.jobstart({ 'sh', '-c', 'sleep 0.3 && wmctrl -r zathura -b add,maximized_vert,maximized_horz' },
+                  { detach = true })
+end, { desc = 'Open PDF in zathura maximized' })
+

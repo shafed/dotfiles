@@ -148,7 +148,7 @@ alias sync-all="\
   cp ~/dotfiles/.config/zsh/.zshrc ~/.zshrc && \
   cp -r ~/dotfiles/.config/nvim/ ~/.config/"
 
-alias oo="vi /mnt/d/ObsidianSync"
+alias oo="vi /mnt/d/ObsidianSync/"
 
 ### aichat ###
 _aichat_zsh() {

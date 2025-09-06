@@ -5,6 +5,7 @@ return {
     require("lsp.handlers")
     -- Языковые сервера
     require("lsp.servers.python")
+    require("lsp.servers.cpp")
   end,
 }
 

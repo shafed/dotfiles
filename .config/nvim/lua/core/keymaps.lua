@@ -27,8 +27,8 @@ map({'n','v','o'}, 'Д', '$', { desc = "End of line" })
 map('n', '<leader><space>', ':nohlsearch<CR>', { desc = "Clear search highlight" })
 
 -- Запуск Python файла
-map('n', '<C-f5>', ':w<CR>:!python3 %<CR>', { desc = "Run Python file" })
-map('i', '<C-f5>', '<Esc>:w<CR>:!python3 %<CR>', { desc = "Run Python file" })
+map('n', '<C-h>', ':w<CR>:!python3 %<CR>', { desc = "Run Python file" })
+map('i', '<C-h>', '<Esc>:w<CR>:!python3 %<CR>', { desc = "Run Python file" })
 
 -- Перемещение строк
 map('n', '<C-j>', ':m .+1<CR>==', { desc = "Move line down" })

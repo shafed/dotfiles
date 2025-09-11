@@ -4,8 +4,7 @@ return {
   version = "v2.*",
   event = "InsertEnter",
   dependencies = {
-    -- большой общий пак высокоуровневых сниппетов (в т.ч. для latex)
-    "rafamadriz/friendly-snippets",
+    "iurimateus/luasnip-latex-snippets.nvim",
   },
   config = function()
     local ls = require("luasnip")
@@ -18,19 +17,28 @@ return {
       delete_check_events  = "TextChanged,InsertLeave",
     })
 
-    -- загрузить vscode-совместимые (friendly-snippets)
+    -- vscode-пакеты
     require("luasnip.loaders.from_vscode").lazy_load()
 
-    -- загрузить наши локальные
-    require("luasnip.loaders.from_lua").load({ paths = vim.fn.stdpath("config") .. "/luasnippets" })
+    -- LaTeX-сниппеты с ограничением по контексту
+    require("luasnip-latex-snippets").setup({
+      use_treesitter = true,   -- использовать treesitter для определения math-зоны
+      allow_on_markdown = true,  -- разрешить в markdown
+      smart_in_math = true,
+    })
 
-    -- джампы внутри сниппетов
-    vim.keymap.set({ "i", "s" }, "<Tab>", function()
-      if ls.jumpable(1) then ls.jump(1) else return "<Tab>" end
+    -- Чтобы tex-сниппеты были доступны и в markdown
+    ls.filetype_extend("markdown", { "tex" })
+
+    -- джампы
+    local map = vim.keymap.set
+    map({ "i", "s" }, "<Tab>", function()
+      if ls.jumpable(1) then return "<Plug>luasnip-jump-next" end
+      return "<Tab>"
     end, { expr = true, silent = true })
-
-    vim.keymap.set({ "i", "s" }, "<S-Tab>", function()
-      if ls.jumpable(-1) then ls.jump(-1) else return "<S-Tab>" end
+    map({ "i", "s" }, "<S-Tab>", function()
+      if ls.jumpable(-1) then return "<Plug>luasnip-jump-prev" end
+      return "<S-Tab>"
     end, { expr = true, silent = true })
   end,
 }

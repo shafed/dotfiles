@@ -26,13 +26,40 @@ map({'n','v','o'}, 'Д', '$', { desc = "End of line" })
 -- Поиск
 map('n', '<leader><space>', ':nohlsearch<CR>', { desc = "Clear search highlight" })
 
--- Запуск Python файла
-map('n', '<leader>h', ':w<CR>:!python3 %<CR>', { desc = "Run Python file" })
-map('i', '<leader>h', '<Esc>:w<CR>:!python3 %<CR>', { desc = "Run Python file" })
+-- Запуск .py и .cpp файлов
+local function run_file()
+  local filetype = vim.bo.filetype
+  local filename = vim.fn.expand('%')
+  
+  vim.cmd('w')
+  
+  if filetype == 'python' then
+    vim.cmd('!python3 ' .. filename)
+  elseif filetype == 'cpp' then
+    local output_name = vim.fn.expand('%:r')
+    -- Компилируем молча, показываем только вывод программы
+    local compile_cmd = 'g++ -std=c++17 -Wall -Wextra -O2 ' .. filename .. ' -o ' .. output_name
+    local result = vim.fn.system(compile_cmd)
+    
+    if vim.v.shell_error == 0 then
+      -- Если компиляция успешна, запускаем программу
+      vim.cmd('!./' .. output_name)
+    else
+      -- Если есть ошибки компиляции, показываем их
+      print("Compilation failed:")
+      print(result)
+    end
+  else
+    print("Unsupported file type: " .. filetype)
+  end
+end
 
--- C++ компиляция и запуск
-map('n', '<leader>c', ':w<CR>:!g++ -std=c++17 -Wall -Wextra -O2 % -o %:r && ./%:r<CR>', { desc = "Compile and run C++" })
-map('i', '<leader>c', '<Esc>:w<CR>:!g++ -std=c++17 -Wall -Wextra -O2 % -o %:r && ./%:r<CR>', { desc = "Compile and run C++" })
+vim.keymap.set('n', '<C-h>', run_file, { desc = "Run current file (Python/C++)" })
+vim.keymap.set('i', '<C-h>', function()
+vim.cmd('stopinsert') -- выходим из insert mode
+run_file()
+end, { desc = "Run current file (Python/C++)" })
+--------
 
 -- Перемещение строк
 map('n', '<C-j>', ':m .+1<CR>==', { desc = "Move line down" })

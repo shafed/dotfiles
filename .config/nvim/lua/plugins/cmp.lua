@@ -10,6 +10,7 @@ return {
   config = function()
     local cmp = require("cmp")
     local luasnip = require("luasnip")
+    vim.o.completeopt = "menu,menuone,noselect"
 
     cmp.setup({
       snippet = {
@@ -44,8 +45,8 @@ return {
       },
       sources = {
         { name = 'nvim_lsp' },
-        { name = 'codeium' },
         { name = 'luasnip' },
+        { name = 'codeium' },
         { name = 'buffer' },
         { name = 'path' },
       },

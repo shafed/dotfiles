@@ -27,8 +27,12 @@ map({'n','v','o'}, 'Д', '$', { desc = "End of line" })
 map('n', '<leader><space>', ':nohlsearch<CR>', { desc = "Clear search highlight" })
 
 -- Запуск Python файла
-map('n', '<C-h>', ':w<CR>:!python3 %<CR>', { desc = "Run Python file" })
-map('i', '<C-h>', '<Esc>:w<CR>:!python3 %<CR>', { desc = "Run Python file" })
+map('n', '<leader>h', ':w<CR>:!python3 %<CR>', { desc = "Run Python file" })
+map('i', '<leader>h', '<Esc>:w<CR>:!python3 %<CR>', { desc = "Run Python file" })
+
+-- C++ компиляция и запуск
+map('n', '<leader>c', ':w<CR>:!g++ -std=c++17 -Wall -Wextra -O2 % -o %:r && ./%:r<CR>', { desc = "Compile and run C++" })
+map('i', '<leader>c', '<Esc>:w<CR>:!g++ -std=c++17 -Wall -Wextra -O2 % -o %:r && ./%:r<CR>', { desc = "Compile and run C++" })
 
 -- Перемещение строк
 map('n', '<C-j>', ':m .+1<CR>==', { desc = "Move line down" })
@@ -37,3 +41,4 @@ map('i', '<C-j>', '<Esc>:m .+1<CR>==gi', { desc = "Move line down" })
 map('i', '<C-k>', '<Esc>:m .-2<CR>==gi', { desc = "Move line up" })
 map('v', '<C-j>', ":m '>+1<CR>gv=gv", { desc = "Move selection down" })
 map('v', '<C-k>', ":m '<-2<CR>gv=gv", { desc = "Move selection up" })
+

@@ -17,6 +17,10 @@ vim.opt.cursorline = true
 
 vim.opt.conceallevel = 2
 
+-- Автодополнение скобок (базовые настройки)
+vim.opt.showmatch = true -- показывать совпадающие скобки vim.opt.matchtime = 1 -- время показа совпадения (в десятых долях секунды)
+vim.opt.matchpairs = "(:),{:},[:],<:>" -- пары символов для показа совпадений
+
 -- VimTeX конфигурация
 vim.g.maplocalleader = " "
 --vim.g.vimtex_view_method = 'zathura'

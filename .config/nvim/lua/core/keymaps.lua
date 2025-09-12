@@ -54,12 +54,55 @@ local function run_file()
   end
 end
 
+-- Запуск .py и .cpp файлов
+local function run_file_in_terminal()
+  local filetype = vim.bo.filetype
+  local filename = vim.fn.expand('%')
+  
+  vim.cmd('w')
+  
+  if filetype == 'python' then
+    vim.cmd('split | terminal python3 ' .. filename)
+  elseif filetype == 'cpp' then
+    local output_name = vim.fn.expand('%:r')
+    local compile_cmd = 'g++ -std=c++17 -Wall -Wextra -O2 ' .. filename .. ' -o ' .. output_name
+    
+    -- Компилируем в фоне
+    local result = vim.fn.system(compile_cmd)
+    
+    if vim.v.shell_error == 0 then
+      -- Открываем терминал и запускаем программу
+      vim.cmd('split | terminal ./' .. output_name)
+    else
+      -- Показываем ошибки компиляции
+      vim.cmd('new')
+      vim.api.nvim_buf_set_lines(0, 0, -1, false, vim.split(result, '\n'))
+      vim.bo.buftype = 'nofile'
+      vim.bo.bufhidden = 'wipe'
+      vim.bo.filetype = 'cpp'
+    end
+  else
+    print("Unsupported file type: " .. filetype)
+  end
+  
+  -- Автоматически переходим в insert mode в терминале
+  vim.cmd('startinsert')
+end
+
+-- Маппинги для обычного запуска
 vim.keymap.set('n', '<C-h>', run_file, { desc = "Run current file (Python/C++)" })
 vim.keymap.set('i', '<C-h>', function()
-vim.cmd('stopinsert') -- выходим из insert mode
-run_file()
+  vim.cmd('stopinsert')
+  run_file()
 end, { desc = "Run current file (Python/C++)" })
---------
+
+-- Маппинги для запуска в терминале
+vim.keymap.set('n', '<C-t>', run_file_in_terminal, { desc = "Run file in terminal (Python/C++)" })
+vim.keymap.set('i', '<C-t>', function()
+  vim.cmd('stopinsert')
+  run_file_in_terminal()
+end, { desc = "Run file in terminal (Python/C++)" })
+------------
 
 -- Перемещение строк
 map('n', '<C-j>', ':m .+1<CR>==', { desc = "Move line down" })

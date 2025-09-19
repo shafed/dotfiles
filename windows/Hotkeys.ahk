@@ -108,6 +108,6 @@ RAlt::LAlt
 ::obsi::Obsidian
 ::tg::Telegram
 ::тг::Telegram
-:*::mail::shaparenko.fedor@gmail.com
-:*::.mail::shaparenkofedor@gmail.com
-:*::mmail::shaparenko.f.a@edu.mirea.ru
+:*:!mail::shaparenko.fedor@gmail.com
+:*:!.mail::shaparenkofedor@gmail.com
+:*:!mmail::shaparenko.f.a@edu.mirea.ru

@@ -1,34 +1,29 @@
--- lua/plugins/luasnip.lua
 return {
   "L3MON4D3/LuaSnip",
   version = "v2.*",
   event = "InsertEnter",
   dependencies = {
-    "iurimateus/luasnip-latex-snippets.nvim",
+    "rafamadriz/friendly-snippets",
   },
   config = function()
     local ls = require("luasnip")
+    local types = require("luasnip.util.types")
 
     ls.config.set_config({
       history = true,
-      updateevents = "TextChanged,TextChangedI",
+      update_events = "TextChanged,TextChangedI",
       enable_autosnippets = true,
-      region_check_events = "CursorHold,InsertLeave",
-      delete_check_events  = "TextChanged,InsertLeave",
+      region_check_events = "CursorMoved,CursorMovedI,InsertLeave",
+      delete_check_events  = "TextChanged,TextChangedI,InsertLeave",
+      ext_opts = {
+        [types.choiceNode] = { active = { virt_text = { { "●", "DiagnosticWarn" } } } },
+      },
     })
 
-    -- vscode-пакеты
+    -- VSCode-пакеты (friendly-snippets)
     require("luasnip.loaders.from_vscode").lazy_load()
 
-    -- LaTeX-сниппеты с ограничением по контексту
-    require("luasnip-latex-snippets").setup({
-      use_treesitter = true,   -- использовать treesitter для определения math-зоны
-      allow_on_markdown = true,  -- разрешить в markdown
-      smart_in_math = true,
-    })
-
-    -- Чтобы tex-сниппеты были доступны и в markdown
-    ls.filetype_extend("markdown", { "tex" })
+    require("luasnip.loaders.from_lua").lazy_load({ paths = "~/.config/nvim/snippets" })
 
     -- джампы
     local map = vim.keymap.set
@@ -42,4 +37,3 @@ return {
     end, { expr = true, silent = true })
   end,
 }
-

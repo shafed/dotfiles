@@ -107,49 +107,6 @@ source $ZSH/oh-my-zsh.sh
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 
-# Vim
-export vi=~/.config/nvim/init.lua
-bindkey -v
-bindkey -M vicmd 'H' vi-first-non-blank
-bindkey -M vicmd 'L' end-of-line
-alias vif="nvim ~/.config/nvim"
-alias vip="nvim ~/.config/nvim/lua/plugins"
-alias vi="nvim"
-alias sync-vi="cp -r ~/.config/nvim/ ~/dotfiles/.config/"
-alias sv="cp -r ~/.config/nvim/ ~/dotfiles/.config/"
-
-export PATH=~/.npm-global/bin:$PATH
-export PATH="$HOME/.local/bin:$PATH"
-export WIN_USERNAME="$(powershell.exe -c 'echo $env:USERNAME' | tr -d '\r')"
-export WINUSER="/mnt/c/Users/$WIN_USERNAME"
-export OPENROUTER_API_KEY="sk-rGiKULn5W3H6Yf8TbzWi4Iu1wnFUTf7y"
-export PATH="$HOME/.local/bin:$PATH"
-export BROWSER=wslview
-
-export ahk="/mnt/c/Program Files/AutoHotkey/Hotkeys.ahk"
-export zsh=~/.zshrc
-export glaze="$WINUSER/.glzr/glazewm/config.yaml"
-export dots=~/dotfiles
-
-alias shell:startup="cd \"$WINUSER/AppData/Roaming/Microsoft/Windows/Start Menu/Programs/Startup\""
-alias open="explorer.exe"
-alias sync-alacritty="~/.local/bin/sync-alacritty"
-alias sa="~/.local/bin/sync-alacritty"
-alias edit-alacritty="nvim ~/.config/alacritty/alacritty.toml"
-alias ea="nvim ~/.config/alacritty/alacritty.toml"
-alias home="cd ~"
-alias h="cd ~"
-alias sync-glaze="cp $WINUSER/.glzr/glazewm/config.yaml ~/dotfiles/windows/"
-alias sgl="cp $WINUSER/.glzr/glazewm/config.yaml ~/dotfiles/windows/"
-alias sync-zsh="cp ~/.zshrc ~/dotfiles/.config/zsh/"
-alias sz="cp ~/.zshrc ~/dotfiles/.config/zsh/"
-alias sync-all="\
-  cp ~/dotfiles/windows/config.yaml $WINUSER/.glzr/glazewm/config.yaml && \
-  cp ~/dotfiles/.config/zsh/.zshrc ~/.zshrc && \
-  cp -r ~/dotfiles/.config/nvim/ ~/.config/"
-
-alias oo="vi /mnt/d/ObsidianSync/"
-
 ### aichat ###
 _aichat_zsh() {
     if [[ -n "$BUFFER" ]]; then
@@ -190,3 +147,49 @@ zle -N zle-im-keymap-select
 zle -N zle-keymap-select zle-im-keymap-select
 zle-line-init() { zle-im-keymap-select; }
 zle -N zle-line-init
+
+# Vim
+export vi=~/.config/nvim/init.lua
+bindkey -v
+bindkey -M vicmd 'H' vi-first-non-blank
+bindkey -M vicmd 'L' end-of-line
+alias vif="nvim ~/.config/nvim"
+alias vip="nvim ~/.config/nvim/lua/plugins"
+alias vi="nvim"
+alias sync-vi="cp -r ~/.config/nvim/ ~/dotfiles/.config/"
+alias sv="cp -r ~/.config/nvim/ ~/dotfiles/.config/"
+
+export PATH=~/.npm-global/bin:$PATH
+export PATH="$HOME/.local/bin:$PATH"
+export win_username="$(powershell.exe -c 'echo $env:USERNAME' | tr -d '\r')"
+export winuser="/mnt/c/Users/$win_username"
+export OPENROUTER_API_KEY="sk-rGiKULn5W3H6Yf8TbzWi4Iu1wnFUTf7y"
+export PATH="$HOME/.local/bin:$PATH"
+export BROWSER=wslview
+
+export ahk="/mnt/c/Program Files/AutoHotkey/Hotkeys.ahk"
+export zsh=~/.zshrc
+export glaze="$winuser/.glzr/glazewm/config.yaml"
+export dots=~/dotfiles
+export downloads="$winuser/Downloads"
+
+alias shell:startup="cd \"$winuser/AppData/Roaming/Microsoft/Windows/Start Menu/Programs/Startup\""
+alias open="explorer.exe"
+alias sync-alacritty="~/.local/bin/sync-alacritty"
+alias sa="~/.local/bin/sync-alacritty"
+alias edit-alacritty="nvim ~/.config/alacritty/alacritty.toml"
+alias ea="nvim ~/.config/alacritty/alacritty.toml"
+alias home="cd ~"
+alias h="cd ~"
+alias sync-glaze="cp $winuser/.glzr/glazewm/config.yaml ~/dotfiles/windows/"
+alias sgl="cp $winuser/.glzr/glazewm/config.yaml ~/dotfiles/windows/"
+alias sync-zsh="cp ~/.zshrc ~/dotfiles/.config/zsh/"
+alias sz="cp ~/.zshrc ~/dotfiles/.config/zsh/"
+alias sync-all="\
+  cp ~/dotfiles/windows/config.yaml $winuser/.glzr/glazewm/config.yaml && \
+  cp ~/dotfiles/.config/zsh/.zshrc ~/.zshrc && \
+  cp -r ~/dotfiles/.config/nvim/ ~/.config/"
+
+alias oo="vi /mnt/d/ObsidianSync/"
+
+

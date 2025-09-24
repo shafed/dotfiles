@@ -171,7 +171,9 @@ export ahk="/mnt/c/Program Files/AutoHotkey/Hotkeys.ahk"
 export zsh=~/.zshrc
 export glaze="$winuser/.glzr/glazewm/config.yaml"
 export dots=~/dotfiles
+export df=~/dotfiles
 export downloads="$winuser/Downloads"
+export ds="$winuser/Downloads"
 
 alias shell:startup="cd \"$winuser/AppData/Roaming/Microsoft/Windows/Start Menu/Programs/Startup\""
 alias open="explorer.exe"

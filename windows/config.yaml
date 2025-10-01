@@ -12,7 +12,7 @@ general:
   config_reload_commands: []
 
   # Whether to automatically focus windows underneath the cursor.
-  focus_follows_cursor: false
+  focus_follows_cursor: true
 
   # Whether to switch back and forth between the previously focused
   # workspace when focusing the current workspace.
@@ -154,16 +154,16 @@ window_rules:
       - window_process: { equals: 'POWERPNT' }
         window_class: { not_regex: 'PPTFrameClass' }
 
-  # Открывать VS Code, Cursor и Vim только в workspace 3
-  - commands: ['move --workspace 3', 'focus --workspace 3']
-    match:
-      - window_process: { regex: 'Code|Cursor|wsl|alacritty' }
-
-  # Открывать Obsidian только в workspace 2
+  # Открывать VS Code, Cursor и Vim только в workspace 2
   - commands: ['move --workspace 2', 'focus --workspace 2']
     match:
-      - window_process: { regex: 'Obsidian' }
+      - window_process: { regex: 'Code|Cursor|wsl|alacritty' }
       - window_title: { regex: 'Training Log\.xlsx'}
+
+  # Открывать Obsidian только в workspace 3
+  - commands: ['move --workspace 3', 'focus --workspace 3']
+    match:
+      - window_process: { regex: 'Obsidian' }
 
   # Открывать YouTube только в workspace 4
   - commands: ['move --workspace 4', 'focus --workspace 4']
@@ -236,8 +236,8 @@ keybindings:
   # As an alternative to the resize keybindings above, resize mode enables
   # resizing via arrow keys or HJKL. The binding mode is defined above with
   # the name 'resize'.
-  - commands: ['wm-enable-binding-mode --name resize']
-    bindings: ['alt+r']
+  # - commands: ['wm-enable-binding-mode --name resize']
+    # bindings: ['alt+r']
 
   # Disables window management and all other keybindings until alt+shift+p
   # is pressed again.
@@ -341,11 +341,11 @@ keybindings:
 
     # MY COMMANDS
   # Browser
-  - commands: ['shell-exec chrome']
-    bindings: ['alt+s']
-  - commands:
-      ['shell-exec %USERPROFILE%\AppData\Local\Programs\Perplexity\Perplexity.exe']
-    bindings: ['alt+shift+s']
+  #- commands: ['shell-exec zen']
+  #  bindings: ['alt+s']
+  #- commands:
+  #    ['shell-exec %USERPROFILE%\AppData\Local\Programs\Perplexity\Perplexity.exe']
+  #  bindings: ['alt+shift+s']
 
     # Win keyremaps
   - commands: ['shell-exec explorer']
@@ -362,9 +362,9 @@ keybindings:
     bindings: ['alt+shift+v']
 
   # Messengers
-  - commands:
-      ['shell-exec %USERPROFILE%\AppData\Roaming\Telegram Desktop\Telegram.exe']
-    bindings: ['alt+d']
+  #- commands:
+  #    ['shell-exec %USERPROFILE%\AppData\Roaming\Telegram Desktop\Telegram.exe']
+  #  bindings: ['alt+d']
   - commands:
       ['shell-exec explorer.exe shell:AppsFolder\5319275A.WhatsAppDesktop_cv1g1gvanyjgm!App']
     bindings: ['alt+shift+d']
@@ -374,9 +374,9 @@ keybindings:
     bindings: ['alt+n']
 
   # Youtube
-  - commands:
-      - shell-exec explorer.exe shell:AppsFolder\Chrome._crx_agimnkijcamfeangaknmldooml
-    bindings: ['alt+y']
+  #- commands:
+  #    - shell-exec explorer.exe shell:AppsFolder\Chrome._crx_agimnkijcamfeangaknmldooml
+  #  bindings: ['alt+y']
 
     # Mail
   - commands:
@@ -400,5 +400,5 @@ keybindings:
     bindings: ['alt+x']
 
   # Terminal
-  - commands: ['shell-exec alacritty']
-    bindings: ['alt+a']
+  #- commands: ['shell-exec alacritty']
+  #  bindings: ['alt+a']

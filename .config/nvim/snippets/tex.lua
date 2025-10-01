@@ -179,9 +179,16 @@ s({trig = "mk", name = "Blackboard bold math font", snippetType = "autosnippet"}
 s({trig = "mm", name = "Inline display", snippetType = "autosnippet"},
     {
 		f(function(_,snip) return snip.captures[1] end),
-        t("\\["), d(1,get_visual), t("\\]")
+        t("\\( "), d(1,get_visual), t(" \\)")
     }
 ),
+
+s({ trig = "dm", name = "Display math", snippetType = "autosnippet" }, {
+    t({ "\\[", "" }),
+    d(1, get_visual),
+    t({ "", "\\]" }),
+    i(0),
+  }),
 
 s({trig = "en", name = "Generic environment"},
     {
@@ -2900,7 +2907,7 @@ s({trig = "itms", name = "Multiple integral subscript", snippetType = "autosnipp
 
 -- MY
 
-s({trig = "<>", name = "<=>", snippetType = "autosnippet", regTrig = true},
+s({trig = "lf", name = "<=>", snippetType = "autosnippet", regTrig = true},
     {
 		f(function(_,snip) return snip.captures[1] end),
 		t("\\Leftrightarrow")

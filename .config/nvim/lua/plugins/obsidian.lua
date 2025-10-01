@@ -16,11 +16,9 @@ return {
     workspaces = {
       {
         name = "personal",
-        path = "/mnt/d/ObsidianSync",
+        path = "/mnt/d/ObsidianSync/",
       },
-      
+     
     },
-
-    -- see below for full list of options 👇
   },
 }

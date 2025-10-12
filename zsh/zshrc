@@ -156,8 +156,8 @@ bindkey -M vicmd 'L' end-of-line
 alias vif="nvim ~/.config/nvim"
 alias vip="nvim ~/.config/nvim/lua/plugins"
 alias vi="nvim"
-alias sync-vi="cp -r ~/.config/nvim/ ~/dotfiles/.config/"
-alias sv="cp -r ~/.config/nvim/ ~/dotfiles/.config/"
+alias sync-vi="cp -r ~/.config/nvim/ ~/dotfiles/"
+alias sv="cp -r ~/.config/nvim/ ~/dotfiles/"
 
 export PATH=~/.npm-global/bin:$PATH
 export PATH="$HOME/.local/bin:$PATH"
@@ -167,7 +167,7 @@ export OPENROUTER_API_KEY="sk-rGiKULn5W3H6Yf8TbzWi4Iu1wnFUTf7y"
 export PATH="$HOME/.local/bin:$PATH"
 export BROWSER=wslview
 
-export ahk="/mnt/c/Program Files/AutoHotkey/Hotkeys.ahk"
+export ahk="/mnt/c/Program Files/AutoHotkey/config.ahk"
 export zsh=~/.zshrc
 export glaze="$winuser/.glzr/glazewm/config.yaml"
 export dots=~/dotfiles
@@ -183,13 +183,10 @@ alias edit-alacritty="nvim ~/.config/alacritty/alacritty.toml"
 alias ea="nvim ~/.config/alacritty/alacritty.toml"
 alias home="cd ~"
 alias h="cd ~"
-alias sync-glaze="cp $winuser/.glzr/glazewm/config.yaml ~/dotfiles/windows/"
-alias sgl="cp $winuser/.glzr/glazewm/config.yaml ~/dotfiles/windows/"
-alias sync-zsh="cp ~/.zshrc ~/dotfiles/.config/zsh/"
-alias sz="cp ~/.zshrc ~/dotfiles/.config/zsh/"
+alias sync-glaze="cp $winuser/.glzr/glazewm/config.yaml ~/dotfiles/glazewm/"
+alias sgl="cp $winuser/.glzr/glazewm/config.yaml ~/dotfiles/glazewm/"
 alias sync-all="\
-  cp ~/dotfiles/windows/config.yaml $winuser/.glzr/glazewm/config.yaml && \
-  cp ~/dotfiles/.config/zsh/.zshrc ~/.zshrc && \
+  cp ~/dotfiles/glazewm/config.yaml $winuser/.glzr/glazewm/config.yaml && \
   cp -r ~/dotfiles/.config/nvim/ ~/.config/"
 
 alias oo="vi /mnt/c/ObsidianSync/"

@@ -4,6 +4,78 @@ SendMode("Input")
 SetWorkingDir(A_ScriptDir)
 
 ; =============================================================================
+;  KOMOREBI
+; =============================================================================
+Komorebic(cmd) {
+    RunWait(format("komorebic.exe {}", cmd), , "Hide")
+}
+
+!q::Komorebic("close")
+!m::Komorebic("minimize")
+
+; Focus windows
+!h::Komorebic("focus left")
+!j::Komorebic("focus down")
+!k::Komorebic("focus up")
+!l::Komorebic("focus right")
+
+!+sc01A::Komorebic("cycle-focus previous")
+!+sc01B::Komorebic("cycle-focus next")
+
+; Move windows
+!+h::Komorebic("move left")
+!+j::Komorebic("move down")
+!+k::Komorebic("move up")
+!+l::Komorebic("move right")
+
+; Stack windows
+!Left::Komorebic("stack left")
+!Down::Komorebic("stack down")
+!Up::Komorebic("stack up")
+!Right::Komorebic("stack right")
+!;::Komorebic("unstack")
+!sc01A::Komorebic("cycle-stack previous")
+!sc01B::Komorebic("cycle-stack next")
+
+; Resize
+!=::Komorebic("resize-axis horizontal increase")
+!-::Komorebic("resize-axis horizontal decrease")
+!+=::Komorebic("resize-axis vertical increase")
+!+_::Komorebic("resize-axis vertical decrease")
+
+; Manipulate windows
+!+t::Komorebic("toggle-float")
+!f::Komorebic("toggle-monocle")
+
+; Window manager options
+!+r::Komorebic("retile")
+!p::Komorebic("toggle-pause")
+
+; Layouts
+;!x::Komorebic("flip-layout horizontal")
+;!y::Komorebic("flip-layout vertical")
+
+; Workspaces
+!1::Komorebic("focus-workspace 0")
+!2::Komorebic("focus-workspace 1")
+!3::Komorebic("focus-workspace 2")
+!4::Komorebic("focus-workspace 3")
+!5::Komorebic("focus-workspace 4")
+!6::Komorebic("focus-workspace 5")
+!7::Komorebic("focus-workspace 6")
+!8::Komorebic("focus-workspace 7")
+
+; Move windows across workspaces
+!+1::Komorebic("move-to-workspace 0")
+!+2::Komorebic("move-to-workspace 1")
+!+3::Komorebic("move-to-workspace 2")
+!+4::Komorebic("move-to-workspace 3")
+!+5::Komorebic("move-to-workspace 4")
+!+6::Komorebic("move-to-workspace 5")
+!+7::Komorebic("move-to-workspace 6")
+!+8::Komorebic("move-to-workspace 7")
+
+; =============================================================================
 ;  ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ
 ; =============================================================================
 browser := "zen.exe"
@@ -105,22 +177,6 @@ Alt & SC030:: {  ; SC030 = клавиша B
 }
 
 ; -----------------------------------------------------------------------------
-; Alt+D - Telegram
-; -----------------------------------------------------------------------------
-*!d:: {
-    ; Проверяем, не является ли это частью комбинации Alt+A+D
-    if (A_PriorKey = "a" && A_TimeSincePriorHotkey < 700) {
-        return
-    }
-    Run(EnvGet("USERPROFILE") "\AppData\Roaming\Telegram Desktop\Telegram.exe")
-    if !WinExist("ahk_exe Telegram.exe") {
-        WinWait("ahk_exe Telegram.exe")
-        Komorebic("move-to-workspace 4")
-    }
-    Run("komorebic focus-workspace 4")
-}
-
-; -----------------------------------------------------------------------------
 ; Alt+Shift+D - WhatsApp
 ; -----------------------------------------------------------------------------
 !+d:: {
@@ -135,53 +191,10 @@ Alt & SC030:: {  ; SC030 = клавиша B
 ; -----------------------------------------------------------------------------
 ; Простые горячие клавиши для приложений
 ; -----------------------------------------------------------------------------
-*!g:: {
-    ; Проверяем, не является ли это частью комбинации Alt+S+G
-    if (A_PriorKey = "s" && A_TimeSincePriorHotkey < 700) {
-        return
-    }
-    Run("C:\Program Files (x86)\TickTick\TickTick.exe")  ; Alt+G - TickTick
-    Komorebic("focus-workspace 0")
-    Sleep 600 ; Нажимаем Alt+F, чтобы перерисовать окно
-    Send("!f")
-    Sleep 50
-    Send("!f")
-}
 
-; Alt+O → nvim в корне Obsidian
-!o:: {
-    ; Сначала ищем без скрытых окон (только на текущем рабочем столе)
-    DetectHiddenWindows(false)
-    
-    if WinExist("NVIM-OBSIDIAN") {
-        ; Окно на текущем рабочем столе - просто активируем
-        WinActivate()
-        WinShow()
-        return
-    } else {
-        ; Теперь ищем на всех рабочих столах
-        DetectHiddenWindows(true)
-        
-        if WinExist("NVIM-OBSIDIAN") {
-            ; Окно существует на другом рабочем столе
-            ; Форсируем переключение
-            winId := WinGetID("NVIM-OBSIDIAN")
-            WinMinimize()  ; Сначала минимизируем
-            WinRestore()   ; Затем восстанавливаем
-            WinActivate()  ; И активируем - это заставит Windows переключить рабочий стол
-            return
-        } else {
-            ; Окна нет вообще - создаём новое
-            Run('alacritty.exe --title "NVIM-OBSIDIAN" --command wsl.exe -d Debian -e nvim ' 
-                . obsidian_path)
-            Komorebic("focus-workspace 1")
-        }
-        
-        DetectHiddenWindows(false)
-    }
-}
 
-; Alt+Shift+t - DeepL
+
+; Alt+Shift+T - DeepL
 !t:: {
     Run("C:\\Program Files\\Zero Install\\0install-win.exe run --no-wait https://appdownload.deepl.com/windows/0install/deepl.xml")  
     Komorebic("focus-workspace 5")
@@ -189,28 +202,7 @@ Alt & SC030:: {  ; SC030 = клавиша B
 !r:: Run("rundll32 shell32.dll,#61")                                   ; Alt+R - Диалог запуска
 !e:: Run("explorer")                                                   ; Alt+E - Проводник
 
-*!c:: {
-    global altSCProcessing
-    
-    ; Проверяем, не является ли это частью комбинации Alt+S+C или Alt+S+C+C
-    if (A_PriorKey = "s" && A_TimeSincePriorHotkey < 700) {
-        return
-    }
-    
-    ; Проверяем, не обрабатываем ли мы сейчас Alt+S+C+C
-    if (altSCProcessing) {
-        return
-    }
-    
-    Run(EnvGet("USERPROFILE") "\AppData\Local\Programs\Microsoft VS Code\Code.exe")  ; Alt+C - VS Code
-    Komorebic("focus-workspace 1")
-}
 
-; Alt+Shift+C - Cursor
-!+c:: {
-    Run(EnvGet("USERPROFILE") "\AppData\Local\Programs\cursor\Cursor.exe")
-    Komorebic("focus-workspace 1")
-}
 !+s:: Run(EnvGet("USERPROFILE") "\AppData\Local\Programs\Perplexity\Perplexity.exe") ; Alt+Shift+S - Perplexity
 
 ; =============================================================================
@@ -248,7 +240,7 @@ Alt & SC030:: {  ; SC030 = клавиша B
     ; Обработка веток
     if (key1 = "o") {
         ; Alt+S+O → курсы MIREA (второй уровень)
-        deadline2 := A_TickCount + 600
+        deadline2 := A_TickCount + 1000
         key2 := ""
         
         vkToKey2 := Map(
@@ -318,6 +310,64 @@ Alt & SC030:: {  ; SC030 = клавиша B
 }
 
 ; -----------------------------------------------------------------------------
+; Alt+O - nvim в корне Obsidian
+; -----------------------------------------------------------------------------
+*!o:: {
+    ; Проверяем, не является ли это частью комбинации Alt+S+O
+    if (A_PriorKey = "s" && A_TimeSincePriorHotkey < 700) {
+        return
+    }
+    
+    ; Сначала ищем без скрытых окон (только на текущем рабочем столе)
+    DetectHiddenWindows(false)
+    
+    if WinExist("NVIM-OBSIDIAN") {
+        ; Окно на текущем рабочем столе - просто активируем
+        WinActivate()
+        WinShow()
+        return
+    } else {
+        ; Теперь ищем на всех рабочих столах
+        DetectHiddenWindows(true)
+        
+        if WinExist("NVIM-OBSIDIAN") {
+            ; Окно существует на другом рабочем столе
+            ; Форсируем переключение
+            winId := WinGetID("NVIM-OBSIDIAN")
+            WinMinimize()  ; Сначала минимизируем
+            WinRestore()   ; Затем восстанавливаем
+            WinActivate()  ; И активируем - это заставит Windows переключить рабочий стол
+            return
+        } else {
+            ; Окна нет вообще - создаём новое
+            Run('alacritty.exe --title "NVIM-OBSIDIAN" --command wsl.exe -d Debian -e nvim ' 
+                . obsidian_path)
+            Komorebic("focus-workspace 1")
+        }
+        
+        DetectHiddenWindows(false)
+    }
+}
+
+
+
+; -----------------------------------------------------------------------------
+; Alt+G - TickTick
+; -----------------------------------------------------------------------------
+*!g:: {
+    ; Проверяем, не является ли это частью комбинации Alt+S+G
+    if (A_PriorKey = "s" && A_TimeSincePriorHotkey < 700) {
+        return
+    }
+    Run("C:\Program Files (x86)\TickTick\TickTick.exe")  ; Alt+G - TickTick
+    Komorebic("focus-workspace 0")
+    Sleep 600 ; Нажимаем Alt+F, чтобы перерисовать окно
+    Send("!f")
+    Sleep 50
+    Send("!f")
+}
+
+; -----------------------------------------------------------------------------
 ; Alt+A - Терминальный хаб
 ; -----------------------------------------------------------------------------
 !a:: {
@@ -379,8 +429,50 @@ Alt & SC030:: {  ; SC030 = клавиша B
     WinMaximize("ahk_exe alacritty.exe")
     Sleep 50
     WinRestore("ahk_exe alacritty.exe")
-    Sleep 50
+    Sleep 100
     WinActivate("ahk_exe alacritty.exe")
+}
+
+; -----------------------------------------------------------------------------
+; Alt+D - Telegram
+; -----------------------------------------------------------------------------
+*!d:: {
+    ; Проверяем, не является ли это частью комбинации Alt+A+D
+    if (A_PriorKey = "a" && A_TimeSincePriorHotkey < 1000) {
+        return
+    }
+    Run(EnvGet("USERPROFILE") "\AppData\Roaming\Telegram Desktop\Telegram.exe")
+    if !WinExist("ahk_exe Telegram.exe") {
+        WinWait("ahk_exe Telegram.exe")
+        Komorebic("move-to-workspace 4")
+    }
+    Run("komorebic focus-workspace 4")
+}
+
+
+; -----------------------------------------------------------------------------
+; Alt+C - VS Code
+; -----------------------------------------------------------------------------
+*!c:: {
+    global altSCProcessing
+    
+    ; Проверяем, не является ли это частью комбинации Alt+S+C или Alt+S+C+C
+    if (A_PriorKey = "s" && A_TimeSincePriorHotkey < 700) {
+        return
+    }
+    
+    ; Проверяем, не обрабатываем ли мы сейчас Alt+S+C+C
+    if (altSCProcessing) {
+        return
+    }
+    
+    Run(EnvGet("USERPROFILE") "\AppData\Local\Programs\Microsoft VS Code\Code.exe")  ; Alt+C - VS Code
+    Komorebic("focus-workspace 1")
+}
+; Alt+Shift+C - Cursor
+!+c:: {
+    Run(EnvGet("USERPROFILE") "\AppData\Local\Programs\cursor\Cursor.exe")
+    Komorebic("focus-workspace 1")
 }
 
 ; -----------------------------------------------------------------------------
@@ -411,10 +503,7 @@ Alt & SC030:: {  ; SC030 = клавиша B
 
     ; Запускаем в браузере
     try
-        Run('chrome.exe --profile-directory=Default --app="' url '"')
-
-    catch
-        Run(url)  ; Fallback в системный браузер
+        Run('chrome.exe --new-window "' url '"')
     Komorebic("focus-workspace 3")
 }
 
@@ -443,8 +532,8 @@ Alt & SC030:: {  ; SC030 = клавиша B
 
     ; Если была цифра — запускаем nvim с файлом дня
     if (key != "") {
-        Run("alacritty.exe --command wsl.exe -d Debian -e nvim -O " 
-            . obsidian_path . "/base/notes/Day_" . key . ".md" " temp")
+        Run("alacritty.exe --command wsl.exe -d Debian -e nvim " 
+            . obsidian_path . "/base/notes/Day_" . key . ".md" " temp.md")
     }
 
     Komorebic("focus-workspace 1")
@@ -483,74 +572,3 @@ Alt & SC030:: {  ; SC030 = клавиша B
 ; =============================================================================
 RAlt::LAlt  ; Правый Alt работает как левый Alt
 
-; =============================================================================
-;  KOMOREBI
-; =============================================================================
-Komorebic(cmd) {
-    RunWait(format("komorebic.exe {}", cmd), , "Hide")
-}
-
-!q::Komorebic("close")
-!m::Komorebic("minimize")
-
-; Focus windows
-!h::Komorebic("focus left")
-!j::Komorebic("focus down")
-!k::Komorebic("focus up")
-!l::Komorebic("focus right")
-
-!+[::Komorebic("cycle-focus previous")
-!+]::Komorebic("cycle-focus next")
-
-; Move windows
-!+h::Komorebic("move left")
-!+j::Komorebic("move down")
-!+k::Komorebic("move up")
-!+l::Komorebic("move right")
-
-; Stack windows
-!Left::Komorebic("stack left")
-!Down::Komorebic("stack down")
-!Up::Komorebic("stack up")
-!Right::Komorebic("stack right")
-!;::Komorebic("unstack")
-![::Komorebic("cycle-stack previous")
-!]::Komorebic("cycle-stack next")
-
-; Resize
-!=::Komorebic("resize-axis horizontal increase")
-!-::Komorebic("resize-axis horizontal decrease")
-!+=::Komorebic("resize-axis vertical increase")
-!+_::Komorebic("resize-axis vertical decrease")
-
-; Manipulate windows
-!+t::Komorebic("toggle-float")
-!f::Komorebic("toggle-monocle")
-
-; Window manager options
-!+r::Komorebic("retile")
-!p::Komorebic("toggle-pause")
-
-; Layouts
-;!x::Komorebic("flip-layout horizontal")
-;!y::Komorebic("flip-layout vertical")
-
-; Workspaces
-!1::Komorebic("focus-workspace 0")
-!2::Komorebic("focus-workspace 1")
-!3::Komorebic("focus-workspace 2")
-!4::Komorebic("focus-workspace 3")
-!5::Komorebic("focus-workspace 4")
-!6::Komorebic("focus-workspace 5")
-!7::Komorebic("focus-workspace 6")
-!8::Komorebic("focus-workspace 7")
-
-; Move windows across workspaces
-!+1::Komorebic("move-to-workspace 0")
-!+2::Komorebic("move-to-workspace 1")
-!+3::Komorebic("move-to-workspace 2")
-!+4::Komorebic("move-to-workspace 3")
-!+5::Komorebic("move-to-workspace 4")
-!+6::Komorebic("move-to-workspace 5")
-!+7::Komorebic("move-to-workspace 6")
-!+8::Komorebic("move-to-workspace 7")

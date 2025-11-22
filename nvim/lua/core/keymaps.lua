@@ -105,12 +105,12 @@ end, { desc = "Run file in terminal (Python/C++)" })
 ------------
 
 -- Перемещение строк
-map('n', '<C-j>', ':m .+1<CR>==', { desc = "Move line down" })
-map('n', '<C-k>', ':m .-2<CR>==', { desc = "Move line up" })
-map('i', '<C-j>', '<Esc>:m .+1<CR>==gi', { desc = "Move line down" })
-map('i', '<C-k>', '<Esc>:m .-2<CR>==gi', { desc = "Move line up" })
-map('v', '<C-j>', ":m '>+1<CR>gv=gv", { desc = "Move selection down" })
-map('v', '<C-k>', ":m '<-2<CR>gv=gv", { desc = "Move selection up" })
+map('n', '<M-j>', ':m .+1<CR>==', { desc = "Move line down" })
+map('n', '<M-k>', ':m .-2<CR>==', { desc = "Move line up" })
+map('i', '<M-j>', '<Esc>:m .+1<CR>==gi', { desc = "Move line down" })
+map('i', '<M-k>', '<Esc>:m .-2<CR>==gi', { desc = "Move line up" })
+map('v', '<M-j>', ":m '>+1<CR>gv=gv", { desc = "Move selection down" })
+map('v', '<M-k>', ":m '<-2<CR>gv=gv", { desc = "Move selection up" })
 
 -- Create todo list
 vim.keymap.set({ "n", "i" }, "<C-g>", function()

@@ -1,7 +1,6 @@
 -- === Core ===
 require("core.options")
 require("core.langmap")
-require("core.clipboard")
 require("core.keymaps")
 require("core.autocmds")
 

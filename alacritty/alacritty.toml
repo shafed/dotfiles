@@ -1,5 +1,3 @@
-#Чтобы отключить обрезание экрана у nvim, нужно зайти через Проводник в Свойства -> Совместимость и нажать галочку "Отключить оптимизацию во весь экран"
-
 # --- Среда ---
 [env]
 TERM = "xterm-256color"
@@ -23,10 +21,6 @@ style = "Bold"
 [font.italic]
 family = "Hack Nerd Font"
 style = "Italic"
-
-# --- Прокрутка ---
-[scrolling]
-history = 20000   # сделай 5000–20000; 0 = без лимита (медленнее)
 
 # --- Цвета ---
 [colors.primary]
@@ -53,4 +47,5 @@ magenta = '#d3869b'
 cyan    = '#89b482'
 white   = '#dfbf8e'
 
-
+[window]
+decorations = "None"

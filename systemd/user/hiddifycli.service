@@ -1,0 +1,19 @@
+# ~/.config/systemd/user/hiddifycli.service
+[Unit]
+Description=Hiddify CLI VPN
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+ExecStart=/usr/local/bin/HiddifyCli run -c %h/.config/hiddify/config.txt
+WorkingDirectory=%h
+Environment=HOME=%h
+Restart=on-failure
+RestartSec=3
+# опционально:
+# LimitNOFILE=1048576
+# KillSignal=SIGINT
+# TimeoutStopSec=5
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,160 @@
+(defcfg
+  linux-dev /dev/input/by-id/usb-Razer_Razer_Huntsman_V2_Tenkeyless-event-kbd
+  process-unmapped-keys yes
+  concurrent-tap-hold yes
+  danger-enable-cmd yes
+)
+
+;;Variables
+(defvar
+  tap-time 200
+  hold-time 200
+  chord-time 60
+  subl-time 200
+)
+
+;;Sites
+(defalias 
+  syt (cmd zen-browser --new-window https://www.youtube.com)
+  sytwt (cmd zen-browser --new-window https://www.youtube.com/playlist?list=WL)
+  syth (cmd zen-browser --new-window https://www.youtube.com/feed/history)
+  sgpt (cmd zen-browser https://chatgpt.com)
+  sclde (cmd zen-browser https://claude.ai/new)
+  slmrn (cmd zen-browser https://lmarena.ai)
+  slog (cmd zen-browser https://onedrive.live.com/personal/a96ef60ed3018334/_layouts/15/doc2.aspx?resid=d3018334-f60e-206e-80a9-730600000000&cid=a96ef60ed3018334&ct=1762060463109&wdOrigin=OFFICECOM-WEB.MAIN.EDGEWORTH&wdPreviousSessionSrc=HarmonyWeb&wdPreviousSession=1c91ac51-61ba-48e9-a8a4-ca4a0a03659b)
+  smirea (cmd zen-browser https://online-edu.mirea.ru/my)
+  smail (cmd zen-browser https://mail.google.com/mail/u/0/#inbox)
+
+  ;;MIREA
+  slin (cmd zen-browser https://online-edu.mirea.ru/course/view.php?id=13878)
+  smath (cmd zen-browser https://online-edu.mirea.ru/course/view.php?id=13880)
+  sdiskr (cmd zen-browser https://online-edu.mirea.ru/course/view.php?id=13383)
+  sph (cmd zen-browser https://online-edu.mirea.ru/course/view.php?id=16159)
+  shist (cmd zen-browser https://online-edu.mirea.ru/course/view.php?id=13488)
+
+  sl (tap-dance 200 (@slmrn @slin))
+)
+
+;;Apps
+(defalias
+  aweztr (cmd zsh -lc "~/.local/bin/switchApp.sh wezterm")
+  azen (tap-hold-press $subl-time $subl-time (cmd zsh -lc "~/.local/bin/switchApp.sh zen") (layer-toggle browser))
+  appl (cmd zsh -lc "~/.local/bin/switchApp.sh perplexity-desktop")
+  atg (cmd Telegram)
+  awhat (cmd zen-browser --new-window https://web.whatsapp.com)
+  atick (cmd zsh -lc "~/.local/bin/switchApp.sh ticktick")
+  apdf (cmd zsh -lc "~/.local/bin/switchApp.sh zathura")
+  avpn (cmd zsh -lc "~/.local/bin/switchApp.sh hiddify")
+  ayt (tap-dance 200 (@syt @sytwt @syth))
+  ady1 (macro @slog 100 (cmd wezterm start -- nvim /home/shafed/ObsidianSync/base/notes/Day_1.md temp.md))
+  ady2 (macro @slog 100 (cmd wezterm start -- nvim /home/shafed/ObsidianSync/base/notes/Day_2.md temp.md))
+  ady3 (macro @slog 100 (cmd wezterm start -- nvim /home/shafed/ObsidianSync/base/notes/Day_3.md temp.md))
+  arofi (cmd rofi -show drun)
+  aobsi (cmd wezterm start -- nvim /home/shafed/ObsidianSync)
+  atodo (cmd wezterm start -- nvim /home/shafed/ObsidianSync/base/notes/todo.md)
+  cls M-q
+)
+
+
+(defalias
+  mnavi  (tap-hold $tap-time $hold-time esc (layer-toggle navi))
+  mescc (tap-hold $tap-time $hold-time esc lctl)
+  ;;mret (tap-hold $tap-time $hold-time tab ret)
+  mapps  (tap-hold-press $tap-time $hold-time ret (layer-toggle apps))
+
+  mlmet (tap-hold $tap-time $hold-time f lmet)
+  mrmet (tap-hold $tap-time $hold-time j rmet)
+  mlalt (tap-hold $tap-time $hold-time d lalt)
+  mralt (tap-hold $tap-time $hold-time k ralt)
+  mrmet2 (tap-hold $tap-time $hold-time ' rmet)
+  mlctl (tap-hold $tap-time $hold-time a lctl)
+  mrctl (tap-hold $tap-time $hold-time ; rctl)
+  mlsft (tap-hold $tap-time $hold-time s lsft)
+  mrsft (tap-hold $tap-time $hold-time l rsft)
+
+  ;;Sublayers
+  mlsubl (tap-hold-press $subl-time $subl-time bspc (layer-while-held apps))
+  mrsubl (tap-hold-press $subl-time $subl-time ret (layer-while-held apps))
+  mweztr (tap-hold-press $subl-time $subl-time @aweztr (layer-while-held wezterm))
+  mshift (tap-hold-press $subl-time $subl-time lsft (layer-while-held shift))
+
+  sw (cmd xkb-switch -n)
+  mmtab (tap-hold $tap-time 200 z M-tab)
+  mmgrv (tap-hold $tap-time 200 x M-grv)
+  msw (tap-hold $tap-time 200 @sw M-tab)
+  mcopy (tap-hold $tap-time $hold-time c C-c)
+  mpaste (tap-hold $tap-time $hold-time v C-v)
+  mwrpd (tap-hold $tap-time $hold-time . (cmd warpd --hint)) ;;like mousless
+
+
+)
+
+(defsrc
+  esc        f1   f2   f3   f4    f5   f6   f7   f8    f9   f10  f11  f12
+  grv   1    2    3    4    5     6    7    8    9    0    -    =    bspc
+  tab   q    w    e    r    t     y    u    i    o    p    [    ]    \
+  caps  a    s    d    f    g     h    j    k    l    ;    '         ret
+  lsft  z    x    c    v    b     n    m    ,    .    /         rsft  up
+  lctl  lmet lalt           spc              ralt     rmet      rctl  lft  down  rght
+)
+
+(deflayer main
+  esc        f1   f2   f3   f4    f5   f6   f7   f8    f9   f10  f11  f12
+  grv   1    2    3    4    5     6    7    8    9    0    -    =    bspc
+  tab   q    w    e    r    t     y    u    i    o    p    [    ]    \
+  @mnavi @mlctl  s    @mlalt    @mlmet    g     h    @mrmet    @mralt    l    @mrctl    @mrmet2         @mapps
+  lsft  @mmtab    @mmgrv    @mcopy @mpaste  b     n    m    ,    @mwrpd    /         rsft  up
+  lctl  lmet @mlsubl           spc              @mrsubl     rmet      rctl  lft  down  rght
+)
+
+(deflayer apps
+  esc        f1   f2   f3   f4    f5   f6   f7   f8    f9   f10  f11  f12
+  grv   @ady1   @ady2    @ady3    4    5     6    7    8    9    0    -    =    bspc
+  tab   @cls    w    e    r    t     @ayt    u    i    @aobsi    p    [    ]    \
+  caps  @mweztr    @azen    @atg    f    @atick     h    j    k    l    ;    '         ret
+  @mshift  @apdf    x    c    v    @avpn     n    m    ,    .    /         @mshift  up
+  lctl  lmet lalt           @arofi              ralt     rmet      rctl  lft  down  rght
+)
+
+(deflayer shift
+  esc        f1   f2   f3   f4    f5   f6   f7   f8    f9   f10  f11  f12
+  grv   1    2    3    4    5     6    7    8    9    0    -    =    bspc
+  tab   q    w    e    r    t     y    u    i    o    p    [    ]    \
+  @mescc  a    @appl    d    f    g     h    j    k    l    ;    '         ret
+  lsft  z    x    c    v    b     n    m    ,    .    /         rsft  up
+  lctl  lmet lalt           spc              ralt     rmet      rctl  lft  down  rght
+
+)
+
+(deflayer browser
+  esc        f1   f2   f3   f4    f5   f6   f7   f8    f9   f10  f11  f12
+  grv   1    2    3    4    5     6    7    8    9    0    -    =    bspc
+  tab   q    w    @smail    r    t     y    u    i    @smirea    @sph    [    ]    \
+  caps  @smath    s    @sdiskr    f    @sgpt     @shist    j    k    @sl    ;    '         ret
+  lsft  z    x    @sclde    v    b     n    m    ,    .    /         rsft  up
+  lctl  lmet lalt           spc              ralt     rmet      rctl  lft  down  rght
+)
+
+(deflayer wezterm
+  esc        f1   f2   f3   f4    f5   f6   f7   f8    f9   f10  f11  f12
+  grv   1    2    3    4    5     6    7    8    9    0    -    =    bspc
+  tab   q    w    e    r    t     y    u    i    o    p    [    ]    \
+  caps  a    s    @atodo    f    g     h    j    k    l    ;    '         ret
+  lsft  z    x    c    v    b     n    m    ,    .    /         rsft  up
+  lctl  lmet lalt           spc              ralt     rmet      rctl  lft  down  rght
+)
+
+(deflayer navi
+  esc        f1   f2   f3   f4    f5   f6   f7   f8    f9   f10  f11  f12
+  grv   1    2    3    4    5     6    7    8    9    0    -    =    bspc
+  tab   q    w    e    r    t     y    u    i    o    p    [    ]    \
+  @mescc @mlctl  @mlsft    @mlalt    f    g     lft    down    up    rght    ;    '         ret
+  lsft  z    x    c    v  b     n    m    ,    .    /         rsft  up
+  lctl  lmet lalt           spc              ralt     rmet      rctl  lft  down  rght
+)
+
+(defchordsv2
+(a s d f) (cmd flameshot gui --clipboard) $chord-time first-release()
+(a s) (cmd xkb-switch -n) $chord-time first-release()
+(lalt lsft) (cmd xkb-switch -n) $chord-time first-release()
+)

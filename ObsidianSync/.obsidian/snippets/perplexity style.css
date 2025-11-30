@@ -1,0 +1,192 @@
+/* === Цвет текстового курсора (caret) для Obsidian === */
+.cm-editor .cm-cursor,
+.markdown-source-view.mod-cm6 .cm-cursor {
+	border-left: 2px solid #59aeb5 !important;
+}
+
+/* Для режима редактора Live Preview и Reading */
+textarea,
+input,
+.cm-content {
+	caret-color: #59aeb5 !important;
+}
+
+/* Цвет выделения и текста для тёмной темы */
+.theme-dark .cm-content ::selection,
+.theme-dark .markdown-preview-view ::selection,
+.theme-dark textarea::selection,
+.theme-dark input::selection,
+.theme-dark body ::selection {
+	background: #103339 !important;
+	color: #59aeb5 !important;
+}
+
+/* === Highlight active line in Live Preview === */
+
+/* Цвет выделения */
+:root {
+	--active-line-color-custom: #59aeb5;
+}
+
+/* ● Маркеры маркированного списка */
+.is-live-preview .cm-active .list-bullet:after {
+	background-color: var(--active-line-color-custom) !important;
+}
+
+/* 1. Маркеры нумерованного списка */
+.is-live-preview .cm-active .list-ol:after,
+.is-live-preview .cm-active .list-number:after {
+	background-color: var(--active-line-color-custom) !important;
+}
+
+/* ❯ Цитаты (горизонтальный бар слева) */
+.is-live-preview .cm-active .HyperMD-quote:before {
+	background-color: var(--active-line-color-custom) !important;
+}
+
+/* “inline” кавычки (символ > перед текстом) */
+.is-live-preview .cm-active .cm-formatting-quote-1 {
+	color: var(--active-line-color-custom) !important;
+}
+
+/* (Опционально) Подсветить номера строк в линейке */
+.cm-lineNumbers .cm-active.cm-gutterElement {
+	color: var(--active-line-color-custom) !important;
+}
+
+/* Ordered list markers (numbers) */
+.is-live-preview .cm-active .cm-formatting-list-ol {
+	color: var(--active-line-color-custom) !important;
+}
+
+/* альтернативно — если у вас в теме используется .list-number */
+.is-live-preview .cm-active .list-number {
+	color: var(--active-line-color-custom) !important;
+}
+
+body:not(.no-active-line-highlight, active-line-background)
+	.cm-active:not(.HyperMD-quote, HyperMD-header, HyperMD-codeblock):before {
+	content: '';
+	border-left: 3px solid var(--basic-border-color);
+	position: absolute;
+	left: -1.125em;
+	height: 100%;
+}
+
+/* === Callout: заголовок с дефолтным шрифтом === */
+.markdown-preview-view .callout-title,
+.markdown-preview-view .callout-title-inner,
+.markdown-preview-view .callout .callout-title,
+.markdown-preview-view .callout .callout-title-inner,
+.markdown-preview-view .callout-title *,
+.markdown-preview-view .callout-title-inner *,
+.callout-title,
+.callout-title-inner,
+.callout .callout-title,
+.callout .callout-title-inner,
+.callout-title *,
+.callout-title-inner * {
+	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+		'Helvetica Neue', Arial, sans-serif !important;
+	font-weight: 600 !important;
+}
+
+/* === Blockquotes === */
+/* ------------------------------------------------------------ */
+/*   Обновлённый сниппет для цитат в Obsidian + тема Minimal    */
+/* ------------------------------------------------------------ */
+
+/* 1. Сбрасываем «серый» цвет Minimal
+      ────────────────────────────── */
+/*  — чтение (markdown-rendered / markdown-preview-view)        */
+/*  — редактирование (HyperMD-quote)                            */
+/*  — все вложенные элементы ( * )                              */
+.markdown-rendered blockquote,
+.markdown-rendered blockquote *,
+.markdown-preview-view blockquote,
+.markdown-preview-view blockquote *,
+.cm-s-obsidian .HyperMD-quote,
+.cm-s-obsidian .HyperMD-quote * {
+	color: var(--text-normal, inherit) !important; /* основной текстовый цвет */
+}
+
+/* Если Minimal ≥ 6.x использует собственные переменные */
+:root {
+	--blockquote-color: var(--text-normal, inherit) !important;
+}
+
+/* 2. Базовое оформление blockquote
+      ───────────────────────────── */
+.markdown-rendered blockquote,
+.cm-s-obsidian .HyperMD-quote {
+	background: var(--blockquote-bg, #f7f7f5);
+	border-left: 6px solid var(--blockquote-bar, #c7cbc7);
+	margin: 1.2em 0;
+	font-size: 1em;
+	font-style: normal;
+	border-radius: 0;
+	width: auto;
+	max-width: 100%;
+	box-shadow: none;
+	display: block;
+	position: relative;
+	word-break: break-word;
+}
+
+/* 3. Светлая тема (переопределяем переменные Minimal, если нужны) */
+.theme-light .markdown-rendered blockquote,
+.theme-light .cm-s-obsidian .HyperMD-quote {
+	background: #f7f7f5 !important;
+	border-left: 6px solid #c7cbc7 !important;
+}
+
+/* 4. Тёмная тема                                                         */
+.theme-dark .markdown-rendered blockquote,
+.theme-dark .cm-s-obsidian .HyperMD-quote {
+	background: #212121 !important;
+	border-left: 6px solid #595959 !important;
+}
+
+/* 5. Убираем курсив из <em>/<i> внутри цитат                              */
+.markdown-rendered blockquote em,
+.markdown-rendered blockquote i {
+	font-style: normal !important;
+}
+
+/* 6. Стили для <sub> (источник/автор)                                     */
+.markdown-rendered blockquote sub,
+.cm-s-obsidian .HyperMD-quote sub {
+	display: block;
+	color: #97a3a3;
+	font-size: 0.95em;
+	margin-top: 0.7em;
+	margin-left: 0.1em;
+	font-family: inherit;
+}
+
+/* 7. Тёмная тема для <sub>                                                */
+.theme-dark .markdown-rendered blockquote sub,
+.theme-dark .cm-s-obsidian .HyperMD-quote sub {
+	color: #969696;
+}
+
+/* 8. Прячем символы форматирования (>, #, *, …) в режиме редактирования */
+.cm-s-obsidian span.cm-transparent {
+	color: transparent !important;
+}
+
+/* Усиление жирности для ссылок [[ ]] */
+.markdown-rendered strong.internal-link,
+.cm-s-obsidian .cm-strong .internal-link {
+	font-weight: 700 !important; /* Можно увеличить до 800 для максимальной жирности */
+	opacity: 1 !important; /* Полная непрозрачность */
+	filter: none !important; /* Убираем осветление */
+	text-shadow: none !important; /* Без теней */
+}
+
+.markdown-rendered strong,
+.cm-s-obsidian .cm-strong {
+	font-weight: 700 !important;
+	opacity: 1 !important;
+	filter: none !important;
+}

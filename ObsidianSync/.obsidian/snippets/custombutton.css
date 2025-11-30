@@ -1,0 +1,81 @@
+/* 1) Языковой блок — всегда */
+.block-language-button {
+	padding: 5px;
+}
+
+/* 2) Глобальная анимация и hover-эффект для всех кнопок */
+.mb-button > button {
+	transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+.mb-button > button:hover {
+	z-index: 100;
+	transform: translate3d(0, -1.5px, 0);
+	box-shadow: 0 4px 4px var(--button-box-shadow, rgba(0, 0, 0, 0.25)),
+		0 10px 10px var(--button-box-shadow, rgba(0, 0, 0, 0.22));
+}
+
+/* 3) Сброс и общие визуальные настройки — только для вариативных кнопок */
+:is(
+		.mb-button.obsidian,
+		.mb-button.light,
+		.mb-button.medium,
+		.mb-button.heavy
+	) {
+	display: inline-block !important;
+	width: auto !important;
+	padding: 0 !important;
+	margin: 5px 10px;
+	overflow: visible !important;
+}
+:is(.mb-button.obsidian, .mb-button.light, .mb-button.medium, .mb-button.heavy)
+	> button {
+	border: 0.5px solid var(--button-border, #7a9486);
+	border-radius: var(--button-border-radius, 5px);
+	padding: 10px 30px;
+	font-size: var(--button-size);
+	text-decoration: none;
+	background-clip: padding-box;
+	box-shadow: 0 1px 3px var(--button-box-shadow, rgba(0, 0, 0, 0.12)),
+		0 1px 2px var(--button-box-shadow, rgba(0, 0, 0, 0.24));
+}
+
+/* 4) Тёмная тема — только для вариативных кнопок */
+.theme-dark
+	:is(
+		.mb-button.obsidian,
+		.mb-button.light,
+		.mb-button.medium,
+		.mb-button.heavy
+	)
+	> button {
+	border-color: var(--button-border, #84a83a);
+}
+.theme-dark
+	:is(
+		.mb-button.obsidian,
+		.mb-button.light,
+		.mb-button.medium,
+		.mb-button.heavy
+	)
+	> button:hover {
+	box-shadow: 0 4px 4px var(--button-box-shadow, rgba(210, 210, 210, 0.25)),
+		0 10px 10px var(--button-box-shadow, rgba(210, 210, 210, 0.22));
+}
+
+/* 5) Цветовые варианты — только для соответствующих классов */
+.mb-button.obsidian > button {
+	background-color: #21808d !important;
+	color: #ffffff !important;
+}
+.mb-button.light > button {
+	background-color: #90ee90 !important;
+	color: #ffffff !important;
+}
+.mb-button.medium > button {
+	background-color: #ffbf00 !important;
+	color: #ffffff !important;
+}
+.mb-button.heavy > button {
+	background-color: #d22b2b !important;
+	color: #ffffff !important;
+}

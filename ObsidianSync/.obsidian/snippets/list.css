@@ -1,0 +1,199 @@
+.markdown-source-view.mod-cm6.is-readable-line-width .cm-line {
+	padding: 0px;
+}
+
+.markdown-rendered ul:not(.contains-task-list, .dataview-result-list-ul) {
+	padding-inline-start: 0;
+}
+
+/* fix foldable list in preview */
+.markdown-rendered .list-collapse-indicator {
+	margin-inline-start: -1.6em;
+	padding-inline-end: 0.3em;
+}
+
+/* Bullet color */
+:root {
+	--bullet-new-color: rgb(72, 72, 72);
+}
+
+/* Change color for all types of markers 
+   in source, editing & preview           */
+ol > li::marker,
+ul > li::marker,
+.cm-s-obsidian .cm-formatting-list {
+	color: var(--bullet-new-color);
+}
+
+/* color for folded list */
+.folded-line-emphasis .markdown-preview-view .is-collapsed:not(.callout-fold),
+.folded-line-emphasis .cm-line:has(.cm-fold-indicator.is-collapsed) {
+	background: color-mix(in srgb, var(--background-primary) 98%, white);
+}
+
+/* LEVEL 1 */
+.markdown-reading-view ul > li > .list-bullet:after,
+.markdown-source-view.mod-cm6 .HyperMD-list-line-1 .list-bullet:after {
+	/* Bullet */
+	height: 7px;
+	width: 7px;
+	border-radius: 50%;
+	background-color: var(--bullet-new-color);
+}
+
+/* .HyperMD-list-line-1:not(.HyperMD-task-line[data-task]):has(.cm-hmd-internal-link) { */
+.HyperMD-list-line-1:not(.HyperMD-task-line[data-task]):not(.lc-list-callout) {
+	background: color-mix(in srgb, var(--background-primary) 98%, white);
+	border-radius: 5px;
+	border-bottom: solid;
+	border-color: rgba(134, 134, 134, 0.4);
+	border-width: 1px;
+	/* font-weight: 600; */
+}
+
+.HyperMD-list-line-1:not(.HyperMD-task-line[data-task]) .cm-hmd-internal-link {
+	font-weight: 600;
+}
+
+/* LEVEL 2 */
+.markdown-reading-view ul > li > ul > li > .list-bullet:after,
+.markdown-source-view.mod-cm6 .HyperMD-list-line-2 .list-bullet:after {
+	/* Dash */
+	height: 3px;
+	width: 7px;
+	border-radius: 0%;
+	background-color: var(--bullet-new-color);
+}
+
+.HyperMD-list-line-2 {
+	font-weight: normal;
+}
+
+/* LEVEL 3 */
+.markdown-reading-view ul > li > ul > li > ul > li > .list-bullet:after,
+.markdown-source-view.mod-cm6 .HyperMD-list-line-3 .list-bullet:after {
+	/* Hollow Bullet */
+	height: 5px;
+	width: 5px;
+	background-color: Transparent;
+	border-color: var(--bullet-new-color);
+	border-style: solid;
+	border-radius: 50%;
+	border-width: 1px;
+}
+
+.HyperMD-list-line-3 {
+	font-weight: lighter;
+	font-style: normal;
+}
+
+/* LEVEL 4 */
+.markdown-reading-view
+	ul
+	> li
+	> ul
+	> li
+	> ul
+	> li
+	> ul
+	> li
+	> .list-bullet:after,
+.markdown-source-view.mod-cm6 .HyperMD-list-line-4 .list-bullet:after {
+	/* Solid Square */
+	height: 5px;
+	width: 5px;
+	border-radius: 0%;
+	background-color: var(--bullet-new-color);
+}
+
+.HyperMD-list-line-4 {
+	font-weight: lighter;
+	font-style: italic;
+}
+
+/* LEVEL 5 */
+.markdown-reading-view
+	ul
+	> li
+	> ul
+	> li
+	> ul
+	> li
+	> ul
+	> li
+	> ul
+	> li
+	> .list-bullet:after,
+.markdown-source-view.mod-cm6 .HyperMD-list-line-5 .list-bullet:after {
+	/* Dash */
+	height: 1px;
+	width: 7px;
+	border-radius: 0%;
+	background-color: var(--bullet-new-color);
+}
+
+.HyperMD-list-line-5 {
+	font-weight: lighter;
+	font-style: italic;
+}
+
+/* LEVEL 6 */
+.markdown-reading-view
+	ul
+	> li
+	> ul
+	> li
+	> ul
+	> li
+	> ul
+	> li
+	> ul
+	> li
+	> ul
+	> li
+	> .list-bullet:after,
+.markdown-source-view.mod-cm6 .HyperMD-list-line-6 .list-bullet:after {
+	/* Hollow Square */
+	height: 4px;
+	width: 4px;
+	background-color: Transparent;
+	border-color: var(--bullet-new-color);
+	border-style: solid;
+	border-radius: 0%;
+	border-width: 1px;
+}
+
+.HyperMD-list-line-6 {
+	font-weight: lighter;
+	font-style: italic;
+}
+
+/* LEVEL 7 */
+.markdown-reading-view
+	ul
+	> li
+	> ul
+	> li
+	> ul
+	> li
+	> ul
+	> li
+	> ul
+	> li
+	> ul
+	> li
+	> ul
+	> li
+	> .list-bullet:after,
+.markdown-source-view.mod-cm6 .HyperMD-list-line-7 .list-bullet:after {
+	/* Small Bullet */
+	height: 2px;
+	width: 2px;
+	border-radius: 50%;
+	background-color: var(--bullet-new-color);
+}
+
+.HyperMD-list-line-7 {
+	font-weight: lighter;
+	font-style: italic;
+}

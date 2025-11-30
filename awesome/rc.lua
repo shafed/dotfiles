@@ -371,12 +371,55 @@ local function switch_within_class()
     end
 end
 
+
+-- Функция для переключения между окнами разных классов
+local focus_history = {}
+
+-- Отслеживаем историю фокуса
+client.connect_signal("focus", function(c)
+    -- Удаляем клиент из истории, если он там есть
+    for i, cl in ipairs(focus_history) do
+        if cl == c then
+            table.remove(focus_history, i)
+            break
+        end
+    end
+    
+    -- Добавляем в начало истории
+    table.insert(focus_history, 1, c)
+    
+    -- Ограничиваем размер истории
+    while #focus_history > 10 do
+        table.remove(focus_history)
+    end
+end)
+
+local function switch_between_different_apps()
+    local c = client.focus
+    if not c then return end
+    
+    local current_class = c.class
+    
+    -- Ищем в истории первое окно с другим классом
+    for _, cl in ipairs(focus_history) do
+        if cl:isvisible() and 
+           cl.class ~= current_class and 
+           cl ~= c then
+            client.focus = cl
+            cl:raise()
+            return
+        end
+    end
+end
+
 -- {{{ Key bindings
 globalkeys = gears.table.join(
 
 awful.key({ modkey }, "grave", switch_within_class,
-    {description = "switch windows of same app", group = "client"}
-),
+    {description = "switch windows of same app", group = "client"}),
+
+awful.key({ modkey }, "Tab", switch_between_different_apps,
+    {description = "switch between different apps", group = "client"}),
 
 awful.key({ "Mod4", "Shift" }, "s", function ()
     awful.spawn("flameshot gui --clipboard")
@@ -417,14 +460,6 @@ end,
               {description = "focus the previous screen", group = "screen"}),
     awful.key({ modkey,           }, "u", awful.client.urgent.jumpto,
               {description = "jump to urgent client", group = "client"}),
-    awful.key({ modkey,           }, "Tab",
-        function ()
-            awful.client.focus.history.previous()
-            if client.focus then
-                client.focus:raise()
-            end
-        end,
-        {description = "go back", group = "client"}),
 
     -- Standard program
     awful.key({ modkey,           }, "Return", function () awful.spawn(terminal) end,

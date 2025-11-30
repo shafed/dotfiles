@@ -1,0 +1,54 @@
+{
+  "presetFields": [
+    {
+      "type": "Multi",
+      "tagName": "multi",
+      "icon": "bullet-list",
+      "tooltip": "Accepts multiple values from a list",
+      "colorClass": "multi",
+      "options": {
+        "sourceType": "ValuesList",
+        "valuesList": {
+          "1": "system/meta",
+          "2": "system/hierarchy"
+        }
+      },
+      "name": "tags",
+      "id": "yzCqCo",
+      "path": ""
+    }
+  ],
+  "fileClassQueries": [],
+  "displayFieldsInContextMenu": true,
+  "globallyIgnoredFields": [],
+  "classFilesPath": "types/",
+  "isAutosuggestEnabled": true,
+  "fileClassAlias": "type",
+  "settingsVersion": "5.1",
+  "globalFileClass": "default",
+  "firstDayOfWeek": 1,
+  "enableLinks": false,
+  "enableTabHeader": false,
+  "enableEditor": false,
+  "enableBacklinks": false,
+  "enableStarred": false,
+  "enableFileExplorer": false,
+  "enableSearch": false,
+  "enableProperties": true,
+  "tableViewMaxRecords": 100,
+  "frontmatterListDisplay": "asList",
+  "fileClassExcludedFolders": [],
+  "showIndexingStatusInStatusBar": true,
+  "fileIndexingExcludedFolders": [],
+  "fileIndexingExcludedExtensions": [
+    ".excalidraw.md"
+  ],
+  "fileIndexingExcludedRegex": [],
+  "frontmatterOnly": false,
+  "showFileClassSelectInModal": true,
+  "chooseFileClassAtFileCreation": false,
+  "autoInsertFieldsAtFileClassInsertion": false,
+  "fileClassIcon": "package",
+  "isAutoCalculationEnabled": true,
+  "buttonIcon": "clipboard-list"
+}

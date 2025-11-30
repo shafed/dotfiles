@@ -1,0 +1,82 @@
+/* ===== Фиолетовая нумерация строк для любой темы Obsidian ===== */
+.numbered-tablets table {
+	/* Ширина «полки» под счётчик: меняйте при необходимости */
+	--nt-number-width: 3ch; /* 1-99     */
+	--nt-number-width-3d: 4ch; /* 100-999  */
+}
+
+/* сброс / инкремент счётчика */
+.numbered-tablets table tbody {
+	counter-reset: rowCounter;
+}
+.numbered-tablets table tbody tr {
+	counter-increment: rowCounter;
+}
+
+/* первая ячейка каждой строки — даём место под цифру */
+.numbered-tablets table tbody tr > td:first-child {
+	position: relative;
+	padding-left: var(--nt-number-width) !important; /* ← ключевой момент */
+}
+
+/* если номер трёхзначный — чуть шире «полку» */
+.numbered-tablets table tbody tr:nth-child(n + 100) > td:first-child {
+	padding-left: var(--nt-number-width-3d) !important;
+}
+
+/* сам счётчик */
+.numbered-tablets table tbody tr > td:first-child::before {
+	content: counter(rowCounter) '.';
+	position: absolute;
+	left: 0;
+	top: 50%;
+	transform: translateY(-50%); /* по вертикали в центр */
+
+	/* ширина равна «полке», минус чуть-чуть для точки */
+	width: calc(var(--nt-number-width) - 0.6ch);
+	text-align: right;
+
+	font-variant-numeric: tabular-nums;
+	color: var(--text-accent);
+	pointer-events: none;
+}
+
+/* трёхзначным номерам — более широкая «полка» */
+.numbered-tablets table tbody tr:nth-child(n + 100) > td:first-child::before {
+	width: calc(var(--nt-number-width-3d) - 0.6ch);
+}
+
+/* DEFAULT THEME OF OBSIDIAN */
+/*
+.numbered-tablets table tbody {
+  counter-reset: rowNumber;
+}
+.numbered-tablets table tbody tr {
+  counter-increment: rowNumber;
+}
+
+.numbered-tablets table tbody tr:nth-child(-n + 9) td:first-child {
+  padding-left: 2ch;
+  position: relative;
+}
+.numbered-tablets table tbody tr:nth-child(-n + 9) td:first-child::before {
+  content: counter(rowNumber) '.';
+  position: absolute;
+  left: 0.55em;
+  top: 0.26em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-accent);
+}
+
+.numbered-tablets table tbody tr:nth-child(n + 10) td:first-child {
+  padding-left: 3ch; 
+  position: relative;
+}
+.numbered-tablets table tbody tr:nth-child(n + 10) td:first-child::before {
+  content: counter(rowNumber) '.';
+  position: absolute;
+  left: 0.55em;
+  top: 0.28em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-accent);
+} */

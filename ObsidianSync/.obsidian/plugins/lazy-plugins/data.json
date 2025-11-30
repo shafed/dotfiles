@@ -1,0 +1,95 @@
+{
+  "dualConfigs": false,
+  "showConsoleLog": false,
+  "desktop": {
+    "shortDelaySeconds": 5,
+    "longDelaySeconds": 15,
+    "delayBetweenPlugins": 40,
+    "defaultStartupType": null,
+    "showDescriptions": true,
+    "enableDependencies": false,
+    "plugins": {
+      "table-editor-obsidian": {
+        "startupType": "long"
+      },
+      "obsidian-another-quick-switcher": {
+        "startupType": "instant"
+      },
+      "auto-note-mover": {
+        "startupType": "long"
+      },
+      "obsidian-better-command-palette": {
+        "startupType": "long"
+      },
+      "dataview": {
+        "startupType": "instant"
+      },
+      "export-to-html": {
+        "startupType": "instant"
+      },
+      "hard-breaks": {
+        "startupType": "instant"
+      },
+      "homepage": {
+        "startupType": "instant"
+      },
+      "js-engine": {
+        "startupType": "instant"
+      },
+      "obsidian-latex-suite": {
+        "startupType": "short"
+      },
+      "obsidian-list-callouts": {
+        "startupType": "long"
+      },
+      "obsidian-meta-bind-plugin": {
+        "startupType": "instant"
+      },
+      "metadata-menu": {
+        "startupType": "long"
+      },
+      "obsidian-minimal-settings": {
+        "startupType": "long"
+      },
+      "multi-properties": {
+        "startupType": "long"
+      },
+      "periodic-notes": {
+        "startupType": "instant"
+      },
+      "quickadd": {
+        "startupType": "long"
+      },
+      "obsidian-quiet-outline": {
+        "startupType": "long"
+      },
+      "shortcuts-extender": {
+        "startupType": "long"
+      },
+      "obsidian-style-settings": {
+        "startupType": "long"
+      },
+      "supercharged-links-obsidian": {
+        "startupType": "instant"
+      },
+      "templater-obsidian": {
+        "startupType": "instant"
+      },
+      "obsidian-vimrc-support": {
+        "startupType": "instant"
+      },
+      "obsidian-zotero-desktop-connector": {
+        "startupType": "long"
+      },
+      "image-grids": {
+        "startupType": "disabled"
+      },
+      "obsidian-contextual-typography": {
+        "startupType": "disabled"
+      },
+      "obsidian-relative-line-numbers": {
+        "startupType": "instant"
+      }
+    }
+  }
+}

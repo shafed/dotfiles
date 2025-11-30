@@ -1,0 +1,258 @@
+{
+  "main": {
+    "id": "5324373015726ba8",
+    "type": "split",
+    "children": [
+      {
+        "id": "22d9f5ccb07777bb",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "2f8ba2e2f8c74e4b",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "sources/books/Искусство любить.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Искусство любить"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "c8ed4ea43a95e91d",
+    "type": "split",
+    "children": [
+      {
+        "id": "fefd3e96d69541dd",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "b672e8a8d097e025",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "e921781fab2275f3",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "/кто заплачет",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "byModifiedTime"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "5eca21f73c4d5fca",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ],
+        "currentTab": 1
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "right": {
+    "id": "3f8bf646e966966a",
+    "type": "split",
+    "children": [
+      {
+        "id": "57c405f457817615",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "cd561233cd7593e9",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "base/notes/Алгебра матриц.md",
+                "collapseAll": true,
+                "extraContext": true,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks for Алгебра матриц"
+            }
+          },
+          {
+            "id": "7c4556984f348cc2",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "home/homepage.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links from homepage"
+            }
+          },
+          {
+            "id": "7afe9947c26f346c",
+            "type": "leaf",
+            "state": {
+              "type": "file-properties",
+              "state": {
+                "file": "sources/books/Искусство любить.md"
+              },
+              "icon": "lucide-info",
+              "title": "File properties for Искусство любить"
+            }
+          },
+          {
+            "id": "3190504560852c73",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "f8c053ab5276e337",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "All properties"
+            }
+          }
+        ],
+        "currentTab": 2
+      },
+      {
+        "id": "82a15317aeb227df",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "1f45d534d760f803",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "sources/books/Искусство любить.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline of Искусство любить"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 425.5,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "bases:Create new base": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "workspaces:Manage workspace layouts": false,
+      "homepage:Open homepage": false,
+      "templater-obsidian:Templater": false,
+      "periodic-notes:Open today": false
+    }
+  },
+  "active": "2f8ba2e2f8c74e4b",
+  "lastOpenFiles": [
+    "home/homepage.md",
+    "sources/books/Искусство любить.md",
+    "sources/books/Искусство любить.md~",
+    "sources/books/4913",
+    "base/notes/todo.md",
+    "base/notes/todo.md~",
+    "base/notes/4913",
+    "base/notes/1760076900-MDTG.md",
+    "sources/books/Вторники с Морри.md",
+    "base/notes/Семинар 2. Алгебра множеств.md",
+    "base/notes/Untitled.md",
+    "base/notes/типовик.md",
+    "sources/courses/Дискретная математика.md",
+    "base/notes/Семинар 1. Дискретная математика.md",
+    "base/notes/Day_3.md",
+    "base/notes/Day_2.md",
+    "base/notes/Day_1.md",
+    "base/notes/homework english.md",
+    "base/notes/text.md",
+    "base/notes/test.md",
+    "base/notes/задание docx.md",
+    "base/notes/задание docx.md~",
+    "base/notes/what I need.md",
+    "base/notes/what I need.md~",
+    "base/notes/What i need.md",
+    "base/notes/What.md",
+    "base/notes/What i need.md~",
+    "base/notes/Лекция 2. Алгебра множеств.md",
+    "base/notes/Лекция 1. Множества и подмножества.md",
+    "base/notes/Лекция 2. Предел последовательности 2.md",
+    "base/notes/Day 2.md~",
+    "sources/courses/Математический анализ.md",
+    "base/notes/Лекция 1. Предел последовательности.md",
+    "sources/videos/Гайд по чтению книг на АНГЛИЙСКОМ! Лайфхаки, план и рекомендации.md~",
+    "base/notes/Day 1.md~",
+    "files/Последовательность вложенных отрезков.png",
+    "files/Правило треугольника (Правило Саррюса).png",
+    "files/diagram-20250910 (1).png",
+    "files/График окрестности.svg",
+    "files/График signum.png",
+    "files/Графики целой и дробной части.png",
+    "files/diagram-20250906 (2).svg",
+    "files/diagram-20250906 (1).svg",
+    "files/diagram-20250906.svg",
+    "files/Отправил папе котиков.jpg"
+  ]
+}

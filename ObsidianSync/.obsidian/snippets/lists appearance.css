@@ -1,0 +1,160 @@
+/* ═══════════════════════════════════════════════════════════════
+   Minimal Nested Lists for Obsidian
+   Unified bullet sizes across all contexts
+   Version: 2.0 (Fully Unified)
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Theme colors */
+  --ml-bullet-color: var(--list-marker-color, #777);
+  --ml-nested-bullet-color: #b1b1b1;
+  
+  /* Unified bullet sizes */
+  --ml-bullet-size-1: 0.3em;    /* Level 1 (callout only) */
+  --ml-bullet-size-2: 0.3em;    /* Level 2 */
+  --ml-bullet-size-3: 0.3em;   /* Level 3 */
+  --ml-bullet-size-4: 0.3em;    /* Level 4 */
+  --ml-bullet-size-5: 0.24em;   /* Level 5 */
+  --ml-bullet-size-6: 2px;      /* Levels 6-7 */
+  
+  /* Callout spacing */
+  --ml-indent: 10px;
+  --ml-default-indent: 25px;
+  --ml-bullet-shift: 0.8em;
+  --ml-bullet-x-adjust: 2px;
+}
+
+/* ─── Base Reset ─────────────────────────────────────────────── */
+/* Remove default list styling */
+.markdown-reading-view ul,
+.markdown-source-view.mod-cm6 ul,
+.callout-content ul {
+  list-style: none;
+  padding-inline-start: 0;
+}
+
+/* First level colors */
+ul > li::marker,
+ol > li::marker,
+.cm-s-obsidian .cm-formatting-list {
+  color: var(--ml-bullet-color);
+}
+
+/* Common bullet base */
+.list-bullet:after,
+.callout-content li::before {
+  content: '';
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* ─── Level 2: Circle outline ─────────────────────────────────── */
+.markdown-reading-view ul ul > li > .list-bullet:after,
+.markdown-source-view.mod-cm6 .HyperMD-list-line-2 .list-bullet:after,
+.callout-content ul ul > li::before {
+  width: var(--ml-bullet-size-2);
+  height: var(--ml-bullet-size-2);
+  border-radius: 50%;
+  border: 1px solid var(--ml-nested-bullet-color);
+  background: transparent;
+}
+
+/* ─── Level 3: Square filled ──────────────────────────────────── */
+.markdown-reading-view ul ul ul > li > .list-bullet:after,
+.markdown-source-view.mod-cm6 .HyperMD-list-line-3 .list-bullet:after,
+.callout-content ul ul ul > li::before {
+  width: var(--ml-bullet-size-3);
+  height: var(--ml-bullet-size-3);
+  border-radius: 1px;
+  background: var(--ml-nested-bullet-color);
+  border: none;
+}
+
+/* ─── Level 4: Square outline ─────────────────────────────────── */
+.markdown-reading-view ul ul ul ul > li > .list-bullet:after,
+.markdown-source-view.mod-cm6 .HyperMD-list-line-4 .list-bullet:after,
+.callout-content ul ul ul ul > li::before {
+  width: var(--ml-bullet-size-4);
+  height: var(--ml-bullet-size-4);
+  border-radius: 1px;
+  border: 1px solid var(--ml-nested-bullet-color);
+  background: transparent;
+}
+
+/* ─── Level 5: Small circle outline ───────────────────────────── */
+.markdown-reading-view ul ul ul ul ul > li > .list-bullet:after,
+.markdown-source-view.mod-cm6 .HyperMD-list-line-5 .list-bullet:after,
+.callout-content ul ul ul ul ul > li::before {
+  width: var(--ml-bullet-size-5);
+  height: var(--ml-bullet-size-5);
+  border-radius: 50%;
+  border: 1px solid var(--ml-nested-bullet-color);
+  background: transparent;
+}
+
+/* ─── Levels 6-7: Tiny dot ────────────────────────────────────── */
+.markdown-reading-view ul ul ul ul ul ul > li > .list-bullet:after,
+.markdown-reading-view ul ul ul ul ul ul ul > li > .list-bullet:after,
+.markdown-source-view.mod-cm6 .HyperMD-list-line-6 .list-bullet:after,
+.markdown-source-view.mod-cm6 .HyperMD-list-line-7 .list-bullet:after,
+.callout-content ul ul ul ul ul ul > li::before,
+.callout-content ul ul ul ul ul ul ul > li::before {
+  width: var(--ml-bullet-size-6);
+  height: var(--ml-bullet-size-6);
+  border-radius: 50%;
+  background: var(--ml-nested-bullet-color);
+  border: none;
+}
+
+/* ─── Callout-specific Styles ─────────────────────────────────── */
+/* Hide default bullets */
+.callout-content .list-bullet {
+  display: none;
+  margin-left: calc(var(--ml-indent) - var(--ml-default-indent));
+}
+
+.callout-content .list-bullet::after {
+  left: calc(var(--ml-indent) / 2);
+}
+
+/* Callout list items */
+.callout-content li {
+  list-style-type: none;
+  position: relative;
+  padding-left: var(--ml-indent);
+  margin-bottom: 0.08em;
+}
+
+.callout-content ul {
+  margin-top: 0.25em;
+  margin-bottom: 0.25em;
+}
+
+/* Callout bullet positioning */
+.callout-content li::before {
+  position: absolute;
+  top: var(--ml-bullet-shift);
+  left: calc(1.5 * var(--ml-indent) - var(--ml-default-indent) + var(--ml-bullet-x-adjust));
+  transform: translateY(-50%);
+}
+
+/* ─── Callout Level 1: Filled circle (unique to callouts) ─────── */
+.callout-content ul > li::before {
+  width: var(--ml-bullet-size-1);
+  height: var(--ml-bullet-size-1);
+  border-radius: 50%;
+  background-color: var(--ml-nested-bullet-color);
+  border: none;
+}
+
+/* ─── Mobile Optimization ─────────────────────────────────────── */
+@media (max-width: 400pt) {
+  :root {
+    /* Scale down all sizes on mobile */
+    --ml-bullet-size-1: 0.34em;
+    --ml-bullet-size-2: 0.26em;
+    --ml-bullet-size-3: 0.21em;
+    --ml-bullet-size-4: 0.26em;
+    --ml-bullet-size-5: 0.2em;
+  }
+}

@@ -1,0 +1,22 @@
+---
+id: Day 2
+aliases:
+  - день 2
+tags: []
+---
+
+| #   | Exercise             | Reps       | Weight   |
+| --- | -------------------- | ---------- | -------- |
+| 1A  | Pull-Up              | 3X10-10-9  | 82,45+5  |
+| 1B  | Dip                  | 3X10-10-9  | 82,45+10 |
+| 1C  | Leg Raise            | 3X10       | 7,5      |
+| 2A  | Len Leg Extension    | 3X14       | 80       |
+| 2B  | Leg Curl             | 3X10       | 50       |
+| 3A  | U OHE                | 3X9-8-8    | 12       |
+| 3B  | Cable Lateral Raise  | 3X12-11-11 | 7        |
+| 4A  | Incline DB Curl      | 3X11-9-9   | 12,5     |
+| 4B  | Len SM Standing Calf | 3X20       | 64,5     |
+
+- lat, ohe: подстроиться под слабую руку. One more
+- Pull-Up and Dip: one more! 
+- curl: deload, 10-10-9

@@ -2,13 +2,14 @@ return {
   "obsidian-nvim/obsidian.nvim",
   version = "*",
   ft = "markdown",
+    lazy = false,
   ---@module 'obsidian'
   ---@type obsidian.config
   opts = {
     workspaces = {
       {
         name = "personal",
-        path = "~/ObsidianSync/",
+        path = "~/obsidiansync/",
       },
     },
     legacy_commands = false,

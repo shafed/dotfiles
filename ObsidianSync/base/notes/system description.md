@@ -1,0 +1,59 @@
+---
+tags:
+  - note/evergreen
+---
+# Основные составляющие
+
+- 🗄️ Источники ([[sources|sources]] | [[book 1|пример]] и [[templates/source|шаблон]])
+	- Метаданные
+		- Типы источников (задаются вложенным тегом `#source/...`)
+			- article
+			- book
+			- course
+			- movie
+			- podcast
+			- video
+		- status (статус источника)
+			- todo – ожидает
+			- wip – в работе
+			- done – завершено
+			- drop - заброшено или заархивировано
+		- category (парсится по `tag: system/category`)
+		- creator (парсится по `tag: people/creator`)
+		- url (ссылка на источник)
+- 🏢 Проекты ([[projects|projects]] | [[project 1|пример]] и [[templates/project|шаблон]])
+	- Метаданные
+		- `tag: project/single`
+		- status
+		- category
+		- start (когда начал проект)
+		- end (когда нужно закончить проект/когда закончил проект)
+- 📅 Периодические заметки ([[home/daily|periodic]] | [[2030-11-03|пример]] и [[periodic/templates/daily|шаблон]])
+	- Дневная заметка
+		- Дневник ведётся свободным образом
+		- Задачи проставляются свободным образом
+		- Уникальные дни задаются [[2030-11-04#Perfect day|заголовками]]
+		- Есть свойство reviewed, которое подразумевает, что вы хотя бы один раз перечитаете периодическую заметку
+- Структурирующие заметки
+	- [[index|index]] (главная заметка со всеми категориями)
+	- `tag: system/category` – категориальная заметка ([[category 1|пример]] и [[templates/category|шаблон]])
+		- Является самым крупным обобщением в системе
+		- Отвечает за поле category
+	- `tag: system/meta` – мета-заметка ([[meta-note 1|пример]] и [[meta-note|шаблон]])
+		- Аналог MOC-заметки или мета-анализа в науке
+		- Имеет в метаданных category
+	- `tag: system/hierarchy` – иерархическая заметка ([[hierarchy 1|пример]] и [[hierarchy|шаблон]])
+		- Справочная страница с жестко заданными логическими связями между заметками
+		- Имеет в метаданных category
+- Люди
+	- `tag: people/creator` – авторы ([[author 1|пример]] и [[templates/creator|шаблон]])
+		- агрегируются в [[creators|creators]]
+		- Отвечает за поле creator
+- Заметки
+	- Основные типы (один тег на заметку)
+		- `tag: note/basic` – базовая заметка ([[atom note|пример]] и [[default note|шаблон]])
+		- `tag: note/evergreen` – избранная заметка ([[home/inbox#evergreen|evergreens]])
+	- Дополнительные маркеры
+		- `tags: mark/fleeting` – формирует [[home/inbox#inbox|inbox]]
+		- `tags: mark/quote` – цитата ([[quote 1|пример]] и [[quote|шаблон]])
+		- `tags: mark/my` – собственная мысль ([[my note|пример]])

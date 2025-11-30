@@ -1,0 +1,128 @@
+/* statuses */
+
+.data-link-icon[data-link-status*="todo" i][data-link-tags*="#source" i]::before,
+.data-link-icon[data-link-status*="todo" i][data-link-tags*="#project" i]::before {
+  border-left: solid #ff1100;
+  border-bottom: solid #ff1100;
+  border-radius: 100px;
+  border-width: 1px;
+}
+
+.data-link-icon[data-link-status*="wip" i][data-link-tags*="#source" i]::before,
+.data-link-icon[data-link-status*="wip" i][data-link-tags*="#project" i]::before {
+  border-left: solid #00ffff;
+  border-bottom: solid #00ffff;
+  border-radius: 100px;
+  border-width: 1px;
+}
+
+.data-link-icon[data-link-status*="done" i][data-link-tags*="#source" i]::before,
+.data-link-icon[data-link-status*="done" i][data-link-tags*="#project" i]::before {
+  border-left: solid #88ff00;
+  border-bottom: solid #88ff00;
+  border-radius: 100px;
+  border-width: 1px;
+}
+
+.data-link-icon[data-link-status*="drop" i][data-link-tags*="#source" i]::before,
+.data-link-icon[data-link-status*="drop" i][data-link-tags*="#project" i]::before {
+  border-left: solid #ffffff;
+  border-bottom: solid #ffffff;
+  border-radius: 100px;
+  border-width: 1px;
+}
+
+/* --- */
+
+[data-link-reviewed*="true" i]::before {
+  border-left: solid #88ff00;
+  border-bottom: solid #88ff00;
+  border-radius: 100px;
+  border-width: 2px;
+}
+
+[data-link-reviewed*="false" i]::before {
+  border-left: solid #ff1100;
+  border-bottom: solid #ff1100;
+  border-radius: 100px;
+  border-width: 2px;
+}
+
+/* --- */
+
+.prompt-results .data-link-icon[data-link-tags*="#note/basic" i]::before,
+.tree-item-self .data-link-icon[data-link-tags*="#note/basic" i]::before,
+.workspace-tab-header .data-link-icon[data-link-tags*="#note/basic" i]::before,
+.BC-Matrix .data-link-icon[data-link-tags*="#note/basic" i]::before,
+.suggestion-container .data-link-icon[data-link-tags*="#note/basic" i]::before {
+  content: "📝 ";
+}
+
+/* --- */
+
+.data-link-icon[data-link-path*="home/diario" i]::before {
+  content: "📓 ";
+}
+
+
+.data-link-icon[data-link-path*="home/index" i]::before {
+  content: "🗺️ ";
+}
+
+.data-link-icon[data-link-path*="home/homepage" i]::before {
+  content: "🏠 ";
+}
+
+.data-link-icon[data-link-path*="home/sources" i]::before {
+  content: "🗃️ ";
+}
+.data-link-icon[data-link-path*="home/articles" i]::before {
+  content: "🧾 ";
+}
+.data-link-icon[data-link-path*="home/books" i]::before {
+  content: "📖 ";
+}
+.data-link-icon[data-link-path*="home/courses" i]::before {
+  content: "🎓 ";
+}
+.data-link-icon[data-link-path*="home/movies" i]::before {
+  content: "🎬 ";
+}
+.data-link-icon[data-link-path*="home/podcasts" i]::before {
+  content: "📻 ";
+}
+.data-link-icon[data-link-path*="home/videos" i]::before {
+  content: "📺 ";
+}
+
+.data-link-icon[data-link-path*="home/projects" i]::before {
+  content: "🏢 ";
+}
+
+.data-link-icon[data-link-path*="home/projects" i]::before {
+  content: "🏢 ";
+}
+
+.data-link-icon[data-link-path*="home/creators" i]::before {
+  content: "🎨 ";
+}
+
+.data-link-icon[data-link-path*="home/inbox" i]::before {
+  content: "📥 ";
+}
+
+.data-link-icon[data-link-path*="home/daily" i]::before,
+.data-link-icon[data-link-path*="home/all days" i]::before {
+  content: "📆 ";
+}
+
+.data-link-icon[data-link-path*="home/system description" i]::before {
+  content: "🆘 ";
+}
+
+/* --- */
+
+.data-link-icon[data-link-path*=".png" i]::before,
+.data-link-icon[data-link-path*=".jpg" i]::before {
+  content: "🖼️ ";
+}

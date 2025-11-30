@@ -32,5 +32,8 @@ return {
     vim.keymap.set("n", "<leader>sf", "<cmd>Telescope find_files<CR>", { desc = "Поиск файла" })
     vim.keymap.set("n", "<leader>sg", "<cmd>Telescope live_grep<CR>", { desc = "Поиск по содержимому" })
     vim.keymap.set("n", "<leader>sb", "<cmd>Telescope buffers<CR>", { desc = "Открытые буферы" })
+    vim.keymap.set("n", "<leader>ыа", "<cmd>Telescope find_files<CR>", { desc = "Поиск файла" })
+    vim.keymap.set("n", "<leader>ып", "<cmd>Telescope live_grep<CR>", { desc = "Поиск по содержимому" })
+    vim.keymap.set("n", "<leader>ыи", "<cmd>Telescope buffers<CR>", { desc = "Открытые буферы" })
   end,
 }

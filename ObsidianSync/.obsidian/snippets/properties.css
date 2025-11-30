@@ -1,0 +1,40 @@
+body {
+  --metadata-label-width: 5em;
+  --metadata-gap: 0;
+  --metadata-padding: 0;
+}
+
+.metadata-property-icon,
+.metadata-property-warning-icon {
+  display: none;
+}
+
+.multi-select-container,
+.metadata-input-number {
+  padding: 0 !important;
+  margin: 0 !important;
+  gap: 0 !important;
+  /* max-height: 2px; */
+}
+
+.metadata-property-key-input.metadata-property-key-input {
+  margin-left: 3px;
+}
+
+.metadata-properties {
+  margin-top: 3px;
+}
+
+.markdown-source-view.is-live-preview.show-properties .metadata-container {
+  display: none;
+}
+
+.field-btn-container button.property-metadata-menu,
+.metadata-content .action-container .fileclass-btn-container .add-field-button {
+  background: transparent;
+  color: gray;
+  padding: 0;
+  margin: 0;
+  height: calc(var(--input-height));
+  width: calc(var(--input-height) * 0.7);
+}

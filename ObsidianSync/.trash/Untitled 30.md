@@ -1,0 +1,7 @@
+---
+tags:
+  - note/basic
+aliases:
+---
+
+$$

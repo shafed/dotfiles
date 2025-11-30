@@ -1,0 +1,120 @@
+{
+  "0": {
+    "id": "accentColor",
+    "name": "Основной акцентный цвет",
+    "description": "Цвет для ссылок, кнопок и выделений (напр., #167E81)",
+    "type": "color",
+    "default": "#167E81"
+  },
+  "1": {
+    "id": "accentColorHover",
+    "name": "Акцент при наведении",
+    "description": "Цвет акцента при hover (напр., #1C9C94)",
+    "type": "color",
+    "default": "#1C9C94"
+  },
+  "2": {
+    "id": "linkColor",
+    "name": "Цвет ссылок",
+    "description": "Цвет кликабельных ссылок",
+    "type": "color",
+    "default": "#167E81"
+  },
+  "3": {
+    "id": "textPrimary",
+    "name": "Основной цвет текста",
+    "description": "Цвет заголовков и обычного текста (напр., #173D3F)",
+    "type": "color",
+    "default": "#173D3F"
+  },
+  "4": {
+    "id": "textSecondary",
+    "name": "Второстепенный текст",
+    "description": "Цвет для описаний и меток (напр., #57636A)",
+    "type": "color",
+    "default": "#57636A"
+  },
+  "5": {
+    "id": "background",
+    "name": "Фон приложения",
+    "description": "Основной фон (напр., #FCFCF8)",
+    "type": "color",
+    "default": "#FCFCF8"
+  },
+  "6": {
+    "id": "paneBackground",
+    "name": "Фон панелей",
+    "description": "Фон области заметок и боковых панелей (напр., #FFFFFF)",
+    "type": "color",
+    "default": "#FFFFFF"
+  },
+  "7": {
+    "id": "activeListBullet",
+    "name": "Цвет точки в маркере при активной строке",
+    "description": "Подсветка точки списка, когда курсор на строке",
+    "type": "color",
+    "default": "#167E81"
+  },
+  "8": {
+    "id": "borderColor",
+    "name": "Цвет границ",
+    "description": "Стандартный цвет границ элементов (напр., #DCDCD7)",
+    "type": "color",
+    "default": "#DCDCD7"
+  },
+  "9": {
+    "id": "borderColorHover",
+    "name": "Граница при наведении",
+    "description": "Цвет границы при hover (напр., #A6A6A0)",
+    "type": "color",
+    "default": "#A6A6A0"
+  },
+  "10": {
+    "id": "borderColorActive",
+    "name": "Активная граница",
+    "description": "Цвет границы при активном взаимодействии (напр., #5C63F0)",
+    "type": "color",
+    "default": "#5C63F0"
+  },
+  "supercharged-links@@30c3-fec5-color": "#5C68C7",
+  "supercharged-links@@30c3-fec5-before": "🧾 ",
+  "supercharged-links@@9bee-444d-before": "📖 ",
+  "supercharged-links@@74e0-402f-before": "🎓 ",
+  "supercharged-links@@bb0d-5257-color": "#C3674A",
+  "supercharged-links@@bb0d-5257-before": "🎬 ",
+  "supercharged-links@@4c1b-67b1-before": "📻 ",
+  "supercharged-links@@7b67-bca6-color": "#008E63",
+  "supercharged-links@@7b67-bca6-before": "📺 ",
+  "supercharged-links@@a6e5-e76e-before": "👓 ",
+  "supercharged-links@@35f2-f7c1-color": "#73512A",
+  "supercharged-links@@35f2-f7c1-before": "👨 ",
+  "supercharged-links@@36b6-85c2-color": "#D26F9D",
+  "supercharged-links@@36b6-85c2-before": "📥 ",
+  "supercharged-links@@bf81-df9a-color": "#009201",
+  "supercharged-links@@bf81-df9a-before": "🌲 ",
+  "supercharged-links@@31e4-89d8-color": "#008F7A",
+  "supercharged-links@@31e4-89d8-before": "🗺️ ",
+  "supercharged-links@@397b-9097-before": "🔎 ",
+  "supercharged-links@@397b-9097-color": "#625EFF",
+  "supercharged-links@@b517-1eaf-before": "🧬 ",
+  "supercharged-links@@b517-1eaf-color": "#9230FF",
+  "supercharged-links@@4af3-0af6-color": "#5FA3FF",
+  "supercharged-links@@4af3-0af6-before": "💭 ",
+  "supercharged-links@@b50c-a075-color": "#C11369",
+  "supercharged-links@@b50c-a075-before": "💎 ",
+  "supercharged-links@@c-b50c-a075-use-background": false,
+  "minimal-mobile@@mobile-toolbar-off": false,
+  "minimal-advanced@@styled-scrollbars": false,
+  "minimal-advanced@@cursor": "default",
+  "minimal-style@@bg1@@light": "#FCFCF9",
+  "supercharged-links@@b5f1-3e00-before": "📅 ",
+  "supercharged-links@@c-b5f1-3e00-use-background": false,
+  "supercharged-links@@b5f1-3e00-color": "#AB47BC",
+  "supercharged-links@@63fc-8895-color": "#42A5F5",
+  "supercharged-links@@63fc-8895-before": "📅 ",
+  "supercharged-links@@103c-2d03-before": "📅 ",
+  "supercharged-links@@103c-2d03-color": "#FFA726",
+  "minimal-style@@callouts-style": "callouts-outlined",
+  "shimmering-focus@@readable-line-length-toggle": true,
+  "shimmering-focus@@file-line-width": 700
+}

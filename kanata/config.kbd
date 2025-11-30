@@ -11,7 +11,9 @@
   hold-time 200
   chord-time 60
   subl-time 200
+  tmux-delay 40
 )
+
 
 ;;Sites
 (defalias 
@@ -31,6 +33,7 @@
   sdiskr (cmd zen-browser https://online-edu.mirea.ru/course/view.php?id=13383)
   sph (cmd zen-browser https://online-edu.mirea.ru/course/view.php?id=16159)
   shist (cmd zen-browser https://online-edu.mirea.ru/course/view.php?id=13488)
+  sit (cmd zen-browser https://online-edu.mirea.ru/course/view.php?id=14297)
 
   sl (tap-dance 200 (@slmrn @slin))
 )
@@ -44,22 +47,24 @@
   awhat (cmd zen-browser --new-window https://web.whatsapp.com)
   atick (cmd zsh -lc "~/.local/bin/switchApp.sh ticktick")
   apdf (cmd zsh -lc "~/.local/bin/switchApp.sh zathura")
-  avpn (cmd zsh -lc "~/.local/bin/switchApp.sh hiddify")
+  ;avpn (cmd zsh -lc "~/.local/bin/switchApp.sh hiddify")
+  avpn (cmd zsh -lc "~/.local/bin/switchApp.sh v2rayn")
   ayt (tap-dance 200 (@syt @sytwt @syth))
-  ady1 (macro @slog 100 (cmd wezterm start -- nvim /home/shafed/ObsidianSync/base/notes/Day_1.md temp.md))
-  ady2 (macro @slog 100 (cmd wezterm start -- nvim /home/shafed/ObsidianSync/base/notes/Day_2.md temp.md))
-  ady3 (macro @slog 100 (cmd wezterm start -- nvim /home/shafed/ObsidianSync/base/notes/Day_3.md temp.md))
   arofi (cmd rofi -show drun)
-  aobsi (cmd wezterm start -- nvim /home/shafed/ObsidianSync)
-  atodo (cmd wezterm start -- nvim /home/shafed/ObsidianSync/base/notes/todo.md)
   cls M-q
 )
 
 
 (defalias
+  maltt (tap-hold $tap-time $hold-time b (macro @aweztr 100 C-s $tmux-delay spc)) ;; tmux alternate session
+  mobsi (macro @slog 100 @aweztr 150 C-s $tmux-delay C-t)
+  mday1 (macro @slog 100 @aweztr 150 C-s $tmux-delay C-q)
+  mday2 (macro @slog 100 @aweztr 150 C-s $tmux-delay C-w)
+  mday3 (macro @aweztr 150 C-s $tmux-delay C-e)
+  mtodo (macro @aweztr 150 C-s $tmux-delay C-d)
+  mcode (macro @aweztr 150 C-s $tmux-delay C-c)
   mnavi  (tap-hold $tap-time $hold-time esc (layer-toggle navi))
   mescc (tap-hold $tap-time $hold-time esc lctl)
-  ;;mret (tap-hold $tap-time $hold-time tab ret)
   mapps  (tap-hold-press $tap-time $hold-time ret (layer-toggle apps))
 
   mlmet (tap-hold $tap-time $hold-time f lmet)
@@ -103,16 +108,16 @@
   grv   1    2    3    4    5     6    7    8    9    0    -    =    bspc
   tab   q    w    e    r    t     y    u    i    o    p    [    ]    \
   @mnavi @mlctl  s    @mlalt    @mlmet    g     h    @mrmet    @mralt    l    @mrctl    @mrmet2         @mapps
-  lsft  @mmtab    @mmgrv    @mcopy @mpaste  b     n    m    ,    @mwrpd    /         rsft  up
+  lsft  @mmtab    @mmgrv    @mcopy @mpaste  @maltt     n    m    ,    @mwrpd    /         rsft  up
   lctl  lmet @mlsubl           spc              @mrsubl     rmet      rctl  lft  down  rght
 )
 
 (deflayer apps
   esc        f1   f2   f3   f4    f5   f6   f7   f8    f9   f10  f11  f12
-  grv   @ady1   @ady2    @ady3    4    5     6    7    8    9    0    -    =    bspc
-  tab   @cls    w    e    r    t     @ayt    u    i    @aobsi    p    [    ]    \
+  grv   @mday1   @mday2    @mday3    4    5     6    7    8    9    0    -    =    bspc
+  tab   @cls    w    e    r    t     @ayt    u    i    @mobsi    p    [    ]    \
   caps  @mweztr    @azen    @atg    f    @atick     h    j    k    l    ;    '         ret
-  @mshift  @apdf    x    c    v    @avpn     n    m    ,    .    /         @mshift  up
+  @mshift  @apdf    x    @mcode    v    @avpn     n    m    ,    .    /         @mshift  up
   lctl  lmet lalt           @arofi              ralt     rmet      rctl  lft  down  rght
 )
 
@@ -129,7 +134,7 @@
 (deflayer browser
   esc        f1   f2   f3   f4    f5   f6   f7   f8    f9   f10  f11  f12
   grv   1    2    3    4    5     6    7    8    9    0    -    =    bspc
-  tab   q    w    @smail    r    t     y    u    i    @smirea    @sph    [    ]    \
+  tab   q    w    @smail    r    t     y    u    @sit    @smirea    @sph    [    ]    \
   caps  @smath    s    @sdiskr    f    @sgpt     @shist    j    k    @sl    ;    '         ret
   lsft  z    x    @sclde    v    b     n    m    ,    .    /         rsft  up
   lctl  lmet lalt           spc              ralt     rmet      rctl  lft  down  rght
@@ -139,7 +144,7 @@
   esc        f1   f2   f3   f4    f5   f6   f7   f8    f9   f10  f11  f12
   grv   1    2    3    4    5     6    7    8    9    0    -    =    bspc
   tab   q    w    e    r    t     y    u    i    o    p    [    ]    \
-  caps  a    s    @atodo    f    g     h    j    k    l    ;    '         ret
+  caps  a    s    @mtodo    f    g     h    j    k    l    ;    '         ret
   lsft  z    x    c    v    b     n    m    ,    .    /         rsft  up
   lctl  lmet lalt           spc              ralt     rmet      rctl  lft  down  rght
 )

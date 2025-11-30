@@ -1,0 +1,210 @@
+{
+  "main": {
+    "id": "5324373015726ba8",
+    "type": "split",
+    "children": [
+      {
+        "id": "4509724f8bf84da7",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "e7a7b303c61786dc",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "base/notes/Day_1.md",
+                "mode": "preview",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Day_1"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "caa2da2a1fdfd05c",
+    "type": "mobile-drawer",
+    "children": [
+      {
+        "id": "628fa2b833a8f9fd",
+        "type": "leaf",
+        "state": {
+          "type": "file-explorer",
+          "state": {
+            "sortOrder": "alphabetical",
+            "autoReveal": false
+          },
+          "icon": "lucide-folder-closed",
+          "title": "Files"
+        }
+      },
+      {
+        "id": "03012ec03908a308",
+        "type": "leaf",
+        "state": {
+          "type": "search",
+          "state": {
+            "query": "",
+            "matchingCase": false,
+            "explainSearch": false,
+            "collapseAll": false,
+            "extraContext": false,
+            "sortOrder": "alphabetical"
+          },
+          "icon": "lucide-search",
+          "title": "Search"
+        }
+      },
+      {
+        "id": "a4d35b6f264c19ad",
+        "type": "leaf",
+        "state": {
+          "type": "tag",
+          "state": {
+            "sortOrder": "frequency",
+            "useHierarchy": true,
+            "showSearch": false,
+            "searchQuery": ""
+          },
+          "icon": "lucide-tags",
+          "title": "Tags"
+        }
+      },
+      {
+        "id": "e07726d4a5ddec7c",
+        "type": "leaf",
+        "state": {
+          "type": "bookmarks",
+          "state": {},
+          "icon": "lucide-bookmark",
+          "title": "Bookmarks"
+        }
+      }
+    ],
+    "currentTab": 0
+  },
+  "right": {
+    "id": "988a8d7f94058fd6",
+    "type": "mobile-drawer",
+    "children": [
+      {
+        "id": "abe77f9cd31fd35a",
+        "type": "leaf",
+        "state": {
+          "type": "backlink",
+          "state": {
+            "file": "base/notes/Day_1.md",
+            "collapseAll": false,
+            "extraContext": false,
+            "sortOrder": "alphabetical",
+            "showSearch": false,
+            "searchQuery": "",
+            "backlinkCollapsed": false,
+            "unlinkedCollapsed": true
+          },
+          "icon": "links-coming-in",
+          "title": "Backlinks"
+        }
+      },
+      {
+        "id": "24f14e86b77b1719",
+        "type": "leaf",
+        "state": {
+          "type": "outgoing-link",
+          "state": {
+            "file": "home/homepage.md",
+            "linksCollapsed": false,
+            "unlinkedCollapsed": true
+          },
+          "icon": "links-going-out",
+          "title": "Outgoing links"
+        }
+      },
+      {
+        "id": "be6b2d1e936fd58f",
+        "type": "leaf",
+        "state": {
+          "type": "outline",
+          "state": {
+            "file": "home/homepage.md",
+            "followCursor": false,
+            "showSearch": false,
+            "searchQuery": ""
+          },
+          "icon": "lucide-list",
+          "title": "Outline"
+        }
+      }
+    ],
+    "currentTab": 0
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false,
+      "homepage:Open homepage": false,
+      "templater-obsidian:Templater": false,
+      "periodic-notes:Open today": false,
+      "table-editor-obsidian:Advanced Tables Toolbar": false
+    }
+  },
+  "active": "e7a7b303c61786dc",
+  "lastOpenFiles": [
+    "home/homepage.md",
+    "base/notes/Day_1.md",
+    "base/notes/ФСБ Арина.md",
+    "sources/books/Вторники с Морри.md",
+    "base/notes/Day_2.md",
+    "base/notes/todo.md",
+    "base/notes/training program.md",
+    "base/notes/Day_3.md",
+    "base/notes/homework english.md",
+    "periodic/days/2025-10-25.md",
+    "periodic/days/2025.10.22.md",
+    "periodic/days/2025-10-22.md",
+    "files/Беспроигрышная техника.png",
+    "files/photo_10_2025-08-10_19-07-31.jpg",
+    "files/photo_11_2025-08-10_19-07-31.jpg",
+    "files/Опросник Бернса 1.png",
+    "files/Графики целой и дробной части.png",
+    "files/theme.css",
+    "files/photo_20_2025-08-10_19-07-31.jpg",
+    "files/photo_22_2025-08-10_19-07-31.jpg",
+    "files/Я со Львом и Матвеем Крым-терраса перед выпускной.jpg",
+    "files/photo_16_2025-08-10_19-07-31.jpg",
+    "files/Техника мешающих и помогающих мыслей 2.png",
+    "files/Я на последнем звонке кружок.mp4",
+    "files/Опросник Бека 1.png.md",
+    "files/Арбуз.png.md",
+    "files/Опросник Бека 2.png.md",
+    "files/Расписание дня.png.md",
+    "home/projects.md",
+    "home/index.md",
+    "home/diario.md",
+    "home/videos.md",
+    "home/inbox.md",
+    "home/books.md",
+    "home/sources.md",
+    "home",
+    "types/default.md",
+    "types/book.md",
+    "types/source.md",
+    "types",
+    "projects/single",
+    "projects",
+    "templates",
+    "periodic/days",
+    "periodic/months",
+    "periodic/years"
+  ]
+}

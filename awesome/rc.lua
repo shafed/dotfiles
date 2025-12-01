@@ -375,11 +375,22 @@ end
 -- Функция для переключения между окнами разных классов
 local focus_history = {}
 
+-- Очистка невалидных клиентов из истории
+local function cleanup_history()
+    for i = #focus_history, 1, -1 do
+        if not focus_history[i].valid then
+            table.remove(focus_history, i)
+        end
+    end
+end
+
 -- Отслеживаем историю фокуса
 client.connect_signal("focus", function(c)
+    cleanup_history()
+    
     -- Удаляем клиент из истории, если он там есть
-    for i, cl in ipairs(focus_history) do
-        if cl == c then
+    for i = #focus_history, 1, -1 do  -- Итерируем в обратном порядке
+        if focus_history[i] == c then
             table.remove(focus_history, i)
             break
         end
@@ -394,15 +405,30 @@ client.connect_signal("focus", function(c)
     end
 end)
 
+-- Удаляем клиент при закрытии
+client.connect_signal("unmanage", function(c)
+    for i = #focus_history, 1, -1 do
+        if focus_history[i] == c then
+            table.remove(focus_history, i)
+            break
+        end
+    end
+end)
+
 local function switch_between_different_apps()
     local c = client.focus
     if not c then return end
     
     local current_class = c.class
+    if not current_class then return end  -- Защита от nil
+    
+    cleanup_history()
     
     -- Ищем в истории первое окно с другим классом
     for _, cl in ipairs(focus_history) do
-        if cl:isvisible() and 
+        if cl.valid and                    -- Проверка валидности
+           cl:isvisible() and 
+           cl.class and                    -- Проверка на nil
            cl.class ~= current_class and 
            cl ~= c then
             client.focus = cl

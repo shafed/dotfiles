@@ -17,7 +17,6 @@
 
 ;;Sites
 (defalias 
-  syt (cmd zen-browser --new-window https://www.youtube.com)
   sytwt (cmd zen-browser --new-window https://www.youtube.com/playlist?list=WL)
   syth (cmd zen-browser --new-window https://www.youtube.com/feed/history)
   sgpt (cmd zen-browser https://chatgpt.com)
@@ -49,7 +48,7 @@
   apdf (cmd zsh -lc "~/.local/bin/switchApp.sh zathura")
   ;avpn (cmd zsh -lc "~/.local/bin/switchApp.sh hiddify")
   avpn (cmd zsh -lc "~/.local/bin/switchApp.sh v2rayn")
-  ayt (tap-dance 200 (@syt @sytwt @syth))
+  ayt (tap-dance 200 (@sytwt @syth))
   arofi (cmd rofi -show drun)
   cls M-q
 )

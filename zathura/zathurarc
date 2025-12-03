@@ -11,3 +11,49 @@ set incremental-search true
 # zoom
 map <C-i> zoom in
 map <C-o> zoom out
+
+# Навигация (русская раскладка)
+map о scroll up
+map л scroll down
+map р scroll left
+map д scroll right
+
+# Прокрутка на половину страницы
+map <C-а> scroll half-up
+map <C-о> scroll half-down
+
+# Прокрутка на полную страницу
+map <C-и> scroll full-down
+map <C-б> scroll full-up
+
+# Переход к первой/последней странице
+map пп goto top
+map П goto bottom
+
+# Следующая/предыдущая страница
+map <Space> navigate next
+map <S-Space> navigate previous
+
+# Масштабирование
+map ч adjust_window width
+map ы adjust_window best-fit
+map в recolor
+
+# Поиск
+map т search next
+map Т search previous
+
+# Закладки
+map ь set "first-page-column 1:1"
+
+# Перезагрузка документа
+map Ч reload
+
+# Полноэкранный режим
+map а toggle_fullscreen
+
+# Переключение режима индекса
+map Ф toggle_index
+
+# Информация о документе
+mapш toggle_statusbar

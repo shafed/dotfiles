@@ -52,4 +52,7 @@ return {
       end,
     },
   },
+
+
+    vim.keymap.set("n", "<leader>ff", "<cmd>Obsidian search<CR>", { desc = "Поиск файла" })
 }

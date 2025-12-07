@@ -29,6 +29,17 @@ ueberzug_scale  = 1
 ueberzug_offset = [ 0, 0, 0, 0 ]
 
 [opener]
+
+# Просмотр PDF (read-only)
+view_pdf = [
+  { run = 'zathura "$@"', orphan = true, desc = "View in Zathura", for = "unix" },
+]
+
+# Редактирование PDF (аннотации)
+edit_pdf = [
+  { run = 'xournalpp "$@"', orphan = true, desc = "Edit in Xournal++", for = "unix" },
+]
+
 edit = [
 	{ run = '${EDITOR:-nvim} "$@"', desc = "$EDITOR", block = true, for = "unix" },
 	{ run = 'code %*',    orphan = true, desc = "code",           for = "windows" },
@@ -58,6 +69,10 @@ play = [
 ]
 
 [open]
+prepend_rules = [
+  # PDF открываются сразу списком опций
+  { name = "*.pdf", use = ["view_pdf", "edit_pdf"] },
+]
 rules = [
 	# Folder
 	{ name = "*/", use = [ "edit", "open", "reveal" ] },

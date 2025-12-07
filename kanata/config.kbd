@@ -39,17 +39,17 @@
 
 ;;Apps
 (defalias
-  aweztr (cmd zsh -lc "~/.local/bin/switchApp.sh wezterm")
-  azen (tap-hold-press $subl-time $subl-time (cmd zsh -lc "~/.local/bin/switchApp.sh zen") (layer-toggle browser))
-  appl (cmd zsh -lc "~/.local/bin/switchApp.sh perplexity-desktop")
+  aweztr (cmd jumpapp wezterm)
+  azen (tap-hold-press $subl-time $subl-time (cmd jumpapp zen) (layer-toggle browser))
+  appl (cmd jumpapp perplexity-desktop)
   atg (cmd Telegram)
   awhat (cmd zen-browser --new-window https://web.whatsapp.com)
-  atick (cmd zsh -lc "~/.local/bin/switchApp.sh ticktick")
-  apdf (cmd zsh -lc "~/.local/bin/switchApp.sh zathura")
+  atick (cmd jumpapp ticktick)
+  apdf (cmd jumpapp zathura)
   ;avpn (cmd zsh -lc "~/.local/bin/switchApp.sh hiddify")
-  avpn (cmd zsh -lc "~/.local/bin/switchApp.sh v2rayn")
+  avpn (cmd jumpapp v2rayn)
   ayt (tap-dance 200 (@sytwt @syth))
-  arofi (cmd rofi -show drun)
+  arofi (cmd rofi -show combi -combi-modes "window,drun" -show-icons)
   cls M-q
 )
 

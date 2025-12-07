@@ -56,7 +56,7 @@
 
 (defalias
   maltt (tap-hold $tap-time $hold-time b (macro @aweztr 100 C-s $tmux-delay spc)) ;; tmux alternate session
-  mobsi (macro @slog 100 @aweztr 150 C-s $tmux-delay C-t)
+  mobsi (macro @aweztr 150 C-s $tmux-delay C-t)
   mday1 (macro @slog 100 @aweztr 150 C-s $tmux-delay C-q)
   mday2 (macro @slog 100 @aweztr 150 C-s $tmux-delay C-w)
   mday3 (macro @aweztr 150 C-s $tmux-delay C-e)

@@ -53,6 +53,19 @@ return {
     },
   },
 
+ config = function(_, opts) -- <leader>ff Obsidian search
+    require("obsidian").setup(opts)
+    
+    vim.api.nvim_create_autocmd("BufEnter", {
+      pattern = "*.md",
+      callback = function()
+        if package.loaded["obsidian"] then
+          vim.keymap.set('n', '<leader>ff', '<cmd>Obsidian search<CR>', {buffer = true})
+          vim.keymap.set('n', '<leader>аа', '<cmd>Obsidian search<CR>', {buffer = true})
+        end
+      end,
+    })
 
-    vim.keymap.set("n", "<leader>ff", "<cmd>Obsidian search<CR>", { desc = "Поиск файла" })
+    vim.keymap.set("n", "<leader>o", "<cmd>Obsidian toc<CR>", {desc = "TOC of file"})
+    end,
 }

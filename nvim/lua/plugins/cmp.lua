@@ -46,7 +46,7 @@ return {
           ["<C-y>"]     = cmp.mapping.confirm({ select = true }),
         }),
         sources = cmp.config.sources({
-          { name = "nvim_lsp" },
+          { name = "nvim_lsp", priority = 1000 },
           { name = "luasnip" },
           { name = "vimtex" },
           { name = "path" },

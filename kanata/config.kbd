@@ -20,6 +20,7 @@
   sytwt (cmd zen-browser --new-window https://www.youtube.com/playlist?list=WL)
   syth (cmd zen-browser --new-window https://www.youtube.com/feed/history)
   sgpt (cmd zen-browser https://chatgpt.com)
+  sppl (cmd zen-browser https://www.perplexity.ai)
   sclde (cmd zen-browser https://claude.ai/new)
   slmrn (cmd zen-browser https://lmarena.ai)
   slog (cmd zen-browser https://onedrive.live.com/personal/a96ef60ed3018334/_layouts/15/doc2.aspx?resid=d3018334-f60e-206e-80a9-730600000000&cid=a96ef60ed3018334&ct=1762060463109&wdOrigin=OFFICECOM-WEB.MAIN.EDGEWORTH&wdPreviousSessionSrc=HarmonyWeb&wdPreviousSession=1c91ac51-61ba-48e9-a8a4-ca4a0a03659b)
@@ -33,8 +34,6 @@
   sph (cmd zen-browser https://online-edu.mirea.ru/course/view.php?id=16159)
   shist (cmd zen-browser https://online-edu.mirea.ru/course/view.php?id=13488)
   sit (cmd zen-browser https://online-edu.mirea.ru/course/view.php?id=14297)
-
-  sl (tap-dance 200 (@slmrn @slin))
 )
 
 ;;Apps
@@ -42,14 +41,14 @@
   aweztr (cmd jumpapp wezterm)
   azen (tap-hold-press $subl-time $subl-time (cmd jumpapp zen) (layer-toggle browser))
   appl (cmd jumpapp perplexity-desktop)
-  atg (cmd Telegram)
+  atg (cmd telegram-desktop)
   awhat (cmd zen-browser --new-window https://web.whatsapp.com)
   atick (cmd jumpapp ticktick)
   apdf (cmd jumpapp zathura)
   ;avpn (cmd zsh -lc "~/.local/bin/switchApp.sh hiddify")
   avpn (cmd jumpapp v2rayn)
   ayt (tap-dance 200 (@sytwt @syth))
-  arofi (cmd rofi -show combi -combi-modes "window,drun" -show-icons)
+  arofi (cmd rofi -show combi -combi-modes "window,drun" -show-icons -window-match-fields class)
   cls M-q
 )
 
@@ -134,7 +133,7 @@
   esc        f1   f2   f3   f4    f5   f6   f7   f8    f9   f10  f11  f12
   grv   1    2    3    4    5     6    7    8    9    0    -    =    bspc
   tab   q    w    @smail    r    t     y    u    @sit    @smirea    @sph    [    ]    \
-  caps  @smath    s    @sdiskr    f    @sgpt     @shist    j    k    @sl    ;    '         ret
+  caps  @smath    s    @slmrn    @sppl    @sgpt     @shist    j    k    @slin    ;    '         ret
   lsft  z    x    @sclde    v    b     n    m    ,    .    /         rsft  up
   lctl  lmet lalt           spc              ralt     rmet      rctl  lft  down  rght
 )

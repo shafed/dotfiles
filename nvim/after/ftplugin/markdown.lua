@@ -2,7 +2,7 @@
 local function set_markdown_highlights()
     -- ЗАГОЛОВКИ (H1 - H6)
     -- В Material Gruvbox используются более мягкие оттенки
-    vim.api.nvim_set_hl(0, "@markup.heading.1.markdown", { fg = "#c14a4a", bold = true }) -- Red
+    vim.api.nvim_set_hl(0, "@markup.heading.1.markdown", { fg = "#ea6962", bold = true }) -- Red
     vim.api.nvim_set_hl(0, "@markup.heading.2.markdown", { fg = "#d8a657", bold = true }) -- Yellow
     vim.api.nvim_set_hl(0, "@markup.heading.3.markdown", { fg = "#a9b665", bold = true }) -- Green
     vim.api.nvim_set_hl(0, "@markup.heading.4.markdown", { fg = "#7daea3", bold = true }) -- Aqua
@@ -28,3 +28,10 @@ vim.api.nvim_create_autocmd("ColorScheme", {
     pattern = "*",
     callback = set_markdown_highlights,
 })
+
+-- Search: Желтый фон, темный текст
+vim.api.nvim_set_hl(0, "Search", { fg = "#282828", bg = "#d8a657" })
+
+-- IncSearch/CurSearch: Оранжевый фон, темный текст
+vim.api.nvim_set_hl(0, "IncSearch", { fg = "#282828", bg = "#e78a4e" })
+vim.api.nvim_set_hl(0, "CurSearch", { fg = "#282828", bg = "#e78a4e" })

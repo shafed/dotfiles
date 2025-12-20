@@ -30,14 +30,14 @@ ueberzug_offset = [ 0, 0, 0, 0 ]
 
 [opener]
 
-# Просмотр PDF (read-only)
-view_pdf = [
-  { run = 'zathura "$@"', orphan = true, desc = "View in Zathura", for = "unix" },
-]
-
 # Редактирование PDF (аннотации)
 edit_pdf = [
   { run = 'xournalpp "$@"', orphan = true, desc = "Edit in Xournal++", for = "unix" },
+]
+
+# Просмотр PDF (read-only)
+view_pdf = [
+  { run = 'zathura "$@"', orphan = true, desc = "View in Zathura", for = "unix" },
 ]
 
 edit = [

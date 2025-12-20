@@ -10,6 +10,8 @@ map({'n','v'}, '<leader>y', '"+y', { desc = "Copy to system clipboard" })
 map('n', '<leader>Y', '"+Y', { desc = "Copy line to system clipboard" })
 map({'n','v'}, '<leader>p', '"+p', { desc = "Paste from system clipboard" })
 map({'n','v'}, '<leader>P', '"+P', { desc = "Paste before from system clipboard" })
+map({'n','v'}, '<M-p>', '"0p', { desc = "Paste from copy register" })
+map({'n','v'}, '<M-P>', '"0P', { desc = "Paste before copy register" })
 
 map({'n','v','o'}, 'H', '^', { desc = "First non-blank" })
 map({'n','v','o'}, 'L', '$', { desc = "End of line" })
@@ -113,7 +115,7 @@ map('v', '<M-j>', ":m '>+1<CR>gv=gv", { desc = "Move selection down" })
 map('v', '<M-k>', ":m '<-2<CR>gv=gv", { desc = "Move selection up" })
 
 -- Create todo list
-vim.keymap.set({ "n", "i" }, "<C-g>", function()
+vim.keymap.set({ "n", "i" }, "<M-d>", function()
   -- Get the current line/row/column
   local cursor_pos = vim.api.nvim_win_get_cursor(0)
   local row, _ = cursor_pos[1], cursor_pos[2]

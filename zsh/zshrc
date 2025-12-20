@@ -166,6 +166,7 @@ export PATH="$HOME/.local/bin:$PATH"
 export OPENROUTER_API_KEY="sk-rGiKULn5W3H6Yf8TbzWi4Iu1wnFUTf7y"
 export PATH="$HOME/.local/bin:$PATH"
 export BROWSER=wslview
+export TERMCMD="wezterm"
 
 export ahk="/mnt/c/Program Files/AutoHotkey/config.ahk"
 export zsh=~/.zshrc

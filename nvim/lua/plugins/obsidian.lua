@@ -20,6 +20,13 @@ return {
       enabled = false,
     },
     
+
+   templates = {
+      folder = "templates",
+      date_format = "%Y-%m-%d-%a",
+      time_format = "%H:%M",
+   },
+
     -- ID всегда timestamp (для стабильности ссылок)
     note_id_func = function(title)
       return tostring(os.time())

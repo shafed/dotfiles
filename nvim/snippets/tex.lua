@@ -183,6 +183,13 @@ s({trig = "mm", name = "Inline display", snippetType = "autosnippet"},
     }
 ),
 
+s({trig = "mk", name = "Inline display", snippetType = "autosnippet"},
+    {
+		f(function(_,snip) return snip.captures[1] end),
+        t("\\[ "), d(1,get_visual), t(" \\]")
+    }
+),
+
 s({ trig = "dm", name = "Display math", snippetType = "autosnippet" }, {
     t({ "\\[", "" }),
     d(1, get_visual),

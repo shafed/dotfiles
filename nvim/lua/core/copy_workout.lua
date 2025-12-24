@@ -1,7 +1,11 @@
 local M = {}
 
+--- Копирует данные из последней markdown-таблицы в буфер обмена
+--- Формат вывода (3 строки):
+--- ex1              ex2
+--- Reps  Weight     Reps  Weight
+--- reps  wt  kg     reps  wt  kg
 function M.copy_table_data()
-  -- Получаем содержимое текущего буфера
   local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
   
   -- Находим все таблицы
@@ -22,7 +26,6 @@ function M.copy_table_data()
     end
   end
   
-  -- Добавляем последнюю таблицу, если она есть
   if #current_table > 0 then
     table.insert(tables, current_table)
   end
@@ -32,21 +35,21 @@ function M.copy_table_data()
     return
   end
   
-  -- Берем последнюю таблицу
   local last_table = tables[#tables]
   
-  -- Пропускаем заголовок и разделитель (первые 2 строки)
-  local result = {}
+  local exercises = {}
+  local data = {}
   
   for i = 3, #last_table do
     local line = last_table[i]
-    -- Разбиваем строку по |
     local cells = {}
     for cell in line:gmatch("[^|]+") do
       table.insert(cells, vim.trim(cell))
     end
     
+    -- cells[1] = №, cells[2] = Exercise, cells[3] = Reps, cells[4] = Weight
     if #cells >= 4 then
+      local exercise = cells[2]
       local reps = cells[3]
       local weight = cells[4]
       
@@ -57,23 +60,47 @@ function M.copy_table_data()
         processed_reps = match
       end
       
-      table.insert(result, processed_reps)
-      table.insert(result, weight)
-      table.insert(result, "kg")
+      table.insert(exercises, exercise)
+      table.insert(data, { processed_reps, weight, "kg" })
     end
   end
   
-  if #result > 0 then
-    local output = table.concat(result, "\t")
+  if #exercises > 0 then
+    -- Строка 1: названия упражнений
+    local line1_parts = {}
+    for i, ex in ipairs(exercises) do
+      table.insert(line1_parts, ex)
+      if i < #exercises then
+        table.insert(line1_parts, "")
+        table.insert(line1_parts, "")
+      end
+    end
     
-    -- Копируем в системный буфер обмена
+    -- Строка 2: заголовки Reps/Weight
+    local line2_parts = {}
+    for i = 1, #exercises do
+      table.insert(line2_parts, "Reps")
+      table.insert(line2_parts, "Weight")
+      if i < #exercises then
+        table.insert(line2_parts, "")
+      end
+    end
+    
+    -- Строка 3: данные reps/weight/kg
+    local line3_parts = {}
+    for _, d in ipairs(data) do
+      table.insert(line3_parts, d[1])
+      table.insert(line3_parts, d[2])
+      table.insert(line3_parts, d[3])
+    end
+    
+    local line1 = table.concat(line1_parts, "\t")
+    local line2 = table.concat(line2_parts, "\t")
+    local line3 = table.concat(line3_parts, "\t")
+    local output = line1 .. "\n" .. line2 .. "\n" .. line3
+    
     vim.fn.setreg("+", output)
-    vim.notify("Скопировано в буфер обмена!", vim.log.levels.INFO)
-    
-    -- Альтернативный способ через системную команду (более надежный)
-    -- vim.fn.system("echo '" .. output .. "' | pbcopy")  -- для macOS
-    -- vim.fn.system("echo '" .. output .. "' | xclip -selection clipboard")  -- для Linux
-    -- vim.fn.system("echo '" .. output .. "' | clip.exe")  -- для WSL
+    vim.notify("Скопировано: " .. #exercises .. " упражнений", vim.log.levels.INFO)
   else
     vim.notify("Нет данных для копирования!", vim.log.levels.WARN)
   end

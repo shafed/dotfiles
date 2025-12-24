@@ -1,5 +1,4 @@
 (defcfg
-  linux-dev /dev/input/by-id/usb-Razer_Razer_Huntsman_V2_Tenkeyless-event-kbd
   process-unmapped-keys yes
   concurrent-tap-hold yes
   danger-enable-cmd yes

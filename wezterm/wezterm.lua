@@ -1,9 +1,17 @@
 local wezterm = require 'wezterm'
+local prev_layout = "us"
 
 wezterm.on('window-focus-changed', function(window, pane)
-    if os.getenv('XDG_SESSION_TYPE') == 'x11' then
-        -- не ломает опции и порядок раскладок
-        wezterm.run_child_process({ 'xkb-switch', '-s', 'us' })
+    if window:is_focused() then
+        -- Сохраняем текущую раскладку (например, 'ru')
+        local success, stdout, _ = wezterm.run_child_process({"xkb-switch", "-p"})
+        if success then prev_layout = stdout:gsub("%s+", "") end
+        
+        -- Переключаем на английский (us)
+        wezterm.run_child_process({"xkb-switch", "-s", "us"})
+    else
+        -- Возвращаем предыдущую при потере фокуса
+        wezterm.run_child_process({"xkb-switch", "-s", prev_layout})
     end
 end)
 

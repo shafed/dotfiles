@@ -104,7 +104,7 @@ vim.keymap.set('i', '<C-t>', function()
   vim.cmd('stopinsert')
   run_file_in_terminal()
 end, { desc = "Run file in terminal (Python/C++)" })
-------------
+-- ====
 
 -- Перемещение строк
 map('n', '<M-j>', ':m .+1<CR>==', { desc = "Move line down" })
@@ -193,4 +193,199 @@ end, {})
 -- Назначаем горячую клавишу (например, <leader>cw)
 vim.keymap.set('n', '<leader>cw', ':CopyWorkoutData<CR>', { desc = 'Copy workout data from table' })
 
-vim.keymap.set('v', 'p', '"_dP')  -- Не сохранять выделение в регистр
+vim.keymap.set('v', 'p', '"_dP')  -- Не сохранять выделенный текст в регистр
+
+
+
+-- =====
+--  Функции для обрамления жирным шрифтом md (** **), автор @linkarzu
+-- =====
+
+vim.keymap.set("v", "<leader>mb", function()
+  -- Get the selected text range
+  local start_row, start_col = unpack(vim.fn.getpos("'<"), 2, 3)
+  local end_row, end_col = unpack(vim.fn.getpos("'>"), 2, 3)
+  -- Get the selected lines
+  local lines = vim.api.nvim_buf_get_lines(0, start_row - 1, end_row, false)
+  local selected_text = table.concat(lines, "\n"):sub(start_col, #lines == 1 and end_col or -1)
+  if selected_text:match("^%*%*.*%*%*$") then
+    vim.notify("Text already bold", vim.log.levels.INFO)
+  else
+    vim.cmd("normal 2gsa*")
+  end
+end, { desc = "[P]BOLD current selection" })
+
+-- -- Multiline unbold attempt
+-- -- In normal mode, bold the current word under the cursor
+-- -- If already bold, it will unbold the word under the cursor
+-- -- If you're in a multiline bold, it will unbold it only if you're on the
+-- -- first line
+vim.keymap.set("n", "<leader>mb", function()
+  local cursor_pos = vim.api.nvim_win_get_cursor(0)
+  local current_buffer = vim.api.nvim_get_current_buf()
+  local start_row = cursor_pos[1] - 1
+  local col = cursor_pos[2]
+  -- Get the current line
+  local line = vim.api.nvim_buf_get_lines(current_buffer, start_row, start_row + 1, false)[1]
+  -- Check if the cursor is on an asterisk
+  if line:sub(col + 1, col + 1):match("%*") then
+    vim.notify("Cursor is on an asterisk, run inside the bold text", vim.log.levels.WARN)
+    return
+  end
+  -- Search for '**' to the left of the cursor position
+  local left_text = line:sub(1, col)
+  local bold_start = left_text:reverse():find("%*%*")
+  if bold_start then
+    bold_start = col - bold_start
+  end
+  -- Search for '**' to the right of the cursor position and in following lines
+  local right_text = line:sub(col + 1)
+  local bold_end = right_text:find("%*%*")
+  local end_row = start_row
+  while not bold_end and end_row < vim.api.nvim_buf_line_count(current_buffer) - 1 do
+    end_row = end_row + 1
+    local next_line = vim.api.nvim_buf_get_lines(current_buffer, end_row, end_row + 1, false)[1]
+    if next_line == "" then
+      break
+    end
+    right_text = right_text .. "\n" .. next_line
+    bold_end = right_text:find("%*%*")
+  end
+  if bold_end then
+    bold_end = col + bold_end
+  end
+  -- Remove '**' markers if found, otherwise bold the word
+  if bold_start and bold_end then
+    -- Extract lines
+    local text_lines = vim.api.nvim_buf_get_lines(current_buffer, start_row, end_row + 1, false)
+    local text = table.concat(text_lines, "\n")
+    -- Calculate positions to correctly remove '**'
+    -- vim.notify("bold_start: " .. bold_start .. ", bold_end: " .. bold_end)
+    local new_text = text:sub(1, bold_start - 1) .. text:sub(bold_start + 2, bold_end - 1) .. text:sub(bold_end + 2)
+    local new_lines = vim.split(new_text, "\n")
+    -- Set new lines in buffer
+    vim.api.nvim_buf_set_lines(current_buffer, start_row, end_row + 1, false, new_lines)
+    -- vim.notify("Unbolded text", vim.log.levels.INFO)
+  else
+    -- Bold the word at the cursor position if no bold markers are found
+    local before = line:sub(1, col)
+    local after = line:sub(col + 1)
+    local inside_surround = before:match("%*%*[^%*]*$") and after:match("^[^%*]*%*%*")
+    if inside_surround then
+      vim.cmd("normal gsd*.")
+    else
+      vim.cmd("normal viw")
+      vim.cmd("normal 2gsa*")
+    end
+    vim.notify("Bolded current word", vim.log.levels.INFO)
+  end
+end, { desc = "[P]BOLD toggle bold markers" })
+
+
+-- =====
+--  Функции для обрамления курсивом md (* *)
+-- =====
+vim.keymap.set("v", "<leader>mi", function()
+  -- Get the selected text range
+  local start_row, start_col = unpack(vim.fn.getpos("'<"), 2, 3)
+  local end_row, end_col = unpack(vim.fn.getpos("'>"), 2, 3)
+  -- Get the selected lines
+  local lines = vim.api.nvim_buf_get_lines(0, start_row - 1, end_row, false)
+  local selected_text = table.concat(lines, "\n"):sub(start_col, #lines == 1 and end_col or -1)
+  -- Проверяем курсив (*text*) но не bold (**text**)
+  if selected_text:match("^%*[^%*].*[^%*]%*$") or selected_text:match("^%*[^%*]%*$") then
+    vim.notify("Text already italic", vim.log.levels.INFO)
+  else
+    vim.cmd("normal gsa*")
+  end
+end, { desc = "[P]ITALIC current selection" })
+
+-- Normal mode - toggle italic for word under cursor
+vim.keymap.set("n", "<leader>mi", function()
+  local cursor_pos = vim.api.nvim_win_get_cursor(0)
+  local current_buffer = vim.api.nvim_get_current_buf()
+  local start_row = cursor_pos[1] - 1
+  local col = cursor_pos[2]
+  -- Get the current line
+  local line = vim.api.nvim_buf_get_lines(current_buffer, start_row, start_row + 1, false)[1]
+  -- Check if the cursor is on an asterisk
+  if line:sub(col + 1, col + 1):match("%*") then
+    vim.notify("Cursor is on an asterisk, run inside the italic text", vim.log.levels.WARN)
+    return
+  end
+
+  -- Helper: find single * (not part of **)
+  local function find_single_asterisk_left(text)
+    for i = #text, 1, -1 do
+      if text:sub(i, i) == "*" then
+        local prev = text:sub(i - 1, i - 1)
+        local next = text:sub(i + 1, i + 1)
+        if prev ~= "*" and next ~= "*" then
+          return #text - i + 1, i
+        end
+      end
+    end
+    return nil, nil
+  end
+
+  local function find_single_asterisk_right(text)
+    local i = 1
+    while i <= #text do
+      if text:sub(i, i) == "*" then
+        local prev = text:sub(i - 1, i - 1)
+        local next = text:sub(i + 1, i + 1)
+        if prev ~= "*" and next ~= "*" then
+          return i
+        end
+      end
+      i = i + 1
+    end
+    return nil
+  end
+
+  -- Search for single '*' to the left of the cursor position
+  local left_text = line:sub(1, col)
+  local _, italic_start = find_single_asterisk_left(left_text)
+
+  -- Search for single '*' to the right of the cursor position
+  local right_text = line:sub(col + 1)
+  local italic_end_offset = find_single_asterisk_right(right_text)
+  local end_row = start_row
+
+  while not italic_end_offset and end_row < vim.api.nvim_buf_line_count(current_buffer) - 1 do
+    end_row = end_row + 1
+    local next_line = vim.api.nvim_buf_get_lines(current_buffer, end_row, end_row + 1, false)[1]
+    if next_line == "" then
+      break
+    end
+    right_text = right_text .. "\n" .. next_line
+    italic_end_offset = find_single_asterisk_right(right_text)
+  end
+
+  local italic_end = italic_end_offset and (col + italic_end_offset) or nil
+
+  -- Remove '*' markers if found, otherwise italic the word
+  if italic_start and italic_end then
+    -- Extract lines
+    local text_lines = vim.api.nvim_buf_get_lines(current_buffer, start_row, end_row + 1, false)
+    local text = table.concat(text_lines, "\n")
+    -- Remove single '*' (offset by 1 instead of 2)
+    local new_text = text:sub(1, italic_start - 1) .. text:sub(italic_start + 1, italic_end - 1) .. text:sub(italic_end + 1)
+    local new_lines = vim.split(new_text, "\n")
+    -- Set new lines in buffer
+    vim.api.nvim_buf_set_lines(current_buffer, start_row, end_row + 1, false, new_lines)
+  else
+    -- Italic the word at the cursor position if no italic markers are found
+    local before = line:sub(1, col)
+    local after = line:sub(col + 1)
+    -- Check if inside single * surround (not **)
+    local inside_surround = before:match("%*[^%*]*$") and after:match("^[^%*]*%*")
+    if inside_surround then
+      vim.cmd("normal gsd*")
+    else
+      vim.cmd("normal viw")
+      vim.cmd("normal gsa*")
+    end
+    vim.notify("Italicized current word", vim.log.levels.INFO)
+  end
+end, { desc = "[P]ITALIC toggle italic markers" })

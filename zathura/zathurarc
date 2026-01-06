@@ -42,7 +42,7 @@ map <S-Space> navigate previous
 # Масштабирование
 map ч adjust_window width
 map ы adjust_window best-fit
-map в recolor
+map ш recolor
 
 # Поиск
 map т search next

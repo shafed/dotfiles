@@ -38,7 +38,7 @@
 ;;Apps
 (defalias
   aweztr (cmd jumpapp wezterm)
-  azen (tap-hold-press $subl-time $subl-time (cmd jumpapp zen) (layer-toggle browser))
+  azen (tap-hold-press $subl-time $subl-time (cmd jumpapp zen-browser) (layer-toggle browser))
   appl (cmd jumpapp perplexity-desktop)
   atg (cmd telegram-desktop)
   awhat (cmd zen-browser --new-window https://web.whatsapp.com)

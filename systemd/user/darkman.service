@@ -1,0 +1,9 @@
+[Unit]
+Description=Darkman service
+
+[Service]
+ExecStart=/usr/bin/darkman run --ready-fd %i
+Restart=on-failure
+
+[Install]
+WantedBy=default.target

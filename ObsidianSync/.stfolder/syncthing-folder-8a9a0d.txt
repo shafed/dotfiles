@@ -1,5 +1,0 @@
-# This directory is a Syncthing folder marker.
-# Do not delete.
-
-folderID: ObsidianSync
-created: 2025-11-04T08:34:18+03:00

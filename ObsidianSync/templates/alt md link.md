@@ -1,1 +1,0 @@
-[[<% tp.file.selection() %>|<% await tp.file.cursor()%>]]

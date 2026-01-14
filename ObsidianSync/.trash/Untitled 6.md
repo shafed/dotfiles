@@ -1,6 +1,0 @@
----
-tags:
-  - note/basic
-aliases:
----
-

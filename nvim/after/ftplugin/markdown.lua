@@ -1,3 +1,6 @@
+-- Treesitter for md
+vim.treesitter.start()
+
 -- Функция для установки цветов в стиле Gruvbox Material
 local function set_markdown_highlights()
     -- ЗАГОЛОВКИ (H1 - H6)

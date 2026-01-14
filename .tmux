@@ -1,1 +1,0 @@
-/home/shafed/dotfiles/tmux

@@ -37,7 +37,7 @@
 
 ;;Apps
 (defalias
-  aweztr (cmd jumpapp wezterm)
+  aweztr (cmd jumpapp kitty)
   azen (tap-hold-press $subl-time $subl-time (cmd jumpapp zen-browser) (layer-toggle browser))
   appl (cmd jumpapp perplexity-desktop)
   atg (cmd telegram-desktop)
@@ -77,7 +77,7 @@
   ;;Sublayers
   mlsubl (tap-hold-press $subl-time $subl-time bspc (layer-while-held apps))
   mrsubl (tap-hold-press $subl-time $subl-time ret (layer-while-held apps))
-  mweztr (tap-hold-press $subl-time $subl-time @aweztr (layer-while-held wezterm))
+  mweztr (tap-hold-press $subl-time $subl-time @aweztr (layer-while-held kitty))
   mshift (tap-hold-press $subl-time $subl-time lsft (layer-while-held shift))
 
   sw (cmd xkb-switch -n)
@@ -137,7 +137,7 @@
   lctl  lmet lalt           spc              ralt     rmet      rctl  lft  down  rght
 )
 
-(deflayer wezterm
+(deflayer kitty
   esc        f1   f2   f3   f4    f5   f6   f7   f8    f9   f10  f11  f12
   grv   1    2    3    4    5     6    7    8    9    0    -    =    bspc
   tab   q    w    e    r    t     y    u    i    o    p    [    ]    \

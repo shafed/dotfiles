@@ -53,5 +53,8 @@ return {
     hide_tab_bar_if_only_one_tab = true,
     window_close_confirmation = "NeverPrompt",
     window_decorations = "RESIZE",
+    front_end = "WebGpu",
+    max_fps = 120,
+    animation_fps = 120, 
     max_fps = 120
 }

@@ -104,7 +104,9 @@ image_bound      = [ 10000, 10000 ]
 suppress_preload = false
 
 [plugin]
-
+prepend_fetchers = [
+    { id = "zoxide", name = "*", run = "zoxide" },
+]
 prepend_previewers = [
     { url = "*.csv", run = "rich-preview"}, # for csv files
     { url = "*.md", run = "rich-preview" }, # for markdown (.md) files

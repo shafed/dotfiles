@@ -39,6 +39,7 @@
 (defalias
   aterm (cmd jumpapp kitty)
   azen (tap-hold-press $subl-time $subl-time (cmd jumpapp zen-browser) (layer-toggle browser))
+  ampv (cmd jumpapp mpv)
   appl (cmd jumpapp perplexity-desktop)
   atg (cmd telegram-desktop)
   awhat (cmd zen-browser --new-window https://web.whatsapp.com)
@@ -53,13 +54,14 @@
 
 
 (defalias
+  mmain (macro @aterm 300 C-s $tmux-delay C-q)
   maltt (tap-hold $tap-time $hold-time b (macro @aterm 100 C-s $tmux-delay spc)) ;; tmux alternate session
-  mobsi (macro @aterm 150 C-s $tmux-delay C-t)
-  mday1 (macro @slog 100 @aterm 150 C-s $tmux-delay C-q)
-  mday2 (macro @slog 100 @aterm 150 C-s $tmux-delay C-w)
-  mday3 (macro @aterm 150 C-s $tmux-delay C-e)
-  mtodo (macro @aterm 150 C-s $tmux-delay C-d)
-  mcode (macro @aterm 150 C-s $tmux-delay C-c)
+  mobsi (macro @aterm 300 C-s $tmux-delay C-t)
+  mday1 (macro @slog 100 @aterm 300 C-s $tmux-delay C-q)
+  mday2 (macro @slog 100 @aterm 300 C-s $tmux-delay C-w)
+  mday3 (macro @aterm 300 C-s $tmux-delay C-e)
+  mtodo (macro @aterm 300 C-s $tmux-delay C-d)
+  mcode (macro @aterm 300 C-s $tmux-delay C-c)
   mnavi  (tap-hold $tap-time $hold-time esc (layer-toggle navi))
   mescc (tap-hold $tap-time $hold-time esc lctl)
   mapps  (tap-hold-press $tap-time $hold-time ret (layer-toggle apps))
@@ -77,13 +79,13 @@
   ;;Sublayers
   mlsubl (tap-hold-press $subl-time $subl-time bspc (layer-while-held apps))
   mrsubl (tap-hold-press $subl-time $subl-time ret (layer-while-held apps))
-  mterm (tap-hold-press $subl-time $subl-time @aterm (layer-while-held kitty))
+  ;;mterm (tap-hold-press $subl-time $subl-time @aterm (layer-while-held kitty))
   mshift (tap-hold-press $subl-time $subl-time lsft (layer-while-held shift))
 
-  sw (cmd xkb-switch -n)
+  sw (cmd hyprctl switchxkblayout kanata next)
   mmtab (tap-hold $tap-time 200 z M-tab)
   mmgrv (tap-hold $tap-time 200 x M-grv)
-  msw (tap-hold $tap-time 200 @sw M-tab)
+  msw (tap-hold $tap-time 200 tab @sw)
   mcopy (tap-hold $tap-time $hold-time c C-c)
   mpaste (tap-hold $tap-time $hold-time v C-v)
   mwrpd (tap-hold $tap-time $hold-time . (cmd warpd --hint)) ;;like mousless
@@ -103,7 +105,7 @@
 (deflayer main
   esc        f1   f2   f3   f4    f5   f6   f7   f8    f9   f10  f11  f12
   grv   1    2    3    4    5     6    7    8    9    0    -    =    bspc
-  tab   q    w    e    r    t     y    u    i    o    p    [    ]    \
+  @msw   q    w    e    r    t     y    u    i    o    p    [    ]    \
   @mnavi @mlctl  s    @mlalt    @mlmet    g     h    @mrmet    @mralt    l    @mrctl    @mrmet2         @mapps
   lsft  @mmtab    @mmgrv    @mcopy @mpaste  @maltt     n    m    ,    @mwrpd    /         rsft  up
   lctl  lmet @mlsubl           spc              @mrsubl     rmet      rctl  lft  down  rght
@@ -112,8 +114,8 @@
 (deflayer apps
   esc        f1   f2   f3   f4    f5   f6   f7   f8    f9   f10  f11  f12
   grv   @mday1   @mday2    @mday3    4    5     6    7    8    9    0    -    =    bspc
-  tab   @cls    w    e    r    t     @ayt    u    i    @mobsi    p    [    ]    \
-  caps  @mterm    @azen    @atg    f    @atick     h    j    k    l    ;    '         ret
+  tab   @cls    @mtodo    @ampv    r    t     @ayt    u    i    @mobsi    p    [    ]    \
+  caps  @mmain    @azen    @atg    f    @atick     h    j    k    l    ;    '         ret
   @mshift  @apdf    x    @mcode    v    @avpn     n    m    ,    .    /         @mshift  up
   lctl  lmet lalt           @arofi              ralt     rmet      rctl  lft  down  rght
 )
@@ -157,6 +159,6 @@
 
 (defchordsv2
 (a s d f) (cmd flameshot gui --clipboard) $chord-time first-release()
-(a s) (cmd xkb-switch -n) $chord-time first-release()
-(lalt lsft) (cmd xkb-switch -n) $chord-time first-release()
+;; (a s) (cmd xkb-switch -n) $chord-time first-release()
+(lalt lsft) @sw $chord-time first-release()
 )

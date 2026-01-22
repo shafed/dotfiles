@@ -2,7 +2,7 @@
 Description=Darkman service
 
 [Service]
-ExecStart=/usr/bin/darkman run --ready-fd %i
+ExecStart=/usr/bin/darkman run
 Restart=on-failure
 
 [Install]

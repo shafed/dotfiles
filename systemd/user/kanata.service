@@ -5,6 +5,7 @@ Wants=graphical-session.target
 
 [Service]
 Type=simple
+Environment="PATH=/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:%h/.local/bin"
 ExecStart=/usr/bin/kanata_cmd_allowed --cfg %h/.config/kanata/config.kbd
 Restart=on-failure
 

@@ -42,13 +42,12 @@
   ampv (cmd jumpapp mpv)
   appl (cmd jumpapp perplexity-desktop)
   atg (cmd telegram-desktop)
-  awhat (cmd zen-browser --new-window https://web.whatsapp.com)
   atick (cmd jumpapp ticktick)
   apdf (cmd jumpapp zathura)
-  ;avpn (cmd zsh -lc "~/.local/bin/switchApp.sh hiddify")
   avpn (cmd jumpapp v2rayn)
   ayt (tap-dance 200 (@sytwt @syth))
-  arofi (cmd rofi -show combi -combi-modes "window,drun" -show-icons -window-match-fields class)
+  ;;arofi (cmd rofi -show combi -combi-modes "window,drun" -show-icons -window-match-fields class)
+  amenu (cmd hyprlauncher)
   cls M-q
 )
 
@@ -117,7 +116,7 @@
   tab   @cls    @mtodo    @ampv    r    t     @ayt    u    i    @mobsi    p    [    ]    \
   caps  @mmain    @azen    @atg    f    @atick     h    j    k    l    ;    '         ret
   @mshift  @apdf    x    @mcode    v    @avpn     n    m    ,    .    /         @mshift  up
-  lctl  lmet lalt           @arofi              ralt     rmet      rctl  lft  down  rght
+  lctl  lmet lalt           @amenu              ralt     rmet      rctl  lft  down  rght
 )
 
 (deflayer shift
@@ -158,7 +157,8 @@
 )
 
 (defchordsv2
-(a s d f) (cmd flameshot gui --clipboard) $chord-time first-release()
+;;(a s d f) (cmd flameshot gui --clipboard) $chord-time first-release()
+(a s d f) (cmd hyprshot -m region) $chord-time first-release()
 ;; (a s) (cmd xkb-switch -n) $chord-time first-release()
 (lalt lsft) @sw $chord-time first-release()
 )

@@ -1,13 +1,24 @@
 [Unit]
 Description=Kanata keyboard remapper
+Documentation=https://github.com/jtroo/kanata
+
+# Ждём, пока Hyprland полностью запустится
 After=graphical-session.target
-Wants=graphical-session.target
+After=hyprland-session.target
+PartOf=graphical-session.target
 
 [Service]
 Type=simple
-Environment="PATH=/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:%h/.local/bin"
+Environment=DISPLAY=:0
+
+# Путь к конфигу - измени под себя
 ExecStart=/usr/bin/kanata_cmd_allowed --cfg %h/.config/kanata/config.kbd
+
 Restart=on-failure
+RestartSec=3
+
+# Небольшая задержка для гарантии инициализации Hyprland
+ExecStartPre=/usr/bin/sleep 2
 
 [Install]
 WantedBy=graphical-session.target

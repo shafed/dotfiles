@@ -29,8 +29,8 @@ return {
       },
     })
 
-    vim.keymap.set("n", "<leader>ff", "<cmd>Telescope find_files<CR>", { desc = "Поиск файла" })
-    vim.keymap.set("n", "<leader>fg", "<cmd>Telescope live_grep<CR>", { desc = "Поиск по содержимому" })
+    vim.keymap.set("n", "<leader><space>", "<cmd>Telescope find_files<CR>", { desc = "Поиск файла" })
+    vim.keymap.set("n", "<leader>/", "<cmd>Telescope live_grep<CR>", { desc = "Поиск по содержимому" })
     vim.keymap.set("n", "<leader>fb", "<cmd>Telescope buffers<CR>", { desc = "Открытые буферы" })
     vim.keymap.set("n", "<leader>аа", "<cmd>Telescope find_files<CR>", { desc = "Поиск файла" })
     vim.keymap.set("n", "<leader>ап", "<cmd>Telescope live_grep<CR>", { desc = "Поиск по содержимому" })

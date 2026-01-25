@@ -168,7 +168,6 @@ export PATH="$HOME/.local/bin:$PATH"
 export BROWSER=wslview
 export TERMCMD="wezterm"
 
-export ahk="/mnt/c/Program Files/AutoHotkey/config.ahk"
 export zsh=~/.zshrc
 export glaze="$winuser/.glzr/glazewm/config.yaml"
 export dots=~/dotfiles

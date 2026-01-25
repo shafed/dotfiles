@@ -71,7 +71,6 @@
   mrmet2 (tap-hold $tap-time $hold-time ' rmet)
   mlctl (tap-hold $tap-time $hold-time a lctl)
   mrctl (tap-hold $tap-time $hold-time ; rctl)
-  mlsft (tap-hold $tap-time $hold-time s lsft)
   mrsft (tap-hold $tap-time $hold-time l rsft)
 
   ;;Sublayers
@@ -79,6 +78,7 @@
   mrsubl (tap-hold-press $subl-time $subl-time ret (layer-while-held apps))
   ;;mterm (tap-hold-press $subl-time $subl-time @aterm (layer-while-held kitty))
 
+  sshot (cmd hyprshot -m region --clipboard-only)
   sw (cmd hyprctl switchxkblayout kanata next)
   mmtab (tap-hold $tap-time 200 z M-tab)
   mmgrv (tap-hold $tap-time 200 x M-grv)
@@ -139,14 +139,14 @@
   esc        f1   f2   f3   f4    f5   f6   f7   f8    f9   f10  f11  f12
   grv   1    2    3    4    5     6    7    8    9    0    -    =    bspc
   tab   q    w    e    r    t     y    u    i    o    p    [    ]    \
-  @mescc @mlctl  @mlsft    @mlalt    f    g     lft    down    up    rght    ;    '         ret
+  @mescc @mlctl  @sshot    @mlalt    f    g     lft    down    up    rght    ;    '         ret
   lsft  z    x    c    v  b     n    m    ,    .    /         rsft  up
   lctl  lmet lalt           spc              ralt     rmet      rctl  lft  down  rght
 )
 
 (defchordsv2
 ;;(a s d f) (cmd flameshot gui --clipboard) $chord-time first-release()
-(a s d f) (cmd hyprshot -m region --clipboard-only) $chord-time first-release()
+(a s d f) @sshot $chord-time first-release()
 ;; (a s) (cmd xkb-switch -n) $chord-time first-release()
 (lalt lsft) @sw $chord-time first-release()
 )

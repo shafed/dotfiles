@@ -67,7 +67,7 @@ return {
       pattern = "*.md",
       callback = function()
         if package.loaded["obsidian"] then
-          vim.keymap.set('n', '<leader>ff', '<cmd>Obsidian search<CR>', {buffer = true})
+          vim.keymap.set('n', '<leader><space>', '<cmd>Obsidian search<CR>', {buffer = true})
           vim.keymap.set('n', '<leader>аа', '<cmd>Obsidian search<CR>', {buffer = true})
         end
       end,

@@ -26,7 +26,7 @@ map({'n','v','o'}, 'Р', '^', { desc = "First non-blank" })
 map({'n','v','o'}, 'Д', '$', { desc = "End of line" })
 
 -- Поиск
-map('n', '<leader><space>', ':nohlsearch<CR>', { desc = "Clear search highlight" })
+map('n', '<esc>', ':nohlsearch<CR>', { desc = "Clear search highlight" })
 
 -- Запуск .py и .cpp файлов
 local function run_file()

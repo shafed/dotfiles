@@ -1,11 +1,15 @@
 (defcfg
-  process-unmapped-keys yes
-  concurrent-tap-hold yes
-  danger-enable-cmd yes
+process-unmapped-keys yes 
+danger-enable-cmd yes
+concurrent-tap-hold yes
 )
 
-;;Variables
+(defvirtualkeys
+  to-base (layer-switch base)
+)
+
 (defvar
+  tot 220  ;; tot=time out tap
   tap-time 200
   hold-time 200
   chord-time 60
@@ -13,140 +17,108 @@
   tmux-delay 40
 )
 
-
-;;Sites
-(defalias 
-  sytwt (cmd zen-browser --new-window https://www.youtube.com/playlist?list=WL)
-  syth (cmd zen-browser --new-window https://www.youtube.com/feed/history)
-  sgpt (cmd zen-browser https://chatgpt.com)
-  sppl (cmd zen-browser https://www.perplexity.ai)
-  sclde (cmd zen-browser https://claude.ai/new)
-  slmrn (cmd zen-browser https://lmarena.ai)
-  slog (cmd zen-browser https://1drv.ms/x/c/a96ef60ed3018334/IQA0gwHTDvZuIICpcwYAAAAAASGSPWqrtx_uoBVFXG5CASQ?e=MjG94J)
-  smirea (cmd zen-browser https://online-edu.mirea.ru/my)
-  smail (cmd zen-browser https://mail.google.com/mail/u/0/#inbox)
-
-  ;;MIREA
-  slin (cmd zen-browser https://online-edu.mirea.ru/course/view.php?id=13878)
-  smath (cmd zen-browser https://online-edu.mirea.ru/course/view.php?id=13880)
-  sdiskr (cmd zen-browser https://online-edu.mirea.ru/course/view.php?id=13383)
-  sph (cmd zen-browser https://online-edu.mirea.ru/course/view.php?id=16159)
-  shist (cmd zen-browser https://online-edu.mirea.ru/course/view.php?id=13488)
-  sit (cmd zen-browser https://online-edu.mirea.ru/course/view.php?id=14297)
+(deftemplate homerowmod (timeouttap timeouthold keytap keyhold)
+	(tap-hold $timeouttap $timeouthold 
+		(multi $keytap  @.tp) 
+		$keyhold
+	)
 )
 
-;;Apps
+;; homerowmodfiltered is a way to force problematic bigrams to become letters not mods
+(deftemplate homerowmodfiltered (timeouttap timeouthold keytap keyhold typinglist)
+  (tap-hold-release-keys $timeouttap $timeouthold
+    (multi $keytap  @.tp)
+    $keyhold
+    $typinglist ;; Activates $keytap early if a key within $typinglist is pressed before hold activates.
+  )
+)
+
 (defalias
+  ;; call @.tp whenever you want to enter fast typing-layer
+  .tp (switch
+        ;;(lsft rsft) XX break ;; optional skip typing-layer activation for upper case keys might solves some FJ problems
+        ()  (multi
+              (layer-switch typing)
+              (on-idle 55 tap-vkey to-base) ;; timeouts from 30 to 100 are wide spread
+            ) break
+      )
+  .spc-typing   (multi (layer-switch base) spc) ;; expilcitly leave typing-layer when hitting `space` - this allows experimenting with higher idle timeouts
   aterm (cmd jumpapp kitty)
-  azen (tap-hold-press $subl-time $subl-time (cmd jumpapp zen-browser) (layer-toggle browser))
-  ampv (cmd jumpapp mpv)
-  atg (cmd telegram-desktop)
-  atick (cmd jumpapp ticktick)
-  apdf (cmd jumpapp zathura)
-  avpn (cmd jumpapp v2rayn)
-  ayt (tap-dance 200 (@sytwt @syth))
-  ;;arofi (cmd rofi -show combi -combi-modes "window,drun" -show-icons -window-match-fields class)
-  amenu (cmd hyprlauncher)
-  cls (cmd hyprctl dispatch killactive)
-)
-
-
-(defalias
-  mmain (macro @aterm 300 C-s $tmux-delay C-q)
-  maltt (tap-hold $tap-time $hold-time b (macro @aterm 100 C-s $tmux-delay spc)) ;; tmux alternate session
-  mobsi (macro @aterm 300 C-s $tmux-delay C-t)
-  mday1 (macro @slog 100 @aterm 300 C-s $tmux-delay C-q)
-  mday2 (macro @slog 100 @aterm 300 C-s $tmux-delay C-w)
-  mday3 (macro @aterm 300 C-s $tmux-delay C-e)
-  mtodo (macro @aterm 300 C-s $tmux-delay C-d)
-  mcode (macro @aterm 300 C-s $tmux-delay C-c)
-  mnavi  (tap-hold $tap-time $hold-time esc (layer-toggle navi))
-  mescc (tap-hold $tap-time $hold-time esc lctl)
-  mapps  (tap-hold-press $tap-time $hold-time ret (layer-toggle apps))
-
-  mlmet (tap-hold $tap-time $hold-time f lmet)
-  mrmet (tap-hold $tap-time $hold-time j rmet)
-  mlalt (tap-hold $tap-time $hold-time d lalt)
-  mralt (tap-hold $tap-time $hold-time k ralt)
-  mrmet2 (tap-hold $tap-time $hold-time ' rmet)
-  mlctl (tap-hold $tap-time $hold-time a lctl)
-  mrctl (tap-hold $tap-time $hold-time ; rctl)
-  mrsft (tap-hold $tap-time $hold-time l rsft)
-
-  ;;Sublayers
-  mlsubl (tap-hold-press $subl-time $subl-time bspc (layer-while-held apps))
-  mrsubl (tap-hold-press $subl-time $subl-time ret (layer-while-held apps))
-  ;;mterm (tap-hold-press $subl-time $subl-time @aterm (layer-while-held kitty))
-
+  azen (cmd jumpapp zen-browser)
   sshot (cmd hyprshot -m region --clipboard-only)
   sw (cmd hyprctl switchxkblayout kanata next)
-  mmtab (tap-hold $tap-time 200 z M-tab)
-  mmgrv (tap-hold $tap-time 200 x M-grv)
-  msw (tap-hold $tap-time 200 tab @sw)
-  mcopy (tap-hold $tap-time $hold-time c C-c)
   mpaste (tap-hold $tap-time $hold-time v C-v)
-  mwrpd (tap-hold $tap-time $hold-time . (cmd warpd --hint)) ;;like mousless
-
-
+  mcopy (tap-hold $tap-time $hold-time c C-c)
 )
 
-(defsrc
-  esc        f1   f2   f3   f4    f5   f6   f7   f8    f9   f10  f11  f12
-  grv   1    2    3    4    5     6    7    8    9    0    -    =    bspc
-  tab   q    w    e    r    t     y    u    i    o    p    [    ]    \
-  caps  a    s    d    f    g     h    j    k    l    ;    '         ret
-  lsft  z    x    c    v    b     n    m    ,    .    /         rsft  up
-  lctl  lmet lalt           spc              ralt     rmet      rctl  lft  down  rght
+(defsrc )
+
+(deflayermap (base)
+ ;; define home row mods (they act as typing-layer triggers, too )
+ f (t! homerowmod $tot 160 f lsft)
+ j (t! homerowmod $tot 160 j rsft)
+ d (t! homerowmod $tot 160 d lctl)
+ k (t! homerowmod $tot 160 k rctl)
+ s (t! homerowmod $tot 160 s lalt)
+ l (t! homerowmod $tot 160 l ralt)
+ a (t! homerowmod $tot 160 a lmet)
+ ; (t! homerowmod $tot 160 ; met)
+
+ ;; define other
+ ;;lalt (tap-hold $subl-time $subl-time bspc (multi (layer-while-held apps) lalt)) ;; enter app layer + alt
+ ;;ralt (tap-hold $subl-time $subl-time ret (multi (layer-while-held apps) ralt))
+ lalt (t! homerowmod $tot 160 bspc (multi (layer-while-held apps) lalt))
+ ralt (t! homerowmod $tot 160 ret (multi (layer-while-held apps) ralt))
+ caps (tap-hold $tap-time $hold-time esc (layer-toggle navi))
+ bspc XX
+ ret XX
+ lsft @sw
+ rsft @sw
+
+
+ ;; define each letter as typing-layer trigger
+ q (multi q @.tp) w (multi w @.tp) e (multi e @.tp) r (multi r @.tp) t (multi t @.tp) y (multi y @.tp) u (multi u @.tp) i (multi i @.tp) o (multi o @.tp) p (multi p @.tp) g (multi g @.tp) h (multi h @.tp) z (multi z @.tp) x (multi x @.tp) c (multi @mcopy @.tp) v (multi @mpaste @.tp) b (multi b @.tp) n (multi n @.tp) m (multi m @.tp)
 )
 
-(deflayer main
-  esc        f1   f2   f3   f4    f5   f6   f7   f8    f9   f10  f11  f12
-  grv   1    2    3    4    5     6    7    8    9    0    -    =    bspc
-  @msw   q    w    e    r    t     y    u    i    o    p    [    ]    \
-  @mnavi @mlctl  s    @mlalt    @mlmet    g     h    @mrmet    @mralt    l    @mrctl    @mrmet2         @mapps
-  lsft  @mmtab    @mmgrv    @mcopy @mpaste  @maltt     n    m    ,    @mwrpd    /         rsft  up
-  lctl  lmet @mlsubl           spc              @mrsubl     rmet      rctl  lft  down  rght
+(deflayermap (typing) 
+ a a b b c c d d e e f f g g h h i i j j k k l l m m n n o o p p q q r r s s t t u u v v w w x x y y z z 
+ lalt bspc ralt ret
+ caps XX ;; key deactivations of caps,... are optional
 )
 
-(deflayer apps
-  esc        f1   f2   f3   f4    f5   f6   f7   f8    f9   f10  f11  f12
-  grv   @mday1   @mday2    @mday3    4    5     6    7    8    9    0    -    =    bspc
-  tab   @cls    @mtodo    @ampv    r    t     @ayt    u    i    @mobsi    p    [    ]    \
-  caps  @mmain    @azen    @atg    f    @atick     h    j    k    l    ;    '         ret
-  lsft  @apdf    x    @mcode    v    @avpn     n    m    ,    .    /         rsft  up
-  lctl  lmet lalt           @amenu              ralt     rmet      rctl  lft  down  rght
+(deflayermap (apps)
+  q (cmd hyprctl dispatch killactive)
+  w (macro @aterm 300 C-s $tmux-delay C-d)
+  y (cmd zen-browser --new-window https://www.youtube.com/playlist?list=LL)
+  o (macro @aterm 300 C-s $tmux-delay C-t)
+  a (macro @aterm 300 C-s $tmux-delay C-q)
+  s (tap-hold-press $subl-time $subl-time (cmd jumpapp zen-browser) (layer-toggle browser))
+  d (cmd jumpapp telegram-desktop)
+  g (cmd jumpapp ticktick)
+  z (cmd jumpapp zathura)
+  c (macro @aterm 300 C-s $tmux-delay C-q)
+  spc (cmd hyprlauncher)
+  caps caps
 )
 
-(deflayer browser
-  esc        f1   f2   f3   f4    f5   f6   f7   f8    f9   f10  f11  f12
-  grv   1    2    3    4    5     6    7    8    9    0    -    =    bspc
-  tab   q    w    @smail    r    t     y    u    @sit    @smirea    @sph    [    ]    \
-  caps  @smath    s    @slmrn    @sppl    @sgpt     @shist    j    k    @slin    ;    '         ret
-  lsft  z    x    @sclde    v    b     n    m    ,    .    /         rsft  up
-  lctl  lmet lalt           spc              ralt     rmet      rctl  lft  down  rght
+(deflayermap (browser)
+  e (cmd zen-browser https://mail.google.com/mail/u/0/#inbox)
+  d (cmd zen-browser https://lmarena.ai)
+  f (cmd zen-browser https://www.perplexity.ai)
+  g (cmd zen-browser https://chatgpt.com)
+  c (cmd zen-browser https://claude.ai/new)
 )
 
-(deflayer kitty
-  esc        f1   f2   f3   f4    f5   f6   f7   f8    f9   f10  f11  f12
-  grv   1    2    3    4    5     6    7    8    9    0    -    =    bspc
-  tab   q    w    e    r    t     y    u    i    o    p    [    ]    \
-  caps  a    s    @mtodo    f    g     h    j    k    l    ;    '         ret
-  lsft  z    x    c    v    b     n    m    ,    .    /         rsft  up
-  lctl  lmet lalt           spc              ralt     rmet      rctl  lft  down  rght
-)
-
-(deflayer navi
-  esc        f1   f2   f3   f4    f5   f6   f7   f8    f9   f10  f11  f12
-  grv   1    2    3    4    5     6    7    8    9    0    -    =    bspc
-  tab   q    w    e    r    t     y    u    i    o    p    [    ]    \
-  @mescc @mlctl  @sshot    @mlalt    f    g     lft    down    up    rght    ;    '         ret
-  lsft  z    x    c    v  b     n    m    ,    .    /         rsft  up
-  lctl  lmet lalt           spc              ralt     rmet      rctl  lft  down  rght
+(deflayermap (navi)
+  ;; arrow keys
+  h lft j down k up l right
+  ;; mods
+ f (t! homerowmod $tot 160 f lsft)
+ d (t! homerowmod $tot 300 d lctl)
+ s @sshot
 )
 
 (defchordsv2
-;;(a s d f) (cmd flameshot gui --clipboard) $chord-time first-release()
 (a s d f) @sshot $chord-time first-release()
-;; (a s) (cmd xkb-switch -n) $chord-time first-release()
-(lalt lsft) @sw $chord-time first-release()
+;; (lalt lsft) @sw $chord-time first-release()
 )

@@ -44,11 +44,12 @@ concurrent-tap-hold yes
       )
   .spc-typing   (multi (layer-switch base) spc) ;; expilcitly leave typing-layer when hitting `space` - this allows experimenting with higher idle timeouts
   aterm (cmd jumpapp kitty)
-  azen (cmd jumpapp zen-browser)
+  azen (cmd zen-browser)
   sshot (cmd hyprshot -m region --clipboard-only)
   sw (cmd hyprctl switchxkblayout kanata next)
   mpaste (tap-hold $tap-time $hold-time v C-v)
   mcopy (tap-hold $tap-time $hold-time c C-c)
+  maltt (tap-hold $tap-time $hold-time b (macro @aterm 100 C-s $tmux-delay spc)) ;; tmux alternate session
 )
 
 (defsrc )
@@ -67,17 +68,16 @@ concurrent-tap-hold yes
  ;; define other
  ;;lalt (tap-hold $subl-time $subl-time bspc (multi (layer-while-held apps) lalt)) ;; enter app layer + alt
  ;;ralt (tap-hold $subl-time $subl-time ret (multi (layer-while-held apps) ralt))
- lalt (t! homerowmod $tot 160 bspc (multi (layer-while-held apps) lalt))
- ralt (t! homerowmod $tot 160 ret (multi (layer-while-held apps) ralt))
+ lalt (t! homerowmod $tot 160 bspc (layer-while-held apps))
+ ralt (t! homerowmod $tot 160 ret (layer-while-held apps))
  caps (tap-hold $tap-time $hold-time esc (layer-toggle navi))
  bspc XX
  ret XX
  lsft @sw
  rsft @sw
 
-
  ;; define each letter as typing-layer trigger
- q (multi q @.tp) w (multi w @.tp) e (multi e @.tp) r (multi r @.tp) t (multi t @.tp) y (multi y @.tp) u (multi u @.tp) i (multi i @.tp) o (multi o @.tp) p (multi p @.tp) g (multi g @.tp) h (multi h @.tp) z (multi z @.tp) x (multi x @.tp) c (multi @mcopy @.tp) v (multi @mpaste @.tp) b (multi b @.tp) n (multi n @.tp) m (multi m @.tp)
+ q (multi q @.tp) w (multi w @.tp) e (multi e @.tp) r (multi r @.tp) t (multi t @.tp) y (multi y @.tp) u (multi u @.tp) i (multi i @.tp) o (multi o @.tp) p (multi p @.tp) g (multi g @.tp) h (multi h @.tp) z (multi z @.tp) x (multi x @.tp) c (multi @mcopy @.tp) v (multi @mpaste @.tp) b (multi @maltt @.tp) n (multi n @.tp) m (multi m @.tp)
 )
 
 (deflayermap (typing) 
@@ -89,13 +89,13 @@ concurrent-tap-hold yes
 (deflayermap (apps)
   q (cmd hyprctl dispatch killactive)
   w (macro @aterm 300 C-s $tmux-delay C-d)
-  y (cmd zen-browser --new-window https://www.youtube.com/playlist?list=LL)
+  y (cmd zen-browser --new-window https://www.youtube.com/playlist?list=WL)
   o (macro @aterm 300 C-s $tmux-delay C-t)
   a (macro @aterm 300 C-s $tmux-delay C-q)
-  s (tap-hold-press $subl-time $subl-time (cmd jumpapp zen-browser) (layer-toggle browser))
-  d (cmd jumpapp telegram-desktop)
-  g (cmd jumpapp ticktick)
-  z (cmd jumpapp zathura)
+  s (tap-hold-press $subl-time $subl-time (cmd zen-browser) (layer-toggle browser))
+  d (cmd telegram-desktop)
+  g (cmd ticktick)
+  z (cmd zathura)
   c (macro @aterm 300 C-s $tmux-delay C-q)
   spc (cmd hyprlauncher)
   caps caps
@@ -112,6 +112,9 @@ concurrent-tap-hold yes
 (deflayermap (navi)
   ;; arrow keys
   h lft j down k up l right
+  ;; words navigation
+  w C-right b C-lft
+
   ;; mods
  f (t! homerowmod $tot 160 f lsft)
  d (t! homerowmod $tot 300 d lctl)

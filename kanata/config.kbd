@@ -17,7 +17,7 @@ concurrent-tap-hold yes
   tmux-delay 40
 )
 
-(deftemplate homerowmod (timeouttap timeouthold keytap keyhold)
+(deftemplate func (timeouttap timeouthold keytap keyhold)
 	(tap-hold $timeouttap $timeouthold 
 		(multi $keytap  @.tp) 
 		$keyhold
@@ -47,29 +47,31 @@ concurrent-tap-hold yes
   azen (cmd zen-browser)
   sshot (cmd hyprshot -m region --clipboard-only)
   sw (cmd hyprctl switchxkblayout kanata next)
-  mpaste (tap-hold $tap-time $hold-time v C-v)
-  mcopy (tap-hold $tap-time $hold-time c C-c)
-  maltt (tap-hold $tap-time $hold-time b (macro @aterm 100 C-s $tmux-delay spc)) ;; tmux alternate session
 )
 
 (defsrc )
 
 (deflayermap (base)
  ;; define home row mods (they act as typing-layer triggers, too )
- f (t! homerowmod $tot 160 f lsft)
- j (t! homerowmod $tot 160 j rsft)
- d (t! homerowmod $tot 160 d lctl)
- k (t! homerowmod $tot 160 k rctl)
- s (t! homerowmod $tot 160 s lalt)
- l (t! homerowmod $tot 160 l ralt)
- a (t! homerowmod $tot 160 a lmet)
- ; (t! homerowmod $tot 160 ; met)
+ f (t! func $tot 160 f lsft)
+ j (t! func $tot 160 j rsft)
+ d (t! func $tot 160 d lctl)
+ k (t! func $tot 160 k rctl)
+ s (t! func $tot 160 s lalt)
+ l (t! func $tot 160 l ralt)
+ a (t! func $tot 160 a lmet)
+ ; (t! func $tot 160 ; met)
 
- ;; define other
- ;;lalt (tap-hold $subl-time $subl-time bspc (multi (layer-while-held apps) lalt)) ;; enter app layer + alt
- ;;ralt (tap-hold $subl-time $subl-time ret (multi (layer-while-held apps) ralt))
- lalt (t! homerowmod $tot 160 bspc (layer-while-held apps))
- ralt (t! homerowmod $tot 160 ret (layer-while-held apps))
+ ;; define functional keys
+ lalt (t! func $tot 160 bspc (layer-while-held apps))
+ ralt (t! func $tot 160 ret (layer-while-held apps))
+ c (t! func $tap-time $hold-time c C-c)
+ v (t! func $tap-time $hold-time v C-v)
+ b (t! func $tap-time $hold-time b (macro @aterm 100 C-s $tmux-delay spc)) ;; tmux alternate session
+ z (t! func $tap-time $hold-time z (cmd hyprctl dispatch focuscurrentorlast)) ;; focus last window
+ x (t! func $tap-time $hold-time x (cmd hyprctl dispatch workspace previous)) ;; focus last workspace
+
+ ;; other
  caps (tap-hold $tap-time $hold-time esc (layer-toggle navi))
  bspc XX
  ret XX
@@ -77,7 +79,7 @@ concurrent-tap-hold yes
  rsft @sw
 
  ;; define each letter as typing-layer trigger
- q (multi q @.tp) w (multi w @.tp) e (multi e @.tp) r (multi r @.tp) t (multi t @.tp) y (multi y @.tp) u (multi u @.tp) i (multi i @.tp) o (multi o @.tp) p (multi p @.tp) g (multi g @.tp) h (multi h @.tp) z (multi z @.tp) x (multi x @.tp) c (multi @mcopy @.tp) v (multi @mpaste @.tp) b (multi @maltt @.tp) n (multi n @.tp) m (multi m @.tp)
+ q (multi q @.tp) w (multi w @.tp) e (multi e @.tp) r (multi r @.tp) t (multi t @.tp) y (multi y @.tp) u (multi u @.tp) i (multi i @.tp) o (multi o @.tp) p (multi p @.tp) g (multi g @.tp) h (multi h @.tp) n (multi n @.tp) m (multi m @.tp)
 )
 
 (deflayermap (typing) 
@@ -117,8 +119,8 @@ concurrent-tap-hold yes
   w C-right b C-lft
 
   ;; mods
- f (t! homerowmod $tot 160 f lsft)
- d (t! homerowmod $tot 300 d lctl)
+ f (t! func $tot 160 f lsft)
+ d (t! func $tot 300 d lctl)
  s @sshot
 )
 

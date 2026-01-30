@@ -207,7 +207,6 @@ function y() {
 
 alias neobean='NVIM_APPNAME=linkarzu/dotfiles-latest/neovim/neobean nvim'
 alias nb='neobean'
-eval "$(zoxide init zsh)"
 
 alias ta="task add"
 alias tl="task list"

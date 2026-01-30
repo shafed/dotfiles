@@ -6,6 +6,7 @@ return {
 				python = { "ruff_format", "ruff_organize_imports" },
 				markdown = { "prettier" },
 				lua = { "stylua" },
+				cpp = { "clang-format" },
 			},
 			format_on_save = { timeout_ms = 500, lsp_fallback = true },
 		})

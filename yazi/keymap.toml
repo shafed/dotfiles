@@ -144,6 +144,11 @@ on = ["R", "m"]
 run = "plugin sudo -- chmod"
 desc = "sudo chmod"
 
+[mgr.prepend_keymap]
+on = ["q"]
+run = "plugin autosession -- save-and-quit"
+desc = "Save session and quit"
+
 keymap = [
 	{ on = "<Esc>", run = "escape",             desc = "Exit visual mode, clear selection, or cancel search" },
 	{ on = "<C-[>", run = "escape",             desc = "Exit visual mode, clear selection, or cancel search" },

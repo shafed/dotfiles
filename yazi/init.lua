@@ -3,3 +3,4 @@ require("relative-motions"):setup({
     show_motion = true,
     enter_mode = "cache_or_first"
 })
+require("autosession"):setup()

@@ -144,7 +144,7 @@ on = ["R", "m"]
 run = "plugin sudo -- chmod"
 desc = "sudo chmod"
 
-[mgr.prepend_keymap]
+[[mgr.prepend_keymap]]
 on = ["q"]
 run = "plugin autosession -- save-and-quit"
 desc = "Save session and quit"

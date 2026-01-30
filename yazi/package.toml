@@ -33,6 +33,11 @@ use = "yazi-rs/plugins:smart-paste"
 rev = "57f1863"
 hash = "75fd60b2df7115e0a6ca31a6a804d320"
 
+[[plugin.deps]]
+use = "barbanevosa/autosession"
+rev = "cbdde95"
+hash = "bd7b86e05fa0ffae4e0410b1b6135c4a"
+
 [[flavor.deps]]
 use = "bennyyip/gruvbox-dark"
 rev = "619fdc5"

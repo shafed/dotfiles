@@ -88,7 +88,8 @@ concurrent-tap-hold yes
 
 (deflayermap (apps)
   q (cmd hyprctl dispatch killactive)
-  w (macro @aterm 300 C-s $tmux-delay C-d)
+  w (cmd kitty sh -c "taskwarrior-tui; exec zsh")
+  e (cmd kitty zsh -i -c "yazi; exec zsh")
   y (cmd zen-browser --new-window https://www.youtube.com/playlist?list=WL)
   o (macro @aterm 300 C-s $tmux-delay C-t)
   a (macro @aterm 300 C-s $tmux-delay C-q)

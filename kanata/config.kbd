@@ -128,3 +128,7 @@ concurrent-tap-hold yes
 (a s d f) @sshot $chord-time first-release()
 ;; (lalt lsft) @sw $chord-time first-release()
 )
+
+(defoverrides
+(rctl w) (rctl bspc)
+)

@@ -193,7 +193,7 @@ alias sync-all="\
 
 alias oo="vi /mnt/c/ObsidianSync/"
 
-#Yazi cd
+# Yazi cd
 alias y="yazi"
 export EDITOR=nvim
 export VISUAL=nvim
@@ -211,3 +211,8 @@ alias nb='neobean'
 
 alias ta="task add"
 alias tl="task list"
+
+# Zoxide
+eval "$(zoxide init zsh)"
+alias cd="z"
+alias cdd="z -"

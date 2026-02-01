@@ -3,12 +3,16 @@ vim.opt.spelllang = { "en", "ru" }
 vim.keymap.set("i", "<C-l>", "<c-g>u<Esc>[s1z=`]a<c-g>u", { silent = true })
 
 vim.g.mapleader = " "
-                        
+
 vim.opt.number = true
 vim.opt.relativenumber = true
 vim.opt.expandtab = true
-vim.opt.shiftwidth = 4
-vim.opt.tabstop = 4
+vim.opt.shiftwidth = 2
+vim.opt.tabstop = 2
+vim.opt.softtabstop = 2
+vim.opt.textwidth = 80
+vim.opt.colorcolumn = "80"
+vim.g.markdown_recommended_style = 0
 vim.opt.termguicolors = true
 vim.opt.smartindent = true
 vim.opt.wrap = true
@@ -27,10 +31,10 @@ vim.opt.matchpairs = "(:),{:},[:],<:>" -- пары символов для по�
 
 -- VimTeX конфигурация
 vim.g.maplocalleader = " "
-vim.g.vimtex_view_method = 'zathura'
+vim.g.vimtex_view_method = "zathura"
 vim.g.vimtex_view_automatic = 0
 vim.g.vimtex_view_forward_search_on_start = 0
 
-vim.g.vimtex_compiler_method = 'latexmk'
+vim.g.vimtex_compiler_method = "latexmk"
 
-vim.g.vimtex_view_general_options = '--fullscreen @pdf'
+vim.g.vimtex_view_general_options = "--fullscreen @pdf"

@@ -3,7 +3,6 @@ return {
   ft = { "markdown", "text" },
   init = function()
     -- на всех уровнях использовать только цифры
-    vim.g.bullets_outline_levels = { 'num', 'num', 'num' }
+    vim.g.bullets_outline_levels = { "num", "num", "num" }
   end,
 }
-

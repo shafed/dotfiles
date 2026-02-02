@@ -1,15 +1,15 @@
 return {
-	"nestermaks/hypr-xkb",
-	event = { "VeryLazy" },
-	opts = {
-		device = "kanata",
-		normal_layout = "us",
-		check = true,
-		lang_codes = { "us", "ru" },
-		layout_ids = {
-			["English (US)"] = 0,
-			["Russian"] = 1,
-			normal = 0,
-		},
-	},
+  "nestermaks/hypr-xkb",
+  event = { "VeryLazy" },
+  opts = {
+    device = "kanata",
+    normal_layout = "us",
+    check = true,
+    lang_codes = { "us", "ru" },
+    layout_ids = {
+      ["English (US)"] = 0,
+      ["Russian"] = 1,
+      normal = 0,
+    },
+  },
 }

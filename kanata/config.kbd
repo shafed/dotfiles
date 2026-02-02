@@ -43,7 +43,7 @@ concurrent-tap-hold yes
             ) break
       )
   .spc-typing   (multi (layer-switch base) spc) ;; expilcitly leave typing-layer when hitting `space` - this allows experimenting with higher idle timeouts
-  aterm (cmd jumpapp kitty)
+  aterm (cmd zsh -lc "$HOME/.config/kanata/switchApp.sh kitty kitty")
   azen (cmd zen-browser)
   sshot (cmd hyprshot -m region --clipboard-only)
   sw (cmd hyprctl switchxkblayout kanata next)
@@ -90,8 +90,9 @@ concurrent-tap-hold yes
 
 (deflayermap (apps)
   q (cmd hyprctl dispatch killactive)
-  w (cmd kitty sh -c "taskwarrior-tui; exec zsh")
-  e (cmd kitty zsh -i -c "yazi; exec zsh")
+  w (macro @aterm 300 C-s $tmux-delay C-w)
+  ;; e (cmd kitty zsh -i -c "yazi; exec zsh")
+  e (macro @aterm 300 C-s $tmux-delay C-y)
   y (cmd zen-browser --new-window https://www.youtube.com/playlist?list=WL)
   o (macro @aterm 300 C-s $tmux-delay C-t)
   a (macro @aterm 300 C-s $tmux-delay C-h)

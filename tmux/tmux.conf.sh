@@ -7,14 +7,11 @@ tmux_sessionizer="~/dotfiles/tmux/tools/prime/tmux-sessionizer.sh"
 unbind C-t
 bind-key -r C-t run-shell "$tmux_sessionizer ~/obsidiansync"
 unbind C-d
-bind-key -r C-d run-shell "$tmux_sessionizer ~/obsidiansync/base/notes/todo.md"
-unbind C-c
 bind-key -r C-c run-shell "$tmux_sessionizer ~/code/cpp"
-bind-key -r C-q run-shell "$tmux_sessionizer ~/obsidiansync/base/notes/Day_1.md"
-bind-key -r C-w run-shell "$tmux_sessionizer ~/obsidiansync/base/notes/Day_2.md"
-bind-key -r C-e run-shell "$tmux_sessionizer ~/obsidiansync/base/notes/Day_3.md"
-bind-key -r C-q new-session -A -s main
-bind-key -r C-y new-session -A -s yazi 'yazi'
+bind-key -r C-h run-shell "$tmux_sessionizer ~"
+bind-key -r C-w run-shell "$tmux_sessionizer ~/work"
+bind-key -r C-d run-shell "$tmux_sessionizer ~/dotfiles"
+bind-key -r C-y new-session -A -s yazi yazi
 
 
 bind-key x kill-pane

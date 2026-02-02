@@ -128,6 +128,8 @@ concurrent-tap-hold yes
 (defchordsv2
 (a s d f) @sshot $chord-time first-release()
 ;; (lalt lsft) @sw $chord-time first-release()
+(a s) lsft $chord-time first-release()
+(; l) rsft $chord-time first-release()
 )
 
 (defoverrides

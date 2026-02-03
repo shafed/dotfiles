@@ -53,14 +53,14 @@ concurrent-tap-hold yes
 
 (deflayermap (base)
  ;; define home row mods (they act as typing-layer triggers, too )
- f (t! func $tot 160 f lsft)
- j (t! func $tot 160 j rsft)
- d (t! func $tot 160 d lctl)
- k (t! func $tot 160 k rctl)
- s (t! func $tot 160 s lalt)
- l (t! func $tot 160 l ralt)
- a (t! func $tot 160 a lmet)
- ; (t! func $tot 160 ; met)
+ ;; f (t! func $tot 160 f lsft)
+ ;; j (t! func $tot 160 j rsft)
+ s (t! func $tot 160 s lctl)
+ l (t! func $tot 160 l rctl)
+ a (t! func $tot 160 a lalt)
+ ; (t! func $tot 160 ; ralt)
+ d (t! func $tot 160 d lmet)
+ k (t! func $tot 160 k met)
 
  ;; define functional keys
  lalt (t! func $tot 160 bspc (layer-while-held apps))
@@ -85,14 +85,16 @@ concurrent-tap-hold yes
 (deflayermap (typing) 
  a a b b c c d d e e f f g g h h i i j j k k l l m m n n o o p p q q r r s s t t u u v v w w x x y y z z 
  lalt bspc ralt ret
- caps XX ;; key deactivations of caps,... are optional
+ caps (tap-hold $tap-time $hold-time esc (layer-toggle navi))
+ lsft @sw
+ rsft @sw
 )
 
 (deflayermap (apps)
   q (cmd hyprctl dispatch killactive)
   w (macro @aterm 300 C-s $tmux-delay C-w)
-  ;; e (cmd kitty zsh -i -c "yazi; exec zsh")
   e (macro @aterm 300 C-s $tmux-delay C-y)
+  r (macro @aterm 300 C-s $tmux-delay C-1)
   y (cmd zen-browser --new-window https://www.youtube.com/playlist?list=WL)
   o (macro @aterm 300 C-s $tmux-delay C-t)
   a (macro @aterm 300 C-s $tmux-delay C-h)
@@ -129,8 +131,10 @@ concurrent-tap-hold yes
 (defchordsv2
 (a s d f) @sshot $chord-time first-release()
 ;; (lalt lsft) @sw $chord-time first-release()
-(a s) lsft $chord-time first-release()
-(; l) rsft $chord-time first-release()
+;; (a s) lsft $chord-time first-release()
+;; (; l) rsft $chord-time first-release()
+(d f) rsft $chord-time first-release()
+(j k) rsft $chord-time first-release()
 )
 
 (defoverrides

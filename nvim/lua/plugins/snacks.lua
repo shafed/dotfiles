@@ -1,6 +1,12 @@
 return {
   "snacks.nvim",
   opts = {
+    picker = {
+      layout = {
+        preset = "ivy",
+        cycle = false,
+      },
+    },
     lazygit = {
       theme = {
         selectedLineBgColor = { bg = "CursorLine" },

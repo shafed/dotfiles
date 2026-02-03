@@ -4,6 +4,8 @@ unbind d
 bind d switch-client -t todo
 
 tmux_sessionizer="~/dotfiles/tmux/tools/prime/tmux-sessionizer.sh"
+daily_note="~/dotfiles/tmux/tools/prime/daily-notes.sh"
+
 unbind C-t
 bind-key -r C-t run-shell "$tmux_sessionizer ~/obsidiansync"
 unbind C-d
@@ -12,6 +14,7 @@ bind-key -r C-h run-shell "$tmux_sessionizer ~"
 bind-key -r C-w run-shell "$tmux_sessionizer ~/work"
 bind-key -r C-d run-shell "$tmux_sessionizer ~/dotfiles"
 bind-key -r C-y new-session -A -s yazi yazi
+bind-key -r 1 run-shell "tmux neww $daily_note"
 
 
 bind-key x kill-pane

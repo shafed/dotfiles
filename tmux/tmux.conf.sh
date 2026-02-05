@@ -43,7 +43,7 @@ set -g @plugin 'christoomey/vim-tmux-navigator'
 # set date in US notation
 
 # Initialize TMUX plugin manager (keep this line at the very bottom of tmux.conf)
-run '~/.tmux/plugins/tpm/tpm'
+run '~/.config/tmux/plugins/tpm/tpm'
 
 set -g status-right ""
 set -g status-right "#[fg=brightblack]#{pane_current_path} #[default]"

@@ -3,7 +3,7 @@
 -- Add any additional options here
 
 vim.opt.spell = true
-vim.opt.spelllang = { "en" }
+vim.opt.spelllang = { "en", "ru" }
 vim.keymap.set("i", "<C-l>", "<c-g>u<Esc>[s1z=`]a<c-g>u", { silent = true })
 
 vim.g.mapleader = " "

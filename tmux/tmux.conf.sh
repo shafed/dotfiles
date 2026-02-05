@@ -16,11 +16,9 @@ bind-key -r C-d run-shell "$tmux_sessionizer ~/dotfiles"
 bind-key -r C-y new-session -A -s yazi yazi
 bind-key -r 1 run-shell "tmux neww $daily_note"
 
-
 bind-key x kill-pane
 unbind Space
 bind-key Space switch-client -l
-
 
 set -g prefix C-s
 
@@ -43,8 +41,6 @@ set -g @plugin 'tmux-plugins/tpm'
 set -g @plugin 'egel/tmux-gruvbox'
 set -g @plugin 'christoomey/vim-tmux-navigator'
 # set date in US notation
-
-
 
 # Initialize TMUX plugin manager (keep this line at the very bottom of tmux.conf)
 run '~/.tmux/plugins/tpm/tpm'

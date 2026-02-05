@@ -33,6 +33,23 @@ return {
           end, { desc = "Open daily note", nargs = "*" })
         end,
       },
+      harper_ls = {
+        enabled = true,
+        filetypes = { "markdown", "typst" },
+        settings = {
+          ["harper-ls"] = {
+            isolateEnglish = true,
+            markdown = {
+              -- [ignores this part]()
+              -- [[ also ignores my marksman links ]]
+              IgnoreLinkTitle = true,
+            },
+            excludePatterns = {
+              "/home/shafed/obsidiansync/base/notes/Day_[123].md",
+            },
+          },
+        },
+      },
     },
   },
 }

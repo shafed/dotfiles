@@ -363,3 +363,115 @@ vim.keymap.set({ "n", "v" }, "gj", function()
   -- Clear the search highlight
   vim.cmd("nohlsearch")
 end, { desc = "[P]Go to next markdown header" })
+
+-- Copy workout data from last markdown table
+vim.keymap.set("n", "<leader>cw", function()
+  -- Get all lines from current buffer
+  local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+
+  -- Find all tables in the buffer
+  local tables = {}
+  local current_table = {}
+  local in_table = false
+
+  -- Iterate through lines and collect table rows
+  for _, line in ipairs(lines) do
+    if line:match("^|") then
+      in_table = true
+      table.insert(current_table, line)
+    else
+      if in_table and #current_table > 0 then
+        table.insert(tables, current_table)
+        current_table = {}
+        in_table = false
+      end
+    end
+  end
+
+  -- Add last table if buffer ends with a table
+  if #current_table > 0 then
+    table.insert(tables, current_table)
+  end
+
+  -- Check if any tables were found
+  if #tables == 0 then
+    vim.notify("Таблицы не найдены!", vim.log.levels.WARN)
+    return
+  end
+
+  -- Get the last table from the buffer
+  local last_table = tables[#tables]
+
+  local exercises = {}
+  local data = {}
+
+  -- Parse table rows (skip header and separator, start from row 3)
+  for i = 3, #last_table do
+    local line = last_table[i]
+    local cells = {}
+
+    -- Split line by pipe character and trim whitespace
+    for cell in line:gmatch("[^|]+") do
+      table.insert(cells, vim.trim(cell))
+    end
+
+    -- Extract data: cells[1] = №, cells[2] = Exercise, cells[3] = Reps, cells[4] = Weight
+    if #cells >= 4 then
+      local exercise = cells[2]
+      local reps = cells[3]
+      local weight = cells[4]
+
+      -- Process reps: extract part after X if there's a hyphen (e.g., "3X8-10" -> "8-10")
+      local processed_reps = reps
+      local match = reps:match("^%d+X([%d%-,]+)$")
+      if match and match:find("-") then
+        processed_reps = match
+      end
+
+      table.insert(exercises, exercise)
+      table.insert(data, { processed_reps, weight, "kg" })
+    end
+  end
+
+  if #exercises > 0 then
+    -- Line 1: exercise names separated by empty cells
+    local line1_parts = {}
+    for i, ex in ipairs(exercises) do
+      table.insert(line1_parts, ex)
+      if i < #exercises then
+        table.insert(line1_parts, "")
+        table.insert(line1_parts, "")
+      end
+    end
+
+    -- Line 2: column headers (Reps/Weight) for each exercise
+    local line2_parts = {}
+    for i = 1, #exercises do
+      table.insert(line2_parts, "Reps")
+      table.insert(line2_parts, "Weight")
+      if i < #exercises then
+        table.insert(line2_parts, "")
+      end
+    end
+
+    -- Line 3: actual data (reps/weight/kg) for each exercise
+    local line3_parts = {}
+    for _, d in ipairs(data) do
+      table.insert(line3_parts, d[1]) -- reps
+      table.insert(line3_parts, d[2]) -- weight
+      table.insert(line3_parts, d[3]) -- kg
+    end
+
+    -- Join parts with tabs and combine into final output
+    local line1 = table.concat(line1_parts, "\t")
+    local line2 = table.concat(line2_parts, "\t")
+    local line3 = table.concat(line3_parts, "\t")
+    local output = line1 .. "\n" .. line2 .. "\n" .. line3
+
+    -- Copy to system clipboard
+    vim.fn.setreg("+", output)
+    vim.notify("Скопировано: " .. #exercises .. " упражнений", vim.log.levels.INFO)
+  else
+    vim.notify("Нет данных для копирования!", vim.log.levels.WARN)
+  end
+end, { desc = "[P]Copy workout table data" })

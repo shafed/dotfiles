@@ -1,5 +1,5 @@
 (defcfg
-process-unmapped-keys yes 
+process-unmapped-keys (all-except lctl ralt) 
 danger-enable-cmd yes
 concurrent-tap-hold yes
 )
@@ -55,12 +55,12 @@ concurrent-tap-hold yes
  ;; define home row mods (they act as typing-layer triggers, too )
  ;; f (t! func $tot 160 f lsft)
  ;; j (t! func $tot 160 j rsft)
- s (t! func $tot 160 s lctl)
- l (t! func $tot 160 l rctl)
- a (t! func $tot 250 a lalt)
- ; (t! func $tot 250 ; ralt)
- d (t! func $tot 250 d lmet)
- k (t! func $tot 250 k met)
+ a (t! func $tot 160 a lctl)
+ ; (t! func $tot 160 ; rctl)
+ d (t! func $tot 250 d lalt)
+ k (t! func $tot 250 k ralt)
+ s (t! func $tot 250 s lmet)
+ l (t! func $tot 250 l met)
 
  ;; define functional keys
  lalt (t! func $tot 160 bspc (layer-while-held apps))

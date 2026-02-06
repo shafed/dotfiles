@@ -139,4 +139,6 @@ concurrent-tap-hold yes
 
 (defoverrides
 (rctl w) (rctl bspc)
+(lctl h) (bspc)
+(rctl h) (bspc)
 )

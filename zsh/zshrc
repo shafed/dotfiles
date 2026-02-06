@@ -216,3 +216,4 @@ alias tl="task list"
 eval "$(zoxide init zsh)"
 alias cd="z"
 alias cdd="z -"
+alias pulldeez='echo "Pulling latest changes, please wait..."; (cd ~/dotfiles && git pull >/dev/null 2>&1) || echo "Failed to pull dotfiles"; source ~/.zshrc'

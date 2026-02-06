@@ -1,6 +1,16 @@
 return {
   "folke/snacks.nvim",
   keys = {
+    -- Keymaps picker
+    {
+      "<leader>sk",
+      function()
+        Snacks.picker.keymaps({
+          layout = "vertical",
+        })
+      end,
+      desc = "Keymaps",
+    },
     -- File picker
     {
       "<leader><space>",

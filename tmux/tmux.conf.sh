@@ -10,7 +10,7 @@ unbind C-t
 bind-key -r C-t run-shell "$tmux_sessionizer ~/obsidian"
 unbind C-d
 bind-key -r C-c run-shell "$tmux_sessionizer ~/code/cpp"
-bind-key -r C-h run-shell "$tmux_sessionizer ~"
+bind-key -r C-a run-shell "$tmux_sessionizer ~"
 bind-key -r C-w run-shell "$tmux_sessionizer ~/work"
 bind-key -r C-d run-shell "$tmux_sessionizer ~/dotfiles"
 bind-key -r C-y new-session -A -s yazi yazi
@@ -46,4 +46,3 @@ set -g @plugin 'christoomey/vim-tmux-navigator'
 run '~/.tmux/plugins/tpm/tpm'
 
 set -g status-right ""
-set -g status-right "#[fg=brightblack]#{pane_current_path} #[default]"

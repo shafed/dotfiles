@@ -97,7 +97,7 @@ concurrent-tap-hold yes
   r (macro @aterm 300 C-s $tmux-delay C-1)
   y (cmd zen-browser --new-window https://www.youtube.com/playlist?list=WL)
   o (macro @aterm 300 C-s $tmux-delay C-t)
-  a (macro @aterm 300 C-s $tmux-delay C-h)
+  a (macro @aterm 300 C-s $tmux-delay C-a)
   s (tap-hold-press $subl-time $subl-time (cmd zen-browser) (layer-toggle browser))
   t (cmd telegram-desktop)
   d (macro @aterm 300 C-s $tmux-delay C-d)

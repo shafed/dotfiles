@@ -20,4 +20,4 @@ username_suffix="h"
 
 dotfiles_latest="j"
 todo="d"
-obsidiansync="t"
+obsidian="t"

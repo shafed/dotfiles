@@ -15,7 +15,7 @@
 # sleep 0.3
 
 # Specify below the directory in which you want to create your daily note
-main_note_dir=~/obsidiansync/periodic
+main_note_dir=~/obsidian/periodic
 
 # Get current date components
 current_year=$(date +"%Y")

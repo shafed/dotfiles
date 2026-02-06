@@ -191,7 +191,6 @@ alias sync-all="\
   cp ~/dotfiles/.config/zsh/.zshrc ~/.zshrc && \
   cp -r ~/dotfiles/.config/nvim/ ~/.config/"
 
-alias oo="vi /mnt/c/ObsidianSync/"
 
 # Yazi cd
 alias y="yazi"

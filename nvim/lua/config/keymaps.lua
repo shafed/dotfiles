@@ -475,3 +475,31 @@ vim.keymap.set("n", "<leader>cw", function()
     vim.notify("Нет данных для копирования!", vim.log.levels.WARN)
   end
 end, { desc = "[P]Copy workout table data" })
+
+vim.keymap.set("n", "<leader>go", function()
+  -- Save files
+  vim.cmd("wa")
+
+  -- Check if in Obsidian Repo
+  local vault_path = vim.fn.expand("~/obsidian")
+  local current_dir = vim.fn.getcwd()
+
+  if current_dir:find(vault_path, 1, true) == nil then
+    print("Not in Obsidian Vault")
+    return
+  end
+
+  -- Git commands
+  local commit_msg = "Vault backup: " .. os.date("%Y-%m-%d %H:%M:%S")
+  local cmd = string.format("cd %s && git add . && git commit -m '%s' && git push", vault_path, commit_msg)
+
+  vim.fn.jobstart(cmd, {
+    on_exit = function(_, code)
+      if code == 0 then
+        print("Obsidian Vault pushed successfully")
+      else
+        print("Error push")
+      end
+    end,
+  })
+end, { desc = "[P]Autopush Obsidian Repo" })

@@ -476,6 +476,7 @@ vim.keymap.set("n", "<leader>cw", function()
   end
 end, { desc = "[P]Copy workout table data" })
 
+-- Autopush Obsidian Repo
 vim.keymap.set("n", "<leader>go", function()
   -- Save files
   vim.cmd("wa")

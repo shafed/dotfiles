@@ -1,6 +1,8 @@
 return {
   "folke/snacks.nvim",
   keys = {
+    -- Use mini.files
+    { "<leader>e", false },
     -- Keymaps picker
     {
       "<leader>sk",

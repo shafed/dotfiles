@@ -476,12 +476,12 @@ vim.keymap.set("n", "<leader>cw", function()
   end
 end, { desc = "[P]Copy workout table data" })
 
--- Autopush Obsidian Repo
+-- Autopush Obsidian Vault
 vim.keymap.set("n", "<leader>go", function()
   -- Save files
   vim.cmd("wa")
 
-  -- Check if in Obsidian Repo
+  -- Check if in Obsidian Vault
   local vault_path = vim.fn.expand("~/obsidian")
   local current_dir = vim.fn.getcwd()
 
@@ -503,4 +503,16 @@ vim.keymap.set("n", "<leader>go", function()
       end
     end,
   })
-end, { desc = "[P]Autopush Obsidian Repo" })
+end, { desc = "[P]Autopush Obsidian Vault" })
+
+-- Grug
+vim.keymap.set(
+  { "v", "n" },
+  "<leader>s1",
+  '<cmd>lua require("grug-far").open({ prefills = { paths = vim.fn.expand("%") } })<cr>',
+  { noremap = true, silent = true, desc = "grug-far: Search in current file" }
+)
+
+vim.keymap.set({ "n", "x" }, "<leader>sv", function()
+  require("grug-far").open({ visualSelectionUsage = "operate-within-range" })
+end, { desc = "grug-far: Search within range" })

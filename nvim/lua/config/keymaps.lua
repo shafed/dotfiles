@@ -522,3 +522,39 @@ vim.keymap.set({ "n", "v" }, "<C-h>", "<C-w>h")
 vim.keymap.set({ "n", "v" }, "<C-j>", "<C-w>j")
 vim.keymap.set({ "n", "v" }, "<C-k>", "<C-w>k")
 vim.keymap.set({ "n", "v" }, "<C-l>", "<C-w>l")
+
+-- Code Runner
+vim.keymap.set("n", "<leader>rr", function()
+  vim.cmd("w")
+  local file = vim.fn.expand("%:t")
+  local out = vim.fn.expand("%:t:r")
+  local dir = vim.fn.expand("%:p:h")
+  local ext = vim.fn.expand("%:e")
+
+  local cmd
+
+  if ext == "cpp" or ext == "cc" or ext == "cxx" then
+    cmd = string.format("cd %s && g++ -std=c++17 -O2 -Wall -o %s %s && ./%s", dir, out, file, out)
+  elseif ext == "c" then
+    cmd = string.format("cd %s && gcc -O2 -Wall -o %s %s && ./%s", dir, out, file, out)
+  elseif ext == "py" then
+    cmd = string.format("cd %s && python3 %s", dir, file)
+  else
+    vim.notify("Нет команды для ." .. ext, vim.log.levels.WARN)
+    return
+  end
+
+  vim.cmd("split | terminal " .. cmd)
+  vim.cmd("startinsert")
+end, { desc = "Run Code" })
+
+-- Normal Mode in Terminal
+vim.keymap.set("t", "<Esc>", "<C-\\><C-n>", { desc = "Normal mode" })
+
+-- Quit with "q"
+vim.api.nvim_create_autocmd("TermOpen", {
+  callback = function()
+    local opts = { buffer = true, silent = true }
+    vim.keymap.set("n", "q", "<cmd>bd!<CR>", opts)
+  end,
+})

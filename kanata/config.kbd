@@ -55,12 +55,12 @@ concurrent-tap-hold yes
  ;; define home row mods (they act as typing-layer triggers, too )
  ;; f (t! func $tot 160 f lsft)
  ;; j (t! func $tot 160 j rsft)
- a (t! func $tot 160 a lctl)
- ; (t! func $tot 160 ; rctl)
- d (t! func $tot 250 d lalt)
- k (t! func $tot 250 k ralt)
- s (t! func $tot 250 s lmet)
- l (t! func $tot 250 l met)
+ a (t! func $tot 300 a lctl)
+ ; (t! func $tot 300 ; rctl)
+ d (t! func $tot 400 d lalt)
+ k (t! func $tot 400 k ralt)
+ s (t! func $tot 400 s lmet)
+ l (t! func $tot 400 l met)
 
  ;; define functional keys
  lalt (t! func $tot 160 bspc (layer-while-held apps))

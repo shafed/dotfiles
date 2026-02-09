@@ -17,6 +17,7 @@ concurrent-tap-hold yes
   tmux-delay 40
 )
 
+;; https://github.com/jtroo/kanata/discussions/1656
 (deftemplate func (timeouttap timeouthold keytap keyhold)
 	(tap-hold $timeouttap $timeouthold 
 		(multi $keytap  @.tp) 

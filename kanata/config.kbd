@@ -61,8 +61,8 @@ concurrent-tap-hold yes
  ; (t! func $tot 300 ; rctl)
  d (t! func $tot 400 d lalt)
  k (t! func $tot 400 k ralt)
- s (t! func $tot 400 s lmet)
- l (t! func $tot 400 l met)
+ s (t! func $tot 300 s lmet)
+ l (t! func $tot 300 l met)
 
  ;; define functional keys
  lalt (t! func $tot 160 bspc (layer-while-held apps))

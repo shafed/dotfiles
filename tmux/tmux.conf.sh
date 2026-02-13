@@ -9,7 +9,7 @@ daily_note="~/dotfiles/tmux/tools/prime/daily-notes.sh"
 unbind C-t
 bind-key -r C-t run-shell "$tmux_sessionizer ~/obsidian"
 unbind C-d
-bind-key -r C-c run-shell "$tmux_sessionizer ~/code/cpp"
+bind-key -r C-c run-shell "$tmux_sessionizer ~/code/python"
 bind-key -r C-a run-shell "$tmux_sessionizer ~"
 bind-key -r C-w run-shell "$tmux_sessionizer ~/work"
 bind-key -r C-d run-shell "$tmux_sessionizer ~/dotfiles"

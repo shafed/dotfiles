@@ -319,6 +319,48 @@ vim.keymap.set("n", "zi", function()
   vim.cmd("normal! zz") -- center the cursor line on screen
 end, { desc = "[P]Fold the heading cursor currently on" })
 
+-- Creates a markdown heading based on the level specified
+local function insert_heading_and_date(level)
+  local heading = string.rep("#", level) .. " " -- Generate heading based on the level
+  local row, _ = unpack(vim.api.nvim_win_get_cursor(0)) -- Get the current row number
+  -- Insert heading
+  vim.api.nvim_buf_set_lines(0, row, row, false, { heading })
+  -- Move the cursor to the end of the heading and enter insert mode
+  vim.api.nvim_win_set_cursor(0, { row + 1, #heading })
+  vim.cmd("startinsert!")
+end
+
+-- These create the the markdown heading
+-- H1
+vim.keymap.set("n", "<leader>jj", function()
+  local date_line = insert_heading_and_date(1)
+end, { desc = "[P]H1 heading and date" })
+
+-- H2
+vim.keymap.set("n", "<leader>kk", function()
+  local date_line = insert_heading_and_date(2)
+end, { desc = "[P]H2 heading and date" })
+
+-- H3
+vim.keymap.set("n", "<leader>ll", function()
+  local date_line = insert_heading_and_date(3)
+end, { desc = "[P]H3 heading and date" })
+
+-- H4
+vim.keymap.set("n", "<leader>;;", function()
+  local date_line = insert_heading_and_date(4)
+end, { desc = "[P]H4 heading and date" })
+
+-- H5
+vim.keymap.set("n", "<leader>uu", function()
+  local date_line = insert_heading_and_date(5)
+end, { desc = "[P]H5 heading and date" })
+
+-- H6
+vim.keymap.set("n", "<leader>ii", function()
+  local date_line = insert_heading_and_date(6)
+end, { desc = "[P]H6 heading and date" })
+
 -------------------------------------------------------------------------------
 --                         End Folding section
 -------------------------------------------------------------------------------

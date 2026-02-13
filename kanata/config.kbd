@@ -60,7 +60,7 @@ concurrent-tap-hold yes
  a (t! homerowmodfiltered $tot 300 a lctl (s d f))
  ; (t! func $tot 300 ; rctl)
  d (t! func $tot 400 d lalt)
- k (t! func $tot 400 k ralt)
+ k (t! homerowmodfiltered $tot 400 k ralt (j))
  s (t! func $tot 300 s lmet)
  l (t! func $tot 300 l met)
 
@@ -112,7 +112,7 @@ concurrent-tap-hold yes
 
 (deflayermap (browser)
   e (cmd zen-browser https://mail.google.com/mail/u/0/#inbox)
-  d (cmd zen-browser https://lmarena.ai)
+  d (cmd zen-browser https://arena.ai)
   f (cmd zen-browser https://www.perplexity.ai)
   g (cmd zen-browser https://chatgpt.com)
   c (cmd zen-browser https://claude.ai/new)

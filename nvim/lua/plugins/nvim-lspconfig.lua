@@ -7,6 +7,23 @@ return {
       },
     },
     servers = {
+      ["*"] = {
+        keys = {
+          -- LSP References
+          {
+            "gr",
+            function()
+              Snacks.picker.lsp_references({
+                on_show = function()
+                  vim.cmd.stopinsert()
+                end,
+                layout = "dropdown",
+              })
+            end,
+            desc = "References",
+          },
+        },
+      },
       markdown_oxide = {
         capabilities = {
           workspace = {
@@ -45,7 +62,7 @@ return {
               IgnoreLinkTitle = true,
             },
             excludePatterns = {
-              "/home/shafed/obsidian/base/notes/day_[123].md",
+              "/home/shafed/obsidian/base/notes/Day [123].md",
             },
           },
         },

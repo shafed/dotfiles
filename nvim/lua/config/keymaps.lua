@@ -518,33 +518,64 @@ vim.keymap.set("n", "<leader>cw", function()
   end
 end, { desc = "[P]Copy workout table data" })
 
--- Autopush Obsidian Vault
-vim.keymap.set("n", "<leader>go", function()
-  -- Save files
-  vim.cmd("wa")
-
-  -- Check if in Obsidian Vault
+-- Auto push Obsidian Vault
+local function push_obsidian_vault(silent)
   local vault_path = vim.fn.expand("~/obsidian")
   local current_dir = vim.fn.getcwd()
 
   if current_dir:find(vault_path, 1, true) == nil then
-    print("Not in Obsidian Vault")
-    return
+    return false
   end
 
-  -- Git commands
+  vim.cmd("silent! wa")
+
   local commit_msg = "Vault backup: " .. os.date("%Y-%m-%d %H:%M:%S")
   local cmd = string.format("cd %s && git add . && git commit -m '%s' && git push", vault_path, commit_msg)
 
   vim.fn.jobstart(cmd, {
     on_exit = function(_, code)
-      if code == 0 then
-        print("Obsidian Vault pushed successfully")
-      else
-        print("Error push")
+      if code == 0 and not silent then
+        vim.schedule(function()
+          print("Obsidian Vault pushed successfully")
+        end)
       end
     end,
   })
+
+  return true
+end
+
+-- Cooldown защита
+local last_push_time = 0
+local PUSH_COOLDOWN = 60
+
+local function push_with_cooldown()
+  local now = os.time()
+  if now - last_push_time < PUSH_COOLDOWN then
+    return
+  end
+  if push_obsidian_vault(true) then
+    last_push_time = now
+  end
+end
+
+-- Автопуш при разных событиях
+vim.api.nvim_create_autocmd({
+  "FocusLost", -- переключился на другое окно
+  "QuitPre", -- перед выходом из Neovim
+  "VimSuspend", -- Ctrl+Z (suspend)
+  "VimLeavePre", -- перед закрытием Neovim
+}, {
+  desc = "Autopush Obsidian Vault",
+  callback = push_with_cooldown,
+})
+
+-- Ручной кеймап
+vim.keymap.set("n", "<leader>go", function()
+  vim.cmd("wa")
+  if not push_obsidian_vault(false) then
+    print("Not in Obsidian Vault")
+  end
 end, { desc = "[P]Autopush Obsidian Vault" })
 
 -- Grug

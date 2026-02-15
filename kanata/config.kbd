@@ -59,8 +59,8 @@ concurrent-tap-hold yes
  ;; a (t! func $tot 300 a lctl)
  a (t! homerowmodfiltered $tot 300 a lctl (s d f))
  ; (t! func $tot 300 ; rctl)
- d (t! func $tot 400 d lalt)
- k (t! homerowmodfiltered $tot 400 k ralt (j))
+ d (t! func $tot 300 d lalt)
+ k (t! homerowmodfiltered $tot 300 k ralt (j))
  s (t! func $tot 300 s lmet)
  l (t! func $tot 300 l met)
 

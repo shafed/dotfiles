@@ -573,7 +573,7 @@ vim.api.nvim_create_autocmd({
 
 -- Ручной кеймап
 vim.keymap.set("n", "<leader>go", function()
-  vim.cmd("wa")
+  vim.cmd("silent! wa")
   if not push_obsidian_vault(false) then
     print("Not in Obsidian Vault")
   end
@@ -834,3 +834,41 @@ vim.keymap.set("n", "<M-x>", function()
   vim.cmd("silent update")
   vim.cmd("loadview")
 end, { desc = "[P]Toggle task and move it to 'done'" })
+
+-- Create task
+vim.keymap.set({ "n", "i" }, "<M-l>", function()
+  -- Get the current line/row/column
+  local cursor_pos = vim.api.nvim_win_get_cursor(0)
+  local row, _ = cursor_pos[1], cursor_pos[2]
+  local line = vim.api.nvim_get_current_line()
+  -- 1) If line is empty => replace it with "- [ ] " and set cursor after the brackets
+  if line:match("^%s*$") then
+    local final_line = "- [ ] "
+    vim.api.nvim_set_current_line(final_line)
+    -- "- [ ] " is 6 characters, so cursor col = 6 places you *after* that space
+    vim.api.nvim_win_set_cursor(0, { row, 6 })
+    return
+  end
+  -- 2) Check if line already has a bullet with possible indentation: e.g. "  - Something"
+  --    We'll capture "  -" (including trailing spaces) as `bullet` plus the rest as `text`.
+  local bullet, text = line:match("^([%s]*[-*]%s+)(.*)$")
+  if bullet then
+    -- Convert bullet => bullet .. "[ ] " .. text
+    local final_line = bullet .. "[ ] " .. text
+    vim.api.nvim_set_current_line(final_line)
+    -- Place the cursor right after "[ ] "
+    -- bullet length + "[ ] " is bullet_len + 4 characters,
+    -- but bullet has trailing spaces, so #bullet includes those.
+    local bullet_len = #bullet
+    -- We want to land after the brackets (four characters: `[ ] `),
+    -- so col = bullet_len + 4 (0-based).
+    vim.api.nvim_win_set_cursor(0, { row, bullet_len + 4 })
+    return
+  end
+  -- 3) If there's text, but no bullet => prepend "- [ ] "
+  --    and place cursor after the brackets
+  local final_line = "- [ ] " .. line
+  vim.api.nvim_set_current_line(final_line)
+  -- "- [ ] " is 6 characters
+  vim.api.nvim_win_set_cursor(0, { row, 6 })
+end, { desc = "Convert bullet to a task or insert new task bullet" })

@@ -103,7 +103,7 @@ concurrent-tap-hold yes
   s (tap-hold-press $subl-time $subl-time (cmd zen-browser) (layer-toggle browser))
   t (cmd telegram-desktop)
   d (macro @aterm 300 C-s $tmux-delay C-d)
-  g (cmd ticktick)
+  g (cmd todoist)
   z (cmd zathura)
   c (macro @aterm 300 C-s $tmux-delay C-c)
   spc (cmd hyprlauncher)

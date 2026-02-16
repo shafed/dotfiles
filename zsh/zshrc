@@ -166,7 +166,7 @@ export PATH="$HOME/.local/bin:$PATH"
 #export winuser="/mnt/c/Users/$win_username"
 export OPENROUTER_API_KEY="sk-rGiKULn5W3H6Yf8TbzWi4Iu1wnFUTf7y"
 export PATH="$HOME/.local/bin:$PATH"
-export BROWSER=wslview
+export BROWSER=zen-browser
 export TERMCMD="wezterm"
 
 export zsh=~/.zshrc

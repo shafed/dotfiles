@@ -548,7 +548,7 @@ end
 
 -- Cooldown защита
 local last_push_time = 0
-local PUSH_COOLDOWN = 60
+local PUSH_COOLDOWN = 300
 
 local function push_with_cooldown()
   local now = os.time()

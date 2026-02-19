@@ -112,10 +112,10 @@ concurrent-tap-hold yes
 
 (deflayermap (browser)
   e (cmd zen-browser https://mail.google.com/mail/u/0/#inbox)
-  d (cmd zen-browser --new-window https://arena.ai)
-  f (cmd zen-browser --new-window https://www.perplexity.ai)
-  g (cmd zen-browser --new-window https://chatgpt.com)
-  c (cmd zen-browser --new-window https://claude.ai/new)
+  d (cmd zen-browser  https://arena.ai)
+  f (cmd zen-browser  https://www.perplexity.ai)
+  g (cmd zen-browser  https://chatgpt.com)
+  c (cmd zen-browser  https://claude.ai/new)
 )
 
 (deflayermap (navi)

@@ -104,6 +104,23 @@ return {
       })
     )
 
+    table.insert(
+      snippets,
+      s({
+        trig = "daily",
+        name = "Daily Note Header",
+        desc = "Insert daily note header with current date and day",
+      }, {
+        f(function()
+          local date = os.date("%Y-%m-%d")
+          local day = os.date("%A")
+          return "# " .. date .. "-" .. day
+        end, {}),
+        t({ "", "", "## Daily Note", "" }),
+        i(1),
+      })
+    )
+
     ls.add_snippets("all", snippets)
 
     return opts

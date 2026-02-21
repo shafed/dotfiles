@@ -104,7 +104,7 @@ concurrent-tap-hold yes
   t (cmd telegram-desktop)
   d (macro @aterm 300 C-s $tmux-delay C-d)
   g (cmd todoist)
-  z (cmd zathura)
+  z (cmd sioyek)
   c (macro @aterm 300 C-s $tmux-delay C-c)
   spc (cmd hyprlauncher)
   caps caps

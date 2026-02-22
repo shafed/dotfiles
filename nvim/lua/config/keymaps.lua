@@ -591,12 +591,6 @@ vim.keymap.set({ "n", "x" }, "<leader>sv", function()
   require("grug-far").open({ visualSelectionUsage = "operate-within-range" })
 end, { desc = "grug-far: Search within range" })
 
--- Window motions
-vim.keymap.set({ "n", "v" }, "<C-h>", "<C-w>h")
-vim.keymap.set({ "n", "v" }, "<C-j>", "<C-w>j")
-vim.keymap.set({ "n", "v" }, "<C-k>", "<C-w>k")
-vim.keymap.set({ "n", "v" }, "<C-l>", "<C-w>l")
-
 -- Code Runner
 vim.keymap.set("n", "<leader>rr", function()
   vim.cmd("w")

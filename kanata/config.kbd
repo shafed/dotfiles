@@ -46,7 +46,7 @@ concurrent-tap-hold yes
   .spc-typing   (multi (layer-switch base) spc) ;; expilcitly leave typing-layer when hitting `space` - this allows experimenting with higher idle timeouts
   aterm (cmd zsh -lc "$HOME/.config/kanata/switchApp.sh kitty kitty")
   azen (cmd zen-browser)
-  sshot (cmd hyprshot -m region --clipboard-only)
+  sshot (cmd flameshot gui --clipboard)
   sw (cmd hyprctl switchxkblayout kanata next)
 )
 

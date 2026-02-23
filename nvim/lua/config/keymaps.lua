@@ -2,6 +2,9 @@
 -- Default keymaps that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/keymaps.lua
 -- Add any additional keymaps here
 
+local wk = require("which-key")
+wk.add({ { mode = { "n" }, { "<leader>t", group = "[P]todo" }, { "<leader>l", group = "[P]Log" } } })
+
 -- LazyGit Keymap
 if vim.fn.executable("lazygit") == 1 then
   vim.keymap.set("n", "<M-g>", function()
@@ -415,8 +418,8 @@ vim.keymap.set({ "n", "v" }, "gj", function()
   vim.cmd("nohlsearch")
 end, { desc = "[P]Go to next markdown header" })
 
--- Copy workout data from last markdown table
-vim.keymap.set("n", "<leader>cw", function()
+-- Copy workout data from last markdown table to clipboard lamw25wmal
+vim.keymap.set("n", "<leader>lc", function()
   -- Get all lines from current buffer
   local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
 
@@ -425,7 +428,6 @@ vim.keymap.set("n", "<leader>cw", function()
   local current_table = {}
   local in_table = false
 
-  -- Iterate through lines and collect table rows
   for _, line in ipairs(lines) do
     if line:match("^|") then
       in_table = true
@@ -439,20 +441,16 @@ vim.keymap.set("n", "<leader>cw", function()
     end
   end
 
-  -- Add last table if buffer ends with a table
   if #current_table > 0 then
     table.insert(tables, current_table)
   end
 
-  -- Check if any tables were found
   if #tables == 0 then
-    vim.notify("Таблицы не найдены!", vim.log.levels.WARN)
+    vim.notify("No tables found!", vim.log.levels.WARN)
     return
   end
 
-  -- Get the last table from the buffer
   local last_table = tables[#tables]
-
   local exercises = {}
   local data = {}
 
@@ -461,18 +459,15 @@ vim.keymap.set("n", "<leader>cw", function()
     local line = last_table[i]
     local cells = {}
 
-    -- Split line by pipe character and trim whitespace
     for cell in line:gmatch("[^|]+") do
       table.insert(cells, vim.trim(cell))
     end
 
-    -- Extract data: cells[1] = №, cells[2] = Exercise, cells[3] = Reps, cells[4] = Weight
     if #cells >= 4 then
       local exercise = cells[2]
       local reps = cells[3]
       local weight = cells[4]
 
-      -- Process reps: extract part after X if there's a hyphen (e.g., "3X8-10" -> "8-10")
       local processed_reps = reps
       local match = reps:match("^%d+X([%d%-,]+)$")
       if match and match:find("-") then
@@ -484,48 +479,162 @@ vim.keymap.set("n", "<leader>cw", function()
     end
   end
 
-  if #exercises > 0 then
-    -- Line 1: exercise names separated by empty cells
-    local line1_parts = {}
-    for i, ex in ipairs(exercises) do
-      table.insert(line1_parts, ex)
-      if i < #exercises then
-        table.insert(line1_parts, "")
-        table.insert(line1_parts, "")
-      end
-    end
-
-    -- Line 2: column headers (Reps/Weight) for each exercise
-    local line2_parts = {}
-    for i = 1, #exercises do
-      table.insert(line2_parts, "Reps")
-      table.insert(line2_parts, "Weight")
-      if i < #exercises then
-        table.insert(line2_parts, "")
-      end
-    end
-
-    -- Line 3: actual data (reps/weight/kg) for each exercise
-    local line3_parts = {}
-    for _, d in ipairs(data) do
-      table.insert(line3_parts, d[1]) -- reps
-      table.insert(line3_parts, d[2]) -- weight
-      table.insert(line3_parts, d[3]) -- kg
-    end
-
-    -- Join parts with tabs and combine into final output
-    local line1 = table.concat(line1_parts, "\t")
-    local line2 = table.concat(line2_parts, "\t")
-    local line3 = table.concat(line3_parts, "\t")
-    local output = line1 .. "\n" .. line2 .. "\n" .. line3
-
-    -- Copy to system clipboard
-    vim.fn.setreg("+", output)
-    vim.notify("Скопировано: " .. #exercises .. " упражнений", vim.log.levels.INFO)
-  else
-    vim.notify("Нет данных для копирования!", vim.log.levels.WARN)
+  if #exercises == 0 then
+    vim.notify("No data to copy!", vim.log.levels.WARN)
+    return
   end
-end, { desc = "[P]Copy workout table data" })
+
+  -- Line 1: exercise names separated by empty cells
+  local line1_parts = {}
+  for i, ex in ipairs(exercises) do
+    table.insert(line1_parts, ex)
+    if i < #exercises then
+      table.insert(line1_parts, "")
+      table.insert(line1_parts, "")
+    end
+  end
+
+  -- Line 2: column headers (Reps/Weight) for each exercise
+  local line2_parts = {}
+  for i = 1, #exercises do
+    table.insert(line2_parts, "Reps")
+    table.insert(line2_parts, "Weight")
+    if i < #exercises then
+      table.insert(line2_parts, "")
+    end
+  end
+
+  -- Line 3: actual data (reps/weight/kg) for each exercise
+  local line3_parts = {}
+  for _, d in ipairs(data) do
+    table.insert(line3_parts, d[1])
+    table.insert(line3_parts, d[2])
+    table.insert(line3_parts, d[3])
+  end
+
+  local line1 = table.concat(line1_parts, "\t")
+  local line2 = table.concat(line2_parts, "\t")
+  local line3 = table.concat(line3_parts, "\t")
+  local output = line1 .. "\n" .. line2 .. "\n" .. line3
+
+  vim.fn.setreg("+", output)
+  vim.notify("Copied: " .. #exercises .. " exercises", vim.log.levels.INFO)
+end, { desc = "[P]Log Copy: workout table to clipboard" })
+
+-- Paste entire file contents into daily note lamw25wmal
+vim.keymap.set("n", "<leader>lp", function()
+  -- ===================== Customizable variables =====================
+  -- NOTE: Path to the daily note creation script
+  local daily_note_script = vim.fn.expand("~/dotfiles/tmux/tools/prime/daily-notes.sh")
+  -- NOTE: Path to the daily note (adjust the pattern to match your structure)
+  local daily_note_path = vim.fn.expand("~/obsidian/periodic/") .. os.date("%Y/%m-%b/%Y-%m-%d-%A") .. ".md"
+  -- NOTE: Heading before which to insert content
+  local tasks_heading = "## Completed Tasks"
+
+  --------------------------------------------------------------------------
+  -- Extract H1 from the current file
+  --------------------------------------------------------------------------
+  local h1_text = nil
+  for _, line in ipairs(vim.api.nvim_buf_get_lines(0, 0, 1, false)) do
+    local match = line:match("^#%s+(.+)$")
+    if match then
+      h1_text = vim.trim(match)
+      break
+    end
+  end
+
+  if not h1_text then
+    vim.notify("H1 heading not found in current file!", vim.log.levels.WARN)
+    return
+  end
+
+  local training_heading = "## Training Log of the " .. h1_text
+
+  -- All file contents without the H1 line (skip first 2 lines: H1 + blank)
+  local buf_lines = vim.api.nvim_buf_get_lines(0, 2, -1, false)
+
+  --------------------------------------------------------------------------
+  -- 1. If daily note does not exist, create it via script
+  --------------------------------------------------------------------------
+  if vim.fn.filereadable(daily_note_path) ~= 1 then
+    vim.fn.system(daily_note_script)
+    if vim.fn.filereadable(daily_note_path) ~= 1 then
+      vim.notify("daily-note.sh failed to create file: " .. daily_note_path, vim.log.levels.ERROR)
+      return
+    end
+  end
+
+  --------------------------------------------------------------------------
+  -- Read the daily note contents
+  --------------------------------------------------------------------------
+  local daily_lines = vim.fn.readfile(daily_note_path)
+
+  --------------------------------------------------------------------------
+  -- Look for the "## Completed Tasks" heading
+  --------------------------------------------------------------------------
+  local heading_index = nil
+  for i, line in ipairs(daily_lines) do
+    if line:match("^" .. tasks_heading .. "%s*$") then
+      heading_index = i
+      break
+    end
+  end
+
+  --------------------------------------------------------------------------
+  -- Build the insert block: heading + blank line + file contents
+  --------------------------------------------------------------------------
+  local insert_block = {}
+  table.insert(insert_block, training_heading)
+  table.insert(insert_block, "")
+  for _, line in ipairs(buf_lines) do
+    table.insert(insert_block, line)
+  end
+
+  local result = {}
+
+  if heading_index then
+    --------------------------------------------------------------------------
+    -- 2. Heading found: insert BEFORE it
+    --------------------------------------------------------------------------
+    for i = 1, heading_index - 1 do
+      table.insert(result, daily_lines[i])
+    end
+    -- Remove trailing blank lines before the insert block
+    while #result > 0 and result[#result] == "" do
+      table.remove(result)
+    end
+    table.insert(result, "")
+    -- Insert the block
+    for _, line in ipairs(insert_block) do
+      table.insert(result, line)
+    end
+    table.insert(result, "")
+    -- Append daily note from the heading onwards
+    for i = heading_index, #daily_lines do
+      table.insert(result, daily_lines[i])
+    end
+  else
+    --------------------------------------------------------------------------
+    -- 3. Heading not found: insert at the end
+    --------------------------------------------------------------------------
+    result = vim.list_extend({}, daily_lines)
+    -- Remove trailing blank lines before the insert block
+    while #result > 0 and result[#result] == "" do
+      table.remove(result)
+    end
+    table.insert(result, "")
+    -- Insert the block
+    for _, line in ipairs(insert_block) do
+      table.insert(result, line)
+    end
+  end
+
+  --------------------------------------------------------------------------
+  -- Write the result back to the daily note
+  --------------------------------------------------------------------------
+  vim.fn.writefile(result, daily_note_path)
+  vim.notify("Inserted into daily note: " .. daily_note_path, vim.log.levels.INFO)
+end, { desc = "[P]Log Paste: file contents into daily note" })
 
 -- Auto push Obsidian Vault
 local function push_obsidian_vault(silent)

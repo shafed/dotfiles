@@ -105,7 +105,7 @@ concurrent-tap-hold yes
   d (macro @aterm 300 C-s $tmux-delay C-d)
   g (cmd todoist)
   z (cmd sioyek)
-  c (macro @aterm 300 C-s $tmux-delay C-c)
+  p (macro @aterm 300 C-s $tmux-delay C-c)
   spc (cmd hyprlauncher)
   caps caps
 )
@@ -116,6 +116,7 @@ concurrent-tap-hold yes
   f (cmd zen-browser  https://www.perplexity.ai)
   g (cmd zen-browser  https://chatgpt.com)
   c (cmd zen-browser  https://claude.ai/new)
+  r (cmd zen-browser https://www.reverso.net/text-translation)
 )
 
 (deflayermap (navi)

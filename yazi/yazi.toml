@@ -35,7 +35,7 @@ edit_pdf = [
 ]
 
 view_pdf = [
-  { run = "zathura %s1", desc = "View (zathura)", for = "unix", block = false,
+  { run = "sioyek %s1", desc = "View (sioyek)", for = "unix", block = false,
   orphan = true },
 ]
 edit = [
@@ -74,7 +74,7 @@ download = [
 
 [open]
 rules = [
-    # PDF Zathura + Xournalpp
+    # PDF
     { mime = "application/pdf", use = [ "view_pdf", "edit_pdf", "reveal" ] },
 	# Folder
 	{ url = "*/", use = [ "edit", "open", "reveal" ] },

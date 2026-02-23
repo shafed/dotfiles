@@ -14,6 +14,7 @@ vim.keymap.set({ "n", "v" }, "gl", "$", { desc = "[P]go to the end of the line" 
 
 -- Fast quit
 vim.keymap.set({ "n", "v", "i" }, "<M-q>", "<cmd>q!<cr>", { desc = "[P]Quit All" })
+vim.keymap.set({ "n", "v", "i" }, "<M-esc>", "<cmd>q!<cr>", { desc = "[P]Quit All" })
 
 vim.keymap.set({ "n", "v" }, "<leader>y", [["+y]], { desc = "[P]Yank to system clipboard" })
 vim.keymap.set({ "n", "v" }, "<leader>p", [["+p]], { desc = "[P]Paste from system clipboard" })

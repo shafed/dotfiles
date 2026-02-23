@@ -21,3 +21,5 @@ gui:
       - "#928374"
 os:
   editPreset: "nvim-remote"
+
+quitOnTopLevelReturn: true

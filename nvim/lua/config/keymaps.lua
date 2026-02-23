@@ -2,6 +2,13 @@
 -- Default keymaps that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/keymaps.lua
 -- Add any additional keymaps here
 
+-- LazyGit Keymap
+if vim.fn.executable("lazygit") == 1 then
+  vim.keymap.set("n", "<M-g>", function()
+    Snacks.lazygit({ cwd = LazyVim.root.git() })
+  end, { desc = "Lazygit (Root Dir)" })
+end
+
 vim.keymap.set({ "n", "v" }, "gh", "^", { desc = "[P]Go to the beginning line" })
 vim.keymap.set({ "n", "v" }, "gl", "$", { desc = "[P]go to the end of the line" })
 

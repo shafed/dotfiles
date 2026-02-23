@@ -107,14 +107,16 @@ return {
     table.insert(
       snippets,
       s({
-        trig = "daily",
-        name = "Daily Note Header",
-        desc = "Insert daily note header with current date and day",
+        trig = "dn",
+        name = "Daily Note",
+        desc = "Insert H1 header from filename with daily note section",
       }, {
         f(function()
-          local date = os.date("%Y-%m-%d")
-          local day = os.date("%A")
-          return "# " .. date .. "-" .. day
+          local filename = vim.fn.expand("%:t:r")
+          if filename == "" then
+            return "# Untitled"
+          end
+          return "# " .. filename
         end, {}),
         t({ "", "", "## Daily Note", "" }),
         i(1),

@@ -35,7 +35,7 @@ edit_pdf = [
 ]
 
 view_pdf = [
-  { run = "sioyek %s1", desc = "View (sioyek)", for = "unix", block = false,
+  { run = "LIBGL_ALWAYS_SOFTWARE=1 sioyek %s1", desc = "View (sioyek)", for = "unix", block = false,
   orphan = true },
 ]
 edit = [

@@ -24,6 +24,7 @@ return {
           },
         },
       },
+      marksman = { enabled = false },
       markdown_oxide = {
         capabilities = {
           workspace = {

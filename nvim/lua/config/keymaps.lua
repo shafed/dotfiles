@@ -719,11 +719,11 @@ vim.keymap.set("n", "<leader>rr", function()
   local cmd
 
   if ext == "cpp" or ext == "cc" or ext == "cxx" then
-    cmd = string.format("cd %s && g++ -std=c++17 -O2 -Wall -o %s %s && ./%s", dir, out, file, out)
+    cmd = string.format("cd '%s' && g++ -std=c++17 -O2 -Wall -o '%s' '%s' && ./'%s'", dir, out, file, out)
   elseif ext == "c" then
-    cmd = string.format("cd %s && gcc -O2 -Wall -o %s %s && ./%s", dir, out, file, out)
+    cmd = string.format("cd '%s' && gcc -O2 -Wall -o '%s' '%s' && ./'%s'", dir, out, file, out)
   elseif ext == "py" then
-    cmd = string.format("cd %s && python3 %s", dir, file)
+    cmd = string.format("cd '%s' && python3 '%s'", dir, file)
   else
     vim.notify("Нет команды для ." .. ext, vim.log.levels.WARN)
     return

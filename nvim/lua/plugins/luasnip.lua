@@ -122,7 +122,7 @@ return {
           end
           return "# " .. filename
         end, {}),
-        t({ "", "", "## Daily Note", "" }),
+        t({ "", "", "## Tasks", "" }),
         i(1),
       })
     )

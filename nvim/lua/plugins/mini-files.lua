@@ -48,5 +48,26 @@ return {
       end,
       desc = "Open mini.files (cwd)",
     },
+    {
+      "<leader>yy",
+      function()
+        local mini_files = require("mini.files")
+        local curr_entry = mini_files.get_fs_entry()
+        if curr_entry then
+          local path = curr_entry.path
+          local cmd = string.format("echo -n 'file://%s' | wl-copy --type text/uri-list", path)
+          local result = vim.fn.system(cmd)
+          if vim.v.shell_error ~= 0 then
+            vim.notify("Copy failed: " .. result, vim.log.levels.ERROR)
+          else
+            vim.notify(vim.fn.fnamemodify(path, ":t"), vim.log.levels.INFO)
+            vim.notify("Copied to system clipboard", vim.log.levels.INFO)
+          end
+        else
+          vim.notify("No file or directory selected", vim.log.levels.WARN)
+        end
+      end,
+      desc = "Copy file/directory to clipboard",
+    },
   },
 }

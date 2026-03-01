@@ -88,7 +88,7 @@ return {
           score_offset = 20, -- the higher the number, the higher the priority
           -- https://github.com/Kaiser-Yang/blink-cmp-dictionary/issues/2
           enabled = true,
-          max_items = 8,
+          max_items = 3,
           min_keyword_length = 3,
           opts = {
             -- -- The dictionary by default now uses fzf, make sure to have it

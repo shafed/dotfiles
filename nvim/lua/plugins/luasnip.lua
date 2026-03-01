@@ -2,6 +2,10 @@ return {
   "L3MON4D3/LuaSnip",
   enabled = true,
   opts = function(_, opts)
+    opts.enable_autosnippets = true
+    require("luasnip.loaders.from_lua").load({ paths = "~/.config/nvim/snippets" }) -- load custom snippets
+    require("luasnip").filetype_extend("markdown", { "tex" }) -- extend .tex snippets to .md
+
     local ls = require("luasnip")
 
     -- Add prefix ";" to each one of my snippets using the extend_decorator

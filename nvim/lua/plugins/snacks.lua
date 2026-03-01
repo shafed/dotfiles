@@ -133,6 +133,15 @@ return {
     },
   },
   opts = {
+    image = {
+      enabled = true,
+      doc = {
+        inline = true,
+        float = true,
+        max_width = 60,
+        max_height = 30,
+      },
+    },
     picker = {
       -- My ~/github/dotfiles-latest/neovim/lazyvim/lua/config/keymaps.lua
       -- file was always showing at the top, I needed a way to decrease its

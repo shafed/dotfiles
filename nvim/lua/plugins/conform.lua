@@ -34,6 +34,8 @@ return {
     formatters_by_ft = {
       python = { "ruff_format", "ruff_organize_imports" },
       markdown = { "prettier" },
+      tex = { "tex-fmt" },
+      latex = { "tex-fmt" },
       lua = { "stylua" },
       cpp = { "clang-format" },
     },

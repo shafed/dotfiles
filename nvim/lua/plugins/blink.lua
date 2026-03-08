@@ -7,6 +7,19 @@ return {
   opts = function(_, opts)
     local trigger_text = ";"
 
+    -- No prefix for .tex
+    local no_prefix_filetypes = { "tex" }
+
+    local function is_no_prefix_ft()
+      local ft = vim.bo.filetype
+      for _, excluded in ipairs(no_prefix_filetypes) do
+        if ft == excluded then
+          return true
+        end
+      end
+      return false
+    end
+
     opts.enabled = function()
       local filetype = vim.bo[0].filetype
       if filetype == "TelescopePrompt" or filetype == "minifiles" or filetype == "snacks_picker_input" then
@@ -55,11 +68,17 @@ return {
           module = "blink.cmp.sources.snippets",
           score_offset = 85,
           should_show_items = function()
+            if is_no_prefix_ft() then
+              return true
+            end
             local col = vim.api.nvim_win_get_cursor(0)[2]
             local before_cursor = vim.api.nvim_get_current_line():sub(1, col)
             return before_cursor:match(trigger_text .. "%w*$") ~= nil
           end,
           transform_items = function(_, items)
+            if is_no_prefix_ft() then
+              return items
+            end
             local line = vim.api.nvim_get_current_line()
             local col = vim.api.nvim_win_get_cursor(0)[2]
             local before_cursor = line:sub(1, col)
@@ -81,41 +100,19 @@ return {
             return items
           end,
         },
-
         dictionary = {
           module = "blink-cmp-dictionary",
           name = "Dict",
-          score_offset = 20, -- the higher the number, the higher the priority
-          -- https://github.com/Kaiser-Yang/blink-cmp-dictionary/issues/2
+          score_offset = 20,
           enabled = true,
           max_items = 3,
           min_keyword_length = 3,
           opts = {
-            -- -- The dictionary by default now uses fzf, make sure to have it
-            -- -- installed
-            -- -- https://github.com/Kaiser-Yang/blink-cmp-dictionary/issues/2
-            --
-            -- Do not specify a file, just the path, and in the path you need to
-            -- have your .txt files
             dictionary_directories = { vim.fn.expand("~/dotfiles/dictionaries") },
-            -- Notice I'm also adding the words I add to the spell dictionary
             dictionary_files = {
               vim.fn.expand("~/dotfiles/nvim/spell/en.utf-8.add"),
               vim.fn.expand("~/dotfiles/nvim/spell/ru.utf-8.add"),
             },
-            -- --  NOTE: To disable the definitions uncomment this section below
-            --
-            -- separate_output = function(output)
-            --   local items = {}
-            --   for line in output:gmatch("[^\r\n]+") do
-            --     table.insert(items, {
-            --       label = line,
-            --       insert_text = line,
-            --       documentation = nil,
-            --     })
-            --   end
-            --   return items
-            -- end,
           },
         },
       },

@@ -1,7 +1,5 @@
 unbind r
 bind r source-file ~/.tmux.conf
-unbind d
-bind d switch-client -t todo
 
 tmux_sessionizer="~/dotfiles/tmux/tools/prime/tmux-sessionizer.sh"
 daily_note="~/dotfiles/tmux/tools/prime/daily-notes.sh"

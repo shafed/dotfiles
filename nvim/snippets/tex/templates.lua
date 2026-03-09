@@ -1,8 +1,8 @@
-return{
-s(
-    {trig = "phy-art", dscr = "Physics article"},
+return {
+  s(
+    { trig = "phy-art", dscr = "Physics article" },
     fmta(
-    [[
+      [[
 	\documentclass[letterpaper,11pt]{article}
 	\usepackage[left=1.6cm,right=1.6cm,top=2.5cm,bottom=2.5cm,headheight=1.0cm]{geometry}
 	\usepackage[activeacute,spanish,es-tabla]{babel}
@@ -133,7 +133,7 @@ s(
 	\end{multicols}
 	\end{document}
     ]],
-    {
+      {
         i(1),
         i(2),
         i(3),
@@ -141,15 +141,15 @@ s(
         i(5),
         i(6),
         i(7),
-        i(8)
-    }
+        i(8),
+      }
     )
-),
+  ),
 
-s(
-    {trig = "math-notes", dscr = "Math notes"},
+  s(
+    { trig = "math-notes", dscr = "Math notes" },
     fmta(
-    [[
+      [[
     \newcommand{\notestitle}{<>}
     \newcommand{\notesprof}{<>}
     \newcommand{\notesauthor}{<>}
@@ -169,18 +169,18 @@ s(
     \input{../eof.tex}
     \end{document}
     ]],
-    {
-        i(1,"Title"),
-        i(2,"Profesor/course"),
-        i(3,"Author"),
-    }
+      {
+        i(1, "Title"),
+        i(2, "Profesor/course"),
+        i(3, "Author"),
+      }
     )
-),
+  ),
 
-s(
-    {trig = "writing", dscr = "Writing"},
+  s(
+    { trig = "writing", dscr = "Writing" },
     fmta(
-    [[
+      [[
 	\documentclass[letterpaper,twoside,11pt]{article}
 	\usepackage[left=1.6cm,right=1.6cm,top=2.5cm,bottom=2.0cm,headheight=1.0cm]{geometry}
 	\usepackage[activeacute,spanish,es-tabla]{babel}
@@ -254,18 +254,18 @@ s(
 	\end{multicols}
 	\end{document}
     ]],
-    {
+      {
         i(1),
         i(2),
-        i(3)
-    }
+        i(3),
+      }
     )
-),
+  ),
 
-s(
-    {trig = "bib", dscr = "Bibliography"},
+  s(
+    { trig = "bib", dscr = "Bibliography" },
     fmta(
-    [[
+      [[
         
         
         
@@ -275,14 +275,14 @@ s(
         \Urlmuskip=0mu plus 1mu\relax
         %\phantom{\cite{}}
     ]],
-    {}
+      {}
     )
-),
+  ),
 
-s(
-    {trig = "min-math", dscr = "Minimal math template"},
+  s(
+    { trig = "min-math", dscr = "Minimal math template" },
     fmta(
-    [[
+      [[
     \documentclass{article}
     \usepackage[utf8]{inputenc}
     \usepackage[tbtags]{amsmath}
@@ -298,11 +298,67 @@ s(
 
     \end{document}
     ]],
-    {
+      {
         i(1),
         i(2),
-        i(3)
-    }
+        i(3),
+      }
     )
-),
+  ),
+
+  s(
+    { trig = "mirea_report", dscr = "MIREA Report" },
+    fmta(
+      [[
+\documentclass[a4paper,12pt]{report}
+\usepackage{fontspec}
+\setmainfont{Times New Roman}
+\usepackage[russian]{babel}
+\usepackage{graphicx}
+\usepackage{geometry}
+\geometry{left=3cm,right=1.5cm,top=2cm,bottom=2cm}
+
+\title{%
+  \begin{center}
+    \includegraphics{gerb.png}
+  \end{center}
+  {\large МИНИСТЕРСТВО НАУКИ И ВЫСШЕГО ОБРАЗОВАНИЯ РОССИЙСКОЙ ФЕДЕРАЦИИ}\\[0.3cm]
+  {\normalsize Федеральное государственное бюджетное образовательное учреждение высшего образования}\\[0.2cm]
+  {\large \textbf{«МИРЭА --- Российский технологический университет»}}\\[0.1cm]
+  {\normalsize РТУ МИРЭА}\\[0.3cm]
+  {\normalsize Институт искусственного интеллекта (ИИИ)}\\
+  {\normalsize Кафедра Промышленной информатики (ПИ)}\\[1cm]
+  {\LARGE \textbf{ОТЧЕТ}}\\[0.2cm]
+  {\Large \textbf{ПО ПРАКТИЧЕСКОЙ РАБОТЕ № <>}}\\[0.4cm]
+  {\large \textbf{по дисциплине «Информатика»}}
+}
+\author{%
+  \begin{tabular}{ll}
+    Выполнил студент группы & КВБО-11-25 \\
+    Принял ассистент        & Беднов Г.А. \\
+  \end{tabular}
+}
+\date{%
+  Практическую работу выполнил «<>» <> 2026 г.\\[0.3cm]
+  «Зачтено» «»  2026 г.\\[1cm]
+  Москва 2026
+}
+
+\begin{document}
+\maketitle
+
+\noindent\textbf{Тема:} <>\\
+\noindent\textbf{Цель работы:} <>
+
+\end{document}
+      ]],
+      {
+        i(1, "№"), -- 1-й <> : номер работы
+        i(2, "дд"), -- 2-й <> : день
+        i(3, "месяц"), -- 3-й <> : месяц
+        i(4, "тема"), -- 4-й <> : тема
+        i(5, "цель"), -- 5-й <> : цель работы
+      }
+    )
+  ),
 }

@@ -20,7 +20,7 @@ vim.keymap.set({ "n", "v", "i" }, "<M-q>", "<cmd>q!<cr>", { desc = "[P]Quit All"
 vim.keymap.set({ "n", "v", "i" }, "<M-esc>", "<cmd>q!<cr>", { desc = "[P]Quit All" })
 
 vim.keymap.set({ "n", "v" }, "<leader>y", [["+y]], { desc = "[P]Yank to system clipboard" })
-vim.keymap.set({ "n", "v" }, "<leader>p", [["+p]], { desc = "[P]Paste from system clipboard" })
+-- vim.keymap.set({ "n", "v" }, "<leader>p", [["+p]], { desc = "[P]Paste from system clipboard" })
 
 -- Paste unformatted text from Neovim
 if vim.g.simpler_scrollback ~= "deeznuts" then

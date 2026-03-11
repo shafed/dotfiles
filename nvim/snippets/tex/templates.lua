@@ -317,6 +317,10 @@ return {
 \usepackage{graphicx}
 \usepackage{geometry}
 \geometry{left=3cm,right=1.5cm,top=2cm,bottom=2cm}
+\usepackage{setspace}
+\onehalfspacing
+\linespread{1.5}
+\setlength{\parindent}{1.25cm}
 
 \title{%
   \begin{center}

@@ -1170,17 +1170,11 @@ vim.keymap.set("n", "<leader>tn", function()
   local line = vim.api.nvim_get_current_line()
 
   -- Extract project (@Project) and section (#Section)
-  local project = line:match("@([^%s@#<!]+)")
-  local section = line:match("#([^%s@#<!]+)")
+  local project = line:match("/([^/<!%s]+)/[^/<!%s]*")
+  local section = line:match("/[^/<!%s]+/([^/<!%s]+)")
 
-  -- Strip checkbox, @project, #section from content
-  local content = line
-    :gsub("^%s*%- %[[ x]%]%s*", "")
-    :gsub("^%s*%-%s*", "")
-    :gsub("%s*@[^%s@#<!]+", "")
-    :gsub("%s*#[^%s@#<!]+", "")
-    :gsub("%s+$", "")
-    :gsub("^%s+", "")
+  local content =
+    line:gsub("^%s*%- %[[ x]%]%s*", ""):gsub("^%s*%-%s*", ""):gsub("%s*/[^%s<!]+", ""):gsub("%s+$", ""):gsub("^%s+", "")
 
   if content == "" then
     vim.notify("Todoist: empty line", vim.log.levels.WARN)
@@ -1202,7 +1196,7 @@ vim.keymap.set("n", "<leader>tn", function()
         vim.schedule(function()
           local cur = vim.api.nvim_get_current_line()
           -- Remove @project and #section markers, then append ID
-          local cleaned = cur:gsub("%s*@[^%s@#<!]+", ""):gsub("%s*#[^%s@#<!]+", ""):gsub("%s+$", "")
+          local cleaned = cur:gsub("%s*/[^/<!%s]+/[^/<!%s]*", ""):gsub("%s+$", "")
           if not cleaned:match("<!%-%- todoist:") then
             vim.api.nvim_set_current_line(cleaned .. " <!-- todoist:" .. id .. " -->")
           end

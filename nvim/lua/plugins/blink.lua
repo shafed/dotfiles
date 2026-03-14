@@ -29,8 +29,13 @@ return {
     end
 
     opts.sources = vim.tbl_deep_extend("force", opts.sources or {}, {
-      default = { "lsp", "path", "snippets", "buffer", "dictionary" },
+      default = { "lsp", "path", "snippets", "buffer", "dictionary", "todoist" },
       providers = {
+        todoist = {
+          name = "Todoist",
+          module = "config.blink_todoist",
+          score_offset = 100,
+        },
         lsp = {
           name = "lsp",
           enabled = true,

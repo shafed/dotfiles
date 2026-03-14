@@ -733,7 +733,6 @@ vim.keymap.set("n", "<leader>rr", function()
   end
 
   vim.cmd("split | terminal " .. cmd)
-  vim.cmd("startinsert")
 end, { desc = "Run Code" })
 
 -- Normal Mode in Terminal

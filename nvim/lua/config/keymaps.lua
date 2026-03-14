@@ -1168,26 +1168,49 @@ end, { desc = "Todoist: export University section" })
 
 vim.keymap.set("n", "<leader>tn", function()
   local line = vim.api.nvim_get_current_line()
-  -- Strip markdown checkbox prefix if present
-  local content = line:gsub("^%s*%- %[[ x]%]%s*", ""):gsub("^%s*%-%s*", ""):gsub("^%s+", "")
+
+  -- Extract project (@Project) and section (#Section)
+  local project = line:match("@([^%s@#<!]+)")
+  local section = line:match("#([^%s@#<!]+)")
+
+  -- Strip checkbox, @project, #section from content
+  local content = line
+    :gsub("^%s*%- %[[ x]%]%s*", "")
+    :gsub("^%s*%-%s*", "")
+    :gsub("%s*@[^%s@#<!]+", "")
+    :gsub("%s*#[^%s@#<!]+", "")
+    :gsub("%s+$", "")
+    :gsub("^%s+", "")
 
   if content == "" then
     vim.notify("Todoist: empty line", vim.log.levels.WARN)
     return
   end
 
-  vim.fn.jobstart("~/dotfiles/scripts/todoist-export.sh --add " .. vim.fn.shellescape(content), {
+  local cmd = "~/dotfiles/scripts/todoist-export.sh --add "
+    .. vim.fn.shellescape(content)
+    .. " "
+    .. vim.fn.shellescape(project or "")
+    .. " "
+    .. vim.fn.shellescape(section or "")
+
+  vim.fn.jobstart(cmd, {
     stdout_buffered = true,
     on_stdout = function(_, data)
       local id = data[1]
       if id and id ~= "" then
         vim.schedule(function()
-          -- Append the task ID as a comment to the current line
-          local current = vim.api.nvim_get_current_line()
-          if not current:match("<!%-%- todoist:") then
-            vim.api.nvim_set_current_line(current .. " <!-- todoist:" .. id .. " -->")
+          local cur = vim.api.nvim_get_current_line()
+          -- Remove @project and #section markers, then append ID
+          local cleaned = cur:gsub("%s*@[^%s@#<!]+", ""):gsub("%s*#[^%s@#<!]+", ""):gsub("%s+$", "")
+          if not cleaned:match("<!%-%- todoist:") then
+            vim.api.nvim_set_current_line(cleaned .. " <!-- todoist:" .. id .. " -->")
           end
-          vim.notify("Todoist: task added ✓", vim.log.levels.INFO)
+          local where = project or "Inbox"
+          if section then
+            where = where .. " / " .. section
+          end
+          vim.notify("Todoist: added to " .. where .. " ✓", vim.log.levels.INFO)
         end)
       end
     end,

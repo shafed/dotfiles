@@ -18,17 +18,17 @@ OUT=${note_dir}/${note_name}.md
 TODAY=$(date +%Y-%m-%d)
 # ──────────────────────────────────────────────────────────
 
-# Fetch data from the Todoist API v1
-api_get() {
-  curl -sf "https://api.todoist.com/api/v1/$1" \
-    -H "Authorization: Bearer $TODOIST_TOKEN"
-}
+# Fetch all data in a single request using the Sync API
+SYNC=$(curl -sf "https://api.todoist.com/api/v1/sync" \
+  -H "Authorization: Bearer $TODOIST_TOKEN" \
+  -d "sync_token=*" \
+  -d "resource_types=[\"all\"]")
 
-# Load all tasks and projects upfront to avoid redundant API calls
-TASKS=$(api_get tasks | jq '.results // .')
-PROJECTS=$(api_get projects | jq '.results // .')
+TASKS=$(echo "$SYNC" | jq '[.items[] | select(.checked == false and .is_deleted == false)]')
+PROJECTS=$(echo "$SYNC" | jq '[.projects[] | select(.is_deleted == false)]')
+SECTIONS=$(echo "$SYNC" | jq '[.sections[] | select(.is_deleted == false)]')
 
-# Format a single task as a markdown checkbox line with optional due date and priority icon
+# Format a single task as a markdown checkbox with optional due date and priority icon
 build_task_line() {
   local content="$1" due="$2" priority="$3" id="$4"
   local icon=""
@@ -45,11 +45,6 @@ build_task_line() {
 # Build a task list for a single project, grouped by sections
 build_md_filtered() {
   local project_id="$1"
-
-  # Fetch sections for this project
-  local sections
-  sections=$(api_get "sections?project_id=$project_id" | jq '.results // .')
-
   local lines=""
 
   # Tasks not assigned to any section
@@ -59,7 +54,7 @@ build_md_filtered() {
 
   if [[ $(echo "$no_section_tasks" | jq 'length') -gt 0 ]]; then
     while IFS= read -r task; do
-      local content due priority
+      local content due priority id
       content=$(echo "$task" | jq -r '.content')
       due=$(echo "$task" | jq -r '.due.date // empty')
       priority=$(echo "$task" | jq -r '.priority')
@@ -81,14 +76,14 @@ build_md_filtered() {
 
     lines+="- **$sname**\n"
     while IFS= read -r task; do
-      local content due priority
+      local content due priority id
       content=$(echo "$task" | jq -r '.content')
       due=$(echo "$task" | jq -r '.due.date // empty')
       priority=$(echo "$task" | jq -r '.priority')
       id=$(echo "$task" | jq -r '.id')
-      lines+="$(build_task_line "$content" "$due" "$priority" "$id")\n"
+      lines+="  $(build_task_line "$content" "$due" "$priority" "$id")\n"
     done < <(echo "$section_tasks" | jq -c '.[]')
-  done < <(echo "$sections" | jq -c '.[]')
+  done < <(echo "$SECTIONS" | jq -c --arg pid "$project_id" '[.[] | select(.project_id == $pid)] | .[]')
 
   echo -e "$lines"
 }
@@ -108,12 +103,12 @@ build_md_grouped() {
 
     lines+="- **$pname**\n"
     while IFS= read -r task; do
-      local content due priority
+      local content due priority id
       content=$(echo "$task" | jq -r '.content')
       due=$(echo "$task" | jq -r '.due.date // empty')
       priority=$(echo "$task" | jq -r '.priority')
       id=$(echo "$task" | jq -r '.id')
-      lines+="$(build_task_line "$content" "$due" "$priority" "$id")\n"
+      lines+="  $(build_task_line "$content" "$due" "$priority" "$id")\n"
     done < <(echo "$project_tasks" | jq -c '.[]')
     lines+="\n"
   done < <(echo "$PROJECTS" | jq -c '.[]')
@@ -124,7 +119,8 @@ build_md_grouped() {
 find_project_id() {
   local name="$1"
   local id
-  id=$(echo "$PROJECTS" | jq -r --arg name "$name" '.[] | select(.name | ascii_downcase == ($name | ascii_downcase)) | .id')
+  id=$(echo "$PROJECTS" | jq -r --arg name "$name" \
+    '.[] | select(.name | ascii_downcase == ($name | ascii_downcase)) | .id')
   if [[ -z "$id" ]]; then
     echo "Project '$name' not found. Available projects:" >&2
     echo "$PROJECTS" | jq -r '.[].name' >&2
@@ -136,13 +132,13 @@ find_project_id() {
 # Return the section ID for a given section name within a project (case-insensitive)
 find_section_id() {
   local project_id="$1" section_name="$2"
-  local sections id
-  sections=$(api_get "sections?project_id=$project_id" | jq '.results // .')
-  id=$(echo "$sections" | jq -r --arg name "$section_name" \
-    '.[] | select(.name | ascii_downcase == ($name | ascii_downcase)) | .id')
+  local id
+  id=$(echo "$SECTIONS" | jq -r --arg pid "$project_id" --arg name "$section_name" \
+    '.[] | select(.project_id == $pid and (.name | ascii_downcase == ($name | ascii_downcase))) | .id')
   if [[ -z "$id" ]]; then
     echo "Section '$section_name' not found. Available sections:" >&2
-    echo "$sections" | jq -r '.[].name' >&2
+    echo "$SECTIONS" | jq -r --arg pid "$project_id" \
+      '.[] | select(.project_id == $pid) | .name' >&2
     exit 1
   fi
   echo "$id"
@@ -153,7 +149,7 @@ build_md_section() {
   local section_id="$1"
   local lines=""
   while IFS= read -r task; do
-    local content due priority
+    local content due priority id
     content=$(echo "$task" | jq -r '.content')
     due=$(echo "$task" | jq -r '.due.date // empty')
     priority=$(echo "$task" | jq -r '.priority')
@@ -187,17 +183,28 @@ write_md() {
 
 # ── Entry point ───────────────────────────────────────────
 case "$1" in
---list-projects)
-  echo "$PROJECTS" | jq -r '.[].name'
-  ;;
-# List sections of a project that have at least one task
+
+# List all sections of a project
 --list-sections)
   [[ -z "$2" ]] && {
-    echo "Specify a project" >&2
+    echo "Specify a project name" >&2
     exit 1
   }
   PID=$(find_project_id "$2")
-  api_get "sections?project_id=$PID" | jq -r '(.results // .) | .[].name'
+
+  # Sections with tasks first, empty ones last
+  echo "$SECTIONS" | jq -r --arg pid "$PID" --argjson tasks "$TASKS" \
+    '[.[] | select(.project_id == $pid)] |
+     sort_by(
+       .id as $sid |
+       if ($tasks | any(.section_id == $sid)) then 0 else 1 end
+     ) | .[].name'
+  ;;
+
+# List all sections across all projects (used for autocomplete preload)
+--list-all-sections)
+  echo "$SECTIONS" | jq -r --argjson projects "$PROJECTS" \
+    '.[] | . as $sec | ($projects[] | select(.id == $sec.project_id) | .name) + "/" + $sec.name'
   ;;
 
 # List tasks in a specific section (used for picker preview)
@@ -211,58 +218,12 @@ case "$1" in
   echo "$TASKS" | jq -r --arg sid "$SID" \
     '.[] | select(.section_id == $sid) | "- [ ] " + .content'
   ;;
---complete)
-  [[ -z "$2" ]] && {
-    echo "Specify a task ID" >&2
-    exit 1
-  }
-  curl -sf -X POST "https://api.todoist.com/api/v1/tasks/$2/close" \
-    -H "Authorization: Bearer $TODOIST_TOKEN"
-  echo "Task $2 completed"
+
+# List all project names
+--list-projects)
+  echo "$PROJECTS" | jq -r '.[].name'
   ;;
---reopen)
-  [[ -z "$2" ]] && {
-    echo "Specify a task ID" >&2
-    exit 1
-  }
-  curl -sf -X POST "https://api.todoist.com/api/v1/tasks/$2/reopen" \
-    -H "Authorization: Bearer $TODOIST_TOKEN"
-  echo "Task $2 reopened"
-  ;;
---add)
-  [[ -z "$2" ]] && {
-    echo "Specify task content" >&2
-    exit 1
-  }
-  content="$2"
-  project_id=""
-  section_id=""
 
-  # Resolve project ID if provided
-  if [[ -n "$3" ]]; then
-    project_id=$(find_project_id "$3")
-  fi
-
-  # Resolve section ID if provided
-  if [[ -n "$4" && -n "$project_id" ]]; then
-    section_id=$(find_section_id "$project_id" "$4")
-  fi
-
-  # Build JSON payload
-  payload=$(jq -n \
-    --arg content "$content" \
-    --arg pid "$project_id" \
-    --arg sid "$section_id" \
-    '{content: $content} +
-     (if $pid != "" then {project_id: $pid} else {} end) +
-     (if $sid != "" then {section_id: $sid} else {} end)')
-
-  result=$(curl -sf -X POST "https://api.todoist.com/api/v1/tasks" \
-    -H "Authorization: Bearer $TODOIST_TOKEN" \
-    -H "Content-Type: application/json" \
-    -d "$payload")
-  echo "$result" | jq -r '.id'
-  ;;
 # Export a project, optionally filtered to a single section
 --project)
   [[ -z "$2" ]] && {
@@ -278,13 +239,68 @@ case "$1" in
   fi
   ;;
 
+# Complete a task in Todoist
+--complete)
+  [[ -z "$2" ]] && {
+    echo "Specify a task ID" >&2
+    exit 1
+  }
+  curl -sf -X POST "https://api.todoist.com/api/v1/tasks/$2/close" \
+    -H "Authorization: Bearer $TODOIST_TOKEN"
+  echo "Task $2 completed"
+  ;;
+
+# Reopen a completed task in Todoist
+--reopen)
+  [[ -z "$2" ]] && {
+    echo "Specify a task ID" >&2
+    exit 1
+  }
+  curl -sf -X POST "https://api.todoist.com/api/v1/tasks/$2/reopen" \
+    -H "Authorization: Bearer $TODOIST_TOKEN"
+  echo "Task $2 reopened"
+  ;;
+
+# Add a new task with optional project and section
+--add)
+  [[ -z "$2" ]] && {
+    echo "Specify task content" >&2
+    exit 1
+  }
+  content="$2"
+  project_id=""
+  section_id=""
+
+  if [[ -n "$3" ]]; then
+    project_id=$(find_project_id "$3")
+  fi
+
+  if [[ -n "$4" && -n "$project_id" ]]; then
+    section_id=$(find_section_id "$project_id" "$4")
+  fi
+
+  payload=$(jq -n \
+    --arg content "$content" \
+    --arg pid "$project_id" \
+    --arg sid "$section_id" \
+    '{content: $content} +
+     (if $pid != "" then {project_id: $pid} else {} end) +
+     (if $sid != "" then {section_id: $sid} else {} end)')
+
+  result=$(curl -sf -X POST "https://api.todoist.com/api/v1/tasks" \
+    -H "Authorization: Bearer $TODOIST_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d "$payload")
+  echo "$result" | jq -r '.id'
+  ;;
+
 # Export all projects grouped by name
 "")
   write_md "$(build_md_grouped)"
   ;;
 
 *)
-  echo "Usage: $0 [--project NAME [SECTION] | --list-sections NAME | --list-section-tasks PROJECT SECTION]" >&2
+  echo "Usage: $0 [--project NAME [SECTION] | --list-projects | --list-sections NAME | --list-all-sections | --list-section-tasks PROJECT SECTION | --complete ID | --reopen ID | --add CONTENT [PROJECT] [SECTION]]" >&2
   exit 1
   ;;
 esac

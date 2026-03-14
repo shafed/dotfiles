@@ -26,6 +26,7 @@ vim.opt.mouse = "a"
 vim.opt.scrolloff = 8
 vim.opt.swapfile = false
 vim.opt.cursorline = true
+vim.opt.clipboard = ""
 
 vim.g.snacks_animate = false
 

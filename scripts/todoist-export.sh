@@ -30,7 +30,7 @@ PROJECTS=$(api_get projects | jq '.results // .')
 
 # Format a single task as a markdown checkbox line with optional due date and priority icon
 build_task_line() {
-  local content="$1" due="$2" priority="$3"
+  local content="$1" due="$2" priority="$3" id="$4"
   local icon=""
   case $priority in
   4) icon=" 🔴" ;;
@@ -39,7 +39,7 @@ build_task_line() {
   esac
   local due_str=""
   [[ -n "$due" && "$due" != "null" ]] && due_str=" \`$due\`"
-  echo "- [ ] ${content}${due_str}${icon}"
+  echo "- [ ] ${content}${due_str}${icon} <!-- todoist:$id -->"
 }
 
 # Build a task list for a single project, grouped by sections
@@ -63,7 +63,8 @@ build_md_filtered() {
       content=$(echo "$task" | jq -r '.content')
       due=$(echo "$task" | jq -r '.due.date // empty')
       priority=$(echo "$task" | jq -r '.priority')
-      lines+="$(build_task_line "$content" "$due" "$priority")\n"
+      id=$(echo "$task" | jq -r '.id')
+      lines+="$(build_task_line "$content" "$due" "$priority" "$id")\n"
     done < <(echo "$no_section_tasks" | jq -c '.[]')
   fi
 
@@ -84,7 +85,8 @@ build_md_filtered() {
       content=$(echo "$task" | jq -r '.content')
       due=$(echo "$task" | jq -r '.due.date // empty')
       priority=$(echo "$task" | jq -r '.priority')
-      lines+="  $(build_task_line "$content" "$due" "$priority")\n"
+      id=$(echo "$task" | jq -r '.id')
+      lines+="$(build_task_line "$content" "$due" "$priority" "$id")\n"
     done < <(echo "$section_tasks" | jq -c '.[]')
   done < <(echo "$sections" | jq -c '.[]')
 
@@ -110,7 +112,8 @@ build_md_grouped() {
       content=$(echo "$task" | jq -r '.content')
       due=$(echo "$task" | jq -r '.due.date // empty')
       priority=$(echo "$task" | jq -r '.priority')
-      lines+="  $(build_task_line "$content" "$due" "$priority")\n"
+      id=$(echo "$task" | jq -r '.id')
+      lines+="$(build_task_line "$content" "$due" "$priority" "$id")\n"
     done < <(echo "$project_tasks" | jq -c '.[]')
     lines+="\n"
   done < <(echo "$PROJECTS" | jq -c '.[]')
@@ -154,7 +157,8 @@ build_md_section() {
     content=$(echo "$task" | jq -r '.content')
     due=$(echo "$task" | jq -r '.due.date // empty')
     priority=$(echo "$task" | jq -r '.priority')
-    lines+="$(build_task_line "$content" "$due" "$priority")\n"
+    id=$(echo "$task" | jq -r '.id')
+    lines+="$(build_task_line "$content" "$due" "$priority" "$id")\n"
   done < <(echo "$TASKS" | jq -c --arg sid "$section_id" '.[] | select(.section_id == $sid)')
   echo -e "$lines"
 }
@@ -183,7 +187,9 @@ write_md() {
 
 # ── Entry point ───────────────────────────────────────────
 case "$1" in
-
+--list-projects)
+  echo "$PROJECTS" | jq -r '.[].name'
+  ;;
 # List sections of a project that have at least one task
 --list-sections)
   [[ -z "$2" ]] && {
@@ -208,7 +214,58 @@ case "$1" in
   echo "$TASKS" | jq -r --arg sid "$SID" \
     '.[] | select(.section_id == $sid) | "- [ ] " + .content'
   ;;
+--complete)
+  [[ -z "$2" ]] && {
+    echo "Specify a task ID" >&2
+    exit 1
+  }
+  curl -sf -X POST "https://api.todoist.com/api/v1/tasks/$2/close" \
+    -H "Authorization: Bearer $TODOIST_TOKEN"
+  echo "Task $2 completed"
+  ;;
+--reopen)
+  [[ -z "$2" ]] && {
+    echo "Specify a task ID" >&2
+    exit 1
+  }
+  curl -sf -X POST "https://api.todoist.com/api/v1/tasks/$2/reopen" \
+    -H "Authorization: Bearer $TODOIST_TOKEN"
+  echo "Task $2 reopened"
+  ;;
+--add)
+  [[ -z "$2" ]] && {
+    echo "Specify task content" >&2
+    exit 1
+  }
+  content="$2"
+  project_id=""
+  section_id=""
 
+  # Resolve project ID if provided
+  if [[ -n "$3" ]]; then
+    project_id=$(find_project_id "$3")
+  fi
+
+  # Resolve section ID if provided
+  if [[ -n "$4" && -n "$project_id" ]]; then
+    section_id=$(find_section_id "$project_id" "$4")
+  fi
+
+  # Build JSON payload
+  payload=$(jq -n \
+    --arg content "$content" \
+    --arg pid "$project_id" \
+    --arg sid "$section_id" \
+    '{content: $content} +
+     (if $pid != "" then {project_id: $pid} else {} end) +
+     (if $sid != "" then {section_id: $sid} else {} end)')
+
+  result=$(curl -sf -X POST "https://api.todoist.com/api/v1/tasks" \
+    -H "Authorization: Bearer $TODOIST_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d "$payload")
+  echo "$result" | jq -r '.id'
+  ;;
 # Export a project, optionally filtered to a single section
 --project)
   [[ -z "$2" ]] && {

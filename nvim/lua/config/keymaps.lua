@@ -3,7 +3,7 @@
 -- Add any additional keymaps here
 
 local wk = require("which-key")
-wk.add({ { mode = { "n" }, { "<leader>t", group = "[P]todo" }, { "<leader>l", group = "[P]Log" } } })
+wk.add({ { mode = { "n" }, { "<leader>t", group = "[P]todo/todoist" }, { "<leader>l", group = "[P]Log" } } })
 
 -- LazyGit Keymap
 if vim.fn.executable("lazygit") == 1 then
@@ -19,12 +19,12 @@ vim.keymap.set({ "n", "v" }, "gl", "$", { desc = "[P]go to the end of the line" 
 vim.keymap.set({ "n", "v", "i" }, "<M-q>", "<cmd>q!<cr>", { desc = "[P]Quit All" })
 vim.keymap.set({ "n", "v", "i" }, "<M-esc>", "<cmd>q!<cr>", { desc = "[P]Quit All" })
 
-vim.keymap.set({ "n", "v" }, "<leader>y", [["+y]], { desc = "[P]Yank to system clipboard" })
-vim.keymap.set({ "n", "v" }, "<leader>Y", [["+Y]], { desc = "[P]Yank line to system clipboard" })
-vim.keymap.set({ "n", "v" }, "<leader>p", [["+p]], { desc = "[P]Paste from system clipboard" })
-vim.keymap.set({ "n", "v" }, "<leader>d", [["+d]], { desc = "[P]Delete to system clipboard" })
-vim.keymap.set({ "n", "v" }, "<leader>D", [["+D]], { desc = "[P]Delete line to system clipboard" })
-
+-- vim.keymap.set({ "n", "v" }, "<leader>y", [["+y]], { desc = "[P]Yank to system clipboard" })
+-- vim.keymap.set({ "n", "v" }, "<leader>Y", [["+Y]], { desc = "[P]Yank line to system clipboard" })
+-- vim.keymap.set({ "n", "v" }, "<leader>p", [["+p]], { desc = "[P]Paste from system clipboard" })
+-- vim.keymap.set({ "n", "v" }, "<leader>d", [["+d]], { desc = "[P]Delete to system clipboard" })
+-- vim.keymap.set({ "n", "v" }, "<leader>D", [["+D]], { desc = "[P]Delete line to system clipboard" })
+--
 -- Paste unformatted text from Neovim
 if vim.g.simpler_scrollback ~= "deeznuts" then
   vim.keymap.set("v", "y", function()
@@ -528,7 +528,7 @@ end, { desc = "[P]Log Copy: workout table to clipboard" })
 vim.keymap.set("n", "<leader>lp", function()
   -- ===================== Customizable variables =====================
   -- NOTE: Path to the daily note creation script
-  local daily_note_script = vim.fn.expand("~/dotfiles/tmux/tools/prime/daily-notes.sh")
+  local daily_note_script = vim.fn.expand("~/dotfiles/scripts/daily-notes.sh")
   -- NOTE: Path to the daily note (adjust the pattern to match your structure)
   local daily_note_path = vim.fn.expand("~/obsidian/periodic/") .. os.date("%Y/%m-%b/%Y-%m-%d-%A") .. ".md"
   -- NOTE: Heading before which to insert content
@@ -885,6 +885,29 @@ vim.keymap.set("n", "<M-x>", function()
     chunk[1] = removeLabel(chunk[1])
     chunk[1] = insertLabelAfterBracket(chunk[1], "`untoggled`")
     updateBufferWithChunk(chunk)
+
+    -- Reopen task in Todoist if the line has a task ID
+    local task_id = nil
+    for _, l in ipairs(chunk) do
+      task_id = l:match("<!%-%- todoist:(%S+) %-%->")
+      if task_id then
+        break
+      end
+    end
+    if task_id then
+      vim.fn.jobstart("~/dotfiles/scripts/todoist-export.sh --reopen " .. task_id, {
+        on_exit = function(_, code)
+          vim.schedule(function()
+            if code == 0 then
+              vim.notify("Todoist: task reopened", vim.log.levels.INFO)
+            else
+              vim.notify("Todoist: error reopening task", vim.log.levels.ERROR)
+            end
+          end)
+        end,
+      })
+    end
+
     vim.notify("Untoggled", vim.log.levels.INFO)
   elseif has_untoggled_index then
     chunk[has_untoggled_index] =
@@ -893,15 +916,60 @@ vim.keymap.set("n", "<M-x>", function()
     chunk[1] = removeLabel(chunk[1])
     chunk[1] = insertLabelAfterBracket(chunk[1], "`" .. label_done .. " " .. timestamp .. "`")
     updateBufferWithChunk(chunk)
+
+    -- Complete task in Todoist if the line has a task ID
+    local task_id = nil
+    for _, l in ipairs(chunk) do
+      task_id = l:match("<!%-%- todoist:(%S+) %-%->")
+      if task_id then
+        break
+      end
+    end
+    if task_id then
+      vim.fn.jobstart("~/dotfiles/scripts/todoist-export.sh --complete " .. task_id, {
+        on_exit = function(_, code)
+          vim.schedule(function()
+            if code == 0 then
+              vim.notify("Todoist: task completed ✓", vim.log.levels.INFO)
+            else
+              vim.notify("Todoist: error completing task", vim.log.levels.ERROR)
+            end
+          end)
+        end,
+      })
+    end
+
     vim.notify("Completed", vim.log.levels.INFO)
   else
-    -- Save original window view before modifications
     local win = api.nvim_get_current_win()
     local view = api.nvim_win_call(win, function()
       return vim.fn.winsaveview()
     end)
     chunk[1] = bulletToX(chunk[1])
     chunk[1] = insertLabelAfterBracket(chunk[1], "`" .. label_done .. " " .. timestamp .. "`")
+
+    -- Complete task in Todoist if the line has a task ID
+    local task_id = nil
+    for _, l in ipairs(chunk) do
+      task_id = l:match("<!%-%- todoist:(%S+) %-%->")
+      if task_id then
+        break
+      end
+    end
+    if task_id then
+      vim.fn.jobstart("~/dotfiles/scripts/todoist-export.sh --complete " .. task_id, {
+        on_exit = function(_, code)
+          vim.schedule(function()
+            if code == 0 then
+              vim.notify("Todoist: task completed ✓", vim.log.levels.INFO)
+            else
+              vim.notify("Todoist: error completing task", vim.log.levels.ERROR)
+            end
+          end)
+        end,
+      })
+    end
+
     -- Remove chunk from the original lines
     for i = chunk_end, chunk_start, -1 do
       table.remove(lines, i + 1)
@@ -919,7 +987,6 @@ vim.keymap.set("n", "<M-x>", function()
         table.insert(lines, heading_index + 1, cLine)
         heading_index = heading_index + 1
       end
-      -- Remove any blank line right after newly inserted chunk
       local after_last_item = heading_index + 1
       if lines[after_last_item] == "" then
         table.remove(lines, after_last_item)
@@ -934,16 +1001,12 @@ vim.keymap.set("n", "<M-x>", function()
         table.remove(lines, after_last_item)
       end
     end
-    -- Update buffer content
     vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
     vim.notify("Completed", vim.log.levels.INFO)
-    -- Restore window view to preserve scroll position
     api.nvim_win_call(win, function()
       vim.fn.winrestview(view)
     end)
   end
-  -- Write changes and restore view to preserve folds
-  -- "Update" saves only if the buffer has been modified since the last save
   vim.cmd("silent update")
   vim.cmd("loadview")
 end, { desc = "[P]Toggle task and move it to 'done'" })
@@ -985,3 +1048,155 @@ vim.keymap.set({ "n", "i" }, "<M-l>", function()
   -- "- [ ] " is 6 characters
   vim.api.nvim_win_set_cursor(0, { row, 6 })
 end, { desc = "Convert bullet to a task or insert new task bullet" })
+
+local function todoist_export(args)
+  vim.fn.jobstart("~/dotfiles/scripts/todoist-export.sh " .. args, {
+    on_exit = function(_, code)
+      if code == 0 then
+        vim.schedule(function()
+          vim.cmd("edit")
+          vim.notify("Todoist: готово", vim.log.levels.INFO)
+        end)
+      else
+        vim.schedule(function()
+          vim.notify("Todoist: ошибка", vim.log.levels.ERROR)
+        end)
+      end
+    end,
+  })
+end
+
+vim.keymap.set("n", "<leader>ti", function()
+  todoist_export("--project Inbox")
+end, { desc = "[P]Todoist: export Inbox" })
+vim.keymap.set("n", "<leader>ta", function()
+  todoist_export("")
+end, { desc = "[P]Todoist: export all" })
+vim.keymap.set("n", "<leader>tu", function()
+  todoist_export("--project University")
+end, { desc = "[P]Todoist: export University" })
+
+vim.keymap.set("n", "<leader>ts", function()
+  -- Cache for section names and their tasks
+  local sections = {}
+  local section_tasks = {}
+
+  -- Fetch sections that have at least one task
+  vim.fn.jobstart("~/dotfiles/scripts/todoist-export.sh --list-sections University", {
+    stdout_buffered = true,
+    on_stdout = function(_, data)
+      for _, line in ipairs(data) do
+        if line ~= "" then
+          table.insert(sections, line)
+        end
+      end
+    end,
+    on_exit = function()
+      vim.schedule(function()
+        if #sections == 0 then
+          vim.notify("Todoist: no sections found", vim.log.levels.WARN)
+          return
+        end
+
+        Snacks.picker.pick({
+          title = "University sections",
+          mode = "normal",
+
+          -- Build picker items from section names
+          finder = function()
+            return vim.tbl_map(function(s)
+              return { text = s, label = s }
+            end, sections)
+          end,
+
+          -- Force normal mode on open
+          on_show = function()
+            vim.cmd.stopinsert()
+          end,
+
+          -- Preview tasks for the currently highlighted section
+          preview = function(ctx)
+            local item = ctx.item
+            if not item then
+              return
+            end
+
+            -- Return cached tasks if already fetched
+            if section_tasks[item.text] then
+              ctx.preview:reset()
+              ctx.preview:set_lines(section_tasks[item.text])
+              return
+            end
+
+            -- Show loading indicator while fetching
+            ctx.preview:reset()
+            ctx.preview:set_lines({ "Loading..." })
+
+            -- Fetch tasks for this section asynchronously
+            vim.fn.jobstart(
+              "~/dotfiles/scripts/todoist-export.sh --list-section-tasks University " .. vim.fn.shellescape(item.text),
+              {
+                stdout_buffered = true,
+                on_stdout = function(_, data)
+                  -- Cache the result, filtering out empty lines
+                  section_tasks[item.text] = vim.tbl_filter(function(l)
+                    return l ~= ""
+                  end, data)
+                end,
+                on_exit = function()
+                  vim.schedule(function()
+                    ctx.preview:reset()
+                    ctx.preview:set_lines(section_tasks[item.text] or {})
+                  end)
+                end,
+              }
+            )
+          end,
+
+          -- Export selected section and reload the buffer
+          confirm = function(picker, item)
+            picker:close()
+            if item then
+              todoist_export("--project University " .. vim.fn.shellescape(item.text))
+            end
+          end,
+        })
+      end)
+    end,
+  })
+end, { desc = "Todoist: export University section" })
+
+vim.keymap.set("n", "<leader>tn", function()
+  local line = vim.api.nvim_get_current_line()
+  -- Strip markdown checkbox prefix if present
+  local content = line:gsub("^%s*%- %[[ x]%]%s*", ""):gsub("^%s*%-%s*", ""):gsub("^%s+", "")
+
+  if content == "" then
+    vim.notify("Todoist: empty line", vim.log.levels.WARN)
+    return
+  end
+
+  vim.fn.jobstart("~/dotfiles/scripts/todoist-export.sh --add " .. vim.fn.shellescape(content), {
+    stdout_buffered = true,
+    on_stdout = function(_, data)
+      local id = data[1]
+      if id and id ~= "" then
+        vim.schedule(function()
+          -- Append the task ID as a comment to the current line
+          local current = vim.api.nvim_get_current_line()
+          if not current:match("<!%-%- todoist:") then
+            vim.api.nvim_set_current_line(current .. " <!-- todoist:" .. id .. " -->")
+          end
+          vim.notify("Todoist: task added ✓", vim.log.levels.INFO)
+        end)
+      end
+    end,
+    on_exit = function(_, code)
+      vim.schedule(function()
+        if code ~= 0 then
+          vim.notify("Todoist: error adding task", vim.log.levels.ERROR)
+        end
+      end)
+    end,
+  })
+end, { desc = "Todoist: add current line as task" })

@@ -193,14 +193,11 @@ case "$1" in
 # List sections of a project that have at least one task
 --list-sections)
   [[ -z "$2" ]] && {
-    echo "Specify a project name" >&2
+    echo "Specify a project" >&2
     exit 1
   }
   PID=$(find_project_id "$2")
-  sections=$(api_get "sections?project_id=$PID" | jq '.results // .')
-  tasks_in_project=$(echo "$TASKS" | jq --arg pid "$PID" '[.[] | select(.project_id == $pid)]')
-  echo "$sections" | jq -r --argjson tasks "$tasks_in_project" \
-    '.[] | select(.id as $sid | $tasks | any(.section_id == $sid)) | .name'
+  api_get "sections?project_id=$PID" | jq -r '(.results // .) | .[].name'
   ;;
 
 # List tasks in a specific section (used for picker preview)

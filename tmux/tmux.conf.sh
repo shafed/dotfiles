@@ -2,7 +2,7 @@ unbind r
 bind r source-file ~/.tmux.conf
 
 tmux_sessionizer="~/dotfiles/tmux/tools/prime/tmux-sessionizer.sh"
-daily_note="~/dotfiles/tmux/tools/prime/daily-notes.sh"
+daily_note="~/dotfiles/scripts/daily-notes.sh"
 
 unbind C-t
 bind-key -r C-t run-shell "$tmux_sessionizer ~/obsidian"

@@ -42,6 +42,26 @@ build_task_line() {
   echo "- [ ] ${content}${due_str}${icon} <!-- todoist:$id -->"
 }
 
+# Recursively build task and its subtasks with increasing indent
+build_task_recursive() {
+  local task_id="$1" indent="$2"
+  local task
+  task=$(echo "$TASKS" | jq -c --arg id "$task_id" '.[] | select(.id == $id)')
+
+  local content due priority id
+  content=$(echo "$task" | jq -r '.content')
+  due=$(echo "$task" | jq -r '.due.date // empty')
+  priority=$(echo "$task" | jq -r '.priority')
+  id=$(echo "$task" | jq -r '.id')
+
+  echo "${indent}$(build_task_line "$content" "$due" "$priority" "$id")"
+
+  # Find and render subtasks recursively
+  while IFS= read -r subtask_id; do
+    build_task_recursive "$subtask_id" "${indent}  "
+  done < <(echo "$TASKS" | jq -r --arg pid "$task_id" \
+    '.[] | select(.parent_id == $pid) | .id')
+}
 # Build a task list for a single project, grouped by sections
 build_md_filtered() {
   local project_id="$1"
@@ -53,14 +73,9 @@ build_md_filtered() {
     '[.[] | select(.project_id == $pid and .section_id == null)]')
 
   if [[ $(echo "$no_section_tasks" | jq 'length') -gt 0 ]]; then
-    while IFS= read -r task; do
-      local content due priority id
-      content=$(echo "$task" | jq -r '.content')
-      due=$(echo "$task" | jq -r '.due.date // empty')
-      priority=$(echo "$task" | jq -r '.priority')
-      id=$(echo "$task" | jq -r '.id')
-      lines+="$(build_task_line "$content" "$due" "$priority" "$id")\n"
-    done < <(echo "$no_section_tasks" | jq -c '.[]')
+    while IFS= read -r id; do
+      lines+="$(build_task_recursive "$id" "")\n"
+    done < <(echo "$no_section_tasks" | jq -r '.[] | select(.parent_id == null) | .id')
   fi
 
   # Tasks grouped under their section as a nested bullet
@@ -75,14 +90,9 @@ build_md_filtered() {
     [[ $(echo "$section_tasks" | jq 'length') -eq 0 ]] && continue
 
     lines+="- **$sname**\n"
-    while IFS= read -r task; do
-      local content due priority id
-      content=$(echo "$task" | jq -r '.content')
-      due=$(echo "$task" | jq -r '.due.date // empty')
-      priority=$(echo "$task" | jq -r '.priority')
-      id=$(echo "$task" | jq -r '.id')
-      lines+="  $(build_task_line "$content" "$due" "$priority" "$id")\n"
-    done < <(echo "$section_tasks" | jq -c '.[]')
+    while IFS= read -r id; do
+      lines+="$(build_task_recursive "$id" "  ")\n"
+    done < <(echo "$section_tasks" | jq -r '.[] | select(.parent_id == null) | .id')
   done < <(echo "$SECTIONS" | jq -c --arg pid "$project_id" '[.[] | select(.project_id == $pid)] | .[]')
 
   echo -e "$lines"
@@ -102,14 +112,9 @@ build_md_grouped() {
     [[ $(echo "$project_tasks" | jq 'length') -eq 0 ]] && continue
 
     lines+="- **$pname**\n"
-    while IFS= read -r task; do
-      local content due priority id
-      content=$(echo "$task" | jq -r '.content')
-      due=$(echo "$task" | jq -r '.due.date // empty')
-      priority=$(echo "$task" | jq -r '.priority')
-      id=$(echo "$task" | jq -r '.id')
-      lines+="  $(build_task_line "$content" "$due" "$priority" "$id")\n"
-    done < <(echo "$project_tasks" | jq -c '.[]')
+    while IFS= read -r id; do
+      lines+="$(build_task_recursive "$id" "  ")\n"
+    done < <(echo "$project_tasks" | jq -r '.[] | select(.parent_id == null) | .id')
     lines+="\n"
   done < <(echo "$PROJECTS" | jq -c '.[]')
   echo -e "$lines"
@@ -148,14 +153,9 @@ find_section_id() {
 build_md_section() {
   local section_id="$1"
   local lines=""
-  while IFS= read -r task; do
-    local content due priority id
-    content=$(echo "$task" | jq -r '.content')
-    due=$(echo "$task" | jq -r '.due.date // empty')
-    priority=$(echo "$task" | jq -r '.priority')
-    id=$(echo "$task" | jq -r '.id')
-    lines+="$(build_task_line "$content" "$due" "$priority" "$id")\n"
-  done < <(echo "$TASKS" | jq -c --arg sid "$section_id" '.[] | select(.section_id == $sid)')
+  while IFS= read -r id; do
+    lines+="$(build_task_recursive "$id" "")\n"
+  done < <(echo "$TASKS" | jq -r --arg sid "$section_id" '.[] | select(.section_id == $sid and .parent_id == null) | .id')
   echo -e "$lines"
 }
 

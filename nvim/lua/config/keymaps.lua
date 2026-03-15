@@ -1208,11 +1208,10 @@ vim.keymap.set("n", "<leader>tn", function()
         end)
       end
     end,
-    on_exit = function(_, code)
+    on_exit = function()
       vim.schedule(function()
-        if code ~= 0 then
-          vim.notify("Todoist: error adding task", vim.log.levels.ERROR)
-        end
+        ctx.preview:reset()
+        ctx.preview:set_lines(section_tasks[item.text] or { "No tasks" })
       end)
     end,
   })

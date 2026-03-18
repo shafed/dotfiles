@@ -201,11 +201,11 @@ return {
 
   s({ trig = "mm", name = "Inline display", snippetType = "autosnippet" }, {
     f(function()
-      return vim.bo.filetype == "markdown" and "$" or "\\( "
+      return vim.bo.filetype == "markdown" and "$" or "\\("
     end),
     d(1, get_visual),
     f(function()
-      return vim.bo.filetype == "markdown" and "$" or " \\)"
+      return vim.bo.filetype == "markdown" and "$" or "\\)"
     end),
   }),
 

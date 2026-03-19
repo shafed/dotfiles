@@ -310,7 +310,7 @@ return {
     { trig = "mirea_report", dscr = "MIREA report with titlepage" },
     fmta(
       [[
-\documentclass[a4paper,12pt]{report}
+\documentclass[a4paper,12pt]{article}
 
 \usepackage{fontspec}
 \setmainfont{Times New Roman}

@@ -307,10 +307,11 @@ return {
   ),
 
   s(
-    { trig = "mirea_report", dscr = "MIREA Report" },
+    { trig = "mirea_report", dscr = "MIREA report with titlepage" },
     fmta(
       [[
 \documentclass[a4paper,12pt]{report}
+
 \usepackage{fontspec}
 \setmainfont{Times New Roman}
 \usepackage[russian]{babel}
@@ -319,49 +320,108 @@ return {
 \geometry{left=3cm,right=1.5cm,top=2cm,bottom=2cm}
 \usepackage{setspace}
 \onehalfspacing
-\linespread{1.5}
 \setlength{\parindent}{1.25cm}
 
-\title{%
-  \begin{center}
-    \includegraphics{gerb.png}
-  \end{center}
-  {\large МИНИСТЕРСТВО НАУКИ И ВЫСШЕГО ОБРАЗОВАНИЯ РОССИЙСКОЙ ФЕДЕРАЦИИ}\\[0.3cm]
-  {\normalsize Федеральное государственное бюджетное образовательное учреждение высшего образования}\\[0.2cm]
-  {\large \textbf{«МИРЭА --- Российский технологический университет»}}\\[0.1cm]
-  {\normalsize РТУ МИРЭА}\\[0.3cm]
-  {\normalsize Институт искусственного интеллекта (ИИИ)}\\
-  {\normalsize Кафедра Промышленной информатики (ПИ)}\\[1cm]
-  {\LARGE \textbf{ОТЧЕТ}}\\[0.2cm]
-  {\Large \textbf{ПО ПРАКТИЧЕСКОЙ РАБОТЕ № <>}}\\[0.4cm]
-  {\large \textbf{по дисциплине «Информатика»}}
-}
-\author{%
-  \begin{tabular}{ll}
-    Выполнил студент группы & КВБО-11-25 \\
-    Принял ассистент        & Беднов Г.А. \\
-  \end{tabular}
-}
-\date{%
-  Практическую работу выполнил «<>» <> 2026 г.\\[0.3cm]
-  «Зачтено» «»  2026 г.\\[1cm]
-  Москва 2026
+\begin{document}
+
+\begin{titlepage}
+\thispagestyle{empty}
+\begin{center}
+
+\includegraphics[width=0.18\textwidth]{assets/gerb.png}
+
+\vspace{0.5cm}
+
+{\small
+МИНИСТЕРСТВО НАУКИ И ВЫСШЕГО ОБРАЗОВАНИЯ\\
+РОССИЙСКОЙ ФЕДЕРАЦИИ
 }
 
-\begin{document}
-\maketitle
+\vspace{0.3cm}
+
+{\small
+Федеральное государственное бюджетное образовательное учреждение\\
+высшего образования
+}
+
+\vspace{0.3cm}
+
+{\large \textbf{«МИРЭА --- Российский технологический университет»}}
+
+{\normalsize РТУ МИРЭА}
+
+{\normalsize Институт искусственного интеллекта (ИИИ)}\\
+{\normalsize Кафедра промышленной информатики (ПИ)}
+
+\vspace{2cm}
+
+{\LARGE \textbf{ОТЧЁТ}}
+
+\vspace{0.3cm}
+
+{\Large \textbf{ПО ПРАКТИЧЕСКОЙ РАБОТЕ № <>}}
+
+\vspace{0.4cm}
+
+{\large по дисциплине «Информатика»}
+
+\vspace{2.5cm}
+
+\begin{tabular}{ll}
+Выполнил студент группы КВБО-11-25 & Шапаренко Ф.А. \\
+Принял ассистент: & Беднов Г.А. \\
+\end{tabular}
+
+\vfill
+
+Практическую работу выполнил: «<>» <> <> г.\\
+«Зачтено» \rule{1cm}{0.4pt} <> г.
+
+\vspace{1cm}
+
+Москва <>
+
+\end{center}
+\end{titlepage}
 
 \noindent\textbf{Тема:} <>\\
 \noindent\textbf{Цель работы:} <>
 
 \end{document}
-      ]],
+    ]],
       {
-        i(1, "№"), -- 1-й <> : номер работы
-        i(2, "дд"), -- 2-й <> : день
-        i(3, "месяц"), -- 3-й <> : месяц
-        i(4, "тема"), -- 4-й <> : тема
-        i(5, "цель"), -- 5-й <> : цель работы
+        i(1, "№"),
+        f(function()
+          return os.date("%d")
+        end),
+        f(function()
+          local months = {
+            "января",
+            "февраля",
+            "марта",
+            "апреля",
+            "мая",
+            "июня",
+            "июля",
+            "августа",
+            "сентября",
+            "октября",
+            "ноября",
+            "декабря",
+          }
+          return months[tonumber(os.date("%m"))]
+        end),
+        f(function()
+          return os.date("%Y")
+        end),
+        f(function()
+          return os.date("%Y")
+        end),
+        f(function()
+          return os.date("%Y")
+        end),
+        i(2, "тема"),
+        i(3, "цель"),
       }
     )
   ),

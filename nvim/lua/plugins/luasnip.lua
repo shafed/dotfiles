@@ -1,9 +1,13 @@
 return {
   "L3MON4D3/LuaSnip",
   enabled = true,
+  dependencies = {
+    "rafamadriz/friendly-snippets",
+  },
   opts = function(_, opts)
     opts.enable_autosnippets = true
     require("luasnip.loaders.from_lua").load({ paths = "~/.config/nvim/snippets" }) -- load custom snippets
+    require("luasnip.loaders.from_vscode").lazy_load()
     require("luasnip").filetype_extend("markdown", { "tex" }) -- extend .tex snippets to .md
 
     local ls = require("luasnip")

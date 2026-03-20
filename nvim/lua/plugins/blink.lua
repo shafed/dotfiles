@@ -8,12 +8,11 @@ return {
     local trigger_text = ";"
 
     -- No prefix for .tex
-    local no_prefix_filetypes = { "tex" }
-
-    local function is_no_prefix_ft()
+    local prefix_filetypes = { "markdown" }
+    local function needs_prefix()
       local ft = vim.bo.filetype
-      for _, excluded in ipairs(no_prefix_filetypes) do
-        if ft == excluded then
+      for _, ft_with_prefix in ipairs(prefix_filetypes) do
+        if ft == ft_with_prefix then
           return true
         end
       end
@@ -68,7 +67,7 @@ return {
           module = "blink.cmp.sources.snippets",
           score_offset = 85,
           should_show_items = function()
-            if is_no_prefix_ft() then
+            if not needs_prefix() then
               return true
             end
             local col = vim.api.nvim_win_get_cursor(0)[2]
@@ -76,7 +75,7 @@ return {
             return before_cursor:match(trigger_text .. "%w*$") ~= nil
           end,
           transform_items = function(_, items)
-            if is_no_prefix_ft() then
+            if not needs_prefix() then
               return items
             end
             local line = vim.api.nvim_get_current_line()

@@ -199,26 +199,18 @@ return {
 
   -- Display environments and alignment structures
 
-  s({ trig = "mm", name = "Inline display", snippetType = "autosnippet" }, {
-    f(function()
-      return vim.bo.filetype == "markdown" and "$" or "\\("
-    end),
+  s({ trig = "mk", name = "Inline display", snippetType = "autosnippet" }, {
+    t("$"),
     d(1, get_visual),
-    f(function()
-      return vim.bo.filetype == "markdown" and "$" or "\\)"
-    end),
+    t("$"),
   }),
 
   s({ trig = "dm", name = "Multiline display", snippetType = "autosnippet" }, {
-    f(function()
-      return vim.bo.filetype == "markdown" and "$$" or "\\["
-    end),
+    t("$$"),
     t({ "", "\t" }),
     d(1, get_visual),
     t({ "", "" }),
-    f(function()
-      return vim.bo.filetype == "markdown" and "$$" or "\\]"
-    end),
+    t("$$"),
   }),
 
   s({ trig = "en", name = "Generic environment" }, {

@@ -48,8 +48,8 @@ concurrent-tap-hold yes
   azen (cmd firefox)
   sshot (cmd flameshot gui --clipboard)
   sw (cmd hyprctl switchxkblayout kanata next)
-  k-navi (fork up C-tab (lctl rctl))
-  j-navi (fork down C-S-tab (lctl rctl))
+  k-navi (fork up C-S-tab (lctl rctl))
+  j-navi (fork down C-tab (lctl rctl))
 )
 
 (defsrc )

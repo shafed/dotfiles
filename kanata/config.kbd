@@ -48,6 +48,8 @@ concurrent-tap-hold yes
   azen (cmd firefox)
   sshot (cmd flameshot gui --clipboard)
   sw (cmd hyprctl switchxkblayout kanata next)
+  k-navi (fork up C-tab (lctl rctl))
+  j-navi (fork down C-S-tab (lctl rctl))
 )
 
 (defsrc )
@@ -121,7 +123,7 @@ concurrent-tap-hold yes
 
 (deflayermap (navi)
   ;; arrow keys
-  h lft j down k up l right
+  h lft j @j-navi k @k-navi l right
   ;; words navigation
   w C-right b C-lft
 

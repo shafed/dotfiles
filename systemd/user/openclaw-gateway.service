@@ -1,0 +1,25 @@
+[Unit]
+Description=OpenClaw Gateway (v2026.3.13)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/usr/bin/node /home/shafed/.npm-global/lib/node_modules/openclaw/dist/index.js gateway --port 18789
+Restart=always
+RestartSec=5
+TimeoutStopSec=30
+TimeoutStartSec=30
+SuccessExitStatus=0 143
+KillMode=control-group
+Environment=HOME=/home/shafed
+Environment=TMPDIR=/tmp
+Environment=PATH=/home/shafed/.local/bin:/home/shafed/.npm-global/bin:/home/shafed/bin:/home/shafed/.volta/bin:/home/shafed/.asdf/shims:/home/shafed/.bun/bin:/home/shafed/.nvm/current/bin:/home/shafed/.fnm/current/bin:/home/shafed/.local/share/pnpm:/usr/local/bin:/usr/bin:/bin
+Environment=OPENCLAW_GATEWAY_PORT=18789
+Environment=OPENCLAW_SYSTEMD_UNIT=openclaw-gateway.service
+Environment="OPENCLAW_WINDOWS_TASK_NAME=OpenClaw Gateway"
+Environment=OPENCLAW_SERVICE_MARKER=openclaw
+Environment=OPENCLAW_SERVICE_KIND=gateway
+Environment=OPENCLAW_SERVICE_VERSION=2026.3.13
+
+[Install]
+WantedBy=default.target

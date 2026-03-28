@@ -1,5 +1,16 @@
 vim.keymap.set("x", "p", '"_dP') -- Don't copy visual in clipboard
 
+-- Copy to clipboard
+vim.keymap.set({ "n", "v" }, "<leader>y", '"+y')
+vim.keymap.set("n", "<leader>Y", '"+Y')
+
+-- Paste from clipboard
+vim.keymap.set({ "n", "v" }, "<leader>p", '"+p')
+vim.keymap.set({ "n", "v" }, "<leader>P", '"+P')
+
+-- Delete to black hole
+vim.keymap.set({ "n", "v" }, "<leader>d", '"_d')
+
 local wk = require("which-key")
 wk.add({ { mode = { "n" }, { "<leader>t", group = "[P]todo/todoist" }, { "<leader>l", group = "[P]Log" } } })
 
@@ -16,65 +27,6 @@ vim.keymap.set({ "n", "v" }, "gl", "$", { desc = "[P]go to the end of the line" 
 -- Fast quit
 vim.keymap.set({ "n", "v", "i" }, "<M-q>", "<cmd>q!<cr>", { desc = "[P]Quit All" })
 vim.keymap.set({ "n", "v", "i" }, "<M-esc>", "<cmd>q!<cr>", { desc = "[P]Quit All" })
-
--- vim.keymap.set({ "n", "v" }, "<leader>y", [["+y]], { desc = "[P]Yank to system clipboard" })
--- vim.keymap.set({ "n", "v" }, "<leader>Y", [["+Y]], { desc = "[P]Yank line to system clipboard" })
--- vim.keymap.set({ "n", "v" }, "<leader>p", [["+p]], { desc = "[P]Paste from system clipboard" })
--- vim.keymap.set({ "n", "v" }, "<leader>d", [["+d]], { desc = "[P]Delete to system clipboard" })
--- vim.keymap.set({ "n", "v" }, "<leader>D", [["+D]], { desc = "[P]Delete line to system clipboard" })
---
--- Paste unformatted text from Neovim
-if vim.g.simpler_scrollback ~= "deeznuts" then
-  vim.keymap.set("v", "y", function()
-    -- Check if the current buffer's filetype is markdown
-    if vim.bo.filetype ~= "markdown" then
-      -- Not a Markdown file, copy the selection to the system clipboard
-      vim.cmd('normal! "+y')
-      -- Optionally, notify the user
-      vim.notify("Yanked to system clipboard", vim.log.levels.INFO)
-      return
-    end
-    -- Yank the selected text into register 'z' without affecting the unnamed register
-    vim.cmd('silent! normal! "zy')
-    -- Get the yanked text from register 'z'
-    local text = vim.fn.getreg("z")
-    -- Path to a temporary file (uses a unique temporary file name)
-    local temp_file = vim.fn.tempname() .. ".md"
-    -- Write the selected text to the temporary file
-    local file = io.open(temp_file, "w")
-    if file == nil then
-      vim.notify("Error: Cannot write to temporary file.", vim.log.levels.ERROR)
-      return
-    end
-    file:write(text)
-    file:close()
-    -- Run Prettier on the temporary file to format it
-    -- Adding > /dev/null 2>&1' because if the command produces output, I see that
-    -- in the neovim buffer
-    local cmd = 'prettier --prose-wrap never --write "' .. temp_file .. '" > /dev/null 2>&1'
-    local result = os.execute(cmd)
-    if result ~= 0 then
-      vim.notify("Error: Prettier formatting failed.", vim.log.levels.ERROR)
-      os.remove(temp_file)
-      return
-    end
-    -- Read the formatted text from the temporary file
-    file = io.open(temp_file, "r")
-    if file == nil then
-      vim.notify("Error: Cannot read from temporary file.", vim.log.levels.ERROR)
-      os.remove(temp_file)
-      return
-    end
-    local formatted_text = file:read("*all")
-    file:close()
-    -- Copy the formatted text to the system clipboard
-    vim.fn.setreg("+", formatted_text)
-    -- Delete the temporary file
-    os.remove(temp_file)
-    -- Notify the user
-    vim.notify("yanked markdown with --prose-wrap never", vim.log.levels.INFO)
-  end, { desc = "[P]Copy selection formatted with Prettier", noremap = true, silent = true })
-end
 
 -------------------------------------------------------------------------------
 --                           Folding section

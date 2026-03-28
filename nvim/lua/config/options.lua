@@ -28,6 +28,16 @@ vim.opt.swapfile = false
 vim.opt.cursorline = true
 vim.opt.autochdir = true
 
+-- убрать clipboard из постоянной синхронизации
+vim.opt.clipboard = ""
+
+-- при потере фокуса — скопировать последний yank в систему
+vim.api.nvim_create_autocmd("FocusLost", {
+  callback = function()
+    vim.fn.setreg("+", vim.fn.getreg('"'))
+  end,
+})
+
 vim.g.snacks_animate = false
 
 vim.opt.conceallevel = 2

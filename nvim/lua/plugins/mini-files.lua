@@ -67,6 +67,7 @@ return {
           vim.notify("No file or directory selected", vim.log.levels.WARN)
         end
       end,
+      ft = "minifiles",
       desc = "Copy file/directory to clipboard",
     },
   },

@@ -26,7 +26,6 @@ vim.opt.mouse = "a"
 vim.opt.scrolloff = 8
 vim.opt.swapfile = false
 vim.opt.cursorline = true
-vim.opt.autochdir = true
 
 -- убрать clipboard из постоянной синхронизации
 vim.opt.clipboard = ""

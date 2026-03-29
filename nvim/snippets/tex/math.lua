@@ -10,7 +10,7 @@ local r = ls.restore_node
 
 local in_mathzone = function()
   local ft = vim.bo.filetype
-  if ft == "markdown" or ft == "quarto" then
+  if ft == "markdown" or ft == "tex" then
     local node = vim.treesitter.get_node({ ignore_injections = false })
     while node do
       local t = node:type()

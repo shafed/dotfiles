@@ -32,6 +32,7 @@ bind-key j select-pane -D
 bind-key k select-pane -U
 bind-key l select-pane -R
 
+set-window-option -g mode-keys vi # vim mode
 set-option -g status-position top
 set -gq allow-passthrough on
 set -g visual-activity off

@@ -199,7 +199,7 @@ return {
 
   -- Display environments and alignment structures
 
-  s({ trig = "mk", name = "Inline display", snippetType = "autosnippet" }, {
+  s({ trig = "mm", name = "Inline display", snippetType = "autosnippet" }, {
     t("$"),
     d(1, get_visual),
     t("$"),

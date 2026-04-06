@@ -77,8 +77,8 @@ concurrent-tap-hold yes
 
  ;; other
  caps (tap-hold $tap-time $hold-time esc (layer-toggle navi))
- bspc XX
- ret XX
+ bspc XX 
+ ret (tap-hold $tap-time $hold-time XX (layer-switch normal)) 
  lsft @sw
  rsft @sw
 
@@ -140,8 +140,19 @@ concurrent-tap-hold yes
 ;; (; l) rsft $chord-time first-release()
 (d f) rsft $chord-time first-release()
 (j k) rsft $chord-time first-release()
+(lsft rsft) (layer-switch base) $chord-time first-release()
 )
 
 (defoverrides
 (rctl w) (rctl bspc)
+)
+
+(deflayermap (normal)
+  lsft lsft
+  rsft rsft
+  lalt lalt
+  ralt ralt
+  bspc bspc
+  ret ret
+  caps caps
 )

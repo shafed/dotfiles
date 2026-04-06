@@ -219,3 +219,4 @@ alias pulldeez='echo "Pulling latest changes, please wait..."; (cd ~/dotfiles &&
 alias sioyek="LIBGL_ALWAYS_SOFTWARE=1 sioyek"
 
 export TODOIST_API_TOKEN="f3736efb85c6f5c726090bb92df83fa9b07a6b19"
+alias copyq='QT_QPA_PLATFORM=xcb copyq'

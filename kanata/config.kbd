@@ -50,6 +50,10 @@ concurrent-tap-hold yes
   sw (cmd hyprctl switchxkblayout kanata next)
   k-navi (fork up C-S-tab (lctl rctl))
   j-navi (fork down C-tab (lctl rctl))
+  sw-lalt (switch ;; language switcher in normal layer
+    ((input real lalt)) @sw break
+    () lsft break
+  )
 )
 
 (defsrc )
@@ -149,7 +153,7 @@ concurrent-tap-hold yes
 )
 
 (deflayermap (normal)
-  lsft lsft
+  lsft @sw-lalt
   rsft rsft
   lalt lalt
   ralt ralt

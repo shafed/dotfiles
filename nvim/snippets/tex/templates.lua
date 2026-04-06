@@ -315,7 +315,7 @@ return {
 \usepackage{fontspec}
 \setmainfont{Times New Roman}
 \usepackage[russian]{babel}
-\usepackage{graphicx}
+\usepackage{graphicx, float, url}
 \usepackage{geometry}
 \geometry{left=3cm,right=1.5cm,top=2cm,bottom=2cm}
 \usepackage{setspace}

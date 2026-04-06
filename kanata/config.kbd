@@ -78,12 +78,13 @@ concurrent-tap-hold yes
  ;; other
  caps (tap-hold $tap-time $hold-time esc (layer-toggle navi))
  bspc XX 
- ret (tap-hold $tap-time $hold-time XX (layer-switch normal)) 
+ ret (tap-hold $tap-time 600 XX (layer-switch normal)) ;; go to normal layer
  lsft @sw
  rsft @sw
+ w (fork (multi w @.tp) bspc (lctl rctl))
 
  ;; define each letter as typing-layer trigger
- q (multi q @.tp) w (multi w @.tp) e (multi e @.tp) r (multi r @.tp) t (multi t @.tp) y (multi y @.tp) u (multi u @.tp) i (multi i @.tp) o (multi o @.tp) p (multi p @.tp) g (multi g @.tp) h (multi h @.tp) n (multi n @.tp) m (multi m @.tp)
+ q (multi q @.tp) e (multi e @.tp) r (multi r @.tp) t (multi t @.tp) y (multi y @.tp) u (multi u @.tp) i (multi i @.tp) o (multi o @.tp) p (multi p @.tp) g (multi g @.tp) h (multi h @.tp) n (multi n @.tp) m (multi m @.tp)
 )
 
 (deflayermap (typing) 
@@ -144,7 +145,7 @@ concurrent-tap-hold yes
 )
 
 (defoverrides
-(rctl w) (rctl bspc)
+;; (rctl w) (rctl bspc)
 )
 
 (deflayermap (normal)
@@ -153,6 +154,6 @@ concurrent-tap-hold yes
   lalt lalt
   ralt ralt
   bspc bspc
-  ret ret
+  ret (tap-hold $tap-time 600 ret (layer-switch base)) 
   caps caps
 )

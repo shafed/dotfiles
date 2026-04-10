@@ -892,7 +892,7 @@ vim.keymap.set("n", "<M-x>", function()
     -- Reopen task in Todoist if the line has a task ID
     local task_id = nil
     for _, l in ipairs(chunk) do
-      task_id = l:match("<!%-%- todoist:(%S+) %-%->")
+      task_id = l:match("<!%-%- id:(%S+) %-%->")
       if task_id then
         break
       end

@@ -1,6 +1,7 @@
 {
   "extras": [
     "lazyvim.plugins.extras.coding.luasnip",
+    "lazyvim.plugins.extras.dap.core",
     "lazyvim.plugins.extras.editor.mini-files",
     "lazyvim.plugins.extras.lang.python"
   ],

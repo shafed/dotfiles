@@ -70,5 +70,21 @@ return {
       ft = "minifiles",
       desc = "Copy file/directory to clipboard",
     },
+
+    {
+      "<leader>o",
+      function()
+        local mini_files = require("mini.files")
+        local curr_entry = mini_files.get_fs_entry()
+        if curr_entry then
+          vim.system({ "xdg-open", curr_entry.path }, { detach = true })
+        else
+          vim.notify("No file or directory selected", vim.log.levels.WARN)
+        end
+      end,
+      noremap = true,
+      silent = true,
+      desc = "[P]Open with default app",
+    },
   },
 }

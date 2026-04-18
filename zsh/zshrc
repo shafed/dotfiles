@@ -77,6 +77,26 @@ plugins=(
   zsh-vi-mode
 )
 
+# Auto-install Oh My Zsh and custom plugins if missing
+if [ ! -d "$ZSH" ]; then
+  echo "Installing Oh My Zsh..."
+  RUNZSH=no KEEP_ZSHRC=yes sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+fi
+
+ZSH_CUSTOM="${ZSH_CUSTOM:-$ZSH/custom}"
+typeset -A _zsh_custom_plugins=(
+  [zsh-autosuggestions]="https://github.com/zsh-users/zsh-autosuggestions"
+  [zsh-syntax-highlighting]="https://github.com/zsh-users/zsh-syntax-highlighting.git"
+  [zsh-vi-mode]="https://github.com/jeffreytse/zsh-vi-mode.git"
+)
+for _plugin _repo in "${(@kv)_zsh_custom_plugins}"; do
+  if [ ! -d "$ZSH_CUSTOM/plugins/$_plugin" ]; then
+    echo "Installing $_plugin..."
+    git clone --depth=1 "$_repo" "$ZSH_CUSTOM/plugins/$_plugin"
+  fi
+done
+unset _plugin _repo _zsh_custom_plugins
+
 source $ZSH/oh-my-zsh.sh
 
 # User configuration

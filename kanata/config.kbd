@@ -101,7 +101,6 @@ concurrent-tap-hold yes
 
 (deflayermap (apps)
   q (cmd hyprctl dispatch killactive)
-  w (macro @aterm 250 C-s $tmux-delay C-w)
   e (macro @aterm 250 C-s $tmux-delay C-y)
   r (macro @aterm 250 C-s $tmux-delay C-1)
   y (cmd firefox --new-window https://www.youtube.com/playlist?list=WL)

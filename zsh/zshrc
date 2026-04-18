@@ -77,6 +77,9 @@ plugins=(
   zsh-vi-mode
 )
 
+# Disable zsh-vi-mode cursor styling (avoids zvm_cursor_style regex error on some terminals/apps)
+ZVM_CURSOR_STYLE_ENABLED=false
+
 # Auto-install Oh My Zsh and custom plugins if missing
 if [ ! -d "$ZSH" ]; then
   echo "Installing Oh My Zsh..."

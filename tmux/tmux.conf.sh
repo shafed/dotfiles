@@ -9,7 +9,6 @@ bind-key -r C-t run-shell "$tmux_sessionizer ~/obsidian"
 unbind C-d
 bind-key -r C-c run-shell "$tmux_sessionizer ~/projects"
 bind-key -r C-a run-shell "$tmux_sessionizer ~"
-bind-key -r C-w run-shell "$tmux_sessionizer ~/work"
 bind-key -r C-d run-shell "$tmux_sessionizer ~/dotfiles"
 bind-key -r C-y new-session -A -s yazi yazi
 bind-key -r 1 run-shell "$daily_note"

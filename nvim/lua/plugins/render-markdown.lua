@@ -60,6 +60,19 @@ return {
       custom = {
         youtu = { pattern = "youtu%.be", icon = "󰗃 " },
       },
+      wiki = {
+        icon = "󱗖 ",
+        body = function(ctx)
+          -- ctx.destination: raw wikilink target, e.g. "2026/04-Apr/2026-04-18-Saturday"
+          -- ctx.alias: optional alias after "|"
+          if ctx.alias then
+            return ctx.alias
+          end
+          local dest = ctx.destination or ""
+          local last = dest:match("([^/]+)$") or dest
+          return last
+        end,
+      },
     },
     heading = {
       sign = false,

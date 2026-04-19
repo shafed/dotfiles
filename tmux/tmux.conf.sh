@@ -4,6 +4,24 @@ bind r source-file ~/.tmux.conf
 tmux_sessionizer="~/dotfiles/tmux/tools/prime/tmux-sessionizer.sh"
 daily_note="~/dotfiles/scripts/daily-notes.sh"
 
+bind-key f run-shell "tmux neww ~/.local/bin/tmux-sessionizer"
+
+bind-key "T" run-shell "sesh connect \"$(
+  sesh list --icons | fzf-tmux -p 100%,100% \
+    --layout=reverse \
+    --no-sort --ansi --border-label ' sesh ' --prompt '⚡  ' \
+    --header '  ^a all ^t tmux ^g configs ^x zoxide ^d tmux kill ^f find' \
+    --bind 'tab:down,btab:up' \
+    --bind 'ctrl-a:change-prompt(⚡  )+reload(sesh list --icons)' \
+    --bind 'ctrl-t:change-prompt(🪟  )+reload(sesh list -t --icons)' \
+    --bind 'ctrl-g:change-prompt(⚙️  )+reload(sesh list -c --icons)' \
+    --bind 'ctrl-x:change-prompt(📁  )+reload(sesh list -z --icons)' \
+    --bind 'ctrl-f:change-prompt(🔎  )+reload(fd -H -d 2 -t d -E .Trash . ~)' \
+    --bind 'ctrl-d:execute(tmux kill-session -t {2..})+change-prompt(⚡  )+reload(sesh list --icons)' \
+    --preview-window 'right:55%' \
+    --preview 'sesh preview {}'
+)\""
+
 unbind C-t
 bind-key -r C-t run-shell "$tmux_sessionizer ~/obsidian"
 unbind C-d

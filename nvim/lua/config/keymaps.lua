@@ -711,14 +711,25 @@ end, { desc = "[P]Autopush Obsidian Vault" })
 
 -- Auto pull Obsidian Vault on startup
 local function pull_obsidian_vault()
-  local vault_path = vim.fn.expand("~/obsidian")
+  local vault_paths = {
+    vim.fn.expand("~/obsidian"),
+    "/data/data/com.termux/files/home/storage/shared/obsidian",
+  }
   local current_dir = vim.fn.getcwd()
 
-  if current_dir:find(vault_path, 1, true) == nil then
+  local matched
+  for _, p in ipairs(vault_paths) do
+    if current_dir:find(p, 1, true) ~= nil then
+      matched = p
+      break
+    end
+  end
+
+  if not matched then
     return
   end
 
-  local cmd = string.format("cd %s && git pull --rebase --autostash", vault_path)
+  local cmd = string.format("cd %s && git pull --rebase --autostash", matched)
 
   vim.fn.jobstart(cmd, {
     on_exit = function(_, code)

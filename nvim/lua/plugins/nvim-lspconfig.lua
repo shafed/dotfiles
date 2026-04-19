@@ -63,7 +63,7 @@ return {
               IgnoreLinkTitle = true,
             },
             excludePatterns = {
-              "/home/shafed/obsidian/base/notes/Day [123].md",
+              "/home/shafed/obsidian/notes/Day [123].md",
             },
           },
         },

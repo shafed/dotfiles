@@ -709,6 +709,35 @@ vim.keymap.set("n", "<leader>go", function()
   end
 end, { desc = "[P]Autopush Obsidian Vault" })
 
+-- Auto pull Obsidian Vault on startup
+local function pull_obsidian_vault()
+  local vault_path = vim.fn.expand("~/obsidian")
+  local current_dir = vim.fn.getcwd()
+
+  if current_dir:find(vault_path, 1, true) == nil then
+    return
+  end
+
+  local cmd = string.format("cd %s && git pull --rebase --autostash", vault_path)
+
+  vim.fn.jobstart(cmd, {
+    on_exit = function(_, code)
+      vim.schedule(function()
+        if code == 0 then
+          vim.notify("Obsidian Vault pulled successfully", vim.log.levels.INFO)
+        else
+          vim.notify("Obsidian Vault pull failed (code " .. code .. ")", vim.log.levels.WARN)
+        end
+      end)
+    end,
+  })
+end
+
+vim.api.nvim_create_autocmd("VimEnter", {
+  desc = "Auto pull Obsidian Vault on startup",
+  callback = pull_obsidian_vault,
+})
+
 -- Grug
 vim.keymap.set(
   { "v", "n" },

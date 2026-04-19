@@ -107,7 +107,7 @@ concurrent-tap-hold yes
   o (macro @aterm 250 C-s $tmux-delay C-t)
   a (macro @aterm 250 C-s $tmux-delay C-a)
   s (tap-hold-press $subl-time $subl-time (cmd firefox) (layer-toggle browser))
-  t (multi (cmd hyprctl dispatch workspace 5) (cmd telegram-desktop))
+  ;; t (multi (cmd hyprctl dispatch workspace 5) (cmd telegram-desktop))
   d (macro @aterm 250 C-s $tmux-delay C-d)
   g (cmd todoist)
   z (cmd zsh -lc "$HOME/.config/kanata/switchApp.sh sioyek 'LIBGL_ALWAYS_SOFTWARE=1 sioyek'")

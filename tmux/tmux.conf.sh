@@ -1,10 +1,20 @@
 unbind r
 bind r source-file ~/.tmux.conf
 
-tmux_sessionizer="~/dotfiles/tmux/tools/prime/tmux-sessionizer.sh"
+tmux_sessionizer="~/dotfiles/tmux/tools/scripts/tmux-sessionizer.sh"
+tmux_nvim="~/dotfiles/tmux/tools/scripts/tmux-sessionizer-nvim.sh"
+tmux_switch="~/dotfiles/tmux/tools/scripts/tmux-sessionizer-switch.sh"
+tmux_zoxide="~/dotfiles/tmux/tools/scripts/tmux-zoxide-session.sh"
+tmux_list="~/dotfiles/tmux/tools/scripts/tmux-list-sessions.sh"
 daily_note="~/dotfiles/scripts/daily-notes.sh"
 
-bind-key f run-shell "tmux neww ~/.local/bin/tmux-sessionizer"
+bind -n M-Tab switch-client -l # переключение между двумя последними сессиями
+bind-key w run-shell "tmux neww $tmux_switch"
+bind-key C-k run-shell "tmux neww $tmux_switch -k" # kill session
+bind-key f run-shell "tmux neww $tmux_sessionizer"
+
+bind-key R run-shell "tmux neww $tmux_zoxide"
+bind-key J run-shell "tmux neww $tmux_list"
 
 bind-key "T" run-shell "sesh connect \"$(
   sesh list --icons | fzf-tmux -p 100%,100% \
@@ -23,11 +33,11 @@ bind-key "T" run-shell "sesh connect \"$(
 )\""
 
 unbind C-t
-bind-key -r C-t run-shell "$tmux_sessionizer ~/obsidian"
+bind-key -r C-t run-shell "$tmux_nvim ~/obsidian"
 unbind C-d
-bind-key -r C-c run-shell "$tmux_sessionizer ~/projects"
-bind-key -r C-a run-shell "$tmux_sessionizer ~"
-bind-key -r C-d run-shell "$tmux_sessionizer ~/dotfiles"
+bind-key -r C-c run-shell "$tmux_nvim ~/projects"
+bind-key -r C-a run-shell "$tmux_nvim ~"
+bind-key -r C-d run-shell "$tmux_zoxide --session dotfiles"
 bind-key -r C-y new-session -A -s yazi yazi
 bind-key -r 1 run-shell "$daily_note"
 

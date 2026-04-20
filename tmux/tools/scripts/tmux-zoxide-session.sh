@@ -93,8 +93,8 @@ find_session_by_path() {
       return 0
     fi
   done < <(
-    tmux list-sessions -F '#{session_name}|#{session_path}' 2>/dev/null \
-      | awk -F'|' '{print $1"\t"$2}' || true
+    tmux list-sessions -F '#{session_name}|#{session_path}' 2>/dev/null |
+      awk -F'|' '{print $1"\t"$2}' || true
   )
 
   return 1
@@ -426,7 +426,7 @@ fzf_out="$(
     --bind 'enter:accept' \
     --bind 'esc:abort' \
     --bind "start:reload:${script_path} --reload" \
-    --bind "change:reload:${script_path} --reload" \
+    --bind "change:reload:${script_path} --reload"
 )"
 fzf_rc=$?
 set -e

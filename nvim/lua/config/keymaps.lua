@@ -1237,9 +1237,15 @@ local function gcal_create_from_line()
     return
   end
 
-  local start_t, end_t = line:match("(%d%d:%d%d)%-(%d%d:%d%d)")
+  local start_t, end_t = line:match("(%d?%d:%d%d)%-(%d?%d:%d%d)")
   if not start_t then
-    start_t = line:match("(%d%d:%d%d)")
+    start_t = line:match("(%d?%d:%d%d)")
+  end
+  if start_t and #start_t == 4 then
+    start_t = "0" .. start_t
+  end
+  if end_t and #end_t == 4 then
+    end_t = "0" .. end_t
   end
   local all_day = start_t == nil
 
@@ -1247,8 +1253,8 @@ local function gcal_create_from_line()
     :gsub("^%s*%- %[[ x]%]%s*", "")
     :gsub("^%s*%-%s*", "")
     :gsub("%[%[[^%]]-%]%]", "")
-    :gsub("%d%d:%d%d%-%d%d:%d%d", "")
-    :gsub("%d%d:%d%d", "")
+    :gsub("%d?%d:%d%d%-%d?%d:%d%d", "")
+    :gsub("%d?%d:%d%d", "")
     :gsub("<!%-%-.-%-%->", "")
     :gsub("/[^/<!%s]+/[^/<!%s]*", "")
     :gsub("%s+", " ")
@@ -1260,35 +1266,32 @@ local function gcal_create_from_line()
     return
   end
 
-  local cmd
+  local tz = os.date("%z"):gsub("(%+?%-?%d%d)(%d%d)", "%1:%2")
+  local when
+  local duration_min
   if all_day then
-    cmd = string.format(
-      "gcalcli --calendar %s add --noprompt --title %s --when %s --duration 1 --allday --reminder 30 2>&1",
-      vim.fn.shellescape(GCAL_CALENDAR),
-      vim.fn.shellescape(title),
-      vim.fn.shellescape(date)
-    )
+    when = date .. "T09:00:00" .. tz
+    duration_min = 30
   else
-    local when = date .. " " .. start_t
-    local duration_min
+    when = date .. "T" .. start_t .. ":00" .. tz
     if end_t then
       local sh, sm = start_t:match("(%d+):(%d+)")
       local eh, em = end_t:match("(%d+):(%d+)")
       duration_min = (tonumber(eh) * 60 + tonumber(em)) - (tonumber(sh) * 60 + tonumber(sm))
       if duration_min <= 0 then
-        duration_min = 60
+        duration_min = 30
       end
     else
-      duration_min = 60
+      duration_min = 30
     end
-    cmd = string.format(
-      "gcalcli --calendar %s add --noprompt --title %s --when %s --duration %d --reminder 30 2>&1",
-      vim.fn.shellescape(GCAL_CALENDAR),
-      vim.fn.shellescape(title),
-      vim.fn.shellescape(when),
-      duration_min
-    )
   end
+  local cmd = string.format(
+    "gcalcli --calendar %s add --noprompt --title %s --when %s --duration %d --reminder '0 popup' 2>&1",
+    vim.fn.shellescape(GCAL_CALENDAR),
+    vim.fn.shellescape(title),
+    vim.fn.shellescape(when),
+    duration_min
+  )
 
   vim.fn.jobstart(cmd, {
     stdout_buffered = true,

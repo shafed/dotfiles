@@ -72,7 +72,7 @@ ZSH_THEME="robbyrussell"
 # Add wisely, as too many plugins slow down shell startup.
 
 # Disable zsh-vi-mode cursor styling (avoids zvm_cursor_style regex error on some terminals/apps)
-ZVM_CURSOR_STYLE_ENABLED=false
+ZVM_CURSOR_STYLE_ENABLED=true
 
 plugins=(
   git

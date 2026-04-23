@@ -131,6 +131,28 @@ return {
       })
     )
 
+    table.insert(
+      snippets,
+      s({
+        trig = "sn",
+        name = "Source Note",
+        desc = "Insert source note frontmatter template",
+      }, {
+        t({ "---", "tags:", "  - source/" }),
+        i(1, "article"),
+        t({ "", "aliases:", "status: " }),
+        i(2, "todo"),
+        t({ "", 'category: "[[' }),
+        i(3, "category"),
+        t({ ']]"', 'creator: "[[' }),
+        i(4, "creator"),
+        t({ ']]"', "url: " }),
+        i(5),
+        t({ "", "---", "", "" }),
+        i(0),
+      })
+    )
+
     ls.add_snippets("all", snippets)
 
     return opts

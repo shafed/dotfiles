@@ -315,7 +315,7 @@ return {
 \usepackage{fontspec}
 \setmainfont{Times New Roman}
 \usepackage[russian]{babel}
-\usepackage{graphicx, float, url}
+\usepackage{graphicx, float}
 \usepackage{geometry}
 \geometry{left=3cm,right=1.5cm,top=2cm,bottom=2cm}
 \usepackage{setspace}
@@ -328,7 +328,7 @@ return {
 \thispagestyle{empty}
 \begin{center}
 
-\includegraphics[width=0.18\textwidth]{assets/gerb.png}
+\includegraphics[width=0.18\textwidth]{../assets/gerb.png}
 
 \vspace{0.5cm}
 

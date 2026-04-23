@@ -84,7 +84,7 @@ concurrent-tap-hold yes
  bspc XX 
  ret (tap-hold $tap-time 600 XX (layer-switch normal)) ;; go to normal layer
  lsft @sw
- rsft @sw
+ rsft rsft
  w (fork (multi w @.tp) bspc (lctl rctl))
 
  ;; define each letter as typing-layer trigger

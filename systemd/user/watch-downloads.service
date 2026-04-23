@@ -1,0 +1,13 @@
+[Unit]
+Description=Watch Downloads and copy path to clipboard
+After=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/watch-downloads.sh
+Restart=on-failure
+Environment=DISPLAY=:0
+Environment=WAYLAND_DISPLAY=wayland-1
+
+[Install]
+WantedBy=default.target

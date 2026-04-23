@@ -1,3 +1,16 @@
+-- Update markdown-oxide daily_notes_folder to current month on startup
+vim.api.nvim_create_autocmd("VimEnter", {
+  once = true,
+  callback = function()
+    local folder = "periodic/" .. os.date("%Y/%m-%b")
+    local config = "/home/shafed/obsidian/.moxide.toml"
+    vim.fn.system(string.format(
+      "sed -i 's|^daily_notes_folder = .*|daily_notes_folder = \"%s\"|' %s",
+      folder, config
+    ))
+  end,
+})
+
 -- When I open markdown files I want to fold the markdown headings
 -- Originally I thought about using it only for skitty-notes, but I think I want
 -- it in all markdown files

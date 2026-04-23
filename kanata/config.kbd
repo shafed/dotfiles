@@ -96,7 +96,7 @@ concurrent-tap-hold yes
  lalt bspc ralt ret
  caps (tap-hold $tap-time $hold-time esc (layer-toggle navi))
  lsft @sw
- rsft @sw
+ rsft rsft
 )
 
 (deflayermap (apps)
@@ -105,8 +105,9 @@ concurrent-tap-hold yes
   r (macro @aterm 250 C-s $tmux-delay C-1)
   y (cmd firefox --new-window https://www.youtube.com/playlist?list=WL)
   o (macro @aterm 250 C-s $tmux-delay C-t)
-  a (macro @aterm 250 C-s $tmux-delay C-a)
+  h (macro @aterm 250 C-s $tmux-delay C-a)
   s (tap-hold-press $subl-time $subl-time (cmd firefox) (layer-toggle browser))
+  a (layer-while-held terminal)
   ;; t (multi (cmd hyprctl dispatch workspace 5) (cmd telegram-desktop))
   d (macro @aterm 250 C-s $tmux-delay C-d)
   g (cmd todoist)
@@ -114,6 +115,11 @@ concurrent-tap-hold yes
   p (macro @aterm 250 C-s $tmux-delay C-c)
   spc (cmd hyprlauncher)
   caps caps
+)
+
+(deflayermap (terminal)
+  s (macro @aterm 250 C-s $tmux-delay s)
+  f (macro @aterm 250 C-s $tmux-delay f)
 )
 
 (deflayermap (browser)

@@ -72,6 +72,22 @@ return {
     },
 
     {
+      "<M-t>",
+      function()
+        local mini_files = require("mini.files")
+        local curr_entry = mini_files.get_fs_entry()
+        if curr_entry and curr_entry.fs_type == "directory" then
+          require("utils.tmux").open(curr_entry.path)
+        else
+          vim.notify("Not a directory or no entry selected", vim.log.levels.WARN)
+        end
+      end,
+      ft = "minifiles",
+      noremap = true,
+      silent = true,
+      desc = "[P]Open dir in tmux pane",
+    },
+    {
       "<leader>o",
       function()
         local mini_files = require("mini.files")

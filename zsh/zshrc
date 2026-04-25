@@ -245,3 +245,24 @@ alias sioyek="LIBGL_ALWAYS_SOFTWARE=1 sioyek"
 
 export TODOIST_API_TOKEN="f3736efb85c6f5c726090bb92df83fa9b07a6b19"
 alias copyq='QT_QPA_PLATFORM=xcb copyq'
+
+# Tmux pane toggle from neovim's <M-t>
+# When focus is in this zsh pane, Alt-t jumps back to the neovim pane and zooms it.
+# Direction must match vim.g.tmux_pane_direction in nvim (default: bottom).
+export TMUX_PANE_DIRECTION="bottom"
+
+function tmux_other_pane() {
+  if [[ $TMUX_PANE_DIRECTION == "right" ]]; then
+    tmux select-pane -L
+  else
+    tmux select-pane -U
+  fi
+  tmux resize-pane -Z
+}
+zvm_define_widget tmux_other_pane
+
+function zvm_after_lazy_keybindings() {
+  # ^[t == Alt-t (verify with `cat -v` then press Alt-t)
+  zvm_bindkey vicmd '^[t' tmux_other_pane
+  zvm_bindkey viins '^[t' tmux_other_pane
+}

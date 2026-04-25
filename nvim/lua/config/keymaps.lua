@@ -1,5 +1,10 @@
 vim.keymap.set("x", "p", '"_dP') -- Don't copy visual in clipboard
 
+-- Toggle a tmux pane (zsh) on the right with the current file's directory
+vim.keymap.set({ "n", "v", "i" }, "<M-t>", function()
+  require("utils.tmux").open()
+end, { desc = "[P]Terminal on tmux pane" })
+
 -- Copy to clipboard
 vim.keymap.set({ "n", "v" }, "<leader>y", '"+y')
 vim.keymap.set("n", "<leader>Y", '"+Y')

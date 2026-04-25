@@ -141,6 +141,7 @@ concurrent-tap-hold yes
  f (t! func $tot 160 f lsft)
  d (t! func $tot 300 d lctl)
  s @sshot
+ i C-S-i ;; kitty scrollback
 )
 
 (defchordsv2

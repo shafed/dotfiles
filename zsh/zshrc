@@ -177,8 +177,9 @@ zle -N zle-line-init
 # Vim
 export vi=~/.config/nvim/init.lua
 bindkey -v
-bindkey -M vicmd 'H' vi-first-non-blank
-bindkey -M vicmd 'L' end-of-line
+# gh/gl -> beginning/end of line in normal mode
+bindkey -M vicmd 'gh' vi-first-non-blank
+bindkey -M vicmd 'gl' end-of-line
 alias vif="nvim ~/.config/nvim"
 alias vip="nvim ~/.config/nvim/lua/plugins"
 alias vi="nvim"

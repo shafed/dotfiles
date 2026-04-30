@@ -4,10 +4,7 @@ vim.api.nvim_create_autocmd("VimEnter", {
   callback = function()
     local folder = "periodic/" .. os.date("%Y/%m-%b")
     local config = "/home/shafed/obsidian/.moxide.toml"
-    vim.fn.system(string.format(
-      "sed -i 's|^daily_notes_folder = .*|daily_notes_folder = \"%s\"|' %s",
-      folder, config
-    ))
+    vim.fn.system(string.format("sed -i 's|^daily_notes_folder = .*|daily_notes_folder = \"%s\"|' %s", folder, config))
   end,
 })
 
@@ -36,5 +33,16 @@ vim.api.nvim_create_autocmd("BufRead", {
       -- vim.cmd("silent write")
       vim.notify("Folded keymaps", vim.log.levels.INFO)
     end, 100) -- Delay in milliseconds (100ms should be enough)
+  end,
+})
+
+-- Mini.files relative numbers
+vim.api.nvim_create_autocmd("User", {
+  pattern = "MiniFilesWindowOpen",
+  callback = function(args)
+    local win_id = args.data.win_id
+
+    vim.wo[win_id].number = true
+    vim.wo[win_id].relativenumber = true
   end,
 })

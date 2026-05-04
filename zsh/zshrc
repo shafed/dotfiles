@@ -250,7 +250,7 @@ alias copyq='QT_QPA_PLATFORM=xcb copyq'
 # Tmux pane toggle from neovim's <M-t>
 # When focus is in this zsh pane, Alt-t jumps back to the neovim pane and zooms it.
 # Direction must match vim.g.tmux_pane_direction in nvim (default: bottom).
-export TMUX_PANE_DIRECTION="bottom"
+export TMUX_PANE_DIRECTION="right"
 
 function tmux_other_pane() {
   if [[ $TMUX_PANE_DIRECTION == "right" ]]; then

@@ -13,7 +13,7 @@ local M = {}
 
 M.open = function(dir)
   local auto_cd_to_new_dir = true
-  local pane_direction = vim.g.tmux_pane_direction or "bottom"
+  local pane_direction = vim.g.tmux_pane_direction or "right"
   local pane_size = (pane_direction == "right") and 60 or 15
   local move_key = (pane_direction == "right") and "C-l" or "C-k"
   local split_cmd = (pane_direction == "right") and "-h" or "-v"

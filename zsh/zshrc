@@ -254,11 +254,10 @@ export TMUX_PANE_DIRECTION="right"
 
 function tmux_other_pane() {
   if [[ $TMUX_PANE_DIRECTION == "right" ]]; then
-    tmux select-pane -L
+    tmux select-pane -L \; resize-pane -Z
   else
-    tmux select-pane -U
+    tmux select-pane -U \; resize-pane -Z
   fi
-  tmux resize-pane -Z
 }
 zvm_define_widget tmux_other_pane
 

@@ -539,18 +539,15 @@ vim.keymap.set("n", "<leader>lc", function()
   vim.notify("Copied: " .. #exercises .. " exercises", vim.log.levels.INFO)
 end, { desc = "[P]Log Copy: workout table to clipboard" })
 
--- Paste entire file contents into daily note lamw25wmal
+-- Save training note to training/ and insert wikilink into daily note
 vim.keymap.set("n", "<leader>lp", function()
-  -- ===================== Customizable variables =====================
-  -- NOTE: Path to the daily note creation script
   local daily_note_script = vim.fn.expand("~/dotfiles/scripts/daily-notes.sh")
-  -- NOTE: Path to the daily note (adjust the pattern to match your structure)
   local daily_note_path = vim.fn.expand("~/obsidian/periodic/") .. os.date("%Y/%m-%b/%Y-%m-%d-%A") .. ".md"
-  -- NOTE: Heading before which to insert content
+  local training_dir = vim.fn.expand("~/obsidian/periodic/training/")
   local tasks_heading = "## Completed Tasks"
 
   --------------------------------------------------------------------------
-  -- Extract H1 from the current file
+  -- Extract H1 from the current file to use as training note filename
   --------------------------------------------------------------------------
   local h1_text = nil
   for _, line in ipairs(vim.api.nvim_buf_get_lines(0, 0, 1, false)) do
@@ -566,29 +563,49 @@ vim.keymap.set("n", "<leader>lp", function()
     return
   end
 
-  local training_heading = "## Training Log of the " .. h1_text
-
-  -- All file contents without the H1 line (skip first 2 lines: H1 + blank)
-  local buf_lines = vim.api.nvim_buf_get_lines(0, 2, -1, false)
+  --------------------------------------------------------------------------
+  -- Write current buffer contents to training/YYYY-MM-DD-<h1_text>.md
+  -- h1_text is the filename without extension, e.g. "Day 2"
+  -- training note slug: YYYY-MM-DD-Day-2 (date + h1 with spaces→dashes)
+  --------------------------------------------------------------------------
+  local date_prefix = os.date("%Y-%m-%d")
+  local h1_slug = h1_text:gsub("%s+", "-")
+  local training_slug = date_prefix .. "-" .. h1_slug
+  local training_filename = training_slug .. ".md"
+  local training_path = training_dir .. training_filename
+  local buf_lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+  vim.fn.writefile(buf_lines, training_path)
 
   --------------------------------------------------------------------------
-  -- 1. If daily note does not exist, create it via script
+  -- Build the wikilink for the daily note
+  --------------------------------------------------------------------------
+  local wikilink = "- [[periodic/training/" .. training_slug .. "|" .. h1_text .. "]]"
+
+  --------------------------------------------------------------------------
+  -- Ensure daily note exists
   --------------------------------------------------------------------------
   if vim.fn.filereadable(daily_note_path) ~= 1 then
     vim.fn.system(daily_note_script)
     if vim.fn.filereadable(daily_note_path) ~= 1 then
-      vim.notify("daily-note.sh failed to create file: " .. daily_note_path, vim.log.levels.ERROR)
+      vim.notify("daily-notes.sh failed to create file: " .. daily_note_path, vim.log.levels.ERROR)
+      return
+    end
+  end
+
+  local daily_lines = vim.fn.readfile(daily_note_path)
+
+  --------------------------------------------------------------------------
+  -- Skip if wikilink already present in daily note
+  --------------------------------------------------------------------------
+  for _, line in ipairs(daily_lines) do
+    if line:find(training_slug, 1, true) then
+      vim.notify("Training note already linked in daily note", vim.log.levels.INFO)
       return
     end
   end
 
   --------------------------------------------------------------------------
-  -- Read the daily note contents
-  --------------------------------------------------------------------------
-  local daily_lines = vim.fn.readfile(daily_note_path)
-
-  --------------------------------------------------------------------------
-  -- Look for the "## Completed Tasks" heading
+  -- Find insertion point: before "## Completed Tasks", or at end
   --------------------------------------------------------------------------
   local heading_index = nil
   for i, line in ipairs(daily_lines) do
@@ -598,61 +615,47 @@ vim.keymap.set("n", "<leader>lp", function()
     end
   end
 
-  --------------------------------------------------------------------------
-  -- Build the insert block: heading + blank line + file contents
-  --------------------------------------------------------------------------
-  local insert_block = {}
-  table.insert(insert_block, training_heading)
-  table.insert(insert_block, "")
-  for _, line in ipairs(buf_lines) do
-    table.insert(insert_block, line)
-  end
-
+  local insert_block = { "## Training", "", wikilink }
   local result = {}
 
   if heading_index then
-    --------------------------------------------------------------------------
-    -- 2. Heading found: insert BEFORE it
-    --------------------------------------------------------------------------
-    for i = 1, heading_index - 1 do
+    -- Find the end of the ## Completed Tasks section (next ## heading or EOF)
+    local section_end = heading_index
+    for i = heading_index + 1, #daily_lines do
+      if daily_lines[i]:match("^##%s") then
+        section_end = i - 1
+        break
+      end
+      section_end = i
+    end
+    for i = 1, section_end do
       table.insert(result, daily_lines[i])
     end
-    -- Remove trailing blank lines before the insert block
     while #result > 0 and result[#result] == "" do
       table.remove(result)
     end
     table.insert(result, "")
-    -- Insert the block
     for _, line in ipairs(insert_block) do
       table.insert(result, line)
     end
     table.insert(result, "")
-    -- Append daily note from the heading onwards
-    for i = heading_index, #daily_lines do
+    for i = section_end + 1, #daily_lines do
       table.insert(result, daily_lines[i])
     end
   else
-    --------------------------------------------------------------------------
-    -- 3. Heading not found: insert at the end
-    --------------------------------------------------------------------------
     result = vim.list_extend({}, daily_lines)
-    -- Remove trailing blank lines before the insert block
     while #result > 0 and result[#result] == "" do
       table.remove(result)
     end
     table.insert(result, "")
-    -- Insert the block
     for _, line in ipairs(insert_block) do
       table.insert(result, line)
     end
   end
 
-  --------------------------------------------------------------------------
-  -- Write the result back to the daily note
-  --------------------------------------------------------------------------
   vim.fn.writefile(result, daily_note_path)
-  vim.notify("Inserted into daily note: " .. daily_note_path, vim.log.levels.INFO)
-end, { desc = "[P]Log Paste: file contents into daily note" })
+  vim.notify("Training note saved and linked in daily note", vim.log.levels.INFO)
+end, { desc = "[P]Log Paste: save training note and link in daily note" })
 
 -- Auto push Obsidian Vault
 local function push_obsidian_vault(silent)

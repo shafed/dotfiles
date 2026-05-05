@@ -73,7 +73,7 @@ local wk = require("which-key")
 wk.add({
   {
     mode = { "n" },
-    { "<leader>t", group = "[P]todo" },
+    { "<leader>t", group = "[P]Todo" },
     { "<leader>l", group = "[P]Log" },
     { "<leader>gc", group = "[P]gcalcli" },
   },
@@ -1156,4 +1156,3 @@ vim.keymap.set("n", "<leader>gca", function()
       .. " agenda --military --details=all"
   )
 end, { desc = "[P]gcalcli: show agenda" })
-

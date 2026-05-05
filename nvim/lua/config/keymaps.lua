@@ -579,7 +579,7 @@ vim.keymap.set("n", "<leader>lp", function()
   --------------------------------------------------------------------------
   -- Build the wikilink for the daily note
   --------------------------------------------------------------------------
-  local wikilink = "- [[periodic/training/" .. training_slug .. "|" .. h1_text .. "]]"
+  local wikilink_target = "[[periodic/training/" .. training_slug .. "|" .. h1_text .. "]]"
 
   --------------------------------------------------------------------------
   -- Ensure daily note exists
@@ -605,7 +605,29 @@ vim.keymap.set("n", "<leader>lp", function()
   end
 
   --------------------------------------------------------------------------
-  -- Find insertion point: before "## Completed Tasks", or at end
+  -- Try to append wikilink to existing "- [ ] gym" task line
+  --------------------------------------------------------------------------
+  local gym_task_index = nil
+  for i, line in ipairs(daily_lines) do
+    if line:match("^%s*%- %[[ x]%]%s*gym%s*$") or line:match("^%s*%- %[[ x]%]%s*gym%s+") then
+      gym_task_index = i
+      break
+    end
+  end
+
+  local result = {}
+
+  if gym_task_index then
+    result = vim.list_extend({}, daily_lines)
+    local gym_line = result[gym_task_index]:gsub("%s+$", "")
+    result[gym_task_index] = gym_line .. " " .. wikilink_target
+    vim.fn.writefile(result, daily_note_path)
+    vim.notify("Training note saved and linked in daily note", vim.log.levels.INFO)
+    return
+  end
+
+  --------------------------------------------------------------------------
+  -- Find insertion point: after "## Completed Tasks", or at end
   --------------------------------------------------------------------------
   local heading_index = nil
   for i, line in ipairs(daily_lines) do
@@ -615,31 +637,15 @@ vim.keymap.set("n", "<leader>lp", function()
     end
   end
 
-  local insert_block = { "## Training", "", wikilink }
-  local result = {}
+  local gym_task_line = "- [ ] gym " .. wikilink_target
 
   if heading_index then
-    -- Find the end of the ## Completed Tasks section (next ## heading or EOF)
-    local section_end = heading_index
-    for i = heading_index + 1, #daily_lines do
-      if daily_lines[i]:match("^##%s") then
-        section_end = i - 1
-        break
-      end
-      section_end = i
-    end
-    for i = 1, section_end do
+    -- Insert gym task line right after the ## Completed Tasks heading
+    for i = 1, heading_index do
       table.insert(result, daily_lines[i])
     end
-    while #result > 0 and result[#result] == "" do
-      table.remove(result)
-    end
-    table.insert(result, "")
-    for _, line in ipairs(insert_block) do
-      table.insert(result, line)
-    end
-    table.insert(result, "")
-    for i = section_end + 1, #daily_lines do
+    table.insert(result, gym_task_line)
+    for i = heading_index + 1, #daily_lines do
       table.insert(result, daily_lines[i])
     end
   else
@@ -648,9 +654,7 @@ vim.keymap.set("n", "<leader>lp", function()
       table.remove(result)
     end
     table.insert(result, "")
-    for _, line in ipairs(insert_block) do
-      table.insert(result, line)
-    end
+    table.insert(result, gym_task_line)
   end
 
   vim.fn.writefile(result, daily_note_path)

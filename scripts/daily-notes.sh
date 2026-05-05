@@ -41,6 +41,14 @@ if [ ! -f "$full_path" ]; then
 
 ## Tasks
 
+## Completed Tasks
+
+## Insights
+
+## Tips & Learnings
+
+## Diary
+
 EOF
 fi
 

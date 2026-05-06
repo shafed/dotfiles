@@ -586,6 +586,13 @@ vim.keymap.set("n", "<leader>lp", function()
   local training_filename = training_slug .. ".md"
   local training_path = training_dir .. training_filename
   local buf_lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+  -- Replace H1 with training_slug so file's H1 matches its filename
+  for i, line in ipairs(buf_lines) do
+    if line:match("^#%s+") then
+      buf_lines[i] = "# " .. training_slug
+      break
+    end
+  end
   vim.fn.writefile(buf_lines, training_path)
 
   --------------------------------------------------------------------------

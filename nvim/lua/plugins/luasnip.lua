@@ -126,7 +126,11 @@ return {
           end
           return "# " .. filename
         end, {}),
+        t({ "", "", "## Notes", "" }),
+        i(1),
         t({ "", "", "## Tasks", "" }),
+        i(1),
+        t({ "", "", "## Completed Tasks", "" }),
         i(1),
       })
     )

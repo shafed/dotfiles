@@ -598,7 +598,7 @@ vim.keymap.set("n", "<leader>lp", function()
   --------------------------------------------------------------------------
   -- Build the wikilink for the daily note
   --------------------------------------------------------------------------
-  local wikilink_target = "[[periodic/training/" .. training_slug .. "|" .. h1_text .. "]]"
+  local wikilink_target = "[[" .. training_slug .. "]]"
 
   --------------------------------------------------------------------------
   -- Ensure daily note exists
@@ -637,9 +637,53 @@ vim.keymap.set("n", "<leader>lp", function()
   local result = {}
 
   if gym_task_index then
-    result = vim.list_extend({}, daily_lines)
-    local gym_line = result[gym_task_index]:gsub("%s+$", "")
-    result[gym_task_index] = gym_line .. " " .. wikilink_target
+    local gym_line = daily_lines[gym_task_index]:gsub("%s+$", "")
+    -- Mark as completed: [ ] -> [x], inject `done:` timestamp if absent
+    gym_line = gym_line:gsub("%[ %]", "[x]", 1)
+    if not gym_line:find("`done:") then
+      local ts = os.date("%Y-%m-%d-%H:%M")
+      gym_line = gym_line:gsub("^(%s*%- %[x%])%s*", "%1 `done: " .. ts .. "` ")
+    end
+    gym_line = gym_line .. " " .. wikilink_target
+
+    -- Locate the ## Completed Tasks heading
+    local completed_heading_index = nil
+    for i, line in ipairs(daily_lines) do
+      if line:match("^" .. tasks_heading .. "%s*$") then
+        completed_heading_index = i
+        break
+      end
+    end
+
+    -- Determine whether the gym task is already inside the Completed Tasks section
+    local in_completed_section = completed_heading_index and gym_task_index > completed_heading_index
+    if in_completed_section then
+      for i = completed_heading_index + 1, gym_task_index - 1 do
+        if daily_lines[i]:match("^##%s") then
+          in_completed_section = false
+          break
+        end
+      end
+    end
+
+    if in_completed_section or not completed_heading_index then
+      -- Already in the right section (or no heading exists) -> just update in place
+      result = vim.list_extend({}, daily_lines)
+      result[gym_task_index] = gym_line
+    else
+      -- Remove the gym line from its original spot and re-insert under the heading
+      for i, line in ipairs(daily_lines) do
+        if i ~= gym_task_index then
+          table.insert(result, line)
+        end
+      end
+      local insert_at = completed_heading_index
+      if gym_task_index < completed_heading_index then
+        insert_at = completed_heading_index - 1
+      end
+      table.insert(result, insert_at + 1, gym_line)
+    end
+
     vim.fn.writefile(result, daily_note_path)
     vim.notify("Training note saved and linked in daily note", vim.log.levels.INFO)
     return
@@ -656,7 +700,7 @@ vim.keymap.set("n", "<leader>lp", function()
     end
   end
 
-  local gym_task_line = "- [ ] gym " .. wikilink_target
+  local gym_task_line = "- [x] `done: " .. os.date("%Y-%m-%d-%H:%M") .. "` gym " .. wikilink_target
 
   if heading_index then
     -- Insert gym task line right after the ## Completed Tasks heading

@@ -237,8 +237,6 @@ alias nb='neobean'
 alias ta="task add"
 alias tl="task list"
 
-# Zoxide
-eval "$(zoxide init zsh)"
 alias cd="z"
 alias cdd="z -"
 alias pulldeez='echo "Pulling latest changes, please wait..."; (cd ~/dotfiles && git pull >/dev/null 2>&1) || echo "Failed to pull dotfiles"; source ~/.zshrc'
@@ -266,3 +264,6 @@ function zvm_after_lazy_keybindings() {
   zvm_bindkey vicmd '^[t' tmux_other_pane
   zvm_bindkey viins '^[t' tmux_other_pane
 }
+
+# Zoxide (must be at end of zshrc, per zoxide doctor)
+eval "$(zoxide init zsh)"

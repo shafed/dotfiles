@@ -72,6 +72,44 @@ return {
     },
 
     {
+      "<leader>yy",
+      function()
+        local mini_files = require("mini.files")
+        local start_line = vim.fn.line("v")
+        local end_line = vim.fn.line(".")
+        if start_line > end_line then
+          start_line, end_line = end_line, start_line
+        end
+        local uris = {}
+        local names = {}
+        for lnum = start_line, end_line do
+          local entry = mini_files.get_fs_entry(0, lnum)
+          if entry then
+            table.insert(uris, "file://" .. entry.path)
+            table.insert(names, vim.fn.fnamemodify(entry.path, ":t"))
+          end
+        end
+        vim.api.nvim_input("<Esc>")
+        if #uris == 0 then
+          vim.notify("No files selected", vim.log.levels.WARN)
+          return
+        end
+        local payload = table.concat(uris, "\n")
+        local cmd = string.format("printf %s | wl-copy --type text/uri-list", vim.fn.shellescape(payload))
+        local result = vim.fn.system(cmd)
+        if vim.v.shell_error ~= 0 then
+          vim.notify("Copy failed: " .. result, vim.log.levels.ERROR)
+        else
+          vim.notify(table.concat(names, "\n"), vim.log.levels.INFO)
+          vim.notify(string.format("Copied %d item(s) to system clipboard", #uris), vim.log.levels.INFO)
+        end
+      end,
+      mode = "x",
+      ft = "minifiles",
+      desc = "Copy selected files/directories to clipboard",
+    },
+
+    {
       "<M-t>",
       function()
         local mini_files = require("mini.files")

@@ -105,6 +105,7 @@ concurrent-tap-hold yes
   r (macro @aterm 250 C-s $tmux-delay C-1)
   y (cmd firefox --new-window https://www.youtube.com/playlist?list=WL)
   o (macro @aterm 250 C-s $tmux-delay C-t)
+  w (macro @aterm 250 C-s $tmux-delay C-w)
   h (macro @aterm 250 C-s $tmux-delay C-a)
   s (tap-hold-press $subl-time $subl-time (cmd firefox) (layer-toggle browser))
   a (layer-while-held terminal)

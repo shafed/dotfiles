@@ -20,7 +20,7 @@
 #: <https://sw.kovidgoyal.net/kitty/kittens/choose-fonts/#font-spec-
 #: syntax>.
 
-font_size 12.0
+font_size 14.0
 
 #: Font size (in pts).
 
@@ -313,7 +313,7 @@ font_size 12.0
 
 #: The thickness of the underline cursor (in pts).
 
-# cursor_blink_interval -1
+cursor_blink_interval 0
 
 #: The interval to blink the cursor (in seconds). Set to zero to
 #: disable blinking. Negative values mean use system default. Note
@@ -331,14 +331,14 @@ font_size 12.0
 #: setting also controls blinking text, which blinks in exact rhythm
 #: with the cursor.
 
-# cursor_stop_blinking_after 15.0
+# cursor_stop_blinking_after 1.0
 
 #: Stop blinking cursor after the specified number of seconds of
 #: keyboard inactivity. Set to zero to never stop blinking. This
 #: setting also controls blinking text, which blinks in exact rhythm
 #: with the cursor.
 
-# cursor_trail 0
+cursor_trail 200
 
 #: Set this to a value larger than zero to enable a "cursor trail"
 #: animation. This is an animation that shows a "trail" following the
@@ -354,7 +354,7 @@ font_size 12.0
 #: cursor_trail_start_threshold to control when a cursor trail is
 #: started.
 
-# cursor_trail_decay 0.1 0.4
+cursor_trail_decay 0.1 0.4
 
 #: Controls the decay times for the cursor trail effect when the
 #: cursor_trail is enabled. This option accepts two positive float
@@ -366,7 +366,7 @@ font_size 12.0
 #: trail. Adjust these values to control how quickly the cursor trail
 #: fades away.
 
-# cursor_trail_start_threshold 2
+cursor_trail_start_threshold 2
 
 #: Set the distance threshold for starting the cursor trail. This
 #: option accepts a positive integer value that represents the minimum
@@ -655,7 +655,7 @@ mouse_hide_wait -1.0
 #: to/from always will only affect text subsequently received by
 #: kitty.
 
-# copy_on_select no
+copy_on_select yes
 
 #: Copy to clipboard or a private buffer on select. With this set to
 #: clipboard, selecting text with the mouse will cause the text to be
@@ -1108,7 +1108,7 @@ mouse_hide_wait -1.0
 #: horizontal sides. Three values set top, horizontal and bottom. Four
 #: values set top, right, bottom and left.
 
-# single_window_margin_width -1
+single_window_margin_width 0
 
 #: The window margin to use when only a single window is visible (in
 #: pts). Negative values will cause the value of window_margin_width
@@ -1237,7 +1237,7 @@ hide_window_decorations yes
 #: insensitive, from the set 0-9A-Z\-=[];',./\\`. Specify your
 #: preference as a string of characters.
 
-# confirm_os_window_close -1
+confirm_os_window_close 0
 
 #: Ask for confirmation when closing an OS window or a tab with at
 #: least this number of kitty windows in it by window manager (e.g.
@@ -1673,7 +1673,7 @@ hide_window_decorations yes
 
 #: Advanced {{{
 
-# shell .
+shell tmux new-session -A -s home
 
 #: The shell program to execute. The default value of . means to use
 #: the value of of the SHELL environment variable or if unset,
@@ -1741,7 +1741,7 @@ hide_window_decorations yes
 #: See rc_custom_auth <https://sw.kovidgoyal.net/kitty/remote-
 #: control/#rc-custom-auth> for details.
 
-# allow_remote_control no
+allow_remote_control yes
 
 #: Allow other programs to control kitty. If you turn this on, other
 #: programs can control all aspects of kitty, including sending text
@@ -2993,8 +2993,20 @@ hide_window_decorations yes
 
 
 # BEGIN_KITTY_FONTS
-font_family      family="JetBrains Mono"
+font_family      family='JetBrains Mono' postscript_name=JetBrainsMono-Regular
 bold_font        auto
 italic_font      auto
 bold_italic_font auto
 # END_KITTY_FONTS
+
+
+# BEGIN_KITTY_THEME
+# GitHub Light
+include current-theme.conf
+# END_KITTY_THEME
+
+#C-bspc to C-w
+map ctrl+backspace send_text all \x17
+
+# Keymap for terminal srcollback in Neovim buffer
+map kitty_mod+i launch --stdin-source=@screen_scrollback --stdin-add-formatting --type=overlay /bin/zsh -c 'nvim --cmd "set eventignore=FileType" "+nnoremap q ZQ" "+call nvim_open_term(0, {})" "+set nomodified nolist noswapfile" "+$" -'

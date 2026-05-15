@@ -37,12 +37,13 @@ vim.api.nvim_create_autocmd("BufRead", {
 })
 
 -- Mini.files relative numbers
-vim.api.nvim_create_autocmd("User", {
-  pattern = "MiniFilesWindowOpen",
-  callback = function(args)
-    local win_id = args.data.win_id
+local function set_minifiles_numbers(args)
+  local win_id = args.data.win_id
+  vim.wo[win_id].number = true
+  vim.wo[win_id].relativenumber = true
+end
 
-    vim.wo[win_id].number = true
-    vim.wo[win_id].relativenumber = true
-  end,
+vim.api.nvim_create_autocmd("User", {
+  pattern = { "MiniFilesWindowOpen", "MiniFilesWindowUpdate" },
+  callback = set_minifiles_numbers,
 })

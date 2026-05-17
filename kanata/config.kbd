@@ -100,6 +100,9 @@ concurrent-tap-hold yes
 )
 
 (deflayermap (apps)
+   
+  f (macro @aterm 250 C-s $tmux-delay f)
+  j (macro @aterm 250 C-s $tmux-delay j)
   q (cmd hyprctl dispatch killactive)
   e (macro @aterm 250 C-s $tmux-delay C-y)
   r (macro @aterm 250 C-s $tmux-delay C-1)
@@ -108,7 +111,7 @@ concurrent-tap-hold yes
   w (macro @aterm 250 C-s $tmux-delay C-w)
   h (macro @aterm 250 C-s $tmux-delay C-a)
   s (tap-hold-press $subl-time $subl-time (cmd firefox) (layer-toggle browser))
-  a (layer-while-held terminal)
+  ;; a (layer-while-held terminal)
   ;; t (multi (cmd hyprctl dispatch workspace 5) (cmd telegram-desktop))
   d (macro @aterm 250 C-s $tmux-delay C-d)
   g (cmd todoist)
@@ -118,10 +121,10 @@ concurrent-tap-hold yes
   caps caps
 )
 
-(deflayermap (terminal)
-  s (macro @aterm 250 C-s $tmux-delay s)
-  f (macro @aterm 250 C-s $tmux-delay f)
-)
+;; (deflayermap (terminal)
+;;   s (macro @aterm 250 C-s $tmux-delay s)
+;;   f (macro @aterm 250 C-s $tmux-delay f)
+;; )
 
 (deflayermap (browser)
   e (cmd firefox https://mail.google.com/mail/u/0/#inbox)

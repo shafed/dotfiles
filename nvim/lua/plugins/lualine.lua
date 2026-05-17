@@ -11,7 +11,24 @@ return {
     },
 
     tabline = {
-      lualine_a = {},
+      lualine_a = {
+        {
+          function()
+            -- Считаем количество буферов
+            local buffers = vim.fn.getbufinfo({ buflisted = 1 })
+            local buf_count = #buffers
+            return "(" .. buf_count .. ")"
+          end,
+          color = { fg = "#756a5e", bg = "#32302f", gui = "bold" },
+          separator = { right = "" },
+          padding = { left = 0, right = 0 },
+        },
+        {
+          "filename",
+          padding = { left = 0, right = 1 },
+          color = { fg = "#756a5e", bg = "#32302f", gui = "bold" },
+        },
+      },
       lualine_b = {},
       lualine_c = {},
       lualine_x = {},
@@ -40,24 +57,7 @@ return {
     },
 
     sections = {
-      lualine_a = {
-        {
-          function()
-            -- Считаем количество буферов
-            local buffers = vim.fn.getbufinfo({ buflisted = 1 })
-            local buf_count = #buffers
-            return "(" .. buf_count .. ")"
-          end,
-          color = { fg = "#2c2c2c", bg = "#a69883", gui = "bold" },
-          separator = { right = "" },
-          padding = { left = 0, right = 0 },
-        },
-        {
-          "filename",
-          padding = { left = 0, right = 1 },
-          color = { fg = "#2c2c2c", bg = "#a69883", gui = "bold" },
-        },
-      },
+      lualine_a = {},
       lualine_b = {},
       lualine_c = {},
       lualine_x = {

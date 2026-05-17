@@ -8,7 +8,7 @@ daily_note="~/dotfiles/scripts/daily-notes.sh"
 bind -n M-Tab switch-client -l # переключение между двумя последними сессиями
 
 bind-key f run-shell "tmux neww $tmux_zoxide"
-bind-key s run-shell "tmux neww $tmux_list"
+bind-key j run-shell "tmux neww $tmux_list"
 
 bind-key -r C-w run-shell "$tmux_zoxide --session downloads"
 unbind C-t

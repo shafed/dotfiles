@@ -60,11 +60,9 @@ concurrent-tap-hold yes
 
 (deflayermap (base)
  ;; define home row mods (they act as typing-layer triggers, too )
- ;; f (t! func $tot 160 f lsft)
- ;; j (t! func $tot 160 j rsft)
- ;; a (t! func $tot 300 a lctl)
+ f (t! func $tot 300 f lsft)
+ j (t! func $tot 300 j rsft)
  a (t! homerowmodfiltered $tot 300 a lctl (s d f))
- ; (t! func $tot 300 ; rctl)
  d (t! func $tot 300 d lalt)
  k (t! homerowmodfiltered $tot 300 k ralt (j))
  s (t! func $tot 300 s lmet)
@@ -83,8 +81,8 @@ concurrent-tap-hold yes
  caps (tap-hold $tap-time $hold-time esc (layer-toggle navi))
  bspc XX 
  ret (tap-hold $tap-time 600 XX (layer-switch normal)) ;; go to normal layer
- lsft @sw
- rsft rsft
+;; lsft @sw
+;; rsft rsft
  w (fork (multi w @.tp) bspc (lctl rctl))
 
  ;; define each letter as typing-layer trigger
@@ -150,11 +148,11 @@ concurrent-tap-hold yes
 
 (defchordsv2
 (a s d f) @sshot $chord-time first-release()
-;; (lalt lsft) @sw $chord-time first-release()
+(lalt lsft) @sw $chord-time first-release()
 ;; (a s) lsft $chord-time first-release()
 ;; (; l) rsft $chord-time first-release()
-(d f) rsft $chord-time first-release()
-(j k) rsft $chord-time first-release()
+;; (d f) rsft $chord-time first-release()
+;; (j k) rsft $chord-time first-release()
 (lsft rsft) (layer-switch base) $chord-time first-release()
 )
 

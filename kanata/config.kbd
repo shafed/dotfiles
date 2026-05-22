@@ -101,7 +101,7 @@ concurrent-tap-hold yes
 (deflayermap (apps)
    
   f (macro @aterm 250 C-s $tmux-delay f)
-  j (macro @aterm 250 C-s $tmux-delay j)
+  j (macro @aterm 250 C-s $tmux-delay s)
   q (cmd hyprctl dispatch killactive)
   e (macro @aterm 250 C-s $tmux-delay C-y)
   r (macro @aterm 250 C-s $tmux-delay C-1)

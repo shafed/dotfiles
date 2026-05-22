@@ -41,12 +41,6 @@ if [ ! -f "$full_path" ]; then
 
 ## Notes
 
-## Tasks
-
-- [ ]
-
-## Completed Tasks
-
 EOF
 fi
 

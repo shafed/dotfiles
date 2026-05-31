@@ -102,9 +102,10 @@ concurrent-tap-hold yes
   j (macro @aterm 250 C-s $tmux-delay s)
   q (cmd hyprctl dispatch killactive)
   e (macro @aterm 250 C-s $tmux-delay C-y)
+  t (macro @aterm 250 C-s $tmux-delay C-t)
   r (macro @aterm 250 C-s $tmux-delay C-1)
   y (cmd firefox --new-window https://www.youtube.com/playlist?list=WL)
-  o (macro @aterm 250 C-s $tmux-delay C-t)
+  o (macro @aterm 250 C-s $tmux-delay C-o)
   w (macro @aterm 250 C-s $tmux-delay C-w)
   h (macro @aterm 250 C-s $tmux-delay C-a)
   s (tap-hold-press $subl-time $subl-time (cmd firefox) (layer-toggle browser))
@@ -115,6 +116,7 @@ concurrent-tap-hold yes
   z (cmd zsh -lc "$HOME/.config/kanata/switchApp.sh sioyek 'LIBGL_ALWAYS_SOFTWARE=1 sioyek'")
   p (macro @aterm 250 C-s $tmux-delay C-c)
   spc (cmd hyprlauncher)
+  . (cmd rofimoji -a clipboard)
   caps caps
 )
 

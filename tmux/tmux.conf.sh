@@ -10,14 +10,11 @@ bind -n M-Tab switch-client -l # переключение между двумя 
 bind-key f run-shell "tmux neww $tmux_zoxide"
 bind-key s run-shell "tmux neww $tmux_list"
 
+bind-key -r C-t run-shell "$tmux_zoxide --session todos"
 bind-key -r C-w run-shell "$tmux_zoxide --session downloads"
-unbind C-t
-bind-key -r C-t run-shell "$tmux_zoxide --session obsidian"
-unbind C-c
+bind-key -r C-o run-shell "$tmux_zoxide --session obsidian"
 bind-key -r C-c run-shell "$tmux_zoxide --session projects"
-unbind C-a
 bind-key -r C-a run-shell "$tmux_zoxide --session home"
-unbind C-d
 bind-key -r C-d run-shell "$tmux_zoxide --session dotfiles"
 bind-key -r C-y new-session -A -s yazi yazi
 bind-key -r 1 run-shell "$daily_note"

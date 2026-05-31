@@ -102,7 +102,7 @@ if ! tmux has-session -t="$tmux_session_name" 2>/dev/null; then
   # Otherwise the instance that was opened always had plugin updates, even though it was neobean
   # tmux new-session -d -s "$tmux_session_name" -c "$note_dir" "NVIM_APPNAME=neobean nvim +norm\ Go +startinsert $full_path"
   tmux new-session -d -s "$tmux_session_name" -c "$note_dir"
-  tmux send-keys -t "$tmux_session_name" "nvim +norm\\ G $full_path" C-m
+  tmux send-keys -t "$tmux_session_name" "git -C ~/obsidian pull && nvim +norm\\ G $full_path" C-m
   # tmux new-session -d -s "$tmux_session_name" "nvim +norm\ G $full_path"
   # Create a new tmux session with the note name in detached mode and start neovim with the daily note
   # tmux new-session -d -s "$tmux_session_name" "nvim $full_path"

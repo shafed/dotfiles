@@ -9,6 +9,9 @@ end, { desc = "[P]Terminal on tmux pane" })
 vim.keymap.set({ "n", "v" }, "<leader>y", '"+y')
 vim.keymap.set("n", "<leader>Y", '"+Y')
 
+-- Delete and copy to clipboard
+vim.keymap.set({ "n", "v" }, "<leader>yd", '"+yyd')
+
 -- Paste from clipboard
 vim.keymap.set({ "n", "v" }, "<leader>p", '"+p')
 vim.keymap.set({ "n", "v" }, "<leader>P", '"+P')

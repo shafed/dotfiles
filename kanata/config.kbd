@@ -8,6 +8,13 @@ concurrent-tap-hold yes
   to-base (layer-switch base)
 )
 
+;; opposite-hand HRM (kanata PR #1955): hold only fires when the next key is on
+;; the other hand, so fast same-hand rolls stay taps without manual key lists.
+(defhands
+  (left  q w e r t a s d f g z x c v b)
+  (right y u i o p h j k l ; n m , . /)
+)
+
 (defvar
   tot 220  ;; tot=time out tap
   tap-time 200
@@ -26,12 +33,28 @@ concurrent-tap-hold yes
 	)
 )
 
-;; homerowmodfiltered is a way to force problematic bigrams to become letters not mods
-(deftemplate homerowmodfiltered (timeouttap timeouthold keytap keyhold typinglist)
-  (tap-hold-release-keys $timeouttap $timeouthold
-    (multi $keytap  @.tp)
+;; opposite-hand HRM: hold only when the next key is on the opposite hand
+;; (per defhands). Same-hand keys tap immediately, replacing the old
+;; per-key typing-list filtering.
+(deftemplate hrm (timeout keytap keyhold)
+  ;; -release variant: decides on the interrupting key's RELEASE, so fast
+  ;; overlapping rolls/bigrams (the 2nd key lifts before the HRM key) resolve
+  ;; to letters. Stacks with require-prior-idle below.
+  (tap-hold-opposite-hand-release $timeout
+    (multi $keytap @.tp)
     $keyhold
-    $typinglist ;; Activates $keytap early if a key within $typinglist is pressed before hold activates.
+    ;; digits aren't in defhands; treat them as neutral->hold so e.g. Super+2
+    ;; (workspace switch) fires from any HRM key, regardless of hand.
+    (neutral-keys 1 2 3 4 5 6 7 8 9 0)
+    (neutral hold)
+    ;; same-hand key also activates the hold, so same-hand combos like
+    ;; Ctrl+Shift (d+f) work. Trade-off: reintroduces same-hand roll misfire
+    ;; risk during fast typing.
+    (same-hand hold)
+    ;; only treat as a mod if there was a >=150ms pause before this key.
+    ;; during a fast typing stream the HRM stays a letter, killing cross-hand
+    ;; bigram misfires like "sh" -> Super+h.
+    (require-prior-idle 150)
   )
 )
 
@@ -66,14 +89,15 @@ concurrent-tap-hold yes
 
 (deflayermap (base)
  ;; define home row mods (they act as typing-layer triggers, too )
- f (t! func $tot 300 f lsft)
- j (t! func $tot 300 j rsft)
- a (t! homerowmodfiltered $tot 300 a lctl (s d f))
- ; (t! func $tot 300 ; rctl)
- d (t! func $tot 300 d lalt)
- k (t! homerowmodfiltered $tot 300 k ralt (j))
- s (t! func $tot 300 s lmet)
- l (t! func $tot 300 l met)
+ ;; AGCS layout: Alt-GUI-Ctrl-Shift (pinky->index), mirrored.
+ a (t! hrm 300 a lalt)
+ s (t! hrm 300 s lmet)
+ d (t! hrm 300 d lctl)
+ f (t! hrm 300 f lsft)
+ j (t! hrm 300 j rsft)
+ k (t! hrm 300 k rctl)
+ l (t! hrm 300 l rmet)
+ ; (t! hrm 300 ; ralt)
 
  ;; define functional keys
  lalt (t! func $tot 160 bspc (layer-while-held apps))

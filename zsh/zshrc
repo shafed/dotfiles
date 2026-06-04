@@ -192,7 +192,7 @@ export PATH="$HOME/.local/bin:$PATH"
 #export winuser="/mnt/c/Users/$win_username"
 export OPENROUTER_API_KEY="sk-rGiKULn5W3H6Yf8TbzWi4Iu1wnFUTf7y"
 export PATH="$HOME/.local/bin:$PATH"
-export BROWSER=zen-browser
+export BROWSER=firefox
 export TERMCMD="wezterm"
 
 export zsh=~/.zshrc
@@ -237,7 +237,6 @@ alias nb='neobean'
 alias ta="task add"
 alias tl="task list"
 
-alias cd="z"
 alias cdd="z -"
 alias pulldeez='echo "Pulling latest changes, please wait..."; (cd ~/dotfiles && git pull >/dev/null 2>&1) || echo "Failed to pull dotfiles"; source ~/.zshrc'
 alias sioyek="LIBGL_ALWAYS_SOFTWARE=1 sioyek"
@@ -266,4 +265,4 @@ function zvm_after_lazy_keybindings() {
 }
 
 # Zoxide (must be at end of zshrc, per zoxide doctor)
-eval "$(zoxide init zsh)"
+eval "$(zoxide init zsh --cmd cd)"

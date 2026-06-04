@@ -15,6 +15,7 @@ concurrent-tap-hold yes
   chord-time 60
   subl-time 200
   tmux-delay 20
+  aterm-settle 250  ;; kitty-launch settle time before sending tmux keys
 )
 
 ;; https://github.com/jtroo/kanata/discussions/1656
@@ -32,6 +33,11 @@ concurrent-tap-hold yes
     $keyhold
     $typinglist ;; Activates $keytap early if a key within $typinglist is pressed before hold activates.
   )
+)
+
+;; tmux-send focuses kitty, then sends the tmux prefix (C-s) followed by $key
+(deftemplate tmux-send (key)
+  (macro @aterm $aterm-settle C-s $tmux-delay $key)
 )
 
 (defalias
@@ -98,35 +104,30 @@ concurrent-tap-hold yes
 
 (deflayermap (apps)
    
-  f (macro @aterm 250 C-s $tmux-delay f)
-  j (macro @aterm 250 C-s $tmux-delay s)
+  f (t! tmux-send f)
+  j (t! tmux-send s)
   q (cmd hyprctl dispatch killactive)
-  e (macro @aterm 250 C-s $tmux-delay C-y)
-  t (macro @aterm 250 C-s $tmux-delay C-t)
-  r (macro @aterm 250 C-s $tmux-delay C-1)
+  e (t! tmux-send C-y)
+  t (t! tmux-send C-t)
+  r (t! tmux-send C-1)
   y (cmd firefox --new-window https://www.youtube.com/playlist?list=WL)
   u (cmd zsh -lc "$HOME/dotfiles/scripts/youtube-qat.sh") ;; yoUtube channel search QAT
   b (cmd zsh -lc "$HOME/dotfiles/scripts/bookmarks.sh") ;; Bookmarks fzf QAT
-  a (cmd zsh -lc "$HOME/dotfiles/scripts/apps-qat.sh") ;; Applications fzf QAT
-  o (macro @aterm 250 C-s $tmux-delay C-o)
-  w (macro @aterm 250 C-s $tmux-delay C-w)
-  h (macro @aterm 250 C-s $tmux-delay C-a)
+  a (cmd zsh -lc "$HOME/dotfiles/scripts/apps.sh") ;; Applications fzf QAT
+  o (t! tmux-send C-o)
+  w (t! tmux-send C-w)
+  h (t! tmux-send C-a)
   s (tap-hold-press $subl-time $subl-time (cmd firefox) (layer-toggle browser))
   ;; a (layer-while-held terminal)
   ;; t (multi (cmd hyprctl dispatch workspace 5) (cmd telegram-desktop))
-  d (macro @aterm 250 C-s $tmux-delay C-d)
+  d (t! tmux-send C-d)
   g (cmd todoist)
   z (cmd zsh -lc "$HOME/.config/kanata/switchApp.sh sioyek 'LIBGL_ALWAYS_SOFTWARE=1 sioyek'")
-  p (macro @aterm 250 C-s $tmux-delay C-c)
+  p (t! tmux-send C-c)
   spc (cmd hyprlauncher)
   . (cmd rofimoji -a clipboard)
   caps caps
 )
-
-;; (deflayermap (terminal)
-;;   s (macro @aterm 250 C-s $tmux-delay s)
-;;   f (macro @aterm 250 C-s $tmux-delay f)
-;; )
 
 (deflayermap (browser)
   e (cmd firefox https://mail.google.com/mail/u/0/#inbox)
@@ -158,10 +159,6 @@ concurrent-tap-hold yes
 ;; (d f) rsft $chord-time first-release()
 ;; (j k) rsft $chord-time first-release()
 (lsft rsft) (layer-switch base) $chord-time first-release()
-)
-
-(defoverrides
-;; (rctl w) (rctl bspc)
 )
 
 (deflayermap (normal)

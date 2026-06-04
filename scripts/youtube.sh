@@ -9,7 +9,8 @@ script_self="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SO
 #
 # Usage:
 #   youtube.sh <channel>            # @handle, channel URL, or channel name
-#   youtube.sh -s [query]           # search channels by name via fzf, then videos
+#   youtube.sh -s [query]           # live YouTube search (videos + channels); a
+#                                   # video opens, a channel drills into its videos
 #   youtube.sh -p <playlist>        # playlist URL or ID (public only)
 #   youtube.sh -r <channel>         # refresh cache for that channel/playlist
 #   youtube.sh -n <count> <channel> # limit how many recent videos to list
@@ -48,9 +49,48 @@ if [[ "${1:-}" == "--preview" ]]; then
     done
   fi
 
-  # Image area: top portion of the preview pane. FZF_PREVIEW_* are set by fzf.
+  # Image area: top of the preview pane. FZF_PREVIEW_* are set by fzf.
   cols="${FZF_PREVIEW_COLUMNS:-40}"
-  img_lines=$((${FZF_PREVIEW_LINES:-20} / 2))
+  max_lines="${FZF_PREVIEW_LINES:-20}"
+
+  # Work out how many text rows the image occupies, so we pad by exactly that
+  # and the title/duration land right under it (no mid-pane gap). icat fits the
+  # image into the --place box preserving aspect, so if we make img_lines match
+  # the image's real shape at the pane width, the image fills exactly that many
+  # rows and our pad lands on the next line.
+  #
+  #   image px aspect      = img_w/img_h          (e.g. 480/360 = 4:3)
+  #   cell aspect (h/w)    = YOUTUBE_FZF_CELL_ASPECT, default 2.1 (×10 = 21)
+  #   rows = cols * (img_h/img_w) / cell_aspect
+  img_w=480 img_h=360 # YouTube thumbnail default (4:3); refined below if possible
+  if command -v identify >/dev/null 2>&1; then
+    read -r img_w img_h < <(identify -format '%w %h' "$thumb" 2>/dev/null) || {
+      img_w=480 img_h=360
+    }
+    [[ "$img_w" =~ ^[0-9]+$ && "$img_h" =~ ^[0-9]+$ && "$img_w" -gt 0 ]] || {
+      img_w=480 img_h=360
+    }
+  fi
+  cell_aspect_x10="${YOUTUBE_FZF_CELL_ASPECT:-21}" # cell height/width × 10
+  ((cell_aspect_x10 > 0)) || cell_aspect_x10=21
+  # Box width starts at the full pane width; height follows from the image
+  # aspect so the --place box matches the image and icat fills it WITHOUT
+  # overflowing (an overflow would draw over the text below). If that height is
+  # taller than ~60% of the pane, shrink the WIDTH too so the box stays the same
+  # shape but fits — keeping room for the title/duration underneath.
+  img_cols=$cols
+  img_lines=$(((img_cols * img_h * 10) / (img_w * cell_aspect_x10)))
+  cap=$((max_lines * 6 / 10))
+  ((cap < 1)) && cap=1
+  if ((img_lines > cap)); then
+    img_lines=$cap
+    # width that preserves the image aspect at this height
+    img_cols=$(((img_lines * img_w * cell_aspect_x10) / (img_h * 10)))
+    ((img_cols < 1)) && img_cols=1
+    ((img_cols > cols)) && img_cols=$cols
+  fi
+  ((img_lines < 1)) && img_lines=1
+
   drew_image=false
   if [[ -s "$thumb" ]]; then
     # Prefer kitty's graphics protocol; fall back to chafa (unicode blocks),
@@ -58,15 +98,18 @@ if [[ "${1:-}" == "--preview" ]]; then
     # YOUTUBE_FZF_IMG=chafa to force the fallback.
     if [[ "${YOUTUBE_FZF_IMG:-}" != "chafa" ]] && command -v kitten >/dev/null 2>&1; then
       kitten icat --clear --transfer-mode=memory --unicode-placeholder \
-        --stdin=no --scale-up --place="${cols}x${img_lines}@0x0" "$thumb" 2>/dev/null &&
+        --stdin=no --scale-up --place="${img_cols}x${img_lines}@0x0" "$thumb" 2>/dev/null &&
         drew_image=true
     fi
     if [[ "$drew_image" == false ]] && command -v chafa >/dev/null 2>&1; then
-      chafa --clear --format=symbols --size="${cols}x${img_lines}" "$thumb" 2>/dev/null &&
+      chafa --clear --format=symbols --size="${img_cols}x${img_lines}" "$thumb" 2>/dev/null &&
         drew_image=true
     fi
   fi
-  # Move cursor below the image area before printing text (icat leaves it at top).
+  # Move cursor to just below the image before printing text. icat with
+  # --place leaves the cursor at the placement origin, so we step down exactly
+  # img_lines rows; under tmux the cursor is unreliable, so this explicit pad is
+  # what guarantees the text sits directly under the image.
   if [[ "$drew_image" == true ]]; then
     printf '\n%.0s' $(seq 1 "$img_lines")
   fi
@@ -78,8 +121,66 @@ if [[ "${1:-}" == "--preview" ]]; then
   exit 0
 fi
 
+# Live-search mode: query YouTube and print one TSV row per result for fzf to
+# display and filter. Called repeatedly by fzf's `change:reload` as the user
+# types, so it must be self-contained and fast (flat search, no per-item fetch).
+#
+# Two searches are merged, channels first then videos, because a plain
+# `ytsearch:` query returns the "All" tab — which is almost entirely videos and
+# rarely surfaces a channel (e.g. "bald omni man", "майни", "сибирский" return
+# zero channels). To find channels reliably we hit YouTube's Channels-tab search
+# (results?search_query=…&sp=EgIQAg== = the "Channels" filter), which returns
+# real channels with @handles and channel_ids.
+#
+# Output columns (tab-separated). Columns 1–5 are machine-readable (the caller
+# parses them after a pick); column 6 is the human-readable line fzf shows and
+# filters (--with-nth=6):
+#   1 kind     channel|video — drives the action on Enter
+#   2 id       channel_id (UC…) for channels, video id for videos
+#   3 handle   @handle for channels (may be empty), empty for videos
+#   4 title    channel name or video title
+#   5 dur      duration_string for videos, empty for channels
+#   6 display  "◉  <channel>   <handle>" or "▶  <title>   <dur>"
+if [[ "${1:-}" == "--ytsearch" ]]; then
+  tab=$'\t'
+  query="${2:-}"
+  [[ -n "$query" ]] || exit 0
+
+  print_tmpl="%(ie_key)s${tab}%(id)s${tab}%(channel)s${tab}%(uploader_id)s${tab}%(title)s${tab}%(duration_string)s"
+  # awk turns yt-dlp rows into our 6-column TSV, keeping only the wanted kind
+  # ("channel" or "video") so the two passes don't print each other's stray rows.
+  render='
+    BEGIN { FS=OFS="\t" }
+    {
+      ie=$1; id=$2; channel=$3; handle=$4; title=$5; dur=$6
+      if (handle=="NA") handle=""
+      if (dur=="NA")    dur=""
+      if (want=="channel" && ie=="YoutubeTab" && id!="" && id!="NA") {
+        disp="\033[36m◉\033[0m  " channel
+        if (handle!="") disp=disp "  \033[2m" handle "\033[0m"
+        print "channel", id, handle, channel, "", disp
+      } else if (want=="video" && ie=="Youtube" && id!="" && id!="NA") {
+        disp="▶  " title
+        if (dur!="") disp=disp "  \033[2m" dur "\033[0m"
+        print "video", id, "", title, dur, disp
+      }
+    }'
+
+  # Channels first (Channels-tab filter), then videos (plain search).
+  enc="$(python3 -c 'import urllib.parse,sys;print(urllib.parse.quote(sys.argv[1]))' "$query" 2>/dev/null)"
+  if [[ -n "$enc" ]]; then
+    yt-dlp --flat-playlist --no-warnings --playlist-end 12 --print "$print_tmpl" \
+      "https://www.youtube.com/results?search_query=${enc}&sp=EgIQAg%3D%3D" 2>/dev/null |
+      awk -v want=channel "$render"
+  fi
+  yt-dlp --flat-playlist --no-warnings --playlist-end 25 --print "$print_tmpl" \
+    "ytsearch25:$query" 2>/dev/null |
+    awk -v want=video "$render"
+  exit 0
+fi
+
 usage() {
-  sed -n '7,18p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+  sed -n '7,21p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
   exit "${1:-0}"
 }
 
@@ -109,6 +210,8 @@ while getopts ":spn:rh" opt; do
 done
 shift $((OPTIND - 1))
 
+tab=$'\t'
+
 source_fzf_colors() {
   if [[ -f "$fzf_colors_file" ]]; then
     # shellcheck disable=SC1090
@@ -116,42 +219,81 @@ source_fzf_colors() {
   fi
 }
 
-# Search channels by name and let the user pick one; prints its @handle.
-# Builds a channel list by sampling search results and de-duplicating by handle.
-search_channel_handle() {
-  local query="$1" results sel
-  echo "Searching channels for: $query" >&2
-  # channel name \t @handle; keep only rows with a real @handle, de-dup by it.
-  results="$(yt-dlp --flat-playlist --no-warnings --playlist-end 20 \
-    --print "%(channel)s${tab}%(uploader_id)s" \
-    "ytsearch20:$query" 2>/dev/null |
-    awk -F'\t' '$2 ~ /^@/ && !seen[$2]++')"
-  [[ -n "$results" ]] || {
-    echo "No channels found for: $query" >&2
-    return 1
-  }
-
-  source_fzf_colors
-  # Show "Channel name  @handle" so the handle is visible while picking.
-  local fzf_args=(--height=100% --reverse --delimiter=$'\t' --with-nth=1,2
-    --prompt="Channel > " --header="Pick a channel for: $query")
-  [[ -n "${linkarzu_fzf_colors:-}" ]] && fzf_args+=(--color="$linkarzu_fzf_colors")
-
-  sel="$(printf '%s\n' "$results" | fzf "${fzf_args[@]}")" || return 1
-  printf '%s' "${sel#*$tab}"
+# Open a video in the browser, detached so it survives this script exiting.
+# setsid avoids needing a pause: xdg-open would otherwise be killed before the
+# browser picks up the URL when the QAT panel closes the instant we exit.
+open_video() {
+  setsid -f xdg-open "https://www.youtube.com/watch?v=$1" >/dev/null 2>&1
 }
 
-tab=$'\t'
+# Live YouTube search, like the site's search bar: the user types in fzf and
+# every keystroke re-queries YouTube (change:reload calls us back in
+# --ytsearch mode). Results mix channels (◉) and videos (▶). Enter on a video
+# opens it; Enter on a channel sets $target to its @handle and returns so the
+# caller falls through to that channel's video listing.
+#
+# Returns 0 with $target set to an @handle (caller continues in channel mode),
+# or exits the whole script directly when a video was opened / nothing picked.
+search_live() {
+  local query="$1" sel kind id handle
+  source_fzf_colors
 
-# Search mode: query -> pick channel -> fall through to that channel's videos.
+  # Seed the list with the initial query; change:reload refreshes it as typed.
+  # --preview only makes sense for videos (col 2 = video id); for channels the
+  # id is a UC… channel id and open_video isn't used, so the preview just shows
+  # nothing useful — that's fine.
+  local fzf_args=(
+    --height=100%
+    --reverse
+    --ansi
+    --delimiter=$'\t'
+    --with-nth=6
+    --query="$query"
+    --disabled
+    --prompt="Search YouTube > "
+    --header="Enter: ◉ channel → its videos · ▶ video → open · Esc: cancel"
+    --bind "change:reload(sleep 0.3; \"$script_self\" --ytsearch {q})+first"
+    --bind "start:reload(\"$script_self\" --ytsearch {q})"
+    --preview "\"$script_self\" --preview {2} {4} {5}"
+    --preview-window "right,55%,wrap"
+  )
+  [[ -n "${linkarzu_fzf_colors:-}" ]] && fzf_args+=(--color="$linkarzu_fzf_colors")
+
+  # --ytsearch feeds rows on each keystroke (start/change reload). Column 6 is
+  # the prefixed ◉/▶ line fzf shows; columns 1–3 carry kind/id/handle for the
+  # action below. fzf gets nothing on its own stdin (rows come from reload).
+  sel="$(fzf "${fzf_args[@]}" </dev/null)" || exit 0
+  [[ -n "$sel" ]] || exit 0
+
+  IFS="$tab" read -r kind id handle _ <<<"$sel"
+  case "$kind" in
+  video)
+    open_video "$id"
+    exit 0
+    ;;
+  channel)
+    if [[ "$handle" == @* ]]; then
+      target="$handle"
+    else
+      # Channel result without a handle (rare): fall back to the channel id,
+      # which yt-dlp can enumerate via the /channel/<id>/videos URL.
+      target="https://www.youtube.com/channel/$id/videos"
+    fi
+    return 0
+    ;;
+  *)
+    exit 0
+    ;;
+  esac
+}
+
+# Search mode: live YouTube search -> open video, or fall through to a channel.
 if [[ "$mode" == "search" ]]; then
   query="${1:-}"
-  if [[ -z "$query" ]]; then
-    read -r -p "Search YouTube channel: " query
-  fi
-  [[ -n "$query" ]] || exit 0
-  target="$(search_channel_handle "$query")" || exit 0
-  [[ -n "$target" ]] || exit 0
+  search_live "$query"
+  # Returns only when a channel was picked; $target now holds it.
+  [[ -n "${target:-}" ]] || exit 0
+  refresh=true # always show that channel's freshest videos right after picking
   mode="channel"
 else
   target="${1:-}"
@@ -240,9 +382,4 @@ if [[ -z "${id:-}" ]]; then
   exit 1
 fi
 
-url="https://www.youtube.com/watch?v=$id"
-
-# Detach the browser into its own session so it survives this QAT panel closing
-# the instant the script exits (otherwise xdg-open is killed before the browser
-# picks up the URL). setsid avoids needing a pause.
-setsid -f xdg-open "$url" >/dev/null 2>&1
+open_video "$id"

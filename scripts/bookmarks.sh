@@ -14,6 +14,70 @@ fzf_colors_file="$HOME/dotfiles/colorscheme/active/active-fzf-colors.sh"
 qat_config="$HOME/dotfiles/kitty/quick-access-terminal-center.conf"
 kitty_bin="$(command -v kitty || echo /usr/bin/kitty)"
 bookmarks_group="bookmarks"
+# Recently-opened log (most recent first), one "name<tab>url" row per opened
+# bookmark. Shown when the query is empty so the picker opens to "recents"
+# instead of the "type 3 chars" empty state — mirrors apps.sh's recent ordering.
+cache_dir="$HOME/.cache/bookmarks-fzf"
+recent_file="$cache_dir/recent.tsv"
+recent_max=50
+tab=$'\t'
+
+# Print every bookmark row from all sources (the full search list). Used when a
+# query is typed. Kept as its own subcommand so fzf can reload it cheaply.
+all_bookmarks() {
+  local bookmarks_file
+  for bookmarks_file in "${bookmarks_files[@]}"; do
+    [[ -s "$bookmarks_file" ]] && cat "$bookmarks_file"
+  done
+}
+
+# Print the recently-opened bookmarks, most recent first. Stale rows (a bookmark
+# that has since been removed from every source) are dropped by intersecting the
+# log against the live catalog on url. Shown when the query is empty.
+recent_bookmarks() {
+  [[ -s "$recent_file" ]] || return 0
+  awk -F'\t' -v recent="$recent_file" '
+    # First pass: remember every url that still exists in the catalog.
+    { live[$2] = 1 }
+    END {
+      while ((getline line < recent) > 0) {
+        split(line, r, "\t")
+        url = r[2]
+        if (url != "" && (url in live) && !(url in seen)) {
+          seen[url] = 1
+          print line
+        }
+      }
+    }
+  ' <(all_bookmarks)
+}
+
+# Record an opened bookmark at the top of the recents log, de-duplicating by url
+# and capping the file length. Rewrites recent_file atomically.
+record_open() {
+  local name="$1" url="$2" tmp
+  [[ -n "$url" ]] || return 0
+  mkdir -p "$cache_dir"
+  [[ -f "$recent_file" ]] || : >"$recent_file"
+  tmp="$(mktemp "$cache_dir/recent.XXXXXX")" || return 0
+  {
+    printf '%s\t%s\n' "$name" "$url"
+    # Keep prior rows except the one we just promoted; cap total lines.
+    awk -F'\t' -v url="$url" '$2 != url' "$recent_file"
+  } | head -n "$recent_max" >"$tmp"
+  mv "$tmp" "$recent_file"
+}
+
+# Internal list providers invoked by fzf's reload binds. They just print rows
+# and exit so reloading on every keystroke stays snappy.
+if [[ "${1:-}" == "--recent" ]]; then
+  recent_bookmarks
+  exit 0
+fi
+if [[ "${1:-}" == "--all" ]]; then
+  all_bookmarks
+  exit 0
+fi
 
 # Find the active Firefox profile by reading profiles.ini, falling back to the
 # first profile dir that actually has a places.sqlite.
@@ -144,13 +208,12 @@ if [[ "${1:-}" == "--pick" ]]; then
   # Refresh the Firefox export before showing the picker so it stays in sync.
   export_firefox_bookmarks
 
-  bookmark_reload_cmd='query={q}; if [[ ${#query} -ge 3 ]]; then for bookmarks_file in'
   fzf_args=(
     --height=100%
     --reverse
     --delimiter=$'\t'
     --with-nth=1
-    --header="Type at least 3 characters to search bookmarks"
+    --header="Empty = recent, type to search all"
     --prompt="Open bookmark > "
   )
   has_bookmarks=false
@@ -180,12 +243,12 @@ if [[ "${1:-}" == "--pick" ]]; then
     source "$fzf_colors_file"
   fi
 
-  for bookmarks_file in "${bookmarks_files[@]}"; do
-    printf -v quoted_bookmarks_file '%q' "$bookmarks_file"
-    bookmark_reload_cmd+=" $quoted_bookmarks_file"
-  done
-  bookmark_reload_cmd+='; do [[ -s "$bookmarks_file" ]] && cat "$bookmarks_file"; done; fi'
-  fzf_args+=(--bind "change:reload($bookmark_reload_cmd)")
+  # Empty query -> recently opened; any typed query -> full catalog. fzf re-runs
+  # these subcommands of ourself on start and on every keystroke.
+  printf -v quoted_self '%q' "$script_path"
+  list_reload="if [[ -z {q} ]]; then $quoted_self --recent; else $quoted_self --all; fi"
+  fzf_args+=(--bind "start:reload($list_reload)")
+  fzf_args+=(--bind "change:reload($list_reload)")
 
   if [[ -n "${linkarzu_fzf_colors:-}" ]]; then
     fzf_args+=(--color="$linkarzu_fzf_colors")
@@ -209,6 +272,9 @@ if [[ "${1:-}" == "--pick" ]]; then
       toggle_bookmarks_qat
       continue
     fi
+
+    # Log this open so the bookmark rises to the top of next time's recents.
+    record_open "$_name" "$url"
 
     toggle_bookmarks_qat
     xdg-open "$url" >/dev/null 2>&1 &

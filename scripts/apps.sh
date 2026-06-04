@@ -2,23 +2,30 @@
 
 set -euo pipefail
 
-script_self="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
+script_path="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
 
 # Fuzzy-find installed applications by name and launch the pick. Mirrors the
-# look/feel of bookmarks.sh and youtube.sh (same fzf colors).
+# look/feel AND mechanism of bookmarks.sh: runs inside a long-lived kitty
+# quick-access panel that is toggled via the remote-control socket, so it
+# overlays the screen the same way and opens instantly (the fzf process stays
+# alive between triggers instead of cold-starting a new panel each time).
 #
 # Usage:
-#   apps.sh             # pick an app and launch it
-#   apps.sh -r          # rebuild the app cache, then pick
+#   apps.sh             # launch (or toggle) the picker QAT
+#   apps.sh -r          # rebuild the app cache, then launch the picker
+#   apps.sh --pick      # internal: run the picker loop inside the QAT panel
 #   apps.sh -h          # this help
 #
 # Notes:
 #   - Reads freedesktop .desktop entries from the standard XDG dirs. Entries
 #     marked NoDisplay=true or Hidden=true are skipped (same as menus do).
 #   - Launches via gtk-launch so the app's own Exec/Actions handling applies,
-#     and detaches with setsid so it survives this QAT panel closing.
+#     and detaches with setsid so it survives the panel hiding.
 
 fzf_colors_file="$HOME/dotfiles/colorscheme/active/active-fzf-colors.sh"
+qat_config="$HOME/dotfiles/kitty/quick-access-terminal-center.conf"
+kitty_bin="$(command -v kitty || echo /usr/bin/kitty)"
+apps_group="apps"
 cache_dir="$HOME/.cache/apps-fzf"
 cache_file="$cache_dir/apps.tsv"
 # Launch tally (desktop-file-id<tab>count). Kept apart from the catalog cache so
@@ -35,36 +42,8 @@ app_dirs=(
   "${XDG_DATA_HOME:-$HOME/.local/share}/applications"
 )
 
-# Render the fzf preview for a single app from its .desktop file: name,
-# comment, and the command it runs. Pulled live from the file (cheap, local),
-# so no cache fields beyond the path are needed.
-# Called as a subprocess by fzf, so it must not depend on the rest of the script.
-if [[ "${1:-}" == "--preview" ]]; then
-  file="${2:-}"
-  [[ -n "$file" && -f "$file" ]] || exit 0
-
-  # First value of a key in the [Desktop Entry] group (ignore localized [xx] keys).
-  field() {
-    awk -F= -v key="$1" '
-      /^\[/ { in_main = ($0 == "[Desktop Entry]") }
-      in_main && $1 == key { sub(/^[^=]*=/, ""); print; exit }
-    ' "$file"
-  }
-
-  name="$(field Name)"
-  comment="$(field Comment)"
-  exec_line="$(field Exec)"
-  categories="$(field Categories)"
-
-  [[ -n "$name" ]] && printf '%s\n\n' "$name"
-  [[ -n "$comment" ]] && printf '%s\n\n' "$comment"
-  [[ -n "$exec_line" ]] && printf 'Exec: %s\n' "$exec_line"
-  [[ -n "$categories" ]] && printf 'Categories: %s\n' "$categories"
-  exit 0
-fi
-
 usage() {
-  sed -n '7,18p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+  sed -n '8,21p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
   exit "${1:-0}"
 }
 
@@ -72,6 +51,22 @@ if ! command -v fzf >/dev/null 2>&1; then
   echo "fzf is not installed." >&2
   exit 1
 fi
+
+# Pull the long-only --pick flag out before getopts, which only understands
+# short options and would choke on "--". --pick means "run the picker loop
+# inside the QAT panel"; without it we are the launcher that spawns the panel.
+pick_mode=false
+list_mode=""
+args=()
+for arg in "$@"; do
+  case "$arg" in
+  --pick) pick_mode=true ;;
+  --recent) list_mode="recent" ;;
+  --all) list_mode="all" ;;
+  *) args+=("$arg") ;;
+  esac
+done
+set -- "${args[@]+"${args[@]}"}"
 
 while getopts ":rh" opt; do
   case "$opt" in
@@ -100,15 +95,57 @@ switch_to_english() {
   hyprctl switchxkblayout all 0 >/dev/null 2>&1 || true
 }
 
-# Close this panel window explicitly via kitty's own remote-control socket.
-# Relying on the window auto-closing when the script exits proved unreliable (it
-# sometimes lingered), so we close the exact window by id. Returns non-zero if
-# remote control is unavailable, so callers can fall back to a plain exit.
-close_panel() {
-  [[ -n "${KITTY_LISTEN_ON:-}" && -n "${KITTY_WINDOW_ID:-}" ]] || return 1
-  command -v kitty >/dev/null 2>&1 || return 1
-  kitty @ --to "$KITTY_LISTEN_ON" close-window --match "id:$KITTY_WINDOW_ID" \
-    >/dev/null 2>&1
+main_kitty_socket() {
+  local sock pid args
+
+  # Each QAT creates its own /tmp/kitty-* socket. Use the main kitty process so
+  # hide/show commands do not accidentally target another floating terminal.
+  for sock in /tmp/kitty-*; do
+    [[ -S "$sock" ]] || continue
+    pid="${sock##*-}"
+    args="$(ps -p "$pid" -o args= 2>/dev/null || true)"
+
+    # On Linux the launcher is usually the python entry point; match either the
+    # resolved kitty binary or a bare "kitty" command in the process arguments.
+    if [[ "$args" == "$kitty_bin"* || "$args" == kitty* || "$args" == *"/kitty "* ]]; then
+      printf '%s\n' "$sock"
+      return 0
+    fi
+  done
+
+  return 1
+}
+
+# Toggle (hide/show) the apps QAT panel. Because the panel is single-instance
+# per instance-group, sending the same launch command flips its visibility
+# instead of spawning a second panel — this is what makes re-triggers instant.
+toggle_apps_qat() {
+  local sock
+
+  sock="$(main_kitty_socket)" || return 0
+  "$kitty_bin" @ --to "unix:${sock}" \
+    action launch --type=background kitten quick-access-terminal \
+    --config "$qat_config" \
+    --instance-group "$apps_group" >/dev/null 2>&1 || true
+}
+
+launch_apps_qat() {
+  local sock pick_args
+  # Forward -r so a "rebuild then pick" still rebuilds inside the panel, where
+  # the picker loop actually reads the cache.
+  pick_args=(--pick)
+  [[ "$refresh" == true ]] && pick_args+=(-r)
+
+  sock="$(main_kitty_socket)" || {
+    echo "No main kitty socket found."
+    exit 1
+  }
+
+  "$kitty_bin" @ --to "unix:${sock}" \
+    action launch --type=background kitten quick-access-terminal \
+    --config "$qat_config" \
+    --instance-group "$apps_group" \
+    /usr/bin/env bash "$script_path" "${pick_args[@]}"
 }
 
 # Build "Name<tab>desktop-file-id<tab>path" rows from all .desktop entries,
@@ -152,16 +189,6 @@ build_cache() {
   rm -f "$cache_file.tmp"
 }
 
-# (Re)build the cache when missing or forced with -r.
-if [[ "$refresh" == true || ! -s "$cache_file" ]]; then
-  build_cache
-fi
-
-if [[ ! -s "$cache_file" ]]; then
-  echo "No applications found." >&2
-  exit 1
-fi
-
 # Feed the catalog to fzf sorted by launch count (desc), then name (asc) so the
 # most-used apps sit at the top and ties stay alphabetical. Counts are joined
 # from usage_file by desktop-file id; unseen apps get 0 and fall to the bottom.
@@ -174,6 +201,24 @@ sorted_apps() {
       }
     }
     { c = (($2 in count) ? count[$2] : 0); print c "\t" $0 }
+  ' "$cache_file" |
+    sort -t"$tab" -k1,1nr -k2,2f |
+    cut -f2-
+}
+
+# Like sorted_apps, but keep only apps that have actually been launched before
+# (a positive count in usage_file). Shown when the query is empty so the picker
+# opens to "recently/most used" instead of the whole catalog. Typing anything
+# switches back to the full list (see the change:reload bind below).
+recent_apps() {
+  awk -F'\t' -v usage="$usage_file" '
+    BEGIN {
+      while ((getline line < usage) > 0) {
+        split(line, u, "\t")
+        if (u[1] != "") count[u[1]] = u[2] + 0
+      }
+    }
+    (($2 in count) && count[$2] > 0) { print count[$2] "\t" $0 }
   ' "$cache_file" |
     sort -t"$tab" -k1,1nr -k2,2f |
     cut -f2-
@@ -195,49 +240,103 @@ record_launch() {
   mv "$tmp" "$usage_file"
 }
 
-fzf_args=(
-  --height=100%
-  --reverse
-  --delimiter=$'\t'
-  --with-nth=1
-  --prompt="Launch app > "
-  --header="Enter to launch, Esc to cancel"
-  --preview "$script_self --preview {3}"
-  --preview-window "right,55%,wrap"
-)
+# Launch the picked app, detached into its own session so it survives the panel
+# hiding. We run the parsed Exec= line directly rather than leaning on
+# gtk-launch: gtk-launch (and gio launch) silently no-op on DBusActivatable=true
+# entries whose desktop-file id is not a valid D-Bus name — e.g. Telegram's
+# hashed id org.telegram.desktop._<hash>.desktop — returning 0 while launching
+# nothing. Parsing Exec= works for every entry regardless of id/DBusActivatable.
+# gtk-launch stays as the fallback for the rare entry that has no Exec= line.
+launch_app() {
+  local file="$1" id="$2" exec_line
+  exec_line="$(awk '/^\[Desktop Entry\]/{f=1;next} /^\[/{f=0} f && /^Exec=/{sub(/^Exec=/,"");print;exit}' "$file")"
 
-source_fzf_colors
-if [[ -n "${linkarzu_fzf_colors:-}" ]]; then
-  fzf_args+=(--color="$linkarzu_fzf_colors")
+  if [[ -n "$exec_line" ]]; then
+    # Strip freedesktop field codes (%u %f %F %U %i %c %k ...) before running.
+    exec_line="$(printf '%s' "$exec_line" | sed 's/%[a-zA-Z]//g')"
+    setsid -f bash -c "$exec_line" >/dev/null 2>&1
+  elif command -v gtk-launch >/dev/null 2>&1; then
+    # gtk-launch wants the id without the trailing .desktop.
+    setsid -f gtk-launch "${id%.desktop}" >/dev/null 2>&1
+  fi
+}
+
+# Internal list providers invoked by fzf's reload binds. They just print rows
+# and exit; kept lightweight so reloading on every keystroke stays snappy. The
+# cache is guaranteed to exist by the time fzf runs (the --pick branch builds it
+# before starting fzf).
+if [[ "$list_mode" == "recent" ]]; then
+  recent_apps
+  exit 0
+fi
+if [[ "$list_mode" == "all" ]]; then
+  sorted_apps
+  exit 0
 fi
 
-switch_to_english
-# On cancel (Esc, non-zero fzf), close the panel the same way as after a launch.
-selected="$(sorted_apps | fzf "${fzf_args[@]}")" || { close_panel || exit 0; exit 0; }
+# The picker loop. Runs inside the QAT panel (apps.sh --pick). Keeps the process
+# alive after every action so kitty only toggles the panel's visibility on the
+# next trigger instead of cold-starting it — same trick as bookmarks.sh.
+if [[ "$pick_mode" == true ]]; then
+  # (Re)build the cache when missing or forced with -r.
+  if [[ "$refresh" == true || ! -s "$cache_file" ]]; then
+    build_cache
+  fi
 
-IFS=$'\t' read -r _name id _path <<<"$selected"
-if [[ -z "${id:-}" ]]; then
-  echo "Invalid selection: $selected" >&2
-  exit 1
+  if [[ ! -s "$cache_file" ]]; then
+    echo "No applications found."
+    read -r -p "Press enter to close. "
+    exit 1
+  fi
+
+  # Empty query -> recently/most-used only; any typed query -> full catalog.
+  # fzf re-runs these subcommands of ourself on start and on every keystroke.
+  printf -v quoted_self '%q' "$script_path"
+  list_reload="if [[ -z {q} ]]; then $quoted_self --recent; else $quoted_self --all; fi"
+
+  fzf_args=(
+    --height=100%
+    --reverse
+    --delimiter=$'\t'
+    --with-nth=1
+    --prompt="Launch app > "
+    --header="Empty = recent, type to search all"
+    --bind "start:reload($list_reload)"
+    --bind "change:reload($list_reload)"
+  )
+
+  source_fzf_colors
+  if [[ -n "${linkarzu_fzf_colors:-}" ]]; then
+    fzf_args+=(--color="$linkarzu_fzf_colors")
+  fi
+
+  while true; do
+    switch_to_english
+    # Esc makes fzf exit non-zero. Treat it as "hide and rearm" so the next
+    # keypress shows an already-running picker instead of starting from cold.
+    # The list itself comes from the reload binds, so feed fzf an empty stdin.
+    if ! selected=$(: | fzf "${fzf_args[@]}"); then
+      toggle_apps_qat
+      continue
+    fi
+
+    IFS=$'\t' read -r _name id _path <<<"$selected"
+
+    if [[ -z "${id:-}" ]]; then
+      echo "Invalid selection: $selected"
+      read -r -p "Press enter to continue. "
+      toggle_apps_qat
+      continue
+    fi
+
+    # Count this launch so the app rises in next time's ordering.
+    record_launch "$id"
+
+    # Hide the panel first, then launch the app detached (same reasoning as
+    # bookmarks.sh's xdg-open: it must outlive this panel hiding).
+    toggle_apps_qat
+    launch_app "$_path" "$id"
+  done
 fi
 
-# Count this launch so the app rises in next time's ordering.
-record_launch "$id"
-
-# gtk-launch wants the desktop-file id without the trailing .desktop.
-desktop_id="${id%.desktop}"
-
-# Detach into its own session so the app survives this QAT panel closing the
-# instant the script exits (same reasoning as youtube.sh's xdg-open).
-if command -v gtk-launch >/dev/null 2>&1; then
-  setsid -f gtk-launch "$desktop_id" >/dev/null 2>&1
-else
-  # Fallback: parse Exec, strip field codes (%u %f %F ...), and run it directly.
-  exec_line="$(awk '/^\[Desktop Entry\]/{f=1;next} /^\[/{f=0} f && /^Exec=/{sub(/^Exec=/,"");print;exit}' "$_path")"
-  exec_line="$(printf '%s' "$exec_line" | sed 's/%[a-zA-Z]//g')"
-  setsid -f bash -c "$exec_line" >/dev/null 2>&1
-fi
-
-# The app was already detached above, so closing the window cannot take it down
-# with us. Fall back to a plain exit if remote control is unavailable.
-close_panel || exit 0
+launch_apps_qat

@@ -100,6 +100,17 @@ switch_to_english() {
   hyprctl switchxkblayout all 0 >/dev/null 2>&1 || true
 }
 
+# Close this panel window explicitly via kitty's own remote-control socket.
+# Relying on the window auto-closing when the script exits proved unreliable (it
+# sometimes lingered), so we close the exact window by id. Returns non-zero if
+# remote control is unavailable, so callers can fall back to a plain exit.
+close_panel() {
+  [[ -n "${KITTY_LISTEN_ON:-}" && -n "${KITTY_WINDOW_ID:-}" ]] || return 1
+  command -v kitty >/dev/null 2>&1 || return 1
+  kitty @ --to "$KITTY_LISTEN_ON" close-window --match "id:$KITTY_WINDOW_ID" \
+    >/dev/null 2>&1
+}
+
 # Build "Name<tab>desktop-file-id<tab>path" rows from all .desktop entries,
 # skipping NoDisplay/Hidden ones and de-duplicating by id so a user override
 # shadows the system copy.
@@ -201,7 +212,8 @@ if [[ -n "${linkarzu_fzf_colors:-}" ]]; then
 fi
 
 switch_to_english
-selected="$(sorted_apps | fzf "${fzf_args[@]}")" || exit 0
+# On cancel (Esc, non-zero fzf), close the panel the same way as after a launch.
+selected="$(sorted_apps | fzf "${fzf_args[@]}")" || { close_panel || exit 0; exit 0; }
 
 IFS=$'\t' read -r _name id _path <<<"$selected"
 if [[ -z "${id:-}" ]]; then
@@ -225,3 +237,7 @@ else
   exec_line="$(printf '%s' "$exec_line" | sed 's/%[a-zA-Z]//g')"
   setsid -f bash -c "$exec_line" >/dev/null 2>&1
 fi
+
+# The app was already detached above, so closing the window cannot take it down
+# with us. Fall back to a plain exit if remote control is unavailable.
+close_panel || exit 0

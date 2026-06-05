@@ -10,5 +10,7 @@ return {
     opts.restricted_keys["gj"] = false
     opts.restricted_keys["gk"] = false
     opts.max_count = 12
+    -- allow mouse usage
+    opts.disable_mouse = false
   end,
 }

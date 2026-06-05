@@ -10,7 +10,7 @@ chords-v2-min-idle 150  ;; after any non-chord keypress, skip chords for 150ms
 ;; opposite-hand HRM (kanata PR #1955): hold only fires when the next key is on
 ;; the other hand, so fast same-hand rolls stay taps without manual key lists.
 (defhands
-  (left  q w e r t a s d f g z x c v b)
+  (left  q w e r t a s d f g z x c v b caps)
   (right y u i o p h j k l ; n m , . /)
 )
 
@@ -164,6 +164,8 @@ chords-v2-min-idle 150  ;; after any non-chord keypress, skip chords for 150ms
 ;; down until both keys lift, so you can add a third key (e.g. C-S-tab).
 (d f) (multi lctl lsft) $mod-chord-time all-released ()
 (j k) (multi lctl lsft) $mod-chord-time all-released ()
+(s f) (multi lmet lsft) $mod-chord-time all-released ()
+(l j) (multi rmet rsft) $mod-chord-time all-released ()
 (lsft rsft) (layer-switch base) $chord-time first-release()
 )
 

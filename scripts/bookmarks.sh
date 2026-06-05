@@ -17,6 +17,9 @@ kitty_bin="$(command -v kitty || echo /usr/bin/kitty)"
 # instead of opening a duplicate. Optional: if missing we fall back to xdg-open.
 brotab_bin="$(command -v bt || echo "$HOME/.local/bin/bt")"
 bookmarks_group="bookmarks"
+# Workspace a cold-started Firefox should land on. When Firefox is already
+# running we leave its window where it is; only a fresh launch is moved here.
+firefox_workspace="2"
 # Recently-opened log (most recent first), one "name<tab>url" row per opened
 # bookmark. Shown when the query is empty so the picker opens to "recents"
 # instead of the "type 3 chars" empty state — mirrors apps.sh's recent ordering.
@@ -85,11 +88,24 @@ normalize_url() {
 # Raise the Firefox window in Hyprland. The QAT panel hides asynchronously, so
 # settle briefly first to avoid Hyprland re-grabbing focus after us. When the
 # window is not up yet (Firefox starting cold), poll a few times for it.
+#
+# On a cold start only (Firefox was not already running when we first looked) we
+# move the freshly-launched window to firefox_workspace so a new browser opens
+# there by default; an already-running Firefox is focused wherever it lives.
 focus_firefox() {
-  local i
+  local i cold_start=false
   sleep 0.15
+
+  # If Firefox isn't up on the first check, this open is launching it cold.
+  if ! hyprctl clients -j 2>/dev/null | grep -q '"class": *"firefox"'; then
+    cold_start=true
+  fi
+
   for i in 1 2 3 4 5 6 7 8 9 10; do
     if hyprctl clients -j 2>/dev/null | grep -q '"class": *"firefox"'; then
+      if [[ "$cold_start" == true ]]; then
+        hyprctl dispatch movetoworkspace "${firefox_workspace},class:firefox" >/dev/null 2>&1 || true
+      fi
       hyprctl dispatch focuswindow class:firefox >/dev/null 2>&1 || true
       return 0
     fi

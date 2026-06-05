@@ -554,11 +554,9 @@ vim.keymap.set("n", "<leader>lc", function()
   vim.notify("Copied: " .. #exercises .. " exercises", vim.log.levels.INFO)
 end, { desc = "[P]Log Copy: workout table to clipboard" })
 
--- Save training note to training/ and insert wikilink into todos.md
+-- Save training note to training/
 vim.keymap.set("n", "<leader>lp", function()
-  local todos_path = vim.fn.expand("~/obsidian/notes/todos.md")
   local training_dir = vim.fn.expand("~/obsidian/periodic/training/")
-  local completed_heading = "## Completed Tasks"
 
   --------------------------------------------------------------------------
   -- Extract H1 from the current file to use as training note filename
@@ -597,133 +595,8 @@ vim.keymap.set("n", "<leader>lp", function()
   end
   vim.fn.writefile(buf_lines, training_path)
 
-  --------------------------------------------------------------------------
-  -- Build the wikilink for the daily note
-  --------------------------------------------------------------------------
-  local wikilink_target = "[[" .. training_slug .. "]]"
-
-  --------------------------------------------------------------------------
-  -- Ensure todos.md exists
-  --------------------------------------------------------------------------
-  if vim.fn.filereadable(todos_path) ~= 1 then
-    vim.notify("todos.md not found at: " .. todos_path, vim.log.levels.ERROR)
-    return
-  end
-
-  local todos_lines = vim.fn.readfile(todos_path)
-
-  --------------------------------------------------------------------------
-  -- Skip if wikilink already present in todos.md
-  --------------------------------------------------------------------------
-  for _, line in ipairs(todos_lines) do
-    if line:find(training_slug, 1, true) then
-      vim.notify("Training note already linked in todos.md", vim.log.levels.INFO)
-      return
-    end
-  end
-
-  --------------------------------------------------------------------------
-  -- Try to find an existing "- [ ] gym" / "- [x] gym" task line
-  --------------------------------------------------------------------------
-  local gym_task_index = nil
-  for i, line in ipairs(todos_lines) do
-    if line:match("^%s*%- %[[ x]%]%s*gym%s*$") or line:match("^%s*%- %[[ x]%]%s*gym%s+") then
-      gym_task_index = i
-      break
-    end
-  end
-
-  --------------------------------------------------------------------------
-  -- Locate ## Completed Tasks and ## To-Do Today headings
-  --------------------------------------------------------------------------
-  local completed_heading_index = nil
-  for i, line in ipairs(todos_lines) do
-    if line:match("^" .. completed_heading .. "%s*$") then
-      completed_heading_index = i
-      break
-    end
-  end
-
-  local ts = os.date("%Y-%m-%d-%H:%M")
-  local result = {}
-
-  if gym_task_index then
-    --------------------------------------------------------------------------
-    -- Existing gym line: complete it, append link, move to Completed Tasks
-    --------------------------------------------------------------------------
-    local gym_line = todos_lines[gym_task_index]:gsub("%s+$", "")
-    gym_line = gym_line:gsub("%[ %]", "[x]", 1)
-    if not gym_line:find("`done:") then
-      gym_line = gym_line:gsub("^(%s*%- %[x%])%s*", "%1 `done: " .. ts .. "` ")
-    end
-    gym_line = gym_line .. " " .. wikilink_target
-
-    -- Is the gym task already inside the Completed Tasks section?
-    local in_completed_section = completed_heading_index and gym_task_index > completed_heading_index
-    if in_completed_section then
-      for i = completed_heading_index + 1, gym_task_index - 1 do
-        if todos_lines[i]:match("^##%s") then
-          in_completed_section = false
-          break
-        end
-      end
-    end
-
-    if in_completed_section or not completed_heading_index then
-      result = vim.list_extend({}, todos_lines)
-      result[gym_task_index] = gym_line
-    else
-      for i, line in ipairs(todos_lines) do
-        if i ~= gym_task_index then
-          table.insert(result, line)
-        end
-      end
-      local insert_at = completed_heading_index
-      if gym_task_index < completed_heading_index then
-        insert_at = completed_heading_index - 1
-      end
-      -- Ensure exactly one blank line after the heading
-      if result[insert_at + 1] ~= "" then
-        table.insert(result, insert_at + 1, "")
-      end
-      table.insert(result, insert_at + 2, gym_line)
-    end
-  else
-    --------------------------------------------------------------------------
-    -- No existing gym line: insert a completed one right after ## To-Do Today
-    --------------------------------------------------------------------------
-    local gym_task_line = "- [x] `done: " .. ts .. "` gym " .. wikilink_target
-
-    if completed_heading_index then
-      for i = 1, completed_heading_index do
-        table.insert(result, todos_lines[i])
-      end
-      -- Exactly one blank line between heading and gym task
-      table.insert(result, "")
-      table.insert(result, gym_task_line)
-      -- Skip an existing blank line right after the heading to avoid doubling
-      local start_i = completed_heading_index + 1
-      if todos_lines[start_i] == "" then
-        start_i = start_i + 1
-      end
-      for i = start_i, #todos_lines do
-        table.insert(result, todos_lines[i])
-      end
-    else
-      result = vim.list_extend({}, todos_lines)
-      while #result > 0 and result[#result] == "" do
-        table.remove(result)
-      end
-      table.insert(result, "")
-      table.insert(result, completed_heading)
-      table.insert(result, "")
-      table.insert(result, gym_task_line)
-    end
-  end
-
-  vim.fn.writefile(result, todos_path)
-  vim.notify("Training note saved and linked in todos.md", vim.log.levels.INFO)
-end, { desc = "[P]Log Paste: save training note and link in todos.md" })
+  vim.notify("Training note saved: " .. training_filename, vim.log.levels.INFO)
+end, { desc = "[P]Log Paste: save training note" })
 
 -- Auto push Obsidian Vault
 local function push_obsidian_vault(silent)

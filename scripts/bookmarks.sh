@@ -13,6 +13,9 @@ bookmarks_files=(
 fzf_colors_file="$HOME/dotfiles/colorscheme/active/active-fzf-colors.sh"
 qat_config="$HOME/dotfiles/kitty/quick-access-terminal-center.conf"
 kitty_bin="$(command -v kitty || echo /usr/bin/kitty)"
+# brotab CLI (installed via pipx). Used to focus an already-open browser tab
+# instead of opening a duplicate. Optional: if missing we fall back to xdg-open.
+brotab_bin="$(command -v bt || echo "$HOME/.local/bin/bt")"
 bookmarks_group="bookmarks"
 # Recently-opened log (most recent first), one "name<tab>url" row per opened
 # bookmark. Shown when the query is empty so the picker opens to "recents"
@@ -66,6 +69,73 @@ record_open() {
     awk -F'\t' -v url="$url" '$2 != url' "$recent_file"
   } | head -n "$recent_max" >"$tmp"
   mv "$tmp" "$recent_file"
+}
+
+# Normalise a URL for loose comparison: strip scheme, a trailing slash, and any
+# #fragment so "https://x.com/" and "http://x.com" match the same open tab.
+normalize_url() {
+  local u="$1"
+  u="${u#http://}"
+  u="${u#https://}"
+  u="${u%%#*}"
+  u="${u%/}"
+  printf '%s\n' "$u"
+}
+
+# Raise the Firefox window in Hyprland. The QAT panel hides asynchronously, so
+# settle briefly first to avoid Hyprland re-grabbing focus after us. When the
+# window is not up yet (Firefox starting cold), poll a few times for it.
+focus_firefox() {
+  local i
+  sleep 0.15
+  for i in 1 2 3 4 5 6 7 8 9 10; do
+    if hyprctl clients -j 2>/dev/null | grep -q '"class": *"firefox"'; then
+      hyprctl dispatch focuswindow class:firefox >/dev/null 2>&1 || true
+      return 0
+    fi
+    sleep 0.25
+  done
+  return 0
+}
+
+# Open a bookmark, preferring an already-open browser tab. Asks brotab for the
+# list of open tabs; if one matches the target URL, activates that tab and
+# focuses Firefox. Otherwise (no match, or brotab unavailable) opens a new tab
+# with xdg-open and still raises Firefox. Always returns 0 so the picker loop
+# keeps running.
+open_or_focus() {
+  local url="$1" want match tab_id
+
+  if [[ -x "$brotab_bin" ]]; then
+    want="$(normalize_url "$url")"
+    # bt list rows: "<prefix.window.tab>\t<title>\t<url>". Find the first tab
+    # whose normalised URL equals the target and grab its tab id (column 1).
+    match="$(
+      "$brotab_bin" list 2>/dev/null | awk -F'\t' -v want="$want" '
+        {
+          u = $3
+          sub(/^https?:\/\//, "", u)
+          sub(/#.*$/, "", u)
+          sub(/\/$/, "", u)
+          if (u == want) { print $1; exit }
+        }
+      '
+    )"
+    if [[ -n "$match" ]]; then
+      # --focused tells brotab to focus the browser; on Hyprland that raise is
+      # ignored, so we also raise the window ourselves below.
+      "$brotab_bin" activate --focused "$match" >/dev/null 2>&1 || true
+      focus_firefox
+      return 0
+    fi
+  fi
+
+  # Not open anywhere (or brotab unavailable): open a new tab, then raise
+  # Firefox so we land in the browser instead of staying on the hidden panel.
+  xdg-open "$url" >/dev/null 2>&1 &
+  disown
+  focus_firefox
+  return 0
 }
 
 # Internal list providers invoked by fzf's reload binds. They just print rows
@@ -277,8 +347,7 @@ if [[ "${1:-}" == "--pick" ]]; then
     record_open "$_name" "$url"
 
     toggle_bookmarks_qat
-    xdg-open "$url" >/dev/null 2>&1 &
-    disown
+    open_or_focus "$url"
   done
 fi
 

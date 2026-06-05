@@ -105,8 +105,8 @@ vim.keymap.set({ "n", "v" }, "gh", "^", { desc = "[P]Go to the beginning line" }
 vim.keymap.set({ "n", "v" }, "gl", "$", { desc = "[P]go to the end of the line" })
 
 -- Fast quit
-vim.keymap.set({ "n", "v", "i" }, "<M-q>", "<cmd>q!<cr>", { desc = "[P]Quit All" })
-vim.keymap.set({ "n", "v", "i" }, "<M-esc>", "<cmd>q!<cr>", { desc = "[P]Quit All" })
+vim.keymap.set({ "n", "v", "i" }, "<C-q>", "<cmd>q!<cr>", { desc = "[P]Quit All" })
+vim.keymap.set({ "n", "v", "i" }, "<C-esc>", "<cmd>q!<cr>", { desc = "[P]Quit All" })
 
 -------------------------------------------------------------------------------
 --                           Folding section
@@ -838,7 +838,7 @@ vim.api.nvim_create_autocmd("TermOpen", {
 -- appended to it at the top lamw25wmal
 --
 -- If an item is moved to that heading, it will be added the `done` label
-vim.keymap.set("n", "<M-x>", function()
+vim.keymap.set("n", "<C-x>", function()
   -- Customizable variables
   -- NOTE: Customize the completion label
   local label_done = "done:"

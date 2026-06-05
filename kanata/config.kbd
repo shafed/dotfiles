@@ -4,10 +4,6 @@ danger-enable-cmd yes
 concurrent-tap-hold yes
 )
 
-(defvirtualkeys
-  to-base (layer-switch base)
-)
-
 ;; opposite-hand HRM (kanata PR #1955): hold only fires when the next key is on
 ;; the other hand, so fast same-hand rolls stay taps without manual key lists.
 (defhands
@@ -25,23 +21,22 @@ concurrent-tap-hold yes
   aterm-settle 250  ;; kitty-launch settle time before sending tmux keys
 )
 
-;; https://github.com/jtroo/kanata/discussions/1656
-(deftemplate func (timeouttap timeouthold keytap keyhold)
-	(tap-hold $timeouttap $timeouthold 
-		(multi $keytap  @.tp) 
+(deftemplate th (timeouttap timeouthold keytap keyhold)
+	(tap-hold $timeouttap $timeouthold
+		$keytap
 		$keyhold
 	)
 )
 
 ;; opposite-hand HRM: hold only when the next key is on the opposite hand
-;; (per defhands). Same-hand keys tap immediately, replacing the old
-;; per-key typing-list filtering.
+;; (per defhands). Same-hand keys tap immediately. defhands + the -release
+;; variant below replace the old typing-layer misfire guard entirely.
 (deftemplate hrm (timeout keytap keyhold)
   ;; -release variant: decides on the interrupting key's RELEASE, so fast
   ;; overlapping rolls/bigrams (the 2nd key lifts before the HRM key) resolve
-  ;; to letters. Stacks with require-prior-idle below.
+  ;; to letters. This alone kills cross-hand misfires like "sh" -> Super+h.
   (tap-hold-opposite-hand-release $timeout
-    (multi $keytap @.tp)
+    $keytap
     $keyhold
     ;; digits aren't in defhands; treat them as neutral->hold so e.g. Super+2
     ;; (workspace switch) fires from any HRM key, regardless of hand.
@@ -51,10 +46,10 @@ concurrent-tap-hold yes
     ;; Ctrl+Shift (d+f) work. Trade-off: reintroduces same-hand roll misfire
     ;; risk during fast typing.
     (same-hand hold)
-    ;; only treat as a mod if there was a >=150ms pause before this key.
-    ;; during a fast typing stream the HRM stays a letter, killing cross-hand
-    ;; bigram misfires like "sh" -> Super+h.
-    (require-prior-idle 150)
+    ;; when the interrupting key is HELD past the timeout (not released, so the
+    ;; -release rule never fires), force the hold. lets you hold j(Shift) and
+    ;; hold v(C-v) to get C-S-v, etc.
+    (timeout hold)
   )
 )
 
@@ -64,15 +59,6 @@ concurrent-tap-hold yes
 )
 
 (defalias
-  ;; call @.tp whenever you want to enter fast typing-layer
-  .tp (switch
-        ;;(lsft rsft) XX break ;; optional skip typing-layer activation for upper case keys might solves some FJ problems
-        ()  (multi
-              (layer-switch typing)
-              (on-idle 55 tap-vkey to-base) ;; timeouts from 30 to 100 are wide spread
-            ) break
-      )
-  .spc-typing   (multi (layer-switch base) spc) ;; expilcitly leave typing-layer when hitting `space` - this allows experimenting with higher idle timeouts
   aterm (cmd zsh -lc "$HOME/.config/kanata/switchApp.sh kitty kitty")
   azen (cmd firefox)
   sshot (cmd flameshot gui --clipboard)
@@ -88,25 +74,25 @@ concurrent-tap-hold yes
 (defsrc )
 
 (deflayermap (base)
- ;; define home row mods (they act as typing-layer triggers, too )
+ ;; define home row mods (opposite-hand)
  ;; AGCS layout: Alt-GUI-Ctrl-Shift (pinky->index), mirrored.
- a (t! hrm 300 a lalt)
- s (t! hrm 300 s lmet)
- d (t! hrm 300 d lctl)
- f (t! hrm 300 f lsft)
- j (t! hrm 300 j rsft)
- k (t! hrm 300 k rctl)
- l (t! hrm 300 l rmet)
- ; (t! hrm 300 ; ralt)
+ a (t! hrm 400 a lalt)
+ s (t! hrm 400 s lmet)
+ d (t! hrm 400 d lctl)
+ f (t! hrm 400 f lsft)
+ j (t! hrm 400 j rsft)
+ k (t! hrm 400 k rctl)
+ l (t! hrm 400 l rmet)
+ ; (t! hrm 400 ; ralt)
 
  ;; define functional keys
- lalt (t! func $tot 160 bspc (layer-while-held apps))
- ralt (t! func $tot 160 ret (layer-while-held apps))
- c (t! func $tap-time $hold-time c C-c)
- v (t! func $tap-time $hold-time v C-v)
- b (t! func $tap-time $hold-time b (macro @aterm 100 C-s $tmux-delay spc)) ;; tmux alternate session
- x (t! func $tap-time $hold-time x (cmd hyprctl dispatch cyclenext)) ;; focus last window in current workspace
- z (t! func $tap-time $hold-time z (cmd hyprctl dispatch workspace previous)) ;; focus last workspace
+ lalt (t! th $tot 160 bspc (layer-while-held apps))
+ ralt (t! th $tot 160 ret (layer-while-held apps))
+ c (t! th $tap-time $hold-time c C-c)
+ v (t! th $tap-time $hold-time v C-v)
+ b (t! th $tap-time $hold-time b (macro @aterm 100 C-s $tmux-delay spc)) ;; tmux alternate session
+ x (t! th $tap-time $hold-time x (cmd hyprctl dispatch cyclenext)) ;; focus last window in current workspace
+ z (t! th $tap-time $hold-time z (cmd hyprctl dispatch workspace previous)) ;; focus last workspace
 
  ;; other
  caps (tap-hold $tap-time $hold-time esc (layer-toggle navi))
@@ -114,16 +100,7 @@ concurrent-tap-hold yes
  ret (tap-hold $tap-time 600 XX (layer-switch normal)) ;; go to normal layer
 ;; lsft @sw
 ;; rsft rsft
- w (fork (multi w @.tp) bspc (lctl rctl))
-
- ;; define each letter as typing-layer trigger
- q (multi q @.tp) e (multi e @.tp) r (multi r @.tp) t (multi t @.tp) y (multi y @.tp) u (multi u @.tp) i (multi i @.tp) o (multi o @.tp) p (multi p @.tp) g (multi g @.tp) h (multi h @.tp) n (multi n @.tp) m (multi m @.tp)
-)
-
-(deflayermap (typing) 
- a a b b c c d d e e f f g g h h i i j j k k l l m m n n o o p p q q r r s s t t u u v v w w x x y y z z 
- lalt bspc ralt ret
- caps (tap-hold $tap-time $hold-time esc (layer-toggle navi))
+ w (fork w bspc (lctl rctl))
 )
 
 (deflayermap (apps)
@@ -169,8 +146,8 @@ concurrent-tap-hold yes
   w C-right b C-lft
 
   ;; mods
- f (t! func $tot 160 f lsft)
- d (t! func $tot 300 d lctl)
+ f (t! th $tot 160 f lsft)
+ d (t! th $tot 300 d lctl)
  s @sshot
  i C-S-i ;; kitty scrollback
 )

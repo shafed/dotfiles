@@ -1,7 +1,10 @@
 (defcfg
-process-unmapped-keys (all-except lctl ralt) 
+process-unmapped-keys (all-except lctl ralt)
 danger-enable-cmd yes
 concurrent-tap-hold yes
+chords-v2-min-idle 150  ;; after any non-chord keypress, skip chords for 150ms
+                        ;; so one-handed mod chords (d+f, j+k) only fire when
+                        ;; pressed deliberately after a pause, not mid-typing.
 )
 
 ;; opposite-hand HRM (kanata PR #1955): hold only fires when the next key is on
@@ -16,6 +19,9 @@ concurrent-tap-hold yes
   tap-time 200
   hold-time 200
   chord-time 60
+  mod-chord-time 35  ;; tight window for one-handed mod chords (d+f, j+k): both
+                     ;; keys must land near-simultaneously, so sequential rolls
+                     ;; like "fd" don't trigger Ctrl+Shift.
   subl-time 200
   tmux-delay 20
   aterm-settle 250  ;; kitty-launch settle time before sending tmux keys
@@ -42,10 +48,10 @@ concurrent-tap-hold yes
     ;; (workspace switch) fires from any HRM key, regardless of hand.
     (neutral-keys 1 2 3 4 5 6 7 8 9 0)
     (neutral hold)
-    ;; same-hand key also activates the hold, so same-hand combos like
-    ;; Ctrl+Shift (d+f) work. Trade-off: reintroduces same-hand roll misfire
-    ;; risk during fast typing.
-    (same-hand hold)
+    ;; same-hand stays at the default 'tap': same-hand bigrams (fd, as, sd...)
+    ;; resolve to letters, killing rolls like fd -> D. Trade-off: one-handed
+    ;; mod combos (e.g. d+f = Ctrl+Shift on the left hand alone) no longer work;
+    ;; take Ctrl/Shift combos across hands instead.
     ;; when the interrupting key is HELD past the timeout (not released, so the
     ;; -release rule never fires), force the hold. lets you hold j(Shift) and
     ;; hold v(C-v) to get C-S-v, etc.
@@ -98,7 +104,7 @@ concurrent-tap-hold yes
  caps (tap-hold $tap-time $hold-time esc (layer-toggle navi))
  bspc XX 
  ret (tap-hold $tap-time 600 XX (layer-switch normal)) ;; go to normal layer
-;; lsft @sw
+ lsft @sw ;; physical LShift taps to switch keyboard layout
 ;; rsft rsft
  w (fork w bspc (lctl rctl))
 )
@@ -153,12 +159,11 @@ concurrent-tap-hold yes
 )
 
 (defchordsv2
-(a s d f) @sshot $chord-time first-release()
-(lalt lsft) @sw $chord-time first-release()
-;; (a s) lsft $chord-time first-release()
-;; (; l) rsft $chord-time first-release()
-;; (d f) rsft $chord-time first-release()
-;; (j k) rsft $chord-time first-release()
+;; one-handed Ctrl+Shift: press both keys together (after a >=150ms idle, per
+;; chords-v2-min-idle) to get a held Ctrl+Shift. all-released keeps the mods
+;; down until both keys lift, so you can add a third key (e.g. C-S-tab).
+(d f) (multi lctl lsft) $mod-chord-time all-released ()
+(j k) (multi lctl lsft) $mod-chord-time all-released ()
 (lsft rsft) (layer-switch base) $chord-time first-release()
 )
 

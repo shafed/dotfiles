@@ -26,6 +26,9 @@ thumb_dir="$cache_dir/thumbs"
 limit=40
 refresh=false
 mode="channel"
+# Workspace the opened video should land on. Intentionally differs from
+# bookmarks.sh (which uses 2): videos go to workspace 4.
+firefox_workspace="4"
 
 # Render the fzf preview for a single video: thumbnail (kitty graphics) on top,
 # then title + duration. Everything comes from the id and the already-built TSV
@@ -125,12 +128,15 @@ fi
 # display and filter. Called repeatedly by fzf's `change:reload` as the user
 # types, so it must be self-contained and fast (flat search, no per-item fetch).
 #
-# Two searches are merged, channels first then videos, because a plain
-# `ytsearch:` query returns the "All" tab — which is almost entirely videos and
-# rarely surfaces a channel (e.g. "bald omni man", "майни", "сибирский" return
-# zero channels). To find channels reliably we hit YouTube's Channels-tab search
-# (results?search_query=…&sp=EgIQAg== = the "Channels" filter), which returns
-# real channels with @handles and channel_ids.
+# Called as: --ytsearch <mode> <query>, where mode is "videos" or "channels"
+# (toggled in the picker with Ctrl-T). The two are separate searches, not merged,
+# so each mode shows a clean single list:
+#   videos   — plain `ytsearch:` = YouTube's "All" tab, in relevance order. Mostly
+#              videos; reads like the real YouTube search bar.
+#   channels — the Channels-tab filter (results?search_query=…&sp=EgIQAg==), which
+#              reliably returns real channels with @handles. A plain ytsearch only
+#              surfaces a channel for an exact name, so this mode is how you find
+#              "@linkarzu" by typing partial text.
 #
 # Output columns (tab-separated). Columns 1–5 are machine-readable (the caller
 # parses them after a pick); column 6 is the human-readable line fzf shows and
@@ -143,39 +149,42 @@ fi
 #   6 display  "◉  <channel>   <handle>" or "▶  <title>   <dur>"
 if [[ "${1:-}" == "--ytsearch" ]]; then
   tab=$'\t'
-  query="${2:-}"
+  search_mode="${2:-videos}"
+  query="${3:-}"
   [[ -n "$query" ]] || exit 0
 
   print_tmpl="%(ie_key)s${tab}%(id)s${tab}%(channel)s${tab}%(uploader_id)s${tab}%(title)s${tab}%(duration_string)s"
-  # awk turns yt-dlp rows into our 6-column TSV, keeping only the wanted kind
-  # ("channel" or "video") so the two passes don't print each other's stray rows.
+  # awk turns each yt-dlp row into our 6-column TSV: YoutubeTab rows render as
+  # channels (◉, drill-down), Youtube rows as videos (▶). Order is preserved.
   render='
     BEGIN { FS=OFS="\t" }
     {
       ie=$1; id=$2; channel=$3; handle=$4; title=$5; dur=$6
       if (handle=="NA") handle=""
       if (dur=="NA")    dur=""
-      if (want=="channel" && ie=="YoutubeTab" && id!="" && id!="NA") {
+      if (ie=="YoutubeTab" && id!="" && id!="NA") {
         disp="\033[36m◉\033[0m  " channel
         if (handle!="") disp=disp "  \033[2m" handle "\033[0m"
         print "channel", id, handle, channel, "", disp
-      } else if (want=="video" && ie=="Youtube" && id!="" && id!="NA") {
+      } else if (ie=="Youtube" && id!="" && id!="NA") {
         disp="▶  " title
         if (dur!="") disp=disp "  \033[2m" dur "\033[0m"
         print "video", id, "", title, dur, disp
       }
     }'
 
-  # Channels first (Channels-tab filter), then videos (plain search).
-  enc="$(python3 -c 'import urllib.parse,sys;print(urllib.parse.quote(sys.argv[1]))' "$query" 2>/dev/null)"
-  if [[ -n "$enc" ]]; then
-    yt-dlp --flat-playlist --no-warnings --playlist-end 12 --print "$print_tmpl" \
+  if [[ "$search_mode" == "channels" ]]; then
+    # Channels-tab filter needs the query URL-encoded.
+    enc="$(python3 -c 'import urllib.parse,sys;print(urllib.parse.quote(sys.argv[1]))' "$query" 2>/dev/null)"
+    [[ -n "$enc" ]] || exit 0
+    yt-dlp --flat-playlist --no-warnings --playlist-end 20 --print "$print_tmpl" \
       "https://www.youtube.com/results?search_query=${enc}&sp=EgIQAg%3D%3D" 2>/dev/null |
-      awk -v want=channel "$render"
+      awk "$render"
+  else
+    yt-dlp --flat-playlist --no-warnings --playlist-end 30 --print "$print_tmpl" \
+      "ytsearch30:$query" 2>/dev/null |
+      awk "$render"
   fi
-  yt-dlp --flat-playlist --no-warnings --playlist-end 25 --print "$print_tmpl" \
-    "ytsearch25:$query" 2>/dev/null |
-    awk -v want=video "$render"
   exit 0
 fi
 
@@ -219,29 +228,88 @@ source_fzf_colors() {
   fi
 }
 
-# Open a video in the browser, detached so it survives this script exiting.
-# setsid avoids needing a pause: xdg-open would otherwise be killed before the
-# browser picks up the URL when the QAT panel closes the instant we exit.
+# Force the keyboard to English so the fzf query types as latin even when the
+# active layout is Russian. Index 0 is "us" in hyprland.conf's kb_layout (us,ru).
+# Best-effort: silently no-op outside Hyprland.
+switch_to_english() {
+  command -v hyprctl >/dev/null 2>&1 || return 0
+  hyprctl switchxkblayout all 0 >/dev/null 2>&1 || true
+}
+
+# Open a video in the browser, then bring Firefox to workspace 4 and focus it.
+#
+# Always opens a NEW tab (no brotab tab-reuse): a video search almost always
+# wants a fresh watch. setsid detaches xdg-open so it survives this script
+# exiting — otherwise the QAT panel closing the instant we exit would kill it
+# before the browser picks up the URL.
+#
+# Unlike bookmarks.sh (which only moves Firefox on a cold start), this ALWAYS
+# moves Firefox to workspace 4 and focuses it, so the video lands there every
+# time regardless of where Firefox was. Polls a few times for the window in case
+# Firefox is starting cold. Best-effort: no-ops outside Hyprland.
 open_video() {
   setsid -f xdg-open "https://www.youtube.com/watch?v=$1" >/dev/null 2>&1
+
+  command -v hyprctl >/dev/null 2>&1 || return 0
+  # The QAT panel hides asynchronously; settle briefly so Hyprland doesn't
+  # re-grab focus after us.
+  sleep 0.15
+  local i
+  for i in 1 2 3 4 5 6 7 8 9 10; do
+    if hyprctl clients -j 2>/dev/null | grep -q '"class": *"firefox"'; then
+      hyprctl dispatch movetoworkspace "${firefox_workspace},class:firefox" >/dev/null 2>&1 || true
+      hyprctl dispatch focuswindow class:firefox >/dev/null 2>&1 || true
+      return 0
+    fi
+    sleep 0.25
+  done
+  return 0
 }
 
 # Live YouTube search, like the site's search bar: the user types in fzf and
 # every keystroke re-queries YouTube (change:reload calls us back in
-# --ytsearch mode). Results mix channels (◉) and videos (▶). Enter on a video
-# opens it; Enter on a channel sets $target to its @handle and returns so the
-# caller falls through to that channel's video listing.
+# --ytsearch mode). Two modes, toggled with Ctrl-T: videos (▶, the default) and
+# channels (◉). Enter on a video opens it; Enter on a channel sets $target to its
+# @handle and returns so the caller falls through to that channel's video listing.
 #
 # Returns 0 with $target set to an @handle (caller continues in channel mode),
 # or exits the whole script directly when a video was opened / nothing picked.
 search_live() {
   local query="$1" sel kind id handle
   source_fzf_colors
+  # Flip to English so the typed query is latin even from a Russian layout. When
+  # launched via the QAT panel this only fires on a cold start (the panel toggle
+  # reuses the process), so youtube-qat.sh also switches on every show.
+  switch_to_english
+
+  # Mode (videos|channels) lives in a temp file so fzf's static reload binds can
+  # read the current value; Ctrl-T rewrites it and reloads. Start in videos mode.
+  local mode_file
+  mode_file="$(mktemp -t yt-search-mode.XXXXXX)"
+  printf 'videos' >"$mode_file"
+  # Clean up the state file when search_live returns or the script exits.
+  trap 'rm -f "$mode_file"' RETURN
+
+  # The reload binds call --ytsearch with the mode read from $mode_file, so a
+  # Ctrl-T flip takes effect on the very next reload without re-launching fzf.
+  local search_cmd="\"$script_self\" --ytsearch \"\$(cat '$mode_file')\" {q}"
 
   # Seed the list with the initial query; change:reload refreshes it as typed.
   # --preview only makes sense for videos (col 2 = video id); for channels the
   # id is a UC… channel id and open_video isn't used, so the preview just shows
   # nothing useful — that's fine.
+  #
+  # Ctrl-T toggles videos<->channels: rewrite the mode file, update the prompt to
+  # show the active mode, then re-run the search in the new mode for the same query.
+  local toggle="transform:
+    if [[ \"\$(cat '$mode_file')\" == videos ]]; then
+      printf channels >'$mode_file'
+      echo \"change-prompt(Search channels > )+reload($search_cmd)+first\"
+    else
+      printf videos >'$mode_file'
+      echo \"change-prompt(Search YouTube > )+reload($search_cmd)+first\"
+    fi"
+
   local fzf_args=(
     --height=100%
     --reverse
@@ -251,9 +319,10 @@ search_live() {
     --query="$query"
     --disabled
     --prompt="Search YouTube > "
-    --header="Enter: ◉ channel → its videos · ▶ video → open · Esc: cancel"
-    --bind "change:reload(sleep 0.3; \"$script_self\" --ytsearch {q})+first"
-    --bind "start:reload(\"$script_self\" --ytsearch {q})"
+    --header="Enter: ▶ video → open · ◉ channel → its videos · Ctrl-T: videos/channels · Esc: cancel"
+    --bind "change:reload(sleep 0.3; $search_cmd)+first"
+    --bind "start:reload($search_cmd)"
+    --bind "ctrl-t:$toggle"
     --preview "\"$script_self\" --preview {2} {4} {5}"
     --preview-window "right,55%,wrap"
   )

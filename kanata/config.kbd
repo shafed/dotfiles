@@ -11,7 +11,7 @@ chords-v2-min-idle 150  ;; after any non-chord keypress, skip chords for 150ms
 ;; the other hand, so fast same-hand rolls stay taps without manual key lists.
 (defhands
   (left  q w e r t a s d f g z x c v b caps)
-  (right y u i o p h j k l ; n m , . /)
+  (right y u i o p h j k l ; n m , . / =)
 )
 
 (defvar
@@ -166,6 +166,7 @@ chords-v2-min-idle 150  ;; after any non-chord keypress, skip chords for 150ms
 (j k) (multi lctl lsft) $mod-chord-time all-released ()
 (s f) (multi lmet lsft) $mod-chord-time all-released ()
 (l j) (multi rmet rsft) $mod-chord-time all-released ()
+(q w) tab $mod-chord-time all-released ()
 (lsft rsft) (layer-switch base) $chord-time first-release()
 )
 

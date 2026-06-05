@@ -131,6 +131,14 @@ toggle_apps_qat() {
 
 launch_apps_qat() {
   local sock pick_args
+
+  # Force English here, in the launcher, because this runs on EVERY hotkey press
+  # (kanata -> apps.sh). When the panel already exists, kitty merely toggles its
+  # visibility and the picker loop's own switch_to_english never re-runs — so the
+  # in-loop call only ever fixes the layout on the very first cold start. Doing it
+  # here guarantees the layout flips to us each time the panel is shown.
+  switch_to_english
+
   # Forward -r so a "rebuild then pick" still rebuilds inside the panel, where
   # the picker loop actually reads the cache.
   pick_args=(--pick)
@@ -163,7 +171,10 @@ build_cache() {
       id="${file##*/}"
 
       # Read only the [Desktop Entry] group; localized [xx] keys are ignored.
-      type=""; name=""; nodisplay=""; hidden=""
+      type=""
+      name=""
+      nodisplay=""
+      hidden=""
       while IFS= read -r line; do
         case "$line" in
         Type=*) type="${line#Type=}" ;;

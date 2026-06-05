@@ -96,7 +96,7 @@ wk.add({
 
 -- LazyGit Keymap
 if vim.fn.executable("lazygit") == 1 then
-  vim.keymap.set("n", "<M-g>", function()
+  vim.keymap.set("n", "<C-g>", function()
     Snacks.lazygit({ cwd = LazyVim.root.git() })
   end, { desc = "Lazygit (Root Dir)" })
 end

@@ -10,8 +10,8 @@ chords-v2-min-idle 150  ;; after any non-chord keypress, skip chords for 150ms
 ;; opposite-hand HRM (kanata PR #1955): hold only fires when the next key is on
 ;; the other hand, so fast same-hand rolls stay taps without manual key lists.
 (defhands
-  (left  q w e r t a s d f g z x c v b caps)
-  (right y u i o p h j k l ; n m , . / =)
+  (left  grv tab q w e r t caps a s d f g z x c v b esc)
+  (right - = bspc y u i o p [ ] \ h j k l ; ' n m , . /)
 )
 
 (defvar
@@ -101,11 +101,10 @@ chords-v2-min-idle 150  ;; after any non-chord keypress, skip chords for 150ms
  z (t! th $tap-time $hold-time z (cmd hyprctl dispatch workspace previous)) ;; focus last workspace
 
  ;; other
- caps (tap-hold $tap-time $hold-time esc (layer-toggle navi))
+ caps (t! th $tap-time $hold-time esc (layer-toggle navi))
  bspc XX 
  ret (tap-hold $tap-time 600 XX (layer-switch normal)) ;; go to normal layer
  lsft @sw ;; physical LShift taps to switch keyboard layout
-;; rsft rsft
  w (fork w bspc (lctl rctl))
 )
 

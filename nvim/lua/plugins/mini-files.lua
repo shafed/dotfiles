@@ -32,8 +32,8 @@ local function uri_list_to_paths(blob)
 end
 
 -- Given a destination directory and a desired basename, return a path that does
--- not collide with an existing entry, appending " (copy)", " (copy 2)", ... and
--- preserving the extension for files.
+-- not collide with an existing entry, appending an incrementing number ("name1",
+-- "name2", ...) before the extension for files.
 local function nonconflicting_dest(dir, name)
   local dest = dir .. "/" .. name
   if vim.uv.fs_stat(dest) == nil then
@@ -45,8 +45,7 @@ local function nonconflicting_dest(dir, name)
   end
   local i = 1
   while true do
-    local suffix = i == 1 and " (copy)" or string.format(" (copy %d)", i)
-    local candidate = string.format("%s/%s%s%s", dir, stem, suffix, ext)
+    local candidate = string.format("%s/%s%d%s", dir, stem, i, ext)
     if vim.uv.fs_stat(candidate) == nil then
       return candidate
     end
@@ -70,6 +69,66 @@ local function copy_paths_to_clipboard(paths)
     vim.notify("Copy failed: " .. result, vim.log.levels.ERROR)
   else
     vim.notify(string.format("Copied %d item(s):\n%s", #uris, table.concat(names, "\n")), vim.log.levels.INFO)
+  end
+end
+
+-- Ad-hoc multi-selection: toggle individual entries (e.g. rows 1, 3, 5) with
+-- <Tab>, then copy them all. State is keyed by absolute path (not line number),
+-- since mini.files redraws and renumbers rows on navigation.
+local Selection = {
+  ns = vim.api.nvim_create_namespace("MiniFilesMultiSelect"),
+  -- set of selected paths; ordered list preserves selection order for copying
+  set = {},
+  order = {},
+}
+
+function Selection.clear()
+  Selection.set = {}
+  Selection.order = {}
+end
+
+function Selection.toggle(path)
+  if Selection.set[path] then
+    Selection.set[path] = nil
+    for i, p in ipairs(Selection.order) do
+      if p == path then
+        table.remove(Selection.order, i)
+        break
+      end
+    end
+  else
+    Selection.set[path] = true
+    table.insert(Selection.order, path)
+  end
+end
+
+function Selection.paths()
+  local out = {}
+  for _, p in ipairs(Selection.order) do
+    table.insert(out, p)
+  end
+  return out
+end
+
+-- Redraw the selection marker (a sign in the line's left margin) for the given
+-- mini.files buffer. Called on every MiniFilesBufferUpdate so highlights survive
+-- redraws and follow entries by path.
+function Selection.redraw(buf_id)
+  if not (buf_id and vim.api.nvim_buf_is_valid(buf_id)) then
+    return
+  end
+  vim.api.nvim_buf_clear_namespace(buf_id, Selection.ns, 0, -1)
+  local mini_files = require("mini.files")
+  local n = vim.api.nvim_buf_line_count(buf_id)
+  for lnum = 1, n do
+    local entry = mini_files.get_fs_entry(buf_id, lnum)
+    if entry and Selection.set[entry.path] then
+      vim.api.nvim_buf_set_extmark(buf_id, Selection.ns, lnum - 1, 0, {
+        sign_text = "●",
+        sign_hl_group = "MiniFilesTitleFocused",
+        priority = 100,
+      })
+    end
   end
 end
 
@@ -108,6 +167,27 @@ return {
       trim_right = ">",
     },
   },
+  init = function()
+    local group = vim.api.nvim_create_augroup("MiniFilesMultiSelect", { clear = true })
+    -- Redraw selection markers whenever a directory buffer is (re)rendered, so
+    -- highlights survive navigation and stay attached to the right entries.
+    vim.api.nvim_create_autocmd("User", {
+      group = group,
+      pattern = "MiniFilesBufferUpdate",
+      callback = function(args)
+        Selection.redraw(args.data.buf_id)
+      end,
+    })
+    -- Drop the selection when the explorer closes so it never leaks into the
+    -- next session.
+    vim.api.nvim_create_autocmd("User", {
+      group = group,
+      pattern = "MiniFilesExplorerClose",
+      callback = function()
+        Selection.clear()
+      end,
+    })
+  end,
   keys = {
     {
       "<leader>e",
@@ -124,8 +204,29 @@ return {
       desc = "Open mini.files (cwd)",
     },
     {
+      "<Tab>",
+      function()
+        local curr_entry = require("mini.files").get_fs_entry()
+        if not curr_entry then
+          return
+        end
+        Selection.toggle(curr_entry.path)
+        Selection.redraw(vim.api.nvim_get_current_buf())
+      end,
+      ft = "minifiles",
+      desc = "Toggle multi-select on entry",
+    },
+    {
       "<leader>yy",
       function()
+        -- Prefer the ad-hoc multi-selection; fall back to the entry under cursor.
+        local marked = Selection.paths()
+        if #marked > 0 then
+          copy_paths_to_clipboard(marked)
+          Selection.clear()
+          Selection.redraw(vim.api.nvim_get_current_buf())
+          return
+        end
         local curr_entry = require("mini.files").get_fs_entry()
         if curr_entry then
           copy_paths_to_clipboard({ curr_entry.path })
@@ -134,7 +235,7 @@ return {
         end
       end,
       ft = "minifiles",
-      desc = "Copy file/directory to clipboard",
+      desc = "Copy marked (or current) file/directory to clipboard",
     },
 
     {

@@ -17,9 +17,15 @@ kitty_bin="$(command -v kitty || echo /usr/bin/kitty)"
 # instead of opening a duplicate. Optional: if missing we fall back to xdg-open.
 brotab_bin="$(command -v bt || echo "$HOME/.local/bin/bt")"
 bookmarks_group="bookmarks"
-# Workspace a cold-started Firefox should land on. When Firefox is already
-# running we leave its window where it is; only a fresh launch is moved here.
+# Workspace a cold-started Firefox should land on, and the fallback workspace for
+# new tabs when Firefox only has windows on the YouTube workspace. When Firefox
+# already has a window elsewhere we leave it where it is and open the tab there.
 firefox_workspace="2"
+# Workspace reserved exclusively for YouTube. New bookmark tabs must never open
+# here: if the only Firefox window lives on it, we move that window to
+# firefox_workspace first. (Already-open tabs found via brotab are still
+# activated wherever they are, including here.)
+youtube_workspace="4"
 # Recently-opened log (most recent first), one "name<tab>url" row per opened
 # bookmark. Shown when the query is empty so the picker opens to "recents"
 # instead of the "type 3 chars" empty state — mirrors apps.sh's recent ordering.
@@ -99,6 +105,9 @@ normalize_url() {
 # On a cold start only (Firefox was not already running when we first looked) we
 # move the freshly-launched window to firefox_workspace so a new browser opens
 # there by default; an already-running Firefox is focused wherever it lives.
+#
+# Used for the brotab path (a matching tab already exists): we just want the
+# browser raised wherever that tab lives, even if that is the YouTube workspace.
 focus_firefox() {
   local i cold_start=false
   sleep 0.15
@@ -121,18 +130,145 @@ focus_firefox() {
   return 0
 }
 
+# Raise the Firefox window whose active tab brotab just activated, identified by
+# that tab's title. After activation the tab's title becomes its window's title,
+# which Hyprland reports (suffixed with " — Mozilla Firefox"), so we match the
+# window whose title starts with the tab title. This is what lets a tab living on
+# the YouTube workspace win over some other Firefox window on a different ws.
+# Falls back to focus_firefox when no window matches (e.g. title not settled).
+focus_firefox_for_title() {
+  local title="$1" i addr
+  [[ -n "$title" ]] || {
+    focus_firefox
+    return 0
+  }
+
+  # Poll briefly: activation + Hyprland title update are asynchronous.
+  for i in 1 2 3 4 5; do
+    addr="$(
+      hyprctl clients -j 2>/dev/null | jq -r --arg t "$title" '
+        .[] | select(.class == "firefox" and (.title | startswith($t))) | .address
+      ' 2>/dev/null | head -n1
+    )"
+    if [[ -n "$addr" ]]; then
+      hyprctl dispatch focuswindow "address:$addr" >/dev/null 2>&1 || true
+      return 0
+    fi
+    sleep 0.15
+  done
+
+  # Title never matched a window; raise some Firefox window so we still leave the
+  # picker and land in the browser.
+  focus_firefox
+  return 0
+}
+
+# Print the Hyprland address of a Firefox window that is NOT on the YouTube
+# workspace, or nothing if every Firefox window is on it (or none exist). When
+# such a window exists we focus it and let xdg-open add a tab there; otherwise
+# we open a new window so the YouTube workspace stays YouTube-only.
+firefox_window_off_youtube() {
+  hyprctl clients -j 2>/dev/null | jq -r --argjson yt "$youtube_workspace" '
+    .[] | select(.class == "firefox" and .workspace.id != $yt) | .address
+  ' 2>/dev/null | head -n1
+}
+
+# Print the Hyprland addresses of all current Firefox windows, one per line.
+firefox_window_addresses() {
+  hyprctl clients -j 2>/dev/null | jq -r '
+    .[] | select(.class == "firefox") | .address
+  ' 2>/dev/null
+}
+
+# Decide how to deliver a new bookmark tab without ever landing on the YouTube
+# workspace, and print the chosen mode for open_or_focus to act on:
+#   "tab <address>" - a Firefox window already lives off the YouTube ws; focus it
+#                     here and let xdg-open add a tab to it.
+#   "newwindow"     - Firefox is running but only on the YouTube ws; the caller
+#                     opens a fresh window (firefox --new-window) on ws2 so the
+#                     YouTube window is left untouched.
+#   "cold"          - no Firefox window yet; the caller launches it and moves the
+#                     new window to firefox_workspace.
+prepare_firefox_for_new_tab() {
+  local addr
+  sleep 0.15
+
+  addr="$(firefox_window_off_youtube)"
+  if [[ -n "$addr" ]]; then
+    # A usable window already lives off the YouTube ws: raise it so xdg-open's
+    # tab lands there.
+    hyprctl dispatch focuswindow "address:$addr" >/dev/null 2>&1 || true
+    printf 'tab\n'
+    return 0
+  fi
+
+  # No window off the YouTube ws. If Firefox is running, every window is on it ->
+  # open a brand-new window on ws2 instead of stealing the YouTube one.
+  if hyprctl clients -j 2>/dev/null | grep -q '"class": *"firefox"'; then
+    printf 'newwindow\n'
+    return 0
+  fi
+
+  # Cold start: no window yet.
+  printf 'cold\n'
+  return 0
+}
+
+# Open the URL in a fresh Firefox window, then move that window (and only that
+# window) to firefox_workspace and focus it. We diff the window address set
+# before/after the launch so the move targets the newly created window rather
+# than the existing YouTube one.
+open_in_new_window() {
+  local url="$1" before after addr i new_addr=""
+
+  before="$(firefox_window_addresses)"
+  firefox --new-window "$url" >/dev/null 2>&1 &
+  disown
+
+  # Wait for a window address that was not present before the launch.
+  for i in 1 2 3 4 5 6 7 8 9 10; do
+    after="$(firefox_window_addresses)"
+    new_addr="$(comm -13 <(printf '%s\n' "$before" | sort) <(printf '%s\n' "$after" | sort) | head -n1)"
+    [[ -n "$new_addr" ]] && break
+    sleep 0.25
+  done
+
+  if [[ -n "$new_addr" ]]; then
+    hyprctl dispatch movetoworkspace "${firefox_workspace},address:$new_addr" >/dev/null 2>&1 || true
+    hyprctl dispatch focuswindow "address:$new_addr" >/dev/null 2>&1 || true
+  fi
+  return 0
+}
+
+# After a cold-start xdg-open, poll for the freshly launched Firefox window and
+# move it to firefox_workspace, then focus it. Mirrors focus_firefox's cold-start
+# branch but is only reached when prepare_firefox_for_new_tab found no window.
+focus_after_cold_open() {
+  local i
+  for i in 1 2 3 4 5 6 7 8 9 10; do
+    if hyprctl clients -j 2>/dev/null | grep -q '"class": *"firefox"'; then
+      hyprctl dispatch movetoworkspace "${firefox_workspace},class:firefox" >/dev/null 2>&1 || true
+      hyprctl dispatch focuswindow class:firefox >/dev/null 2>&1 || true
+      return 0
+    fi
+    sleep 0.25
+  done
+  return 0
+}
+
 # Open a bookmark, preferring an already-open browser tab. Asks brotab for the
 # list of open tabs; if one matches the target URL, activates that tab and
 # focuses Firefox. Otherwise (no match, or brotab unavailable) opens a new tab
 # with xdg-open and still raises Firefox. Always returns 0 so the picker loop
 # keeps running.
 open_or_focus() {
-  local url="$1" want match
+  local url="$1" want match tab_id tab_title
 
   if [[ -x "$brotab_bin" ]]; then
     want="$(normalize_url "$url")"
     # bt list rows: "<prefix.window.tab>\t<title>\t<url>". Find the first tab
-    # whose normalised URL equals the target and grab its tab id (column 1).
+    # whose normalised URL equals the target; emit "<tab id>\t<title>" so we can
+    # both activate it and locate its Hyprland window by title afterwards.
     match="$(
       "$brotab_bin" list 2>/dev/null | awk -F'\t' -v want="$want" '
         {
@@ -140,24 +276,44 @@ open_or_focus() {
           sub(/^https?:\/\//, "", u)
           sub(/#.*$/, "", u)
           sub(/\/$/, "", u)
-          if (u == want) { print $1; exit }
+          if (u == want) { print $1 "\t" $2; exit }
         }
       '
     )"
     if [[ -n "$match" ]]; then
+      IFS=$'\t' read -r tab_id tab_title <<<"$match"
       # --focused tells brotab to focus the browser; on Hyprland that raise is
       # ignored, so we also raise the window ourselves below.
-      "$brotab_bin" activate --focused "$match" >/dev/null 2>&1 || true
-      focus_firefox
+      "$brotab_bin" activate --focused "$tab_id" >/dev/null 2>&1 || true
+      # Raise the specific window holding this tab (its title becomes the window
+      # title after activation), not just any Firefox window — otherwise a tab on
+      # the YouTube ws would be missed in favour of some other Firefox window.
+      focus_firefox_for_title "$tab_title"
       return 0
     fi
   fi
 
-  # Not open anywhere (or brotab unavailable): open a new tab, then raise
-  # Firefox so we land in the browser instead of staying on the hidden panel.
-  xdg-open "$url" >/dev/null 2>&1 &
-  disown
-  focus_firefox
+  # Not open anywhere (or brotab unavailable): open a new tab/window, keeping it
+  # off the YouTube workspace. prepare_firefox_for_new_tab picks the strategy and
+  # (for the "tab" case) focuses the target window first, since xdg-open delivers
+  # the URL to the most-recently-active Firefox window.
+  case "$(prepare_firefox_for_new_tab)" in
+  newwindow)
+    # Only YouTube-ws windows exist: spawn a fresh window on ws2 instead.
+    open_in_new_window "$url"
+    ;;
+  cold)
+    # No Firefox yet: launch it, then move the new window to firefox_workspace.
+    xdg-open "$url" >/dev/null 2>&1 &
+    disown
+    focus_after_cold_open
+    ;;
+  *)
+    # "tab": a window off the YouTube ws is focused; add a tab to it.
+    xdg-open "$url" >/dev/null 2>&1 &
+    disown
+    ;;
+  esac
   return 0
 }
 

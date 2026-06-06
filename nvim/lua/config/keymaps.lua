@@ -1,7 +1,7 @@
 vim.keymap.set("x", "p", '"_dP') -- Don't copy visual in clipboard
 
 -- Toggle a tmux pane (zsh) on the right with the current file's directory
-vim.keymap.set({ "n", "v", "i" }, "<C-t>", function()
+vim.keymap.set({ "n", "v", "i" }, "<M-t>", function()
   require("utils.tmux").open()
 end, { desc = "[P]Terminal on tmux pane" })
 
@@ -96,7 +96,7 @@ wk.add({
 
 -- LazyGit Keymap
 if vim.fn.executable("lazygit") == 1 then
-  vim.keymap.set("n", "<C-g>", function()
+  vim.keymap.set("n", "<M-g>", function()
     Snacks.lazygit({ cwd = LazyVim.root.git() })
   end, { desc = "Lazygit (Root Dir)" })
 end
@@ -105,8 +105,8 @@ vim.keymap.set({ "n", "v" }, "gh", "^", { desc = "[P]Go to the beginning line" }
 vim.keymap.set({ "n", "v" }, "gl", "$", { desc = "[P]go to the end of the line" })
 
 -- Fast quit
-vim.keymap.set({ "n", "v", "i" }, "<C-q>", "<cmd>q!<cr>", { desc = "[P]Quit All" })
-vim.keymap.set({ "n", "v", "i" }, "<C-esc>", "<cmd>q!<cr>", { desc = "[P]Quit All" })
+vim.keymap.set({ "n", "v", "i" }, "<M-q>", "<cmd>q!<cr>", { desc = "[P]Quit All" })
+vim.keymap.set({ "n", "v", "i" }, "<M-esc>", "<cmd>q!<cr>", { desc = "[P]Quit All" })
 
 -------------------------------------------------------------------------------
 --                           Folding section
@@ -711,7 +711,7 @@ vim.api.nvim_create_autocmd("TermOpen", {
 -- appended to it at the top lamw25wmal
 --
 -- If an item is moved to that heading, it will be added the `done` label
-vim.keymap.set("n", "<C-x>", function()
+vim.keymap.set("n", "<M-x>", function()
   -- Customizable variables
   -- NOTE: Customize the completion label
   local label_done = "done:"
@@ -905,7 +905,7 @@ vim.keymap.set("n", "<C-x>", function()
 end, { desc = "[P]Toggle task and move it to 'done'" })
 
 -- Create task
-vim.keymap.set({ "n", "i" }, "<C-l>", function()
+vim.keymap.set({ "n", "i" }, "<M-l>", function()
   -- Get the current line/row/column
   local cursor_pos = vim.api.nvim_win_get_cursor(0)
   local row, _ = cursor_pos[1], cursor_pos[2]

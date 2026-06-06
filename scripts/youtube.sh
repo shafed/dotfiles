@@ -12,13 +12,16 @@ script_self="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SO
 #   youtube.sh -s [query]           # live YouTube search (videos + channels); a
 #                                   # video opens, a channel drills into its videos
 #   youtube.sh -p <playlist>        # playlist URL or ID (public only)
+#   youtube.sh -H                   # your YouTube watch history (logged-in)
 #   youtube.sh -r <channel>         # refresh cache for that channel/playlist
 #   youtube.sh -n <count> <channel> # limit how many recent videos to list
 #
 # Notes:
-#   - Uses yt-dlp, so it sees PUBLIC data only: channel uploads and public /
-#     unlisted playlists. It can NOT see your private playlists, subscriptions,
-#     or "Watch later" — that needs the YouTube Data API + OAuth.
+#   - Uses yt-dlp. For channels/playlists/search it sees PUBLIC data only:
+#     channel uploads and public / unlisted playlists.
+#   - Watch history (-H) reads your logged-in session from the browser's
+#     cookies (yt-dlp --cookies-from-browser), so it needs you signed into
+#     YouTube in that browser. No OAuth required.
 
 fzf_colors_file="$HOME/dotfiles/colorscheme/active/active-fzf-colors.sh"
 cache_dir="$HOME/.cache/youtube-fzf"
@@ -26,6 +29,8 @@ thumb_dir="$cache_dir/thumbs"
 limit=40
 refresh=false
 mode="channel"
+# Browser whose cookies yt-dlp reads for logged-in data (watch history).
+cookies_browser="firefox"
 # Workspace the opened video should land on. Intentionally differs from
 # bookmarks.sh (which uses 2): videos go to workspace 4.
 firefox_workspace="4"
@@ -188,8 +193,54 @@ if [[ "${1:-}" == "--ytsearch" ]]; then
   exit 0
 fi
 
+# Emit the logged-in watch history as the SAME 6-column TSV the search picker
+# uses, so Ctrl-H inside search_live can reload straight into it and Enter opens
+# a row as a video. Reads the session from the browser's cookies (no OAuth), and
+# dedupes the feed's repeated rows (re-watches/day groupings), newest first.
+if [[ "${1:-}" == "--ythistory" ]]; then
+  tab=$'\t'
+  cookies_browser="${YOUTUBE_FZF_COOKIES_BROWSER:-firefox}"
+  yt-dlp --flat-playlist --no-warnings --playlist-end 40 \
+    --cookies-from-browser "$cookies_browser" \
+    --print "%(id)s${tab}%(title)s${tab}%(duration_string)s" \
+    "https://www.youtube.com/feed/history" 2>/dev/null |
+    awk -F"$tab" '
+      BEGIN { OFS="\t" }
+      !seen[$1]++ {
+        id=$1; title=$2; dur=$3
+        if (dur=="NA") dur=""
+        disp="▶  " title
+        if (dur!="") disp=disp "  \033[2m" dur "\033[0m"
+        print "video", id, "", title, dur, disp
+      }'
+  exit 0
+fi
+
+# Emit the logged-in "Watch later" playlist (WL) in the SAME 6-column TSV the
+# search picker uses, so Ctrl-L inside search_live reloads into it and Enter
+# opens a row as a video. Like history, reads the session from browser cookies
+# (no OAuth). WL is private, so this only works while signed in.
+if [[ "${1:-}" == "--ytwatchlater" ]]; then
+  tab=$'\t'
+  cookies_browser="${YOUTUBE_FZF_COOKIES_BROWSER:-firefox}"
+  yt-dlp --flat-playlist --no-warnings --playlist-end 100 \
+    --cookies-from-browser "$cookies_browser" \
+    --print "%(id)s${tab}%(title)s${tab}%(duration_string)s" \
+    "https://www.youtube.com/playlist?list=WL" 2>/dev/null |
+    awk -F"$tab" '
+      BEGIN { OFS="\t" }
+      !seen[$1]++ {
+        id=$1; title=$2; dur=$3
+        if (dur=="NA") dur=""
+        disp="▶  " title
+        if (dur!="") disp=disp "  \033[2m" dur "\033[0m"
+        print "video", id, "", title, dur, disp
+      }'
+  exit 0
+fi
+
 usage() {
-  sed -n '7,21p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+  sed -n '7,24p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
   exit "${1:-0}"
 }
 
@@ -200,10 +251,11 @@ for tool in yt-dlp fzf; do
   fi
 done
 
-while getopts ":spn:rh" opt; do
+while getopts ":spn:rhH" opt; do
   case "$opt" in
   s) mode="search" ;;
   p) mode="playlist" ;;
+  H) mode="history" ;;
   n) limit="$OPTARG" ;;
   r) refresh=true ;;
   h) usage 0 ;;
@@ -287,12 +339,16 @@ search_live() {
   local mode_file
   mode_file="$(mktemp -t yt-search-mode.XXXXXX)"
   printf 'videos' >"$mode_file"
-  # Clean up the state file when search_live returns or the script exits.
-  trap 'rm -f "$mode_file"' RETURN
+  # (state files are cleaned by the RETURN trap set up with $vi_file below)
 
   # The reload binds call --ytsearch with the mode read from $mode_file, so a
   # Ctrl-T flip takes effect on the very next reload without re-launching fzf.
   local search_cmd="\"$script_self\" --ytsearch \"\$(cat '$mode_file')\" {q}"
+  # Ctrl-H / Ctrl-L load the watch history / "Watch later" playlist into the same
+  # picker (rows are emitted in the search format, kind=video, so Enter opens them
+  # like any other video).
+  local history_cmd="\"$script_self\" --ythistory"
+  local watchlater_cmd="\"$script_self\" --ytwatchlater"
 
   # Seed the list with the initial query; change:reload refreshes it as typed.
   # --preview only makes sense for videos (col 2 = video id); for channels the
@@ -310,6 +366,38 @@ search_live() {
       echo \"change-prompt(Search YouTube > )+reload($search_cmd)+first\"
     fi"
 
+  # Vim-style modes. Insert mode (default): you type and every keystroke
+  # re-queries YouTube (change:reload), letters go into the query. Esc enters
+  # normal mode: typing stops re-querying and j/k/g/G navigate, i/ returns to
+  # insert, q or Esc quits.
+  #
+  # fzf binds are global, so a mode is just "which binds are active". We swap
+  # them with rebind/unbind on the mode transitions:
+  #   - j/k/g/G are navigation actions, but start UNBOUND so they type as
+  #     letters in insert mode; normal mode rebinds them to nav.
+  #   - esc is rebound per mode: insert's esc -> normal, normal's esc -> abort.
+  #   - change (the live re-query) is unbound in normal mode so j/k don't fire it.
+  local insert_header="INSERT · Esc normal · ^T videos/channels · ^H history · ^L later"
+  local normal_header="NORMAL · j/k move · g/G top/bottom · i insert · Enter open · q/Esc quit"
+  # Mode transitions. fzf's rebind restores a key's ORIGINAL action, so esc can't
+  # be flipped between "go normal" and "quit" with rebind alone — instead esc
+  # runs a transform that reads the current mode from $vi_file and acts on it:
+  # insert -> normal, normal -> abort. enter_normal/enter_insert just flip the
+  # nav keys + the live-query bind + the mode file + the header.
+  local vi_file
+  vi_file="$(mktemp -t yt-vi-mode.XXXXXX)"
+  printf insert >"$vi_file"
+  trap 'rm -f "$mode_file" "$vi_file"' RETURN
+
+  local enter_normal="execute-silent(printf normal >'$vi_file')+unbind(change)+rebind(j,k,g,G,q)+change-header($normal_header)"
+  local enter_insert="execute-silent(printf insert >'$vi_file')+unbind(j,k,g,G,q)+rebind(change)+change-header($insert_header)"
+  local esc_action="transform:
+    if [[ \"\$(cat '$vi_file')\" == insert ]]; then
+      echo \"$enter_normal\"
+    else
+      echo abort
+    fi"
+
   local fzf_args=(
     --height=100%
     --reverse
@@ -319,10 +407,22 @@ search_live() {
     --query="$query"
     --disabled
     --prompt="Search YouTube > "
-    --header="Enter: ▶ video → open · ◉ channel → its videos · Ctrl-T: videos/channels · Esc: cancel"
+    --header="$insert_header"
+    # Start in insert: live re-query on, nav keys off (so they type as letters).
+    --bind "start:reload($search_cmd)+unbind(j,k,g,G,q)"
     --bind "change:reload(sleep 0.3; $search_cmd)+first"
-    --bind "start:reload($search_cmd)"
     --bind "ctrl-t:$toggle"
+    --bind "ctrl-h:change-prompt(Watch history > )+reload($history_cmd)+first"
+    --bind "ctrl-l:change-prompt(Watch later > )+reload($watchlater_cmd)+first"
+    # esc: insert -> normal, normal -> quit (via the mode-aware transform).
+    --bind "esc:$esc_action"
+    # Navigation actions, unbound at start (insert types them), rebound in normal.
+    --bind "j:down"
+    --bind "k:up"
+    --bind "g:first"
+    --bind "G:last"
+    --bind "q:abort"
+    --bind "i:$enter_insert"
     --preview "\"$script_self\" --preview {2} {4} {5}"
     --preview-window "right,55%,wrap"
   )
@@ -364,6 +464,9 @@ if [[ "$mode" == "search" ]]; then
   [[ -n "${target:-}" ]] || exit 0
   refresh=true # always show that channel's freshest videos right after picking
   mode="channel"
+elif [[ "$mode" == "history" ]]; then
+  # History takes no positional argument; the source is your account feed.
+  target="watch history"
 else
   target="${1:-}"
 fi
@@ -373,7 +476,12 @@ if [[ -z "$target" ]]; then
 fi
 
 # Build the source URL yt-dlp should enumerate.
-if [[ "$mode" == "playlist" ]]; then
+if [[ "$mode" == "history" ]]; then
+  source_url="https://www.youtube.com/feed/history"
+  cache_key="history"
+  # History is volatile (changes as you watch), so never serve it stale.
+  refresh=true
+elif [[ "$mode" == "playlist" ]]; then
   case "$target" in
   http*) source_url="$target" ;;
   *) source_url="https://www.youtube.com/playlist?list=$target" ;;
@@ -404,13 +512,22 @@ if [[ "$needs_fetch" == true ]]; then
   # Use a literal tab in the template; yt-dlp does not interpret "\t".
   # duration_string is the only useful metadata --flat-playlist returns fast
   # (view_count/upload_date come back as NA without per-video requests).
-  if ! yt-dlp --flat-playlist --no-warnings \
-    --playlist-end "$limit" \
-    --print "%(id)s${tab}%(title)s${tab}%(duration_string)s" \
-    "$source_url" >"$cache_file.tmp" 2>/dev/null; then
+  yt_args=(--flat-playlist --no-warnings
+    --playlist-end "$limit"
+    --print "%(id)s${tab}%(title)s${tab}%(duration_string)s")
+  # History needs your logged-in session, read from the browser's cookies.
+  [[ "$mode" == "history" ]] && yt_args+=(--cookies-from-browser "$cookies_browser")
+
+  if ! yt-dlp "${yt_args[@]}" "$source_url" >"$cache_file.tmp" 2>/dev/null; then
     rm -f "$cache_file.tmp"
     echo "Could not fetch videos for: $target" >&2
     exit 1
+  fi
+  # The history feed repeats videos (re-watches, day groupings); collapse to the
+  # first occurrence of each id while keeping most-recent-first order.
+  if [[ "$mode" == "history" ]]; then
+    awk -F"$tab" '!seen[$1]++' "$cache_file.tmp" >"$cache_file.tmp2" &&
+      mv "$cache_file.tmp2" "$cache_file.tmp"
   fi
   # Only replace a good cache if we actually got rows.
   if [[ -s "$cache_file.tmp" ]]; then

@@ -26,7 +26,6 @@ firefox_workspace="2"
 cache_dir="$HOME/.cache/bookmarks-fzf"
 recent_file="$cache_dir/recent.tsv"
 recent_max=50
-tab=$'\t'
 
 # Print every bookmark row from all sources (the full search list). Used when a
 # query is typed. Kept as its own subcommand so fzf can reload it cheaply.
@@ -74,8 +73,6 @@ record_open() {
   mv "$tmp" "$recent_file"
 }
 
-# Normalise a URL for loose comparison: strip scheme, a trailing slash, and any
-# #fragment so "https://x.com/" and "http://x.com" match the same open tab.
 # Force the keyboard to English so fzf search matches latin bookmark names even
 # when the active layout is Russian. Index 0 is "us" in hyprland.conf's kb_layout
 # (us,ru). Best-effort: silently no-op outside Hyprland.
@@ -84,6 +81,8 @@ switch_to_english() {
   hyprctl switchxkblayout all 0 >/dev/null 2>&1 || true
 }
 
+# Normalise a URL for loose comparison: strip scheme, a trailing slash, and any
+# #fragment so "https://x.com/" and "http://x.com" match the same open tab.
 normalize_url() {
   local u="$1"
   u="${u#http://}"
@@ -128,7 +127,7 @@ focus_firefox() {
 # with xdg-open and still raises Firefox. Always returns 0 so the picker loop
 # keeps running.
 open_or_focus() {
-  local url="$1" want match tab_id
+  local url="$1" want match
 
   if [[ -x "$brotab_bin" ]]; then
     want="$(normalize_url "$url")"
@@ -280,11 +279,9 @@ toggle_bookmarks_qat() {
 launch_bookmarks_qat() {
   local sock
 
-  # Force English here, in the launcher, because this runs on EVERY hotkey press
-  # (kanata -> bookmarks.sh). When the panel already exists, kitty merely toggles
-  # its visibility and the picker loop's own switch_to_english never re-runs — so
-  # the in-loop call only ever fixes the layout on the very first cold start. Doing
-  # it here guarantees the layout flips to us each time the panel is shown.
+  # Force English here, in the launcher: it runs on EVERY hotkey press
+  # (kanata -> bookmarks.sh), so the layout flips to us each time the panel is
+  # shown — including toggles, where kitty just re-reveals the existing panel.
   switch_to_english
 
   sock="$(main_kitty_socket)" || {
@@ -356,7 +353,6 @@ if [[ "${1:-}" == "--pick" ]]; then
   fi
 
   while true; do
-    switch_to_english
     # Keep this process alive after every action. When the QAT process stays
     # alive, kitty only toggles visibility instead of cold-starting a new panel.
     if ! selected=$(: | fzf "${fzf_args[@]}"); then

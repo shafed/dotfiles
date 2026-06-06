@@ -1,7 +1,7 @@
 vim.keymap.set("x", "p", '"_dP') -- Don't copy visual in clipboard
 
 -- Toggle a tmux pane (zsh) on the right with the current file's directory
-vim.keymap.set({ "n", "v", "i" }, "<M-t>", function()
+vim.keymap.set({ "n", "v", "i" }, "<C-t>", function()
   require("utils.tmux").open()
 end, { desc = "[P]Terminal on tmux pane" })
 
@@ -905,7 +905,7 @@ vim.keymap.set("n", "<C-x>", function()
 end, { desc = "[P]Toggle task and move it to 'done'" })
 
 -- Create task
-vim.keymap.set({ "n", "i" }, "<M-l>", function()
+vim.keymap.set({ "n", "i" }, "<C-l>", function()
   -- Get the current line/row/column
   local cursor_pos = vim.api.nvim_win_get_cursor(0)
   local row, _ = cursor_pos[1], cursor_pos[2]

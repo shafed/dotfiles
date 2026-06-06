@@ -43,7 +43,7 @@ return {
     },
     -- Navigate my buffers
     {
-      "<M-h>",
+      "<C-h>",
       function()
         Snacks.picker.buffers({
           -- I always want my buffers picker to start in normal mode

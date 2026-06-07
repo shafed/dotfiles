@@ -14,19 +14,108 @@ return {
       desc = "Keymaps",
     },
     -- File picker
+    -- When invoked inside ~/obsidian, search notes by filename AND by frontmatter
+    -- `aliases`. Anywhere else, fall back to the regular Find Files picker.
     {
       "<leader><space>",
       function()
-        Snacks.picker.files({
-          finder = "files",
+        local obsidian = vim.fn.expand("~/obsidian")
+        local cwd = vim.fn.getcwd()
+        if cwd:sub(1, #obsidian) ~= obsidian then
+          Snacks.picker.files({
+            finder = "files",
+            format = "file",
+            show_empty = true,
+            supports_live = true,
+          })
+          return
+        end
+
+        -- Read the YAML `aliases` from a note's frontmatter. Supports both the
+        -- block form (aliases:\n  - foo) and the inline form (aliases: [foo]).
+        local function read_aliases(path)
+          local fh = io.open(path, "r")
+          if not fh then
+            return nil
+          end
+          local aliases = {}
+          local in_frontmatter, in_aliases = false, false
+          local lineno = 0
+          for line in fh:lines() do
+            lineno = lineno + 1
+            if lineno == 1 then
+              if line ~= "---" then
+                break -- no frontmatter
+              end
+              in_frontmatter = true
+            elseif in_frontmatter and line == "---" then
+              break -- end of frontmatter
+            elseif in_frontmatter then
+              local inline = line:match("^aliases:%s*%[(.-)%]%s*$")
+              local scalar = line:match("^aliases:%s*(%S.*)$")
+              if inline then
+                -- aliases: [a, "b c", 'd']
+                for a in inline:gmatch("[^,]+") do
+                  a = a:gsub("^%s*['\"]?", ""):gsub("['\"]?%s*$", "")
+                  if a ~= "" then
+                    table.insert(aliases, a)
+                  end
+                end
+              elseif scalar then
+                -- aliases: some value (scalar on the same line)
+                scalar = scalar:gsub("^['\"]?", ""):gsub("['\"]?%s*$", "")
+                table.insert(aliases, scalar)
+              elseif line:match("^aliases:%s*$") then
+                in_aliases = true
+              elseif in_aliases then
+                -- Either a list item ("  - foo") or a bare indented scalar
+                -- ("  foo") that some notes use under "aliases:".
+                local item = line:match("^%s*-%s*(.+)$") or line:match("^%s+(%S.*)$")
+                if item then
+                  item = item:gsub("^['\"]?", ""):gsub("['\"]?%s*$", "")
+                  table.insert(aliases, item)
+                elseif not line:match("^%s") then
+                  in_aliases = false -- next top-level key
+                end
+              end
+            end
+          end
+          fh:close()
+          return aliases
+        end
+
+        Snacks.picker.pick({
+          source = "obsidian_notes",
+          title = "Obsidian Notes",
           format = "file",
           show_empty = true,
-          supports_live = true,
-          -- In case you want to override the layout for this keymap
-          -- layout = "vscode",
+          finder = function()
+            local items = {}
+            local files = vim.fn.systemlist({
+              "rg",
+              "--files",
+              "--glob",
+              "*.md",
+              obsidian,
+            })
+            for _, file in ipairs(files) do
+              local aliases = read_aliases(file)
+              -- The matcher searches against `text`; append aliases so notes
+              -- are findable by alias, while `format = "file"` still shows path.
+              local text = vim.fn.fnamemodify(file, ":t")
+              if aliases and #aliases > 0 then
+                text = text .. " " .. table.concat(aliases, " ")
+              end
+              table.insert(items, {
+                text = text,
+                file = file,
+              })
+            end
+            return items
+          end,
         })
       end,
-      desc = "Find Files",
+      desc = "Find Files / Obsidian notes (name + aliases)",
     },
     -- LSP References
     {

@@ -37,10 +37,27 @@ vim.api.nvim_create_autocmd("VimEnter", {
 -- })
 
 -- Mini.files relative numbers
+-- Dedicated, more contrasty line-number groups applied only to mini.files
+-- windows via window-local 'winhighlight', so global LineNr stays untouched.
+local function set_minifiles_number_hl()
+  vim.api.nvim_set_hl(0, "MiniFilesLineNr", { fg = "#a89984" })
+end
+set_minifiles_number_hl()
+-- Re-apply after colorscheme reloads, which reset custom highlights.
+vim.api.nvim_create_autocmd("ColorScheme", { callback = set_minifiles_number_hl })
+
 local function set_minifiles_numbers(args)
   local win_id = args.data.win_id
   vim.wo[win_id].number = true
   vim.wo[win_id].relativenumber = true
+  -- Append our line-number remap without clobbering mini.files' own
+  -- winhighlight entries (NormalFloat/FloatTitle/CursorLine), which it manages
+  -- by string-appending too. Add it only if not already present.
+  local wh = vim.wo[win_id].winhighlight
+  local entry = "LineNr:MiniFilesLineNr"
+  if not wh:find(entry, 1, true) then
+    vim.wo[win_id].winhighlight = wh == "" and entry or (wh .. "," .. entry)
+  end
 end
 
 vim.api.nvim_create_autocmd("User", {

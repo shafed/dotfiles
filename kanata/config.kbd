@@ -137,10 +137,9 @@ chords-v2-min-idle 150  ;; after any non-chord keypress, skip chords for 150ms
 
 (deflayermap (browser)
   e (cmd firefox https://mail.google.com/mail/u/0/#inbox)
-  d (cmd firefox  https://arena.ai)
   f (cmd firefox  https://www.perplexity.ai)
   g (cmd firefox  https://chatgpt.com)
-  c (cmd firefox  https://claude.ai/new)
+  d (cmd firefox  https://claude.ai/new)
   r (cmd firefox https://www.reverso.net/text-translation)
 )
 

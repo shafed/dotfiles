@@ -197,45 +197,156 @@ fi
 # uses, so Ctrl-H inside search_live can reload straight into it and Enter opens
 # a row as a video. Reads the session from the browser's cookies (no OAuth), and
 # dedupes the feed's repeated rows (re-watches/day groupings), newest first.
-if [[ "${1:-}" == "--ythistory" ]]; then
+#
+# Called as: --ythistory [cache_file] [query]
+#   - With no args: fetch from YouTube and print the rows (used on Ctrl-H).
+#   - With a cache_file: cache the fetched rows there on first call, then on
+#     later calls filter that cache locally by [query] (fzf fuzzy) instead of
+#     re-hitting YouTube — this is what makes typing search WITHIN history.
+# Turn a stream of "id<TAB>title<TAB>dur<TAB>channel" rows into the shared
+# 6-column picker TSV, deduping by id (newest first). channel may be empty (the
+# flat feed doesn't carry it — it's filled in later by --ytenrich). Columns:
+#   1 kind(video) 2 id 3 (handle, empty) 4 title 5 dur 6 display
+# Column 6 is what fzf shows AND matches; the dimmed "dur · channel" span there
+# is why typing a channel name filters to that channel's videos.
+yt_rows_awk='
+  BEGIN { FS=OFS="\t" }
+  !seen[$1]++ {
+    id=$1; title=$2; dur=$3; channel=$4
+    if (dur=="NA") dur=""
+    if (channel=="NA") channel=""
+    disp="▶  " title
+    meta=dur
+    if (channel!="") meta=(meta!="" ? meta " · " channel : channel)
+    if (meta!="") disp=disp "  \033[2m" meta "\033[0m"
+    print "video", id, "", title, dur, disp
+  }'
+
+# Background channel enrichment. The flat history/WL listing returns NO channel
+# (yt-dlp gives channel=NA without a per-video fetch), so the first list shows
+# titles only. This mode runs detached after the cache is written: it fetches
+# each video's channel with a POOL of parallel yt-dlp calls (xargs -P) and
+# rewrites the cache in place — progressively, so channels (and channel search)
+# light up batch by batch instead of all at once ~20s later. The picker picks up
+# the new rows on its next reload (any keystroke).
+#
+# Called as: --ytenrich <cache_file>
+if [[ "${1:-}" == "--ytenrich" ]]; then
   tab=$'\t'
+  cache_file="${2:-}"
   cookies_browser="${YOUTUBE_FZF_COOKIES_BROWSER:-firefox}"
-  yt-dlp --flat-playlist --no-warnings --playlist-end 40 \
-    --cookies-from-browser "$cookies_browser" \
-    --print "%(id)s${tab}%(title)s${tab}%(duration_string)s" \
-    "https://www.youtube.com/feed/history" 2>/dev/null |
-    awk -F"$tab" '
-      BEGIN { OFS="\t" }
-      !seen[$1]++ {
-        id=$1; title=$2; dur=$3
-        if (dur=="NA") dur=""
+  [[ -s "$cache_file" ]] || exit 0
+  # A lock so two reloads can't launch overlapping enrichers for one cache.
+  lock="$cache_file.enriching"
+  (
+    set -o noclobber
+    : >"$lock"
+  ) 2>/dev/null || exit 0
+  map_file="$(mktemp -t yt-chanmap.XXXXXX)"
+  fetch_pid=""
+  # Clean temp/lock and stop the fetch pool on any exit. Kill the fetch process
+  # GROUP (-pid) so the xargs workers die with us, not just xargs itself.
+  trap 'rm -f "$lock" "$map_file" "$cache_file".tmp.*; [[ -n "$fetch_pid" ]] && kill -- -"$fetch_pid" 2>/dev/null' EXIT
+
+  # Rejoin the (possibly partial) id→channel map onto the cache by id and rebuild
+  # col 6 with the channel in the dimmed span. Atomic mv, and never resurrect a
+  # cache the picker already cleaned up.
+  rejoin() {
+    [[ -s "$map_file" && -e "$cache_file" ]] || return 0
+    local tmp="$cache_file.tmp.$$"
+    awk -F"$tab" -v OFS="$tab" '
+      NR==FNR { if ($2!="" && $2!="NA") chan[$1]=$2; next }
+      {
+        id=$2; title=$4; dur=$5; channel=(id in chan ? chan[id] : "")
         disp="▶  " title
-        if (dur!="") disp=disp "  \033[2m" dur "\033[0m"
-        print "video", id, "", title, dur, disp
-      }'
+        meta=dur
+        if (channel!="") meta=(meta!="" ? meta " · " channel : channel)
+        if (meta!="") disp=disp "  \033[2m" meta "\033[0m"
+        print $1, id, $3, title, dur, disp
+      }' "$map_file" "$cache_file" >"$tmp" 2>/dev/null || true
+    if [[ -s "$tmp" && -e "$cache_file" ]]; then mv "$tmp" "$cache_file"; else rm -f "$tmp"; fi
+  }
+
+  # Fetch the channel for each id with a pool of parallel yt-dlp calls, each
+  # appending "id<TAB>channel" to the map as it resolves. -P 8 cuts ~34 videos
+  # from >50s serial to ~20s. --ignore-no-formats-error: we only want metadata,
+  # and some videos expose no format to the cookie session (age/region gated),
+  # which would otherwise error the row out before --print runs. -- guards ids
+  # that start with "-".
+  # setsid puts the whole pipeline in its own process group so the EXIT trap can
+  # kill the pool (xargs + all yt-dlp workers) with one group kill.
+  YT_TAB="$tab" YT_CB="$cookies_browser" YT_CACHE="$cache_file" \
+    setsid sh -c '
+      cut -f2 "$YT_CACHE" | xargs -P 8 -I{} -- \
+        sh -c "yt-dlp --no-warnings --skip-download --ignore-errors --ignore-no-formats-error \
+          --cookies-from-browser \"\$YT_CB\" \
+          --print \"%(id)s\$YT_TAB%(channel)s\" \
+          -- \"https://www.youtube.com/watch?v=\$1\" 2>/dev/null" _ {}
+    ' >>"$map_file" &
+  fetch_pid=$!
+
+  # While the pool runs, rejoin every few seconds so channels appear in batches.
+  while kill -0 "$fetch_pid" 2>/dev/null; do
+    command sleep 3
+    rejoin
+  done
+  wait "$fetch_pid" 2>/dev/null || true
+  rejoin # final pass picks up whatever resolved after the last tick
   exit 0
 fi
 
-# Emit the logged-in "Watch later" playlist (WL) in the SAME 6-column TSV the
-# search picker uses, so Ctrl-L inside search_live reloads into it and Enter
-# opens a row as a video. Like history, reads the session from browser cookies
-# (no OAuth). WL is private, so this only works while signed in.
-if [[ "${1:-}" == "--ytwatchlater" ]]; then
+# Shared body for the history / "Watch later" picker sources. Both emit the
+# SAME 6-column TSV the search picker uses (kind=video), so Enter opens a row
+# like any other video. Reads the logged-in session from the browser's cookies
+# (no OAuth); WL is private and history is per-account.
+#
+# Called as: --ythistory|--ytwatchlater [cache_file] [query]
+#   - no cache_file : fetch from YouTube and print rows (used on Ctrl-H/Ctrl-L).
+#   - cache_file    : populate it once, kick off background channel enrichment,
+#                     then on later calls filter that cache locally by [query]
+#                     (fzf fuzzy) instead of re-hitting YouTube — this is what
+#                     makes typing search WITHIN history / later.
+if [[ "${1:-}" == "--ythistory" || "${1:-}" == "--ytwatchlater" ]]; then
   tab=$'\t'
   cookies_browser="${YOUTUBE_FZF_COOKIES_BROWSER:-firefox}"
-  yt-dlp --flat-playlist --no-warnings --playlist-end 100 \
-    --cookies-from-browser "$cookies_browser" \
-    --print "%(id)s${tab}%(title)s${tab}%(duration_string)s" \
-    "https://www.youtube.com/playlist?list=WL" 2>/dev/null |
-    awk -F"$tab" '
-      BEGIN { OFS="\t" }
-      !seen[$1]++ {
-        id=$1; title=$2; dur=$3
-        if (dur=="NA") dur=""
-        disp="▶  " title
-        if (dur!="") disp=disp "  \033[2m" dur "\033[0m"
-        print "video", id, "", title, dur, disp
-      }'
+  cache_file="${2:-}"
+  query="${3:-}"
+  if [[ "$1" == "--ythistory" ]]; then
+    feed_url="https://www.youtube.com/feed/history"
+    feed_end=40
+  else
+    feed_url="https://www.youtube.com/playlist?list=WL"
+    feed_end=100
+  fi
+  emit_feed() {
+    yt-dlp --flat-playlist --no-warnings --playlist-end "$feed_end" \
+      --cookies-from-browser "$cookies_browser" \
+      --print "%(id)s${tab}%(title)s${tab}%(duration_string)s${tab}%(channel)s" \
+      "$feed_url" 2>/dev/null |
+      awk "$yt_rows_awk"
+  }
+  if [[ -n "$cache_file" ]]; then
+    # Populate the cache once (first press), then enrich channels in the
+    # background so the list shows instantly and channel search lights up shortly
+    # after. Reuse the cache for every keystroke that follows.
+    if [[ ! -s "$cache_file" ]]; then
+      emit_feed >"$cache_file"
+      [[ -s "$cache_file" ]] &&
+        setsid -f "$script_self" --ytenrich "$cache_file" >/dev/null 2>&1
+    fi
+    if [[ -n "$query" ]]; then
+      # Match against column 6, which holds the title + dimmed duration·channel.
+      # --ansi strips the escape codes so the query matches the visible text only
+      # (so e.g. typing a channel name filters to that channel's videos).
+      # fzf --filter exits 1 on no match; that just means "no rows" to the
+      # picker, so don't let set -e treat an empty result as a failure.
+      fzf --ansi --filter="$query" --delimiter=$'\t' --with-nth=6 <"$cache_file" || true
+    else
+      cat "$cache_file"
+    fi
+  else
+    emit_feed
+  fi
   exit 0
 fi
 
@@ -384,14 +495,26 @@ search_live() {
   printf 'videos' >"$mode_file"
   # (state files are cleaned by the RETURN trap set up with $vi_file below)
 
+  # The "source" decides what typing searches: live YouTube (search), or WITHIN
+  # the loaded history / watch-later list. Ctrl-H/Ctrl-L flip it; Ctrl-T (and a
+  # fresh search) flip it back to "search". The change bind reads this to pick
+  # which command a keystroke reloads. Cache files hold the once-fetched
+  # history/later rows so per-keystroke filtering stays local (no re-fetch).
+  local source_file history_cache watchlater_cache
+  source_file="$(mktemp -t yt-source.XXXXXX)"
+  printf 'search' >"$source_file"
+  history_cache="$(mktemp -t yt-history.XXXXXX)"
+  watchlater_cache="$(mktemp -t yt-watchlater.XXXXXX)"
+
   # The reload binds call --ytsearch with the mode read from $mode_file, so a
   # Ctrl-T flip takes effect on the very next reload without re-launching fzf.
   local search_cmd="\"$script_self\" --ytsearch \"\$(cat '$mode_file')\" {q}"
   # Ctrl-H / Ctrl-L load the watch history / "Watch later" playlist into the same
   # picker (rows are emitted in the search format, kind=video, so Enter opens them
-  # like any other video).
-  local history_cmd="\"$script_self\" --ythistory"
-  local watchlater_cmd="\"$script_self\" --ytwatchlater"
+  # like any other video). The cache-file arg makes the FIRST call fetch+cache and
+  # the {q} arg lets later calls (from the change bind) filter that cache locally.
+  local history_cmd="\"$script_self\" --ythistory '$history_cache' {q}"
+  local watchlater_cmd="\"$script_self\" --ytwatchlater '$watchlater_cache' {q}"
 
   # Seed the list with the initial query; change:reload refreshes it as typed.
   # --preview only makes sense for videos (col 2 = video id); for channels the
@@ -400,7 +523,10 @@ search_live() {
   #
   # Ctrl-T toggles videos<->channels: rewrite the mode file, update the prompt to
   # show the active mode, then re-run the search in the new mode for the same query.
+  # Toggling implies live search, so also flip the source back to "search" — this
+  # is how you leave history/later browsing and return to querying YouTube.
   local toggle="transform:
+    printf search >'$source_file'
     if [[ \"\$(cat '$mode_file')\" == videos ]]; then
       printf channels >'$mode_file'
       echo \"change-prompt(Search channels > )+reload($search_cmd)+first\"
@@ -408,6 +534,16 @@ search_live() {
       printf videos >'$mode_file'
       echo \"change-prompt(Search YouTube > )+reload($search_cmd)+first\"
     fi"
+
+  # The change bind (a keystroke) is source-aware: in "search" it live-queries
+  # YouTube; in "history"/"later" it filters the already-loaded list locally.
+  # The brief sleep debounces fast typing (same as the old static change bind).
+  local change_action="transform:
+    case \"\$(cat '$source_file')\" in
+      history) echo \"reload(sleep 0.2; $history_cmd)+first\" ;;
+      later)   echo \"reload(sleep 0.2; $watchlater_cmd)+first\" ;;
+      *)       echo \"reload(sleep 0.3; $search_cmd)+first\" ;;
+    esac"
 
   # Vim-style modes. Insert mode (default): you type and every keystroke
   # re-queries YouTube (change:reload), letters go into the query. Esc enters
@@ -430,7 +566,7 @@ search_live() {
   local vi_file
   vi_file="$(mktemp -t yt-vi-mode.XXXXXX)"
   printf insert >"$vi_file"
-  trap 'rm -f "$mode_file" "$vi_file"' RETURN
+  trap 'rm -f "$mode_file" "$vi_file" "$source_file" "$history_cache" "$watchlater_cache"' RETURN
 
   local enter_normal="execute-silent(printf normal >'$vi_file')+unbind(change)+rebind(j,k,g,G,q)+change-header($normal_header)"
   local enter_insert="execute-silent(printf insert >'$vi_file')+unbind(j,k,g,G,q)+rebind(change)+change-header($insert_header)"
@@ -453,10 +589,13 @@ search_live() {
     --header="$insert_header"
     # Start in insert: live re-query on, nav keys off (so they type as letters).
     --bind "start:reload($search_cmd)+unbind(j,k,g,G,q)"
-    --bind "change:reload(sleep 0.3; $search_cmd)+first"
+    --bind "change:$change_action"
     --bind "ctrl-t:$toggle"
-    --bind "ctrl-h:change-prompt(Watch history > )+reload($history_cmd)+first"
-    --bind "ctrl-l:change-prompt(Watch later > )+reload($watchlater_cmd)+first"
+    # Ctrl-H/Ctrl-L switch the source so typing searches WITHIN that list. They
+    # clear the query first so the full list shows, then reload (empty {q} =
+    # unfiltered). The first call fetches+caches; later keystrokes filter locally.
+    --bind "ctrl-h:execute-silent(printf history >'$source_file')+change-prompt(Search history > )+clear-query+reload($history_cmd)+first"
+    --bind "ctrl-l:execute-silent(printf later >'$source_file')+change-prompt(Search later > )+clear-query+reload($watchlater_cmd)+first"
     # esc: insert -> normal, normal -> quit (via the mode-aware transform).
     --bind "esc:$esc_action"
     # Navigation actions, unbound at start (insert types them), rebound in normal.

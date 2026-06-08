@@ -60,66 +60,45 @@ if [[ "${1:-}" == "--preview" ]]; then
   # Image area: top of the preview pane. FZF_PREVIEW_* are set by fzf.
   cols="${FZF_PREVIEW_COLUMNS:-40}"
   max_lines="${FZF_PREVIEW_LINES:-20}"
-
-  # Work out how many text rows the image occupies, so we pad by exactly that
-  # and the title/duration land right under it (no mid-pane gap). icat fits the
-  # image into the --place box preserving aspect, so if we make img_lines match
-  # the image's real shape at the pane width, the image fills exactly that many
-  # rows and our pad lands on the next line.
-  #
-  #   image px aspect      = img_w/img_h          (e.g. 480/360 = 4:3)
-  #   cell aspect (h/w)    = YOUTUBE_FZF_CELL_ASPECT, default 2.1 (×10 = 21)
-  #   rows = cols * (img_h/img_w) / cell_aspect
-  img_w=480 img_h=360 # YouTube thumbnail default (4:3); refined below if possible
-  if command -v identify >/dev/null 2>&1; then
-    read -r img_w img_h < <(identify -format '%w %h' "$thumb" 2>/dev/null) || {
-      img_w=480 img_h=360
-    }
-    [[ "$img_w" =~ ^[0-9]+$ && "$img_h" =~ ^[0-9]+$ && "$img_w" -gt 0 ]] || {
-      img_w=480 img_h=360
-    }
-  fi
-  cell_aspect_x10="${YOUTUBE_FZF_CELL_ASPECT:-21}" # cell height/width × 10
-  ((cell_aspect_x10 > 0)) || cell_aspect_x10=21
-  # Box width starts at the full pane width; height follows from the image
-  # aspect so the --place box matches the image and icat fills it WITHOUT
-  # overflowing (an overflow would draw over the text below). If that height is
-  # taller than ~60% of the pane, shrink the WIDTH too so the box stays the same
-  # shape but fits — keeping room for the title/duration underneath.
-  img_cols=$cols
-  img_lines=$(((img_cols * img_h * 10) / (img_w * cell_aspect_x10)))
+  # Cap the image to ~60% of the pane height so the title/duration always fit
+  # beneath it.
   cap=$((max_lines * 6 / 10))
   ((cap < 1)) && cap=1
-  if ((img_lines > cap)); then
-    img_lines=$cap
-    # width that preserves the image aspect at this height
-    img_cols=$(((img_lines * img_w * cell_aspect_x10) / (img_h * 10)))
-    ((img_cols < 1)) && img_cols=1
-    ((img_cols > cols)) && img_cols=$cols
-  fi
-  ((img_lines < 1)) && img_lines=1
 
   drew_image=false
   if [[ -s "$thumb" ]]; then
     # Prefer kitty's graphics protocol; fall back to chafa (unicode blocks),
     # which works in any preview pane without graphics support. Set
     # YOUTUBE_FZF_IMG=chafa to force the fallback.
+    #
+    # The key for correct text placement: do NOT use --place. With --place the
+    # cursor is restored to the image's top-left, forcing us to guess the
+    # rendered height and pad by hand — and that guess (cell aspect ratio) is
+    # wrong on many terminals, so the text lands in the wrong row or off-pane.
+    # Instead we bound the image with --use-window-size (pretend the window is
+    # cols × cap cells) and let icat do what it does by default: move the cursor
+    # to the line right AFTER the image. The text then always follows directly,
+    # no math, whatever the real cell size.
     if [[ "${YOUTUBE_FZF_IMG:-}" != "chafa" ]] && command -v kitten >/dev/null 2>&1; then
-      kitten icat --clear --transfer-mode=memory --unicode-placeholder \
-        --stdin=no --scale-up --place="${img_cols}x${img_lines}@0x0" "$thumb" 2>/dev/null &&
+      # Pixels-per-cell, used only to give --use-window-size a plausible pixel
+      # box (icat fits by the smaller of cell/pixel bounds). Query the terminal;
+      # fall back to a typical 8×16 cell if that's unavailable.
+      wpx=8 hpx=16
+      read -r _cw _ch _pw _ph < <(kitten icat --print-window-size 2>/dev/null | tr 'x,' '   ') || true
+      [[ "${_cw:-}" =~ ^[0-9]+$ && "${_pw:-}" =~ ^[0-9]+$ && "$_cw" -gt 0 ]] && wpx=$((_pw / _cw))
+      [[ "${_ch:-}" =~ ^[0-9]+$ && "${_ph:-}" =~ ^[0-9]+$ && "$_ch" -gt 0 ]] && hpx=$((_ph / _ch))
+      ((wpx > 0)) || wpx=8
+      ((hpx > 0)) || hpx=16
+      kitten icat --clear --transfer-mode=memory --unicode-placeholder --stdin=no \
+        --use-window-size "${cols},${cap},$((cols * wpx)),$((cap * hpx))" \
+        "$thumb" 2>/dev/null &&
         drew_image=true
     fi
     if [[ "$drew_image" == false ]] && command -v chafa >/dev/null 2>&1; then
-      chafa --clear --format=symbols --size="${img_cols}x${img_lines}" "$thumb" 2>/dev/null &&
+      # chafa advances the cursor past the image on its own too, so again no pad.
+      chafa --clear --format=symbols --size="${cols}x${cap}" "$thumb" 2>/dev/null &&
         drew_image=true
     fi
-  fi
-  # Move cursor to just below the image before printing text. icat with
-  # --place leaves the cursor at the placement origin, so we step down exactly
-  # img_lines rows; under tmux the cursor is unreliable, so this explicit pad is
-  # what guarantees the text sits directly under the image.
-  if [[ "$drew_image" == true ]]; then
-    printf '\n%.0s' $(seq 1 "$img_lines")
   fi
 
   # Show duration first (one line, no blank gap) so it stays visible even when

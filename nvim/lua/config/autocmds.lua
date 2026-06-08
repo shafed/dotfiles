@@ -143,8 +143,8 @@ vim.api.nvim_create_autocmd("VimEnter", {
   callback = pull_obsidian_vault,
 })
 
--- в init.lua
-vim.opt.viewoptions = "folds,cursor" -- сохраняем фолды и позицию курсора
+-- needed by mkview/loadview below: persist folds and cursor position
+vim.opt.viewoptions = "folds,cursor"
 
 vim.api.nvim_create_autocmd("BufWinLeave", {
   pattern = "*.md",
@@ -156,6 +156,10 @@ vim.api.nvim_create_autocmd("BufWinLeave", {
 vim.api.nvim_create_autocmd("BufWinEnter", {
   pattern = "*.md",
   callback = function()
-    vim.cmd("silent! loadview")
+    -- defer until after the FileType foldexpr has finished, otherwise
+    -- loadview can restore folds before they're computed (flaky state)
+    vim.schedule(function()
+      pcall(vim.cmd, "loadview")
+    end)
   end,
 })

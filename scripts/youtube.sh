@@ -557,8 +557,8 @@ search_live() {
   printf insert >"$vi_file"
   trap 'rm -f "$mode_file" "$vi_file" "$source_file" "$history_cache" "$watchlater_cache"' RETURN
 
-  local enter_normal="execute-silent(printf normal >'$vi_file')+unbind(change)+rebind(j,k,g,G,q)+change-header($normal_header)"
-  local enter_insert="execute-silent(printf insert >'$vi_file')+unbind(j,k,g,G,q)+rebind(change)+change-header($insert_header)"
+  local enter_normal="execute-silent(printf normal >'$vi_file')+unbind(change)+rebind(j,k,g,G,q,i)+change-header($normal_header)"
+  local enter_insert="execute-silent(printf insert >'$vi_file')+unbind(j,k,g,G,q,i)+rebind(change)+change-header($insert_header)"
   local esc_action="transform:
     if [[ \"\$(cat '$vi_file')\" == insert ]]; then
       echo \"$enter_normal\"
@@ -577,7 +577,8 @@ search_live() {
     --prompt="Search YouTube > "
     --header="$insert_header"
     # Start in insert: live re-query on, nav keys off (so they type as letters).
-    --bind "start:reload($search_cmd)+unbind(j,k,g,G,q)"
+    # i is included so the letter "i" types in insert mode; normal mode rebinds it.
+    --bind "start:reload($search_cmd)+unbind(j,k,g,G,q,i)"
     --bind "change:$change_action"
     --bind "ctrl-t:$toggle"
     # Ctrl-H/Ctrl-L switch the source so typing searches WITHIN that list. They

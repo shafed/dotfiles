@@ -44,6 +44,7 @@ if [[ "${1:-}" == "--preview" ]]; then
   vid="${2:-}"
   title="${3:-}"
   duration="${4:-}"
+  channel="${5:-}"
   [[ -n "$vid" ]] || exit 0
   mkdir -p "$thumb_dir"
 
@@ -102,8 +103,10 @@ if [[ "${1:-}" == "--preview" ]]; then
   fi
 
   # Show duration first (one line, no blank gap) so it stays visible even when
-  # the title wraps and the image has eaten half the pane height.
+  # the title wraps and the image has eaten half the pane height. Channel (when
+  # known — history/later rows, once enriched) goes on its own line under it.
   [[ -n "$duration" && "$duration" != "NA" ]] && printf 'Duration: %s\n' "$duration"
+  [[ -n "$channel" && "$channel" != "NA" ]] && printf 'Channel: %s\n' "$channel"
   [[ -n "$title" ]] && printf '%s\n' "$title"
   exit 0
 fi
@@ -185,9 +188,10 @@ fi
 # Turn a stream of "id<TAB>title<TAB>dur<TAB>channel" rows into the shared
 # 6-column picker TSV, deduping by id (newest first). channel may be empty (the
 # flat feed doesn't carry it — it's filled in later by --ytenrich). Columns:
-#   1 kind(video) 2 id 3 (handle, empty) 4 title 5 dur 6 display
-# Column 6 is what fzf shows AND matches; the dimmed "dur · channel" span there
-# is why typing a channel name filters to that channel's videos.
+#   1 kind(video) 2 id 3 channel 4 title 5 dur 6 display
+# Column 3 holds the channel (the "handle" slot, unused for videos) so the
+# preview can show it. Column 6 is what fzf shows AND matches; the dimmed
+# "dur · channel" span there is why typing a channel name filters to it.
 yt_rows_awk='
   BEGIN { FS=OFS="\t" }
   !seen[$1]++ {
@@ -198,7 +202,7 @@ yt_rows_awk='
     meta=dur
     if (channel!="") meta=(meta!="" ? meta " · " channel : channel)
     if (meta!="") disp=disp "  \033[2m" meta "\033[0m"
-    print "video", id, "", title, dur, disp
+    print "video", id, channel, title, dur, disp
   }'
 
 # Background channel enrichment. The flat history/WL listing returns NO channel
@@ -228,20 +232,22 @@ if [[ "${1:-}" == "--ytenrich" ]]; then
   trap 'rm -f "$lock" "$map_file" "$cache_file".tmp.*; [[ -n "$fetch_pid" ]] && kill -- -"$fetch_pid" 2>/dev/null' EXIT
 
   # Rejoin the (possibly partial) id→channel map onto the cache by id and rebuild
-  # col 6 with the channel in the dimmed span. Atomic mv, and never resurrect a
-  # cache the picker already cleaned up.
+  # col 3 (channel, for the preview) + col 6 (the dimmed span). Atomic mv, and
+  # never resurrect a cache the picker already cleaned up.
   rejoin() {
     [[ -s "$map_file" && -e "$cache_file" ]] || return 0
     local tmp="$cache_file.tmp.$$"
     awk -F"$tab" -v OFS="$tab" '
       NR==FNR { if ($2!="" && $2!="NA") chan[$1]=$2; next }
       {
-        id=$2; title=$4; dur=$5; channel=(id in chan ? chan[id] : "")
+        id=$2; title=$4; dur=$5
+        # Prefer a freshly-resolved channel; otherwise keep whatever col 3 had.
+        channel=(id in chan ? chan[id] : $3)
         disp="▶  " title
         meta=dur
         if (channel!="") meta=(meta!="" ? meta " · " channel : channel)
         if (meta!="") disp=disp "  \033[2m" meta "\033[0m"
-        print $1, id, $3, title, dur, disp
+        print $1, id, channel, title, dur, disp
       }' "$map_file" "$cache_file" >"$tmp" 2>/dev/null || true
     if [[ -s "$tmp" && -e "$cache_file" ]]; then mv "$tmp" "$cache_file"; else rm -f "$tmp"; fi
   }
@@ -584,7 +590,8 @@ search_live() {
     --bind "G:last"
     --bind "q:abort"
     --bind "i:$enter_insert"
-    --preview "\"$script_self\" --preview {2} {4} {5}"
+    # Args: id title dur channel (col 3 carries the channel for history/later).
+    --preview "\"$script_self\" --preview {2} {4} {5} {3}"
     --preview-window "right,55%,wrap"
   )
   [[ -n "${linkarzu_fzf_colors:-}" ]] && fzf_args+=(--color="$linkarzu_fzf_colors")

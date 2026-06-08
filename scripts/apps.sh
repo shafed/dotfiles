@@ -21,6 +21,10 @@ script_path="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SO
 #     marked NoDisplay=true or Hidden=true are skipped (same as menus do).
 #   - Launches via gtk-launch so the app's own Exec/Actions handling applies,
 #     and detaches with setsid so it survives the panel hiding.
+#   - Enter focuses an already-open window of the pick when one exists (matched
+#     by WM class via hyprctl), and only launches a fresh instance when nothing
+#     is running. Alt+Enter always launches a new instance. (Shift+Enter is not
+#     bindable in fzf — terminals send no distinct code for it.)
 
 fzf_colors_file="$HOME/dotfiles/colorscheme/active/active-fzf-colors.sh"
 qat_config="$HOME/dotfiles/kitty/quick-access-terminal-center.conf"
@@ -156,12 +160,14 @@ launch_apps_qat() {
     /usr/bin/env bash "$script_path" "${pick_args[@]}"
 }
 
-# Build "Name<tab>desktop-file-id<tab>path" rows from all .desktop entries,
-# skipping NoDisplay/Hidden ones and de-duplicating by id so a user override
-# shadows the system copy.
+# Build "Name<tab>desktop-file-id<tab>path<tab>wmclass" rows from all .desktop
+# entries, skipping NoDisplay/Hidden ones and de-duplicating by id so a user
+# override shadows the system copy. The wmclass column lets the picker match a
+# pick against an already-open window (see focus_app); it is the entry's
+# StartupWMClass when present, else a best-effort guess from the desktop-file id.
 build_cache() {
   mkdir -p "$cache_dir"
-  local dir file id name nodisplay hidden type
+  local dir file id name nodisplay hidden type wmclass
   : >"$cache_file.tmp"
 
   for dir in "${app_dirs[@]}"; do
@@ -175,12 +181,14 @@ build_cache() {
       name=""
       nodisplay=""
       hidden=""
+      wmclass=""
       while IFS= read -r line; do
         case "$line" in
         Type=*) type="${line#Type=}" ;;
         Name=*) name="${line#Name=}" ;;
         NoDisplay=*) nodisplay="${line#NoDisplay=}" ;;
         Hidden=*) hidden="${line#Hidden=}" ;;
+        StartupWMClass=*) wmclass="${line#StartupWMClass=}" ;;
         esac
       done < <(awk '/^\[Desktop Entry\]/{f=1;next} /^\[/{f=0} f' "$file")
 
@@ -189,7 +197,18 @@ build_cache() {
       [[ "$hidden" == "true" ]] && continue
       [[ -n "$name" ]] || continue
 
-      printf '%s\t%s\t%s\n' "$name" "$id" "$file" >>"$cache_file.tmp"
+      # No StartupWMClass: guess from the id. Many apps set their WM class to the
+      # last reverse-DNS segment of the id (org.telegram.desktop -> "telegram",
+      # firefox.desktop -> "firefox"). Lowercased to match the case-insensitive
+      # compare in focus_app. A rough heuristic, but the focus is best-effort —
+      # a miss just falls through to launching a new instance.
+      if [[ -z "$wmclass" ]]; then
+        wmclass="${id%.desktop}"
+        wmclass="${wmclass##*.}"
+        wmclass="${wmclass,,}"
+      fi
+
+      printf '%s\t%s\t%s\t%s\n' "$name" "$id" "$file" "$wmclass" >>"$cache_file.tmp"
     done
   done
 
@@ -249,6 +268,46 @@ record_launch() {
     END { if (!seen) print id "\t" 1 }
   ' "$usage_file" >"$tmp"
   mv "$tmp" "$usage_file"
+}
+
+# Raise an already-open window of the picked app, matched by WM class against
+# Hyprland's client list (against both class and initialClass since some apps
+# differ between the two). Returns success only when a window was found and
+# focused, so the caller can fall back to launching. Best-effort: a no-op
+# (returns failure) outside Hyprland or without jq.
+#
+# Matching is fuzzy on purpose. A desktop entry's StartupWMClass routinely fails
+# to equal the live window class: Telegram's system entry ships the bogus
+# "org.telegram.desktop.desktop" while the window reports "org.telegram.desktop",
+# and its AUR/Flatpak entry says "TelegramDesktop" for the same window. So we
+# normalize both sides (lowercase, drop a trailing .desktop, strip . _ - separators)
+# and match when the normalized forms are equal OR one ends with the other — the
+# suffix test absorbs a reverse-DNS prefix (org./com.) present on only one side.
+focus_app() {
+  local wmclass="$1" addr
+  [[ -n "$wmclass" ]] || return 1
+  command -v hyprctl >/dev/null 2>&1 || return 1
+  command -v jq >/dev/null 2>&1 || return 1
+
+  addr="$(
+    hyprctl clients -j 2>/dev/null | jq -r --arg c "$wmclass" '
+      # Live window classes get plain normalization. The query (a desktop-file
+      # value) additionally loses ONE trailing .desktop — that strips the bogus
+      # "org.telegram.desktop.desktop" suffix without touching a window class
+      # whose own final segment is legitimately "desktop" (org.telegram.desktop).
+      def norm: ascii_downcase | gsub("[._-]"; "");
+      ($c | ascii_downcase | sub("\\.desktop$"; "") | gsub("[._-]"; "")) as $cl
+      | .[]
+      | (((.class // "") | norm), ((.initialClass // "") | norm)) as $wc
+      | select($wc != "" and $cl != ""
+          and ($wc == $cl or ($wc | endswith($cl)) or ($cl | endswith($wc))))
+      | .address
+    ' 2>/dev/null | head -n1
+  )"
+
+  [[ -n "$addr" ]] || return 1
+  hyprctl dispatch focuswindow "address:$addr" >/dev/null 2>&1 || true
+  return 0
 }
 
 # Launch the picked app, detached into its own session so it survives the panel
@@ -311,7 +370,8 @@ if [[ "$pick_mode" == true ]]; then
     --delimiter=$'\t'
     --with-nth=1
     --prompt="Launch app > "
-    --header="Empty = recent, type to search all"
+    --header="Empty = recent, type to search all · Enter = focus/open · Alt+Enter = new instance"
+    --expect=alt-enter
     --bind "start:reload($list_reload)"
     --bind "change:reload($list_reload)"
   )
@@ -326,16 +386,32 @@ if [[ "$pick_mode" == true ]]; then
     # Esc makes fzf exit non-zero. Treat it as "hide and rearm" so the next
     # keypress shows an already-running picker instead of starting from cold.
     # The list itself comes from the reload binds, so feed fzf an empty stdin.
-    if ! selected=$(: | fzf "${fzf_args[@]}"); then
+    if ! output=$(: | fzf "${fzf_args[@]}"); then
       toggle_apps_qat
       continue
     fi
 
-    IFS=$'\t' read -r _name id _path <<<"$selected"
+    # With --expect, fzf prints the pressed key on the first line (empty for a
+    # plain Enter) and the selected row on the second. Alt+Enter forces a new
+    # instance; plain Enter focuses an existing window when one is open.
+    key="$(sed -n '1p' <<<"$output")"
+    selected="$(sed -n '2p' <<<"$output")"
+
+    IFS=$'\t' read -r _name id _path wmclass <<<"$selected"
 
     if [[ -z "${id:-}" ]]; then
       echo "Invalid selection: $selected"
       read -r -p "Press enter to continue. "
+      toggle_apps_qat
+      continue
+    fi
+
+    # Plain Enter: if a window of this app is already open, just raise it and
+    # skip launching. Alt+Enter (key set) always falls through to a fresh
+    # launch. Focus while the panel is still up so hiding it leaves us on the
+    # raised window; bail out before record_launch so focusing does not inflate
+    # the usage ranking the way an actual launch should.
+    if [[ "$key" != "alt-enter" ]] && focus_app "$wmclass"; then
       toggle_apps_qat
       continue
     fi

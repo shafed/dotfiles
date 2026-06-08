@@ -905,7 +905,7 @@ vim.keymap.set("n", "<M-x>", function()
 end, { desc = "[P]Toggle task and move it to 'done'" })
 
 -- Create task
-vim.keymap.set({ "n", "i" }, "<M-l>", function()
+local function create_task()
   -- Get the current line/row/column
   local cursor_pos = vim.api.nvim_win_get_cursor(0)
   local row, _ = cursor_pos[1], cursor_pos[2]
@@ -940,7 +940,18 @@ vim.keymap.set({ "n", "i" }, "<M-l>", function()
   vim.api.nvim_set_current_line(final_line)
   -- "- [ ] " is 6 characters
   vim.api.nvim_win_set_cursor(0, { row, 6 })
-end, { desc = "Convert bullet to a task or insert new task bullet" })
+end
+
+-- Only bind <M-l> in markdown buffers
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "markdown",
+  callback = function(args)
+    vim.keymap.set({ "n", "i" }, "<M-l>", create_task, {
+      buffer = args.buf,
+      desc = "Convert bullet to a task or insert new task bullet",
+    })
+  end,
+})
 
 -- Google Calendar (gcalcli)
 -- Create event from current task line. Date comes from a wikilink:

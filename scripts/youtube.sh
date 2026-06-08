@@ -564,19 +564,13 @@ search_live() {
   # id is a UC… channel id and open_video isn't used, so the preview just shows
   # nothing useful — that's fine.
   #
-  # Ctrl-T toggles videos<->channels: rewrite the mode file, update the prompt to
-  # show the active mode, then re-run the search in the new mode for the same query.
-  # Toggling implies live search, so also flip the source back to "search" — this
-  # is how you leave history/later browsing and return to querying YouTube.
-  local toggle="transform:
-    printf search >'$source_file'
-    if [[ \"\$(cat '$mode_file')\" == videos ]]; then
-      printf channels >'$mode_file'
-      echo \"change-prompt(Search channels > )+reload($search_cmd)+first\"
-    else
-      printf videos >'$mode_file'
-      echo \"change-prompt(Search YouTube > )+reload($search_cmd)+first\"
-    fi"
+  # Ctrl-C / Ctrl-V pick the search mode explicitly (channels / videos). Each
+  # rewrites the mode file, updates the prompt, and re-runs the search in that
+  # mode for the same query. Choosing a mode implies live search, so both also
+  # flip the source back to "search" — this is how you leave history/later
+  # browsing and return to querying YouTube.
+  local set_channels="execute-silent(printf search >'$source_file'; printf channels >'$mode_file')+change-prompt(Search channels > )+reload($search_cmd)+first"
+  local set_videos="execute-silent(printf search >'$source_file'; printf videos >'$mode_file')+change-prompt(Search YouTube > )+reload($search_cmd)+first"
 
   # The change bind (a keystroke) is source-aware: in "search" it live-queries
   # YouTube; in "history"/"later" it filters the already-loaded list locally.
@@ -599,7 +593,7 @@ search_live() {
   #     letters in insert mode; normal mode rebinds them to nav.
   #   - esc is rebound per mode: insert's esc -> normal, normal's esc -> abort.
   #   - change (the live re-query) is unbound in normal mode so j/k don't fire it.
-  local insert_header="INSERT · Esc normal · ^T videos/channels · ^H history · ^L later"
+  local insert_header="INSERT · Esc normal · ^V videos · ^C channels · ^H history · ^L later"
   local normal_header="NORMAL · j/k move · g/G top/bottom · i insert · Enter open · q/Esc quit"
   # Mode transitions. fzf's rebind restores a key's ORIGINAL action, so esc can't
   # be flipped between "go normal" and "quit" with rebind alone — instead esc
@@ -634,7 +628,10 @@ search_live() {
     # i is included so the letter "i" types in insert mode; normal mode rebinds it.
     --bind "start:reload($search_cmd)+unbind(j,k,g,G,q,i)"
     --bind "change:$change_action"
-    --bind "ctrl-t:$toggle"
+    # Ctrl-V videos / Ctrl-C channels: pick the live-search mode explicitly.
+    # (Binding ctrl-c here overrides its usual abort; quit is Esc/q.)
+    --bind "ctrl-v:$set_videos"
+    --bind "ctrl-c:$set_channels"
     # Ctrl-H/Ctrl-L switch the source so typing searches WITHIN that list. They
     # clear the query first so the full list shows, then reload (empty {q} =
     # unfiltered). The first call fetches+caches; later keystrokes filter locally.

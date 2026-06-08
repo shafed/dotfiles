@@ -384,21 +384,6 @@ switch_to_english() {
   hyprctl switchxkblayout all 0 >/dev/null 2>&1 || true
 }
 
-# Print the Hyprland addresses of all current Firefox windows, one per line.
-firefox_window_addresses() {
-  hyprctl clients -j 2>/dev/null | jq -r '
-    .[] | select(.class == "firefox") | .address
-  ' 2>/dev/null
-}
-
-# Print the address of a Firefox window that is NOT on the YouTube workspace, or
-# nothing if every Firefox window is already on it (or none exist).
-firefox_window_off_youtube() {
-  hyprctl clients -j 2>/dev/null | jq -r --argjson yt "$firefox_workspace" '
-    .[] | select(.class == "firefox" and .workspace.id != $yt) | .address
-  ' 2>/dev/null | head -n1
-}
-
 # Open a video in the browser on workspace 4, then focus it.
 #
 # A video search always wants a fresh watch, so this never reuses an existing
@@ -411,6 +396,14 @@ firefox_window_off_youtube() {
 # setsid detaches the cold-start xdg-open so it survives this script exiting —
 # otherwise the QAT panel closing the instant we exit would kill it before the
 # browser picks up the URL. Best-effort: no-ops outside Hyprland.
+#
+# Everything past the initial xdg-open involves sleeps and polling loops (up to
+# ~2.6s of settle + window-appearance waits). Running that in the foreground
+# keeps THIS script alive, and since the kitty QAT panel only closes when the
+# script exits, the panel lingers showing the now-dead fzf frame ("empty fzf
+# terminal"). So we do all the slow Hyprland window-shuffling in a DETACHED
+# background subshell (setsid) and return immediately — the panel closes at once
+# while Firefox placement finishes on its own.
 open_video() {
   local url="https://www.youtube.com/watch?v=$1"
 
@@ -419,41 +412,52 @@ open_video() {
     return 0
   fi
 
-  # The QAT panel hides asynchronously; settle briefly so Hyprland doesn't
-  # re-grab focus after us.
-  sleep 0.15
+  setsid -f bash -c '
+    url="$1"
+    firefox_workspace="$2"
 
-  # Firefox is up and has a window off ws4 -> open the video as its OWN new
-  # window on ws4 so the existing Firefox windows stay where they are.
-  if [[ -n "$(firefox_window_off_youtube)" ]]; then
-    local before after new_addr="" i
-    before="$(firefox_window_addresses)"
-    setsid -f firefox --new-window "$url" >/dev/null 2>&1
-    # Wait for a window address that was not present before the launch.
+    firefox_window_addresses() {
+      hyprctl clients -j 2>/dev/null | jq -r ".[] | select(.class == \"firefox\") | .address" 2>/dev/null
+    }
+    firefox_window_off_youtube() {
+      hyprctl clients -j 2>/dev/null | jq -r --argjson yt "$firefox_workspace" \
+        ".[] | select(.class == \"firefox\" and .workspace.id != \$yt) | .address" 2>/dev/null | head -n1
+    }
+
+    # The QAT panel hides asynchronously; settle briefly so Hyprland does not
+    # re-grab focus after us.
+    sleep 0.15
+
+    # Firefox is up and has a window off ws4 -> open the video as its OWN new
+    # window on ws4 so the existing Firefox windows stay where they are.
+    if [[ -n "$(firefox_window_off_youtube)" ]]; then
+      before="$(firefox_window_addresses)"
+      firefox --new-window "$url" >/dev/null 2>&1
+      # Wait for a window address that was not present before the launch.
+      for i in 1 2 3 4 5 6 7 8 9 10; do
+        after="$(firefox_window_addresses)"
+        new_addr="$(comm -13 <(printf "%s\n" "$before" | sort) <(printf "%s\n" "$after" | sort) | head -n1)"
+        [[ -n "$new_addr" ]] && break
+        sleep 0.25
+      done
+      if [[ -n "${new_addr:-}" ]]; then
+        hyprctl dispatch movetoworkspace "${firefox_workspace},address:$new_addr" >/dev/null 2>&1 || true
+        hyprctl dispatch focuswindow "address:$new_addr" >/dev/null 2>&1 || true
+      fi
+      exit 0
+    fi
+
+    # Firefox only on ws4, or cold start: open a tab and pull Firefox to ws4.
+    xdg-open "$url" >/dev/null 2>&1
     for i in 1 2 3 4 5 6 7 8 9 10; do
-      after="$(firefox_window_addresses)"
-      new_addr="$(comm -13 <(printf '%s\n' "$before" | sort) <(printf '%s\n' "$after" | sort) | head -n1)"
-      [[ -n "$new_addr" ]] && break
+      if hyprctl clients -j 2>/dev/null | grep -q "\"class\": *\"firefox\""; then
+        hyprctl dispatch movetoworkspace "${firefox_workspace},class:firefox" >/dev/null 2>&1 || true
+        hyprctl dispatch focuswindow class:firefox >/dev/null 2>&1 || true
+        exit 0
+      fi
       sleep 0.25
     done
-    if [[ -n "$new_addr" ]]; then
-      hyprctl dispatch movetoworkspace "${firefox_workspace},address:$new_addr" >/dev/null 2>&1 || true
-      hyprctl dispatch focuswindow "address:$new_addr" >/dev/null 2>&1 || true
-    fi
-    return 0
-  fi
-
-  # Firefox only on ws4, or cold start: open a tab and pull Firefox to ws4.
-  setsid -f xdg-open "$url" >/dev/null 2>&1
-  local i
-  for i in 1 2 3 4 5 6 7 8 9 10; do
-    if hyprctl clients -j 2>/dev/null | grep -q '"class": *"firefox"'; then
-      hyprctl dispatch movetoworkspace "${firefox_workspace},class:firefox" >/dev/null 2>&1 || true
-      hyprctl dispatch focuswindow class:firefox >/dev/null 2>&1 || true
-      return 0
-    fi
-    sleep 0.25
-  done
+  ' _ "$url" "$firefox_workspace" >/dev/null 2>&1
   return 0
 }
 

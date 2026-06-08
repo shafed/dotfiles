@@ -9,6 +9,7 @@ script_self="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SO
 #
 # Usage:
 #   youtube.sh <channel>            # @handle, channel URL, or channel name
+#                                   # (Ctrl-S in the list toggles videos/streams)
 #   youtube.sh -s [query]           # live YouTube search (videos + channels); a
 #                                   # video opens, a channel drills into its videos
 #   youtube.sh -p <playlist>        # playlist URL or ID (public only)
@@ -345,8 +346,51 @@ if [[ "${1:-}" == "--ythistory" || "${1:-}" == "--ytwatchlater" ]]; then
   exit 0
 fi
 
+# Fetch ONE tab of a channel (videos or streams) and print the 3-column
+# id/title/dur rows the channel picker consumes, with a live badge baked into
+# the title. Caches per-tab so the Ctrl-S toggle is instant on re-toggle.
+#
+# Called as: --yttab <videos|streams> <channel_base> <cache_file>
+#   channel_base — channel URL WITHOUT a trailing /videos|/streams (e.g.
+#                  https://www.youtube.com/@handle). The tab is appended here.
+# The streams tab is where YouTube keeps live / past-live content; the videos
+# tab is uploads only. This subcommand is what makes Ctrl-S flip between them.
+if [[ "${1:-}" == "--yttab" ]]; then
+  tab=$'\t'
+  which_tab="${2:-videos}"
+  channel_base="${3:-}"
+  cache_file="${4:-}"
+  limit="${YOUTUBE_FZF_LIMIT:-40}"
+  [[ -n "$channel_base" ]] || exit 0
+
+  # Reuse a fresh per-tab cache; otherwise fetch. Same 6h staleness as the main
+  # path. The picker re-toggling within a session hits the cache and is instant.
+  if [[ -n "$cache_file" && -s "$cache_file" ]] &&
+    [[ -z "$(find "$cache_file" -mmin +360 2>/dev/null)" ]]; then
+    cat "$cache_file"
+    exit 0
+  fi
+
+  rows="$(yt-dlp --flat-playlist --no-warnings --playlist-end "$limit" \
+    --print "%(id)s${tab}%(title)s${tab}%(duration_string)s${tab}%(live_status)s" \
+    "${channel_base}/${which_tab}" 2>/dev/null |
+    awk -F"$tab" -v OFS="$tab" '
+      {
+        title=$2; live=$4
+        if (live=="is_live")                            title=title "  \033[31m● LIVE\033[0m"
+        else if (live=="was_live" || live=="post_live") title=title "  \033[2m(was live)\033[0m"
+        print $1, title, $3
+      }')"
+  [[ -n "$rows" ]] || exit 0
+  if [[ -n "$cache_file" ]]; then
+    printf '%s\n' "$rows" >"$cache_file"
+  fi
+  printf '%s\n' "$rows"
+  exit 0
+fi
+
 usage() {
-  sed -n '7,24p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+  sed -n '7,25p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
   exit "${1:-0}"
 }
 
@@ -677,6 +721,10 @@ else
   *) source_url="https://www.youtube.com/@$target/videos" ;;
   esac
   cache_key="ch-$(printf '%s' "$target" | tr -c 'A-Za-z0-9' '_')"
+  # Channel base (URL without a trailing /videos|/streams) so the Ctrl-S toggle
+  # can swap tabs by appending the other one. Only channels have a streams tab.
+  channel_base="${source_url%/videos}"
+  channel_base="${channel_base%/streams}"
 fi
 
 mkdir -p "$cache_dir"
@@ -738,6 +786,7 @@ if [[ ! -s "$cache_file" ]]; then
   exit 1
 fi
 
+base_header="$target — Enter to open in browser, Esc to cancel"
 fzf_args=(
   --height=100%
   --reverse
@@ -745,10 +794,37 @@ fzf_args=(
   --delimiter=$'\t'
   --with-nth=2
   --prompt="Open video > "
-  --header="$target — Enter to open in browser, Esc to cancel"
+  --header="$base_header"
   --preview "$script_self --preview {1} {2} {3}"
   --preview-window "right,55%,wrap"
 )
+
+# Ctrl-S: in channel mode, flip between the channel's videos tab and its streams
+# tab (where YouTube keeps live / past-live content; the videos tab is uploads
+# only). The current tab lives in a temp file so the static reload bind can read
+# it; --yttab fetches+caches per tab, so re-toggling is instant. Not offered for
+# playlists/history, which have no streams tab.
+if [[ -n "${channel_base:-}" ]]; then
+  tab_file="$(mktemp -t yt-chtab.XXXXXX)"
+  printf videos >"$tab_file"
+  streams_cache="${cache_file%.tsv}.streams.tsv"
+  export YOUTUBE_FZF_LIMIT="$limit" # so the streams tab honors -n too
+  videos_cmd="\"$script_self\" --yttab videos '$channel_base' '$cache_file'"
+  streams_cmd="\"$script_self\" --yttab streams '$channel_base' '$streams_cache'"
+  ctrl_s_toggle="transform:
+    if [[ \"\$(cat '$tab_file')\" == videos ]]; then
+      printf streams >'$tab_file'
+      echo \"change-prompt(Open stream > )+change-header($target · STREAMS — Enter open, ^S videos, Esc cancel)+reload($streams_cmd)+first\"
+    else
+      printf videos >'$tab_file'
+      echo \"change-prompt(Open video > )+change-header($base_header · ^S streams)+reload($videos_cmd)+first\"
+    fi"
+  fzf_args+=(
+    --header="$base_header · ^S streams"
+    --bind "ctrl-s:$ctrl_s_toggle"
+  )
+  trap 'rm -f "$tab_file"' EXIT
+fi
 
 source_fzf_colors
 if [[ -n "${linkarzu_fzf_colors:-}" ]]; then

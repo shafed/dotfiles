@@ -697,7 +697,7 @@ if [[ "$needs_fetch" == true ]]; then
   # (view_count/upload_date come back as NA without per-video requests).
   yt_args=(--flat-playlist --no-warnings
     --playlist-end "$limit"
-    --print "%(id)s${tab}%(title)s${tab}%(duration_string)s")
+    --print "%(id)s${tab}%(title)s${tab}%(duration_string)s${tab}%(live_status)s")
   # History needs your logged-in session, read from the browser's cookies.
   [[ "$mode" == "history" ]] && yt_args+=(--cookies-from-browser "$cookies_browser")
 
@@ -706,6 +706,17 @@ if [[ "$needs_fetch" == true ]]; then
     echo "Could not fetch videos for: $target" >&2
     exit 1
   fi
+  # Bake a live badge into the title column (col 2, the one fzf shows) so an
+  # active live / past live is distinguishable here too — an active live has no
+  # duration, so without this it looks like a plain video. Drop col 4 afterwards
+  # so the cache keeps its 3-column id/title/dur shape (preview args {1} {2} {3}).
+  awk -F"$tab" -v OFS="$tab" '
+    {
+      title=$2; live=$4
+      if (live=="is_live")                       title=title "  \033[31m● LIVE\033[0m"
+      else if (live=="was_live" || live=="post_live") title=title "  \033[2m(was live)\033[0m"
+      print $1, title, $3
+    }' "$cache_file.tmp" >"$cache_file.tmp3" && mv "$cache_file.tmp3" "$cache_file.tmp"
   # The history feed repeats videos (re-watches, day groupings); collapse to the
   # first occurrence of each id while keeping most-recent-first order.
   if [[ "$mode" == "history" ]]; then
@@ -730,6 +741,7 @@ fi
 fzf_args=(
   --height=100%
   --reverse
+  --ansi
   --delimiter=$'\t'
   --with-nth=2
   --prompt="Open video > "

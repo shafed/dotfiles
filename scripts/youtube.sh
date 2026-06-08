@@ -140,22 +140,32 @@ if [[ "${1:-}" == "--ytsearch" ]]; then
   query="${3:-}"
   [[ -n "$query" ]] || exit 0
 
-  print_tmpl="%(ie_key)s${tab}%(id)s${tab}%(channel)s${tab}%(uploader_id)s${tab}%(title)s${tab}%(duration_string)s"
+  print_tmpl="%(ie_key)s${tab}%(id)s${tab}%(channel)s${tab}%(uploader_id)s${tab}%(title)s${tab}%(duration_string)s${tab}%(live_status)s"
   # awk turns each yt-dlp row into our 6-column TSV: YoutubeTab rows render as
   # channels (◉, drill-down), Youtube rows as videos (▶). Order is preserved.
+  # Live streams come through as Youtube rows too (they're kept, not excluded);
+  # an active live has no duration, so we badge it so it's distinguishable:
+  #   is_live -> red ● LIVE,  was_live/post_live -> dim "live" instead of a dur.
   render='
     BEGIN { FS=OFS="\t" }
     {
-      ie=$1; id=$2; channel=$3; handle=$4; title=$5; dur=$6
+      ie=$1; id=$2; channel=$3; handle=$4; title=$5; dur=$6; live=$7
       if (handle=="NA") handle=""
       if (dur=="NA")    dur=""
+      if (live=="NA")   live=""
       if (ie=="YoutubeTab" && id!="" && id!="NA") {
         disp="\033[36m◉\033[0m  " channel
         if (handle!="") disp=disp "  \033[2m" handle "\033[0m"
         print "channel", id, handle, channel, "", disp
       } else if (ie=="Youtube" && id!="" && id!="NA") {
         disp="▶  " title
-        if (dur!="") disp=disp "  \033[2m" dur "\033[0m"
+        if (live=="is_live") {
+          disp=disp "  \033[31m● LIVE\033[0m"
+        } else if (live=="was_live" || live=="post_live") {
+          disp=disp "  \033[2m" (dur!="" ? dur " · " : "") "was live\033[0m"
+        } else if (dur!="") {
+          disp=disp "  \033[2m" dur "\033[0m"
+        }
         print "video", id, "", title, dur, disp
       }
     }'

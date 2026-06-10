@@ -2,7 +2,21 @@
 
 set -euo pipefail
 
-script_path="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+script_path="$script_dir/$(basename "${BASH_SOURCE[0]}")"
+# shellcheck source=lib.sh
+source "$script_dir/lib.sh"
+
+# Fuzzy-find bookmarks and open the pick in Firefox, preferring an already-open
+# tab (focused via brotab) over opening a duplicate. Runs inside a long-lived
+# kitty quick-access panel toggled via the remote-control socket — same
+# mechanism as apps.sh — so it overlays the screen and re-opens instantly.
+#
+# Usage:
+#   bookmarks.sh                  # launch (or toggle) the picker QAT
+#   bookmarks.sh --sync-firefox   # export Firefox bookmarks to TSV and exit
+#   bookmarks.sh --pick           # internal: picker loop inside the QAT panel
+#   bookmarks.sh --recent|--all   # internal: list providers for fzf's reloads
 
 firefox_bookmarks_file="$HOME/dotfiles/bookmarks/firefox-bookmarks.tsv"
 bookmarks_files=(
@@ -10,9 +24,6 @@ bookmarks_files=(
   "$HOME/dotfiles-private/bookmarks/bookmarks.tsv"
   "$firefox_bookmarks_file"
 )
-fzf_colors_file="$HOME/dotfiles/colorscheme/active/active-fzf-colors.sh"
-qat_config="$HOME/dotfiles/kitty/quick-access-terminal-center.conf"
-kitty_bin="$(command -v kitty || echo /usr/bin/kitty)"
 # brotab CLI (installed via pipx). Used to focus an already-open browser tab
 # instead of opening a duplicate. Optional: if missing we fall back to xdg-open.
 brotab_bin="$(command -v bt || echo "$HOME/.local/bin/bt")"
@@ -79,14 +90,6 @@ record_open() {
   mv "$tmp" "$recent_file"
 }
 
-# Force the keyboard to English so fzf search matches latin bookmark names even
-# when the active layout is Russian. Index 0 is "us" in hyprland.conf's kb_layout
-# (us,ru). Best-effort: silently no-op outside Hyprland.
-switch_to_english() {
-  command -v hyprctl >/dev/null 2>&1 || return 0
-  hyprctl switchxkblayout all 0 >/dev/null 2>&1 || true
-}
-
 # Normalise a URL for loose comparison: strip scheme, a trailing slash, and any
 # #fragment so "https://x.com/" and "http://x.com" match the same open tab.
 normalize_url() {
@@ -113,12 +116,12 @@ focus_firefox() {
   sleep 0.15
 
   # If Firefox isn't up on the first check, this open is launching it cold.
-  if ! hyprctl clients -j 2>/dev/null | grep -q '"class": *"firefox"'; then
+  if ! firefox_running; then
     cold_start=true
   fi
 
-  for i in 1 2 3 4 5 6 7 8 9 10; do
-    if hyprctl clients -j 2>/dev/null | grep -q '"class": *"firefox"'; then
+  for i in {1..10}; do
+    if firefox_running; then
       if [[ "$cold_start" == true ]]; then
         hyprctl dispatch movetoworkspace "${firefox_workspace},class:firefox" >/dev/null 2>&1 || true
       fi
@@ -144,7 +147,7 @@ focus_firefox_for_title() {
   }
 
   # Poll briefly: activation + Hyprland title update are asynchronous.
-  for i in 1 2 3 4 5; do
+  for i in {1..5}; do
     addr="$(
       hyprctl clients -j 2>/dev/null | jq -r --arg t "$title" '
         .[] | select(.class == "firefox" and (.title | startswith($t))) | .address
@@ -163,37 +166,20 @@ focus_firefox_for_title() {
   return 0
 }
 
-# Print the Hyprland address of a Firefox window that is NOT on the YouTube
-# workspace, or nothing if every Firefox window is on it (or none exist). When
-# such a window exists we focus it and let xdg-open add a tab there; otherwise
-# we open a new window so the YouTube workspace stays YouTube-only.
-firefox_window_off_youtube() {
-  hyprctl clients -j 2>/dev/null | jq -r --argjson yt "$youtube_workspace" '
-    .[] | select(.class == "firefox" and .workspace.id != $yt) | .address
-  ' 2>/dev/null | head -n1
-}
-
-# Print the Hyprland addresses of all current Firefox windows, one per line.
-firefox_window_addresses() {
-  hyprctl clients -j 2>/dev/null | jq -r '
-    .[] | select(.class == "firefox") | .address
-  ' 2>/dev/null
-}
-
 # Decide how to deliver a new bookmark tab without ever landing on the YouTube
 # workspace, and print the chosen mode for open_or_focus to act on:
-#   "tab <address>" - a Firefox window already lives off the YouTube ws; focus it
-#                     here and let xdg-open add a tab to it.
-#   "newwindow"     - Firefox is running but only on the YouTube ws; the caller
-#                     opens a fresh window (firefox --new-window) on ws2 so the
-#                     YouTube window is left untouched.
-#   "cold"          - no Firefox window yet; the caller launches it and moves the
-#                     new window to firefox_workspace.
+#   "tab"       - a Firefox window already lives off the YouTube ws; focus it
+#                 here and let xdg-open add a tab to it.
+#   "newwindow" - Firefox is running but only on the YouTube ws; the caller
+#                 opens a fresh window (firefox --new-window) on ws2 so the
+#                 YouTube window is left untouched.
+#   "cold"      - no Firefox window yet; the caller launches it and moves the
+#                 new window to firefox_workspace.
 prepare_firefox_for_new_tab() {
   local addr
   sleep 0.15
 
-  addr="$(firefox_window_off_youtube)"
+  addr="$(firefox_window_off_workspace "$youtube_workspace")"
   if [[ -n "$addr" ]]; then
     # A usable window already lives off the YouTube ws: raise it so xdg-open's
     # tab lands there.
@@ -204,55 +190,13 @@ prepare_firefox_for_new_tab() {
 
   # No window off the YouTube ws. If Firefox is running, every window is on it ->
   # open a brand-new window on ws2 instead of stealing the YouTube one.
-  if hyprctl clients -j 2>/dev/null | grep -q '"class": *"firefox"'; then
+  if firefox_running; then
     printf 'newwindow\n'
     return 0
   fi
 
   # Cold start: no window yet.
   printf 'cold\n'
-  return 0
-}
-
-# Open the URL in a fresh Firefox window, then move that window (and only that
-# window) to firefox_workspace and focus it. We diff the window address set
-# before/after the launch so the move targets the newly created window rather
-# than the existing YouTube one.
-open_in_new_window() {
-  local url="$1" before after addr i new_addr=""
-
-  before="$(firefox_window_addresses)"
-  firefox --new-window "$url" >/dev/null 2>&1 &
-  disown
-
-  # Wait for a window address that was not present before the launch.
-  for i in 1 2 3 4 5 6 7 8 9 10; do
-    after="$(firefox_window_addresses)"
-    new_addr="$(comm -13 <(printf '%s\n' "$before" | sort) <(printf '%s\n' "$after" | sort) | head -n1)"
-    [[ -n "$new_addr" ]] && break
-    sleep 0.25
-  done
-
-  if [[ -n "$new_addr" ]]; then
-    hyprctl dispatch movetoworkspace "${firefox_workspace},address:$new_addr" >/dev/null 2>&1 || true
-    hyprctl dispatch focuswindow "address:$new_addr" >/dev/null 2>&1 || true
-  fi
-  return 0
-}
-
-# After a cold-start xdg-open, poll for the freshly launched Firefox window and
-# move it to firefox_workspace, then focus it. Mirrors focus_firefox's cold-start
-# branch but is only reached when prepare_firefox_for_new_tab found no window.
-focus_after_cold_open() {
-  local i
-  for i in 1 2 3 4 5 6 7 8 9 10; do
-    if hyprctl clients -j 2>/dev/null | grep -q '"class": *"firefox"'; then
-      hyprctl dispatch movetoworkspace "${firefox_workspace},class:firefox" >/dev/null 2>&1 || true
-      hyprctl dispatch focuswindow class:firefox >/dev/null 2>&1 || true
-      return 0
-    fi
-    sleep 0.25
-  done
   return 0
 }
 
@@ -300,13 +244,13 @@ open_or_focus() {
   case "$(prepare_firefox_for_new_tab)" in
   newwindow)
     # Only YouTube-ws windows exist: spawn a fresh window on ws2 instead.
-    open_in_new_window "$url"
+    open_in_new_firefox_window "$url" "$firefox_workspace"
     ;;
   cold)
     # No Firefox yet: launch it, then move the new window to firefox_workspace.
     xdg-open "$url" >/dev/null 2>&1 &
     disown
-    focus_after_cold_open
+    move_firefox_when_up "$firefox_workspace"
     ;;
   *)
     # "tab": a window off the YouTube ws is focused; add a tab to it.
@@ -316,17 +260,6 @@ open_or_focus() {
   esac
   return 0
 }
-
-# Internal list providers invoked by fzf's reload binds. They just print rows
-# and exit so reloading on every keystroke stays snappy.
-if [[ "${1:-}" == "--recent" ]]; then
-  recent_bookmarks
-  exit 0
-fi
-if [[ "${1:-}" == "--all" ]]; then
-  all_bookmarks
-  exit 0
-fi
 
 # Find the active Firefox profile by reading profiles.ini, falling back to the
 # first profile dir that actually has a places.sqlite.
@@ -401,76 +334,12 @@ export_firefox_bookmarks() {
   [[ -n "$out" ]] && printf '%s\n' "$out" >"$firefox_bookmarks_file"
 }
 
-main_kitty_socket() {
-  local sock pid args
-
-  # Each QAT creates its own /tmp/kitty-* socket. Use the main kitty process so
-  # hide/show commands do not accidentally target another floating terminal.
-  for sock in /tmp/kitty-*; do
-    [[ -S "$sock" ]] || continue
-    pid="${sock##*-}"
-    args="$(ps -p "$pid" -o args= 2>/dev/null || true)"
-
-    # On Linux the launcher is usually the python entry point; match either the
-    # resolved kitty binary or a bare "kitty" command in the process arguments.
-    if [[ "$args" == "$kitty_bin"* || "$args" == kitty* || "$args" == *"/kitty "* ]]; then
-      printf '%s\n' "$sock"
-      return 0
-    fi
-  done
-
-  return 1
-}
-
-toggle_bookmarks_qat() {
-  local sock
-
-  sock="$(main_kitty_socket)" || return 0
-  "$kitty_bin" @ --to "unix:${sock}" \
-    action launch --type=background kitten quick-access-terminal \
-    --config "$qat_config" \
-    --instance-group "$bookmarks_group" >/dev/null 2>&1 || true
-}
-
-launch_bookmarks_qat() {
-  local sock
-
-  # Force English here, in the launcher: it runs on EVERY hotkey press
-  # (kanata -> bookmarks.sh), so the layout flips to us each time the panel is
-  # shown — including toggles, where kitty just re-reveals the existing panel.
-  switch_to_english
-
-  sock="$(main_kitty_socket)" || {
-    echo "No main kitty socket found."
-    exit 1
-  }
-
-  "$kitty_bin" @ --to "unix:${sock}" \
-    action launch --type=background kitten quick-access-terminal \
-    --config "$qat_config" \
-    --instance-group "$bookmarks_group" \
-    /usr/bin/env bash "$script_path" --pick
-}
-
-if [[ "${1:-}" == "--sync-firefox" ]]; then
-  export_firefox_bookmarks
-  echo "Synced Firefox bookmarks to $firefox_bookmarks_file"
-  exit 0
-fi
-
-if [[ "${1:-}" == "--pick" ]]; then
+# The picker loop. Runs inside the QAT panel (bookmarks.sh --pick). Keeps the
+# process alive after every action so kitty only toggles the panel's visibility
+# on the next trigger instead of cold-starting it.
+run_picker() {
   # Refresh the Firefox export before showing the picker so it stays in sync.
   export_firefox_bookmarks
-
-  fzf_args=(
-    --height=100%
-    --reverse
-    --delimiter=$'\t'
-    --with-nth=1
-    --header="Empty = recent, type to search all"
-    --prompt="Open bookmark > "
-  )
-  has_bookmarks=false
 
   if ! command -v fzf >/dev/null 2>&1; then
     echo "fzf is not installed."
@@ -478,6 +347,7 @@ if [[ "${1:-}" == "--pick" ]]; then
     exit 1
   fi
 
+  local bookmarks_file has_bookmarks=false
   for bookmarks_file in "${bookmarks_files[@]}"; do
     if [[ -s "$bookmarks_file" ]]; then
       has_bookmarks=true
@@ -492,29 +362,35 @@ if [[ "${1:-}" == "--pick" ]]; then
     exit 1
   fi
 
-  if [[ -f "$fzf_colors_file" ]]; then
-    # shellcheck disable=SC1090
-    source "$fzf_colors_file"
-  fi
-
   # Empty query -> recently opened; any typed query -> full catalog. fzf re-runs
   # these subcommands of ourself on start and on every keystroke.
+  local quoted_self list_reload
   printf -v quoted_self '%q' "$script_path"
   list_reload="if [[ -z {q} ]]; then $quoted_self --recent; else $quoted_self --all; fi"
-  fzf_args+=(--bind "start:reload($list_reload)")
-  fzf_args+=(--bind "change:reload($list_reload)")
 
+  local fzf_args=(
+    --height=100%
+    --reverse
+    --delimiter=$'\t'
+    --with-nth=1
+    --header="Empty = recent, type to search all"
+    --prompt="Open bookmark > "
+    --bind "start:reload($list_reload)"
+    --bind "change:reload($list_reload)"
+  )
+
+  source_fzf_colors
   if [[ -n "${linkarzu_fzf_colors:-}" ]]; then
     fzf_args+=(--color="$linkarzu_fzf_colors")
   fi
 
+  local selected _name url
   while true; do
-    # Keep this process alive after every action. When the QAT process stays
-    # alive, kitty only toggles visibility instead of cold-starting a new panel.
+    # Esc makes fzf exit non-zero. Treat it as "hide and rearm" so the next
+    # keypress shows an already-running picker instead of starting from cold.
+    # The list itself comes from the reload binds, so feed fzf an empty stdin.
     if ! selected=$(: | fzf "${fzf_args[@]}"); then
-      # Esc makes fzf exit non-zero. Treat it as "hide and rearm" so the next
-      # keypress shows an already-running picker instead of starting from cold.
-      toggle_bookmarks_qat
+      toggle_qat "$bookmarks_group"
       continue
     fi
 
@@ -523,16 +399,35 @@ if [[ "${1:-}" == "--pick" ]]; then
     if [[ -z "${url:-}" ]]; then
       echo "Invalid bookmark: $selected"
       read -r -p "Press enter to continue. "
-      toggle_bookmarks_qat
+      toggle_qat "$bookmarks_group"
       continue
     fi
 
     # Log this open so the bookmark rises to the top of next time's recents.
     record_open "$_name" "$url"
 
-    toggle_bookmarks_qat
+    toggle_qat "$bookmarks_group"
     open_or_focus "$url"
   done
-fi
+}
 
-launch_bookmarks_qat
+case "${1:-}" in
+# Internal list providers invoked by fzf's reload binds. They just print rows
+# and exit so reloading on every keystroke stays snappy.
+--recent)
+  recent_bookmarks
+  ;;
+--all)
+  all_bookmarks
+  ;;
+--sync-firefox)
+  export_firefox_bookmarks
+  echo "Synced Firefox bookmarks to $firefox_bookmarks_file"
+  ;;
+--pick)
+  run_picker
+  ;;
+*)
+  launch_qat "$bookmarks_group" /usr/bin/env bash "$script_path" --pick
+  ;;
+esac

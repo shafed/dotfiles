@@ -2,7 +2,10 @@
 
 set -euo pipefail
 
-script_path="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+script_path="$script_dir/$(basename "${BASH_SOURCE[0]}")"
+# shellcheck source=lib.sh
+source "$script_dir/lib.sh"
 
 # Fuzzy-find installed applications by name and launch the pick. Mirrors the
 # look/feel AND mechanism of bookmarks.sh: runs inside a long-lived kitty
@@ -10,25 +13,16 @@ script_path="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SO
 # overlays the screen the same way and opens instantly (the fzf process stays
 # alive between triggers instead of cold-starting a new panel each time).
 #
-# Usage:
-#   apps.sh             # launch (or toggle) the picker QAT
-#   apps.sh -r          # rebuild the app cache, then launch the picker
-#   apps.sh --pick      # internal: run the picker loop inside the QAT panel
-#   apps.sh -h          # this help
-#
 # Notes:
 #   - Reads freedesktop .desktop entries from the standard XDG dirs. Entries
 #     marked NoDisplay=true or Hidden=true are skipped (same as menus do).
-#   - Launches via gtk-launch so the app's own Exec/Actions handling applies,
-#     and detaches with setsid so it survives the panel hiding.
+#   - Launches the entry's Exec= line detached with setsid so the app survives
+#     the panel hiding.
 #   - Enter focuses an already-open window of the pick when one exists (matched
 #     by WM class via hyprctl), and only launches a fresh instance when nothing
 #     is running. Alt+Enter always launches a new instance. (Shift+Enter is not
 #     bindable in fzf — terminals send no distinct code for it.)
 
-fzf_colors_file="$HOME/dotfiles/colorscheme/active/active-fzf-colors.sh"
-qat_config="$HOME/dotfiles/kitty/quick-access-terminal-center.conf"
-kitty_bin="$(command -v kitty || echo /usr/bin/kitty)"
 apps_group="apps"
 cache_dir="$HOME/.cache/apps-fzf"
 cache_file="$cache_dir/apps.tsv"
@@ -47,7 +41,15 @@ app_dirs=(
 )
 
 usage() {
-  sed -n '8,21p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+  cat <<'EOF'
+Fuzzy-find installed applications by name and launch the pick.
+
+Usage:
+  apps.sh             # launch (or toggle) the picker QAT
+  apps.sh -r          # rebuild the app cache, then launch the picker
+  apps.sh --pick      # internal: run the picker loop inside the QAT panel
+  apps.sh -h          # this help
+EOF
   exit "${1:-0}"
 }
 
@@ -56,9 +58,10 @@ if ! command -v fzf >/dev/null 2>&1; then
   exit 1
 fi
 
-# Pull the long-only --pick flag out before getopts, which only understands
-# short options and would choke on "--". --pick means "run the picker loop
-# inside the QAT panel"; without it we are the launcher that spawns the panel.
+# Pull the long-only flags out before getopts, which only understands short
+# options and would choke on "--". --pick means "run the picker loop inside the
+# QAT panel"; without it we are the launcher that spawns the panel. --recent and
+# --all are the list providers fzf's reload binds call back into.
 pick_mode=false
 list_mode=""
 args=()
@@ -83,82 +86,6 @@ while getopts ":rh" opt; do
   esac
 done
 shift $((OPTIND - 1))
-
-source_fzf_colors() {
-  if [[ -f "$fzf_colors_file" ]]; then
-    # shellcheck disable=SC1090
-    source "$fzf_colors_file"
-  fi
-}
-
-# Force the keyboard to English so fzf search matches latin app names even when
-# the active layout is Russian. Index 0 is "us" in hyprland.conf's kb_layout
-# (us,ru). Best-effort: silently no-op outside Hyprland.
-switch_to_english() {
-  command -v hyprctl >/dev/null 2>&1 || return 0
-  hyprctl switchxkblayout all 0 >/dev/null 2>&1 || true
-}
-
-main_kitty_socket() {
-  local sock pid args
-
-  # Each QAT creates its own /tmp/kitty-* socket. Use the main kitty process so
-  # hide/show commands do not accidentally target another floating terminal.
-  for sock in /tmp/kitty-*; do
-    [[ -S "$sock" ]] || continue
-    pid="${sock##*-}"
-    args="$(ps -p "$pid" -o args= 2>/dev/null || true)"
-
-    # On Linux the launcher is usually the python entry point; match either the
-    # resolved kitty binary or a bare "kitty" command in the process arguments.
-    if [[ "$args" == "$kitty_bin"* || "$args" == kitty* || "$args" == *"/kitty "* ]]; then
-      printf '%s\n' "$sock"
-      return 0
-    fi
-  done
-
-  return 1
-}
-
-# Toggle (hide/show) the apps QAT panel. Because the panel is single-instance
-# per instance-group, sending the same launch command flips its visibility
-# instead of spawning a second panel — this is what makes re-triggers instant.
-toggle_apps_qat() {
-  local sock
-
-  sock="$(main_kitty_socket)" || return 0
-  "$kitty_bin" @ --to "unix:${sock}" \
-    action launch --type=background kitten quick-access-terminal \
-    --config "$qat_config" \
-    --instance-group "$apps_group" >/dev/null 2>&1 || true
-}
-
-launch_apps_qat() {
-  local sock pick_args
-
-  # Force English here, in the launcher, because this runs on EVERY hotkey press
-  # (kanata -> apps.sh). When the panel already exists, kitty merely toggles its
-  # visibility and the picker loop's own switch_to_english never re-runs — so the
-  # in-loop call only ever fixes the layout on the very first cold start. Doing it
-  # here guarantees the layout flips to us each time the panel is shown.
-  switch_to_english
-
-  # Forward -r so a "rebuild then pick" still rebuilds inside the panel, where
-  # the picker loop actually reads the cache.
-  pick_args=(--pick)
-  [[ "$refresh" == true ]] && pick_args+=(-r)
-
-  sock="$(main_kitty_socket)" || {
-    echo "No main kitty socket found."
-    exit 1
-  }
-
-  "$kitty_bin" @ --to "unix:${sock}" \
-    action launch --type=background kitten quick-access-terminal \
-    --config "$qat_config" \
-    --instance-group "$apps_group" \
-    /usr/bin/env bash "$script_path" "${pick_args[@]}"
-}
 
 # Build "Name<tab>desktop-file-id<tab>path<tab>wmclass" rows from all .desktop
 # entries, skipping NoDisplay/Hidden ones and de-duplicating by id so a user
@@ -331,23 +258,10 @@ launch_app() {
   fi
 }
 
-# Internal list providers invoked by fzf's reload binds. They just print rows
-# and exit; kept lightweight so reloading on every keystroke stays snappy. The
-# cache is guaranteed to exist by the time fzf runs (the --pick branch builds it
-# before starting fzf).
-if [[ "$list_mode" == "recent" ]]; then
-  recent_apps
-  exit 0
-fi
-if [[ "$list_mode" == "all" ]]; then
-  sorted_apps
-  exit 0
-fi
-
 # The picker loop. Runs inside the QAT panel (apps.sh --pick). Keeps the process
 # alive after every action so kitty only toggles the panel's visibility on the
 # next trigger instead of cold-starting it — same trick as bookmarks.sh.
-if [[ "$pick_mode" == true ]]; then
+run_picker() {
   # (Re)build the cache when missing or forced with -r.
   if [[ "$refresh" == true || ! -s "$cache_file" ]]; then
     build_cache
@@ -361,10 +275,11 @@ if [[ "$pick_mode" == true ]]; then
 
   # Empty query -> recently/most-used only; any typed query -> full catalog.
   # fzf re-runs these subcommands of ourself on start and on every keystroke.
+  local quoted_self list_reload
   printf -v quoted_self '%q' "$script_path"
   list_reload="if [[ -z {q} ]]; then $quoted_self --recent; else $quoted_self --all; fi"
 
-  fzf_args=(
+  local fzf_args=(
     --height=100%
     --reverse
     --delimiter=$'\t'
@@ -381,13 +296,14 @@ if [[ "$pick_mode" == true ]]; then
     fzf_args+=(--color="$linkarzu_fzf_colors")
   fi
 
+  local output key selected _name id _path wmclass
   while true; do
     switch_to_english
     # Esc makes fzf exit non-zero. Treat it as "hide and rearm" so the next
     # keypress shows an already-running picker instead of starting from cold.
     # The list itself comes from the reload binds, so feed fzf an empty stdin.
     if ! output=$(: | fzf "${fzf_args[@]}"); then
-      toggle_apps_qat
+      toggle_qat "$apps_group"
       continue
     fi
 
@@ -402,7 +318,7 @@ if [[ "$pick_mode" == true ]]; then
     if [[ -z "${id:-}" ]]; then
       echo "Invalid selection: $selected"
       read -r -p "Press enter to continue. "
-      toggle_apps_qat
+      toggle_qat "$apps_group"
       continue
     fi
 
@@ -412,7 +328,7 @@ if [[ "$pick_mode" == true ]]; then
     # raised window; bail out before record_launch so focusing does not inflate
     # the usage ranking the way an actual launch should.
     if [[ "$key" != "alt-enter" ]] && focus_app "$wmclass"; then
-      toggle_apps_qat
+      toggle_qat "$apps_group"
       continue
     fi
 
@@ -421,9 +337,32 @@ if [[ "$pick_mode" == true ]]; then
 
     # Hide the panel first, then launch the app detached (same reasoning as
     # bookmarks.sh's xdg-open: it must outlive this panel hiding).
-    toggle_apps_qat
+    toggle_qat "$apps_group"
     launch_app "$_path" "$id"
   done
+}
+
+# Internal list providers invoked by fzf's reload binds. They just print rows
+# and exit; kept lightweight so reloading on every keystroke stays snappy. The
+# cache is guaranteed to exist by the time fzf runs (run_picker builds it
+# before starting fzf).
+if [[ "$list_mode" == "recent" ]]; then
+  recent_apps
+  exit 0
+fi
+if [[ "$list_mode" == "all" ]]; then
+  sorted_apps
+  exit 0
 fi
 
-launch_apps_qat
+if [[ "$pick_mode" == true ]]; then
+  run_picker
+  exit 0
+fi
+
+# We are the launcher: show (or toggle) the picker panel. Forward -r so a
+# "rebuild then pick" still rebuilds inside the panel, where the picker loop
+# actually reads the cache.
+pick_args=(--pick)
+[[ "$refresh" == true ]] && pick_args+=(-r)
+launch_qat "$apps_group" /usr/bin/env bash "$script_path" "${pick_args[@]}"

@@ -2,7 +2,10 @@
 
 set -euo pipefail
 
-script_self="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+script_self="$script_dir/$(basename "${BASH_SOURCE[0]}")"
+# shellcheck source=lib.sh
+source "$script_dir/lib.sh"
 
 # Fuzzy-find YouTube videos by channel or playlist and open the pick in the
 # browser. Mirrors the look/feel of bookmarks.sh (same fzf colors).
@@ -24,7 +27,6 @@ script_self="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SO
 #     cookies (yt-dlp --cookies-from-browser), so it needs you signed into
 #     YouTube in that browser. No OAuth required.
 
-fzf_colors_file="$HOME/dotfiles/colorscheme/active/active-fzf-colors.sh"
 cache_dir="$HOME/.cache/youtube-fzf"
 thumb_dir="$cache_dir/thumbs"
 limit=40
@@ -346,6 +348,20 @@ if [[ "${1:-}" == "--ythistory" || "${1:-}" == "--ytwatchlater" ]]; then
   exit 0
 fi
 
+# Turn 4-column id/title/dur/live_status rows (a yt-dlp --print dump) into the
+# 3-column id/title/dur shape the channel picker consumes, baking a live badge
+# into the title column (the one fzf shows) so an active live / past live is
+# distinguishable — an active live has no duration, so without this it would
+# look like a plain video. Shared by --yttab and the main channel fetch.
+live_badge_awk='
+  BEGIN { FS=OFS="\t" }
+  {
+    title=$2; live=$4
+    if (live=="is_live")                            title=title "  \033[31m● LIVE\033[0m"
+    else if (live=="was_live" || live=="post_live") title=title "  \033[2m(was live)\033[0m"
+    print $1, title, $3
+  }'
+
 # Fetch ONE tab of a channel (videos or streams) and print the 3-column
 # id/title/dur rows the channel picker consumes, with a live badge baked into
 # the title. Caches per-tab so the Ctrl-S toggle is instant on re-toggle.
@@ -374,13 +390,7 @@ if [[ "${1:-}" == "--yttab" ]]; then
   rows="$(yt-dlp --flat-playlist --no-warnings --playlist-end "$limit" \
     --print "%(id)s${tab}%(title)s${tab}%(duration_string)s${tab}%(live_status)s" \
     "${channel_base}/${which_tab}" 2>/dev/null |
-    awk -F"$tab" -v OFS="$tab" '
-      {
-        title=$2; live=$4
-        if (live=="is_live")                            title=title "  \033[31m● LIVE\033[0m"
-        else if (live=="was_live" || live=="post_live") title=title "  \033[2m(was live)\033[0m"
-        print $1, title, $3
-      }')"
+    awk "$live_badge_awk")"
   [[ -n "$rows" ]] || exit 0
   if [[ -n "$cache_file" ]]; then
     printf '%s\n' "$rows" >"$cache_file"
@@ -390,7 +400,27 @@ if [[ "${1:-}" == "--yttab" ]]; then
 fi
 
 usage() {
-  sed -n '7,25p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+  cat <<'EOF'
+Fuzzy-find YouTube videos by channel or playlist and open the pick in the
+browser.
+
+Usage:
+  youtube.sh <channel>            # @handle, channel URL, or channel name
+                                  # (Ctrl-S in the list toggles videos/streams)
+  youtube.sh -s [query]           # live YouTube search (videos + channels); a
+                                  # video opens, a channel drills into its videos
+  youtube.sh -p <playlist>        # playlist URL or ID (public only)
+  youtube.sh -H                   # your YouTube watch history (logged-in)
+  youtube.sh -r <channel>         # refresh cache for that channel/playlist
+  youtube.sh -n <count> <channel> # limit how many recent videos to list
+
+Notes:
+  - Uses yt-dlp. For channels/playlists/search it sees PUBLIC data only:
+    channel uploads and public / unlisted playlists.
+  - Watch history (-H) reads your logged-in session from the browser's
+    cookies (yt-dlp --cookies-from-browser), so it needs you signed into
+    YouTube in that browser. No OAuth required.
+EOF
   exit "${1:-0}"
 }
 
@@ -423,20 +453,7 @@ shift $((OPTIND - 1))
 
 tab=$'\t'
 
-source_fzf_colors() {
-  if [[ -f "$fzf_colors_file" ]]; then
-    # shellcheck disable=SC1090
-    source "$fzf_colors_file"
-  fi
-}
-
-# Force the keyboard to English so the fzf query types as latin even when the
-# active layout is Russian. Index 0 is "us" in hyprland.conf's kb_layout (us,ru).
-# Best-effort: silently no-op outside Hyprland.
-switch_to_english() {
-  command -v hyprctl >/dev/null 2>&1 || return 0
-  hyprctl switchxkblayout all 0 >/dev/null 2>&1 || true
-}
+# (source_fzf_colors and switch_to_english come from lib.sh)
 
 # Open a video in the browser on workspace 4, then focus it.
 #
@@ -467,16 +484,9 @@ open_video() {
   fi
 
   setsid -f bash -c '
-    url="$1"
-    firefox_workspace="$2"
-
-    firefox_window_addresses() {
-      hyprctl clients -j 2>/dev/null | jq -r ".[] | select(.class == \"firefox\") | .address" 2>/dev/null
-    }
-    firefox_window_off_youtube() {
-      hyprctl clients -j 2>/dev/null | jq -r --argjson yt "$firefox_workspace" \
-        ".[] | select(.class == \"firefox\" and .workspace.id != \$yt) | .address" 2>/dev/null | head -n1
-    }
+    source "$1" # lib.sh: firefox window helpers
+    url="$2"
+    ws="$3"
 
     # The QAT panel hides asynchronously; settle briefly so Hyprland does not
     # re-grab focus after us.
@@ -484,34 +494,15 @@ open_video() {
 
     # Firefox is up and has a window off ws4 -> open the video as its OWN new
     # window on ws4 so the existing Firefox windows stay where they are.
-    if [[ -n "$(firefox_window_off_youtube)" ]]; then
-      before="$(firefox_window_addresses)"
-      firefox --new-window "$url" >/dev/null 2>&1
-      # Wait for a window address that was not present before the launch.
-      for i in 1 2 3 4 5 6 7 8 9 10; do
-        after="$(firefox_window_addresses)"
-        new_addr="$(comm -13 <(printf "%s\n" "$before" | sort) <(printf "%s\n" "$after" | sort) | head -n1)"
-        [[ -n "$new_addr" ]] && break
-        sleep 0.25
-      done
-      if [[ -n "${new_addr:-}" ]]; then
-        hyprctl dispatch movetoworkspace "${firefox_workspace},address:$new_addr" >/dev/null 2>&1 || true
-        hyprctl dispatch focuswindow "address:$new_addr" >/dev/null 2>&1 || true
-      fi
+    if [[ -n "$(firefox_window_off_workspace "$ws")" ]]; then
+      open_in_new_firefox_window "$url" "$ws"
       exit 0
     fi
 
     # Firefox only on ws4, or cold start: open a tab and pull Firefox to ws4.
     xdg-open "$url" >/dev/null 2>&1
-    for i in 1 2 3 4 5 6 7 8 9 10; do
-      if hyprctl clients -j 2>/dev/null | grep -q "\"class\": *\"firefox\""; then
-        hyprctl dispatch movetoworkspace "${firefox_workspace},class:firefox" >/dev/null 2>&1 || true
-        hyprctl dispatch focuswindow class:firefox >/dev/null 2>&1 || true
-        exit 0
-      fi
-      sleep 0.25
-    done
-  ' _ "$url" "$firefox_workspace" >/dev/null 2>&1
+    move_firefox_when_up "$ws"
+  ' _ "$script_dir/lib.sh" "$url" "$firefox_workspace" >/dev/null 2>&1
   return 0
 }
 

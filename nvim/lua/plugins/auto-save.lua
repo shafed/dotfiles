@@ -18,7 +18,6 @@ vim.api.nvim_create_autocmd("ModeChanged", {
   pattern = { "*:[vV\x16]*" },
   callback = function()
     vim.api.nvim_exec_autocmds("User", { pattern = "VisualEnter" })
-    -- print("VisualEnter")
   end,
 })
 
@@ -27,7 +26,6 @@ vim.api.nvim_create_autocmd("ModeChanged", {
   pattern = { "[vV\x16]*:*" },
   callback = function()
     vim.api.nvim_exec_autocmds("User", { pattern = "VisualLeave" })
-    -- print("VisualLeave")
   end,
 })
 
@@ -49,90 +47,6 @@ vim.api.nvim_create_autocmd("User", {
   end,
 })
 
--- Disable auto-save when entering a snacks_input buffer
--- vim.api.nvim_create_autocmd("FileType", {
--- 	pattern = "snacks_input",
--- 	group = group,
--- 	callback = function()
--- 		vim.api.nvim_exec_autocmds("User", { pattern = "SnacksInputEnter" })
--- 		-- print("snacks input enter")
--- 	end,
--- })
-
--- Re-enable auto-save when leaving that buffer
--- vim.api.nvim_create_autocmd("BufLeave", {
--- 	group = group,
--- 	pattern = "*", -- check all buffers
--- 	callback = function(opts)
--- 		local ft = vim.bo[opts.buf].filetype
--- 		if ft == "snacks_input" then
--- 			vim.api.nvim_exec_autocmds("User", { pattern = "SnacksInputLeave" })
--- 			-- print("snacks input leave")
--- 		end
--- 	end,
--- })
-
--- Disable auto-save when entering a snacks_input buffer
--- vim.api.nvim_create_autocmd("FileType", {
--- 	pattern = "snacks_picker_input",
--- 	group = group,
--- 	callback = function()
--- 		vim.api.nvim_exec_autocmds("User", { pattern = "SnacksPickerInputEnter" })
--- 		-- print("snacks picker input enter")
--- 	end,
--- })
-
--- Re-enable auto-save when leaving that buffer
--- vim.api.nvim_create_autocmd("BufLeave", {
--- 	group = group,
--- 	pattern = "*", -- check all buffers
--- 	callback = function(opts)
--- 		local ft = vim.bo[opts.buf].filetype
--- 		if ft == "snacks_picker_input" then
--- 			vim.api.nvim_exec_autocmds("User", { pattern = "SnacksPickerInputLeave" })
--- 			-- print("snacks picker input leave")
--- 		end
--- 	end,
--- })
-
--- -- I just needed to see all of the events happening when troubleshooting the
--- -- keymap to paste images in the assets directory
--- local debug_group = vim.api.nvim_create_augroup("debug_events", { clear = true })
---
--- local debug_events = {
---   "BufEnter",
---   "BufLeave",
---   "FileType",
---   "FocusLost",
---   "FocusGained",
---   "InsertEnter",
---   "InsertLeave",
---   "ModeChanged",
---   "QuitPre",
---   "TextChanged",
---   "WinEnter",
---   "WinLeave",
---   -- ... add any you suspect
--- }
---
--- for _, evt in ipairs(debug_events) do
---   vim.api.nvim_create_autocmd(evt, {
---     group = debug_group,
---     pattern = "*",
---     callback = function(opts)
---       -- Just print or log it somewhere
---       local msg = string.format(
---         "DEBUG EVENT: %s -> Buf=%d FileType=%s",
---         evt,
---         opts.buf,
---         vim.api.nvim_get_option_value("filetype", { buf = opts.buf })
---       )
---       print(msg)
---       -- or write to a file if needed
---     end,
---   })
--- end
-
 return {
   {
     "okuuva/auto-save.nvim",
@@ -142,11 +56,6 @@ return {
     opts = {
       enabled = true, -- start auto-save when the plugin is loaded (i.e. when your package manager loads it)
       trigger_events = { -- See :h events
-        -- -- vim events that trigger an immediate save
-        -- -- I'm disabling this, as it's autosaving when I leave the buffer and
-        -- -- that's autoformatting stuff if on insert mode and following a tutorial
-        -- -- Re-enabling this to only save if NOT in insert mode in the condition below
-        -- immediate_save = { nil },
         immediate_save = { "BufLeave", "FocusLost", "QuitPre", "VimSuspend" }, -- vim events that trigger an immediate save
         -- vim events that trigger a deferred save (saves after `debounce_delay`)
         defer_save = {
@@ -154,15 +63,11 @@ return {
           "TextChanged",
           { "User", pattern = "VisualLeave" },
           { "User", pattern = "FlashJumpEnd" },
-          --	{ "User", pattern = "SnacksInputLeave" },
-          --	{ "User", pattern = "SnacksPickerInputLeave" },
         },
         cancel_deferred_save = {
           "InsertEnter",
           { "User", pattern = "VisualEnter" },
           { "User", pattern = "FlashJumpStart" },
-          --	{ "User", pattern = "SnacksInputEnter" },
-          --	{ "User", pattern = "SnacksPickerInputEnter" },
         },
       },
       -- function that takes the buffer handle and determines whether to save the current buffer or not

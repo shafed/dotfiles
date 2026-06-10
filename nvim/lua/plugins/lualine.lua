@@ -72,7 +72,7 @@ return {
         {
           require("noice").api.status.command.get,
           cond = require("noice").api.status.command.has,
-          color = { fg = "ff9e64" },
+          color = { fg = "#ff9e64" },
         },
       },
       lualine_z = { "location" },

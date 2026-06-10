@@ -110,7 +110,6 @@ return {
             dictionary_directories = { vim.fn.expand("~/dotfiles/dictionaries") },
             dictionary_files = {
               vim.fn.expand("~/dotfiles/nvim/spell/en.utf-8.add"),
-              vim.fn.expand("~/dotfiles/nvim/spell/ru.utf-8.add"),
             },
           },
         },

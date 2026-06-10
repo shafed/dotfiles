@@ -3,7 +3,10 @@ vim.api.nvim_create_autocmd("VimEnter", {
   once = true,
   callback = function()
     local folder = "periodic/" .. os.date("%Y/%m-%b")
-    local config = "/home/shafed/obsidian/.moxide.toml"
+    local config = vim.fn.expand("~/obsidian/.moxide.toml")
+    if not vim.uv.fs_stat(config) then
+      return
+    end
     vim.fn.system(string.format("sed -i 's|^daily_notes_folder = .*|daily_notes_folder = \"%s\"|' %s", folder, config))
   end,
 })

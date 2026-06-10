@@ -117,19 +117,6 @@ return {
       end,
       desc = "Find Files / Obsidian notes (name + aliases)",
     },
-    -- LSP References
-    {
-      "gr",
-      function()
-        Snacks.picker.lsp_references({
-          on_show = function()
-            vim.cmd.stopinsert()
-          end,
-          layout = "vertical",
-        })
-      end,
-      desc = "References",
-    },
     -- Navigate my buffers
     {
       "<M-h>",

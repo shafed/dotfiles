@@ -1,3 +1,8 @@
+local folding = require("utils.folding")
+local tasks = require("utils.tasks")
+local gcal = require("utils.gcal")
+local obsidian = require("utils.obsidian")
+
 vim.keymap.set("x", "p", '"_dP') -- Don't copy visual in clipboard
 
 -- Toggle a tmux pane (zsh) on the right with the current file's directory
@@ -9,15 +14,15 @@ end, { desc = "[P]Terminal on tmux pane" })
 vim.keymap.set({ "n", "v" }, "<leader>y", '"+y')
 vim.keymap.set("n", "<leader>Y", '"+Y')
 
--- Delete and copy to clipboard
-vim.keymap.set({ "n", "v" }, "<leader>yd", '"+yyd')
-
 -- Paste from clipboard
 vim.keymap.set({ "n", "v" }, "<leader>p", '"+p')
 vim.keymap.set({ "n", "v" }, "<leader>P", '"+P')
 
 -- Delete to black hole
 vim.keymap.set({ "n", "v" }, "<leader>d", '"_d')
+
+-- Fix last spelling mistake without leaving insert mode
+vim.keymap.set("i", "<C-l>", "<c-g>u<Esc>[s1z=`]a<c-g>u", { silent = true })
 
 -- Auto-yank visual selection to the system clipboard on mouse release
 -- NOTE: This requires Neovim to receive mouse events (so `mouse` must include visual mode)
@@ -31,58 +36,45 @@ vim.keymap.set(
   { silent = true, desc = "[P]Mouse select (double) -> yank to system clipboard" }
 )
 
--- Paste unformatted text from Neovim
-if vim.g.simpler_scrollback ~= "deeznuts" then
-  vim.keymap.set("v", "y", function()
-    -- Check if the current buffer's filetype is markdown
-    if vim.bo.filetype ~= "markdown" then
-      -- Not a Markdown file, copy the selection to the system clipboard
-      vim.cmd('normal! "+y')
-      -- Optionally, notify the user
-      vim.notify("Yanked to system clipboard", vim.log.levels.INFO)
-      return
-    end
-    -- Yank the selected text into register 'z' without affecting the unnamed register
-    vim.cmd('silent! normal! "zy')
-    -- Get the yanked text from register 'z'
-    local text = vim.fn.getreg("z")
-    -- Path to a temporary file (uses a unique temporary file name)
-    local temp_file = vim.fn.tempname() .. ".md"
-    -- Write the selected text to the temporary file
-    local file = io.open(temp_file, "w")
-    if file == nil then
-      vim.notify("Error: Cannot write to temporary file.", vim.log.levels.ERROR)
-      return
-    end
-    file:write(text)
-    file:close()
-    -- Run Prettier on the temporary file to format it
-    -- Adding > /dev/null 2>&1' because if the command produces output, I see that
-    -- in the neovim buffer
-    local cmd = 'prettier --prose-wrap never --write "' .. temp_file .. '" > /dev/null 2>&1'
-    local result = os.execute(cmd)
-    if result ~= 0 then
-      vim.notify("Error: Prettier formatting failed.", vim.log.levels.ERROR)
-      os.remove(temp_file)
-      return
-    end
-    -- Read the formatted text from the temporary file
-    file = io.open(temp_file, "r")
-    if file == nil then
-      vim.notify("Error: Cannot read from temporary file.", vim.log.levels.ERROR)
-      os.remove(temp_file)
-      return
-    end
-    local formatted_text = file:read("*all")
-    file:close()
-    -- Copy the formatted text to the system clipboard
-    vim.fn.setreg("+", formatted_text)
-    -- Delete the temporary file
+-- Yank to system clipboard; in markdown run the selection through Prettier
+-- (--prose-wrap never) first so wrapped lines are unwrapped on paste
+vim.keymap.set("v", "y", function()
+  if vim.bo.filetype ~= "markdown" then
+    vim.cmd('normal! "+y')
+    vim.notify("Yanked to system clipboard", vim.log.levels.INFO)
+    return
+  end
+  -- Yank the selected text into register 'z' without affecting the unnamed register
+  vim.cmd('silent! normal! "zy')
+  local text = vim.fn.getreg("z")
+  local temp_file = vim.fn.tempname() .. ".md"
+  local file = io.open(temp_file, "w")
+  if file == nil then
+    vim.notify("Error: Cannot write to temporary file.", vim.log.levels.ERROR)
+    return
+  end
+  file:write(text)
+  file:close()
+  -- Redirect prettier's output, otherwise it shows up in the buffer
+  local cmd = 'prettier --prose-wrap never --write "' .. temp_file .. '" > /dev/null 2>&1'
+  local result = os.execute(cmd)
+  if result ~= 0 then
+    vim.notify("Error: Prettier formatting failed.", vim.log.levels.ERROR)
     os.remove(temp_file)
-    -- Notify the user
-    vim.notify("yanked markdown with --prose-wrap never", vim.log.levels.INFO)
-  end, { desc = "[P]Copy selection formatted with Prettier", noremap = true, silent = true })
-end
+    return
+  end
+  file = io.open(temp_file, "r")
+  if file == nil then
+    vim.notify("Error: Cannot read from temporary file.", vim.log.levels.ERROR)
+    os.remove(temp_file)
+    return
+  end
+  local formatted_text = file:read("*all")
+  file:close()
+  vim.fn.setreg("+", formatted_text)
+  os.remove(temp_file)
+  vim.notify("yanked markdown with --prose-wrap never", vim.log.levels.INFO)
+end, { desc = "[P]Copy selection formatted with Prettier", noremap = true, silent = true })
 
 local wk = require("which-key")
 wk.add({
@@ -111,211 +103,40 @@ vim.keymap.set({ "n", "v", "i" }, "<M-esc>", "<cmd>q!<cr>", { desc = "[P]Quit Al
 -------------------------------------------------------------------------------
 --                           Folding section
 -------------------------------------------------------------------------------
+-- Implementation lives in lua/utils/folding.lua
 
--- Checks each line to see if it matches a markdown heading (#, ##, etc.):
--- It’s called implicitly by Neovim’s folding engine by vim.opt_local.foldexpr
-function _G.markdown_foldexpr()
-  local lnum = vim.v.lnum
-  local line = vim.fn.getline(lnum)
-  local heading = line:match("^(#+)%s")
-  if heading then
-    local level = #heading
-    if level == 1 then
-      -- Special handling for H1
-      if lnum == 1 then
-        return ">1"
-      else
-        local frontmatter_end = vim.b.frontmatter_end
-        if frontmatter_end and (lnum == frontmatter_end + 1) then
-          return ">1"
-        end
-      end
-    elseif level >= 2 and level <= 6 then
-      -- Regular handling for H2-H6
-      return ">" .. level
-    end
-  end
-  return "="
-end
-
-function _G.typst_foldexpr()
-  local lnum = vim.v.lnum
-  local line = vim.fn.getline(lnum)
-  local heading = line:match("^(=+)%s")
-  if heading then
-    local level = #heading
-    if level >= 1 and level <= 6 then
-      return ">" .. level
-    end
-  end
-  return "="
-end
-
-local function set_markdown_folding()
-  vim.opt_local.foldmethod = "expr"
-  vim.opt_local.foldexpr = "v:lua.markdown_foldexpr()"
-  vim.opt_local.foldlevel = 99
-
-  -- Detect frontmatter closing line
-  local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
-  local found_first = false
-  local frontmatter_end = nil
-  for i, line in ipairs(lines) do
-    if line == "---" then
-      if not found_first then
-        found_first = true
-      else
-        frontmatter_end = i
-        break
-      end
-    end
-  end
-  vim.b.frontmatter_end = frontmatter_end
-end
-
-local function set_typst_folding()
-  vim.opt_local.foldmethod = "expr"
-  vim.opt_local.foldexpr = "v:lua.typst_foldexpr()"
-  vim.opt_local.foldlevel = 99
-end
-
--- Use autocommand to apply only to markdown files
 vim.api.nvim_create_autocmd("FileType", {
   pattern = "markdown",
-  callback = set_markdown_folding,
+  callback = folding.set_markdown_folding,
 })
 
 vim.api.nvim_create_autocmd("FileType", {
   pattern = "typst",
-  callback = set_typst_folding,
+  callback = folding.set_typst_folding,
 })
 
--- Function to fold all headings of a specific level
-local function fold_headings_of_level(level)
-  -- Move to the top of the file without adding to jumplist
-  vim.cmd("keepjumps normal! gg")
-  -- Get the total number of lines
-  local total_lines = vim.fn.line("$")
-  for line = 1, total_lines do
-    -- Get the content of the current line
-    local line_content = vim.fn.getline(line)
-    if vim.bo.filetype == "typst" then
-      if line_content:match("^" .. string.rep("=", level) .. "%s") then
-        -- Move the cursor to the current line without adding to jumplist
-        vim.cmd(string.format("keepjumps call cursor(%d, 1)", line))
-        -- Check if the current line has a fold level > 0
-        local current_foldlevel = vim.fn.foldlevel(line)
-        if current_foldlevel > 0 then
-          -- Fold the heading if it matches the level
-          if vim.fn.foldclosed(line) == -1 then
-            vim.cmd("normal! za")
-          end
-          -- else
-          --   vim.notify("No fold at line " .. line, vim.log.levels.WARN)
-        end
-      end
-    else
-      -- "^" -> Ensures the match is at the start of the line
-      -- string.rep("#", level) -> Creates a string with 'level' number of "#" characters
-      -- "%s" -> Matches any whitespace character after the "#" characters
-      -- So this will match `## `, `### `, `#### ` for example, which are markdown headings
-      if line_content:match("^" .. string.rep("#", level) .. "%s") then
-        -- Move the cursor to the current line without adding to jumplist
-        vim.cmd(string.format("keepjumps call cursor(%d, 1)", line))
-        -- Check if the current line has a fold level > 0
-        local current_foldlevel = vim.fn.foldlevel(line)
-        if current_foldlevel > 0 then
-          -- Fold the heading if it matches the level
-          if vim.fn.foldclosed(line) == -1 then
-            vim.cmd("normal! za")
-          end
-          -- else
-          --   vim.notify("No fold at line " .. line, vim.log.levels.WARN)
-        end
-      end
+-- HACK: Fold markdown headings in Neovim with a keymap
+-- https://youtu.be/EYczZLNEnIY
+--
+-- zj folds headings level 1+, zk level 2+ (I know, it reads like "madafaka"
+-- but "k" for me means "2"), zl level 3+, z; level 4+ lamw25wmal
+for key, level in pairs({ j = 1, k = 2, l = 3, [";"] = 4 }) do
+  vim.keymap.set("n", "z" .. key, function()
+    -- "Update" saves only if the buffer has been modified since the last save
+    vim.cmd("silent update")
+    -- Reloads the file to refresh folds, otherwise you have to re-open neovim
+    vim.cmd("edit!")
+    -- Unfold everything first or I had issues
+    vim.cmd("normal! zR")
+    local levels = {}
+    for l = 6, level, -1 do
+      table.insert(levels, l)
     end
-  end
+    folding.fold_headings(levels)
+    vim.cmd("normal! zz") -- center the cursor line on screen
+  end, { desc = "[P]Fold all headings level " .. level .. " or above" })
 end
 
-local function fold_markdown_headings(levels)
-  -- I save the view to know where to jump back after folding
-  local saved_view = vim.fn.winsaveview()
-  for _, level in ipairs(levels) do
-    fold_headings_of_level(level)
-  end
-  vim.cmd("nohlsearch")
-  -- Restore the view to jump to where I was
-  vim.fn.winrestview(saved_view)
-end
-
--- HACK: Fold markdown headings in Neovim with a keymap
--- https://youtu.be/EYczZLNEnIY
---
--- Keymap for folding markdown headings of level 1 or above
-vim.keymap.set("n", "zj", function()
-  -- "Update" saves only if the buffer has been modified since the last save
-  vim.cmd("silent update")
-  -- vim.keymap.set("n", "<leader>mfj", function()
-  -- Reloads the file to refresh folds, otheriise you have to re-open neovim
-  vim.cmd("edit!")
-  -- Unfold everything first or I had issues
-  vim.cmd("normal! zR")
-  fold_markdown_headings({ 6, 5, 4, 3, 2, 1 })
-  vim.cmd("normal! zz") -- center the cursor line on screen
-end, { desc = "[P]Fold all headings level 1 or above" })
-
--- HACK: Fold markdown headings in Neovim with a keymap
--- https://youtu.be/EYczZLNEnIY
---
--- Keymap for folding markdown headings of level 2 or above
--- I know, it reads like "madafaka" but "k" for me means "2"
-vim.keymap.set("n", "zk", function()
-  -- "Update" saves only if the buffer has been modified since the last save
-  vim.cmd("silent update")
-  -- vim.keymap.set("n", "<leader>mfk", function()
-  -- Reloads the file to refresh folds, otherwise you have to re-open neovim
-  vim.cmd("edit!")
-  -- Unfold everything first or I had issues
-  vim.cmd("normal! zR")
-  fold_markdown_headings({ 6, 5, 4, 3, 2 })
-  vim.cmd("normal! zz") -- center the cursor line on screen
-end, { desc = "[P]Fold all headings level 2 or above" })
-
--- HACK: Fold markdown headings in Neovim with a keymap
--- https://youtu.be/EYczZLNEnIY
---
--- Keymap for folding markdown headings of level 3 or above
-vim.keymap.set("n", "zl", function()
-  -- "Update" saves only if the buffer has been modified since the last save
-  vim.cmd("silent update")
-  -- vim.keymap.set("n", "<leader>mfl", function()
-  -- Reloads the file to refresh folds, otherwise you have to re-open neovim
-  vim.cmd("edit!")
-  -- Unfold everything first or I had issues
-  vim.cmd("normal! zR")
-  fold_markdown_headings({ 6, 5, 4, 3 })
-  vim.cmd("normal! zz") -- center the cursor line on screen
-end, { desc = "[P]Fold all headings level 3 or above" })
-
--- HACK: Fold markdown headings in Neovim with a keymap
--- https://youtu.be/EYczZLNEnIY
---
--- Keymap for folding markdown headings of level 4 or above
-vim.keymap.set("n", "z;", function()
-  -- "Update" saves only if the buffer has been modified since the last save
-  vim.cmd("silent update")
-  -- vim.keymap.set("n", "<leader>mf;", function()
-  -- Reloads the file to refresh folds, otherwise you have to re-open neovim
-  vim.cmd("edit!")
-  -- Unfold everything first or I had issues
-  vim.cmd("normal! zR")
-  fold_markdown_headings({ 6, 5, 4 })
-  vim.cmd("normal! zz") -- center the cursor line on screen
-end, { desc = "[P]Fold all headings level 4 or above" })
-
--- HACK: Fold markdown headings in Neovim with a keymap
--- https://youtu.be/EYczZLNEnIY
---
 -- Use <CR> to fold when in normal mode
 -- To see help about folds use `:help fold`
 vim.keymap.set("n", "<CR>", function()
@@ -331,33 +152,22 @@ vim.keymap.set("n", "<CR>", function()
   end
 end, { desc = "[P]Toggle fold" })
 
--- HACK: Fold markdown headings in Neovim with a keymap
--- https://youtu.be/EYczZLNEnIY
---
--- Keymap for unfolding markdown headings of level 2 or above
--- Changed all the markdown folding and unfolding keymaps from <leader>mfj to
--- zj, zk, zl, z; and zu respectively lamw25wmal
+-- Keymap for unfolding all headings
 vim.keymap.set("n", "zu", function()
   -- "Update" saves only if the buffer has been modified since the last save
   vim.cmd("silent update")
-  -- vim.keymap.set("n", "<leader>mfu", function()
   -- Reloads the file to reflect the changes
   vim.cmd("edit!")
   vim.cmd("normal! zR") -- Unfold all headings
   vim.cmd("normal! zz") -- center the cursor line on screen
 end, { desc = "[P]Unfold all headings level 2 or above" })
 
--- HACK: Fold markdown headings in Neovim with a keymap
--- https://youtu.be/EYczZLNEnIY
---
--- gk jummps to the markdown heading above and then folds it
+-- gk jumps to the markdown heading above and then folds it
 -- zi by default toggles folding, but I don't need it lamw25wmal
 vim.keymap.set("n", "zi", function()
   -- "Update" saves only if the buffer has been modified since the last save
   vim.cmd("silent update")
-  -- Difference between normal and normal!
-  -- - `normal` executes the command and respects any mappings that might be defined.
-  -- - `normal!` executes the command in a "raw" mode, ignoring any mappings.
+  -- `normal` (not `normal!`) so the gk mapping below is respected
   vim.cmd("normal gk")
   -- This is to fold the line under the cursor
   vim.cmd("normal! za")
@@ -365,7 +175,7 @@ vim.keymap.set("n", "zi", function()
 end, { desc = "[P]Fold the heading cursor currently on" })
 
 -- Creates a markdown heading based on the level specified
-local function insert_heading_and_date(level)
+local function insert_heading(level)
   local heading = string.rep("#", level) .. " " -- Generate heading based on the level
   local row, _ = unpack(vim.api.nvim_win_get_cursor(0)) -- Get the current row number
   -- Insert heading
@@ -375,271 +185,36 @@ local function insert_heading_and_date(level)
   vim.cmd("startinsert!")
 end
 
--- These create the the markdown heading
--- H1
-vim.keymap.set("n", "<leader>jj", function()
-  local date_line = insert_heading_and_date(1)
-end, { desc = "[P]H1 heading and date" })
-
--- H2
-vim.keymap.set("n", "<leader>kk", function()
-  local date_line = insert_heading_and_date(2)
-end, { desc = "[P]H2 heading and date" })
-
--- H3
-vim.keymap.set("n", "<leader>ll", function()
-  local date_line = insert_heading_and_date(3)
-end, { desc = "[P]H3 heading and date" })
-
--- H4
-vim.keymap.set("n", "<leader>;;", function()
-  local date_line = insert_heading_and_date(4)
-end, { desc = "[P]H4 heading and date" })
-
--- H5
-vim.keymap.set("n", "<leader>uu", function()
-  local date_line = insert_heading_and_date(5)
-end, { desc = "[P]H5 heading and date" })
-
--- H6
-vim.keymap.set("n", "<leader>ii", function()
-  local date_line = insert_heading_and_date(6)
-end, { desc = "[P]H6 heading and date" })
+-- <leader>jj..ii create markdown headings H1..H6
+for key, level in pairs({ jj = 1, kk = 2, ll = 3, [";;"] = 4, uu = 5, ii = 6 }) do
+  vim.keymap.set("n", "<leader>" .. key, function()
+    insert_heading(level)
+  end, { desc = "[P]H" .. level .. " heading and date" })
+end
 
 -------------------------------------------------------------------------------
 --                         End Folding section
 -------------------------------------------------------------------------------
 
--- Jump between md headings
+-- Jump between md/typst headings: searches for lines starting with `##`
+-- (or `==` in typst) without polluting the search highlight
 vim.keymap.set({ "n", "v" }, "gk", function()
-  -- `?` - Start a search backwards from the current cursor position.
-  -- `^` - Match the beginning of a line.
-  -- `##` - Match 2 ## symbols
-  -- `\\+` - Match one or more occurrences of prev element (#)
-  -- `\\s` - Match exactly one whitespace character following the hashes
-  -- `.*` - Match any characters (except newline) following the space
-  -- vim.cmd("silent! ?^##\\+\\s.*$")
-  local ft = vim.bo.filetype
-  if ft == "typst" then
-    vim.cmd("silent! ?^==\\+\\s.*$")
-    -- Clear the search highlight
-    vim.cmd("nohlsearch")
-    return
-  end -- `$` - Match extends to end of line
-  vim.cmd("silent! ?^##\\+\\s.*$")
-  -- Clear the search highlight
+  local pattern = vim.bo.filetype == "typst" and "?^==\\+\\s.*$" or "?^##\\+\\s.*$"
+  vim.cmd("silent! " .. pattern)
   vim.cmd("nohlsearch")
 end, { desc = "[P]Go to previous markdown header" })
 
 vim.keymap.set({ "n", "v" }, "gj", function()
-  -- `/` - Start a search forwards from the current cursor position.
-  -- `^` - Match the beginning of a line.
-  -- `##` - Match 2 ## symbols
-  -- `\\+` - Match one or more occurrences of prev element (#)
-  -- `\\s` - Match exactly one whitespace character following the hashes
-  -- `.*` - Match any characters (except newline) following the space
-  -- `$` - Match extends to end of line
-  local ft = vim.bo.filetype
-  if ft == "typst" then
-    vim.cmd("silent! /^==\\+\\s.*$")
-    -- Clear the search highlight
-    vim.cmd("nohlsearch")
-    return
-  end
-  vim.cmd("silent! /^##\\+\\s.*$")
-  -- Clear the search highlight
+  local pattern = vim.bo.filetype == "typst" and "/^==\\+\\s.*$" or "/^##\\+\\s.*$"
+  vim.cmd("silent! " .. pattern)
   vim.cmd("nohlsearch")
 end, { desc = "[P]Go to next markdown header" })
 
--- Copy workout data from last markdown table to clipboard lamw25wmal
-vim.keymap.set("n", "<leader>lc", function()
-  -- Get all lines from current buffer
-  local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+-- Workout log helpers (lua/utils/obsidian.lua)
+vim.keymap.set("n", "<leader>lc", obsidian.copy_workout_table, { desc = "[P]Log Copy: workout table to clipboard" })
+vim.keymap.set("n", "<leader>lp", obsidian.save_training_note, { desc = "[P]Log Paste: save training note" })
 
-  -- Find all tables in the buffer
-  local tables = {}
-  local current_table = {}
-  local in_table = false
-
-  for _, line in ipairs(lines) do
-    if line:match("^|") then
-      in_table = true
-      table.insert(current_table, line)
-    else
-      if in_table and #current_table > 0 then
-        table.insert(tables, current_table)
-        current_table = {}
-        in_table = false
-      end
-    end
-  end
-
-  if #current_table > 0 then
-    table.insert(tables, current_table)
-  end
-
-  if #tables == 0 then
-    vim.notify("No tables found!", vim.log.levels.WARN)
-    return
-  end
-
-  local last_table = tables[#tables]
-  local exercises = {}
-  local data = {}
-
-  -- Parse table rows (skip header and separator, start from row 3)
-  for i = 3, #last_table do
-    local line = last_table[i]
-    local cells = {}
-
-    for cell in line:gmatch("[^|]+") do
-      table.insert(cells, vim.trim(cell))
-    end
-
-    if #cells >= 4 then
-      local exercise = cells[2]
-      local reps = cells[3]
-      local weight = cells[4]
-
-      local processed_reps = reps
-      local match = reps:match("^%d+X([%d%-,]+)$")
-      if match and match:find("-") then
-        processed_reps = match
-      end
-
-      table.insert(exercises, exercise)
-      table.insert(data, { processed_reps, weight, "kg" })
-    end
-  end
-
-  if #exercises == 0 then
-    vim.notify("No data to copy!", vim.log.levels.WARN)
-    return
-  end
-
-  -- Line 1: exercise names separated by empty cells
-  local line1_parts = {}
-  for i, ex in ipairs(exercises) do
-    table.insert(line1_parts, ex)
-    if i < #exercises then
-      table.insert(line1_parts, "")
-      table.insert(line1_parts, "")
-    end
-  end
-
-  -- Line 2: column headers (Reps/Weight) for each exercise
-  local line2_parts = {}
-  for i = 1, #exercises do
-    table.insert(line2_parts, "Reps")
-    table.insert(line2_parts, "Weight")
-    if i < #exercises then
-      table.insert(line2_parts, "")
-    end
-  end
-
-  -- Line 3: actual data (reps/weight/kg) for each exercise
-  local line3_parts = {}
-  for _, d in ipairs(data) do
-    table.insert(line3_parts, d[1])
-    table.insert(line3_parts, d[2])
-    table.insert(line3_parts, d[3])
-  end
-
-  local line1 = table.concat(line1_parts, "\t")
-  local line2 = table.concat(line2_parts, "\t")
-  local line3 = table.concat(line3_parts, "\t")
-  local output = line1 .. "\n" .. line2 .. "\n" .. line3
-
-  vim.fn.setreg("+", output)
-  vim.notify("Copied: " .. #exercises .. " exercises", vim.log.levels.INFO)
-end, { desc = "[P]Log Copy: workout table to clipboard" })
-
--- Save training note to training/
-vim.keymap.set("n", "<leader>lp", function()
-  local training_dir = vim.fn.expand("~/obsidian/periodic/training/")
-
-  --------------------------------------------------------------------------
-  -- Extract H1 from the current file to use as training note filename
-  --------------------------------------------------------------------------
-  local h1_text = nil
-  for _, line in ipairs(vim.api.nvim_buf_get_lines(0, 0, 1, false)) do
-    local match = line:match("^#%s+(.+)$")
-    if match then
-      h1_text = vim.trim(match)
-      break
-    end
-  end
-
-  if not h1_text then
-    vim.notify("H1 heading not found in current file!", vim.log.levels.WARN)
-    return
-  end
-
-  --------------------------------------------------------------------------
-  -- Write current buffer contents to training/YYYY-MM-DD-<h1_text>.md
-  -- h1_text is the filename without extension, e.g. "Day 2"
-  -- training note slug: YYYY-MM-DD-Day-2 (date + h1 with spaces→dashes)
-  --------------------------------------------------------------------------
-  local date_prefix = os.date("%Y-%m-%d")
-  local h1_slug = h1_text:gsub("%s+", "-")
-  local training_slug = date_prefix .. "-" .. h1_slug
-  local training_filename = training_slug .. ".md"
-  local training_path = training_dir .. training_filename
-  local buf_lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
-  -- Replace H1 with training_slug so file's H1 matches its filename
-  for i, line in ipairs(buf_lines) do
-    if line:match("^#%s+") then
-      buf_lines[i] = "# " .. training_slug
-      break
-    end
-  end
-  vim.fn.writefile(buf_lines, training_path)
-
-  vim.notify("Training note saved: " .. training_filename, vim.log.levels.INFO)
-end, { desc = "[P]Log Paste: save training note" })
-
--- Auto push Obsidian Vault
-local function push_obsidian_vault(silent)
-  local vault_path = vim.fn.expand("~/obsidian")
-  local current_dir = vim.fn.getcwd()
-
-  if current_dir:find(vault_path, 1, true) == nil then
-    return false
-  end
-
-  vim.cmd("silent! wa")
-
-  local commit_msg = "Vault backup: " .. os.date("%Y-%m-%d %H:%M:%S")
-  local cmd = string.format("cd %s && git add . && git commit -m '%s' && git push", vault_path, commit_msg)
-
-  vim.fn.jobstart(cmd, {
-    on_exit = function(_, code)
-      if code == 0 and not silent then
-        vim.schedule(function()
-          print("Obsidian Vault pushed successfully")
-        end)
-      end
-    end,
-  })
-
-  return true
-end
-
--- Cooldown защита
-local last_push_time = 0
-local PUSH_COOLDOWN = 3600
-
-local function push_with_cooldown()
-  local now = os.time()
-  if now - last_push_time < PUSH_COOLDOWN then
-    return
-  end
-  if push_obsidian_vault(true) then
-    last_push_time = now
-  end
-end
-
--- Автопуш при разных событиях
+-- Автопуш Obsidian Vault при разных событиях
 vim.api.nvim_create_autocmd({
   "FocusLost", -- переключился на другое окно
   "QuitPre", -- перед выходом из Neovim
@@ -647,13 +222,12 @@ vim.api.nvim_create_autocmd({
   "VimLeavePre", -- перед закрытием Neovim
 }, {
   desc = "Autopush Obsidian Vault",
-  callback = push_with_cooldown,
+  callback = obsidian.push_with_cooldown,
 })
 
 -- Ручной кеймап
 vim.keymap.set("n", "<leader>go", function()
-  vim.cmd("silent! wa")
-  if not push_obsidian_vault(false) then
+  if not obsidian.push(false) then
     print("Not in Obsidian Vault")
   end
 end, { desc = "[P]Autopush Obsidian Vault" })
@@ -705,356 +279,23 @@ vim.api.nvim_create_autocmd("TermOpen", {
   end,
 })
 
--- If there is no `untoggled` or `done` label on an item, mark it as done
--- and move it to the "## completed tasks" markdown heading in the same file, if
--- the heading does not exist, it will be created, if it exists, items will be
--- appended to it at the top lamw25wmal
---
--- If an item is moved to that heading, it will be added the `done` label
-vim.keymap.set("n", "<M-x>", function()
-  -- Customizable variables
-  -- NOTE: Customize the completion label
-  local label_done = "done:"
-  -- NOTE: Customize the timestamp format
-  local timestamp = os.date("%Y-%m-%d-%H:%M")
-  -- local timestamp = os.date("%y%m%d")
-  -- NOTE: Customize the heading and its level
-  local tasks_heading = "## Completed Tasks"
-  -- Save the view to preserve folds
-  vim.cmd("mkview")
-  local api = vim.api
-  -- Retrieve buffer & lines
-  local buf = api.nvim_get_current_buf()
-  local cursor_pos = vim.api.nvim_win_get_cursor(0)
-  local start_line = cursor_pos[1] - 1
-  local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
-  local total_lines = #lines
-  -- If cursor is beyond last line, do nothing
-  if start_line >= total_lines then
-    vim.cmd("loadview")
-    return
-  end
-  ------------------------------------------------------------------------------
-  -- (A) Move upwards to find the bullet line (if user is somewhere in the chunk)
-  ------------------------------------------------------------------------------
-  while start_line > 0 do
-    local line_text = lines[start_line + 1]
-    -- Stop if we find a blank line or a bullet line
-    if line_text == "" or line_text:match("^%s*%-") then
-      break
-    end
-    start_line = start_line - 1
-  end
-  -- Now we might be on a blank line or a bullet line
-  if lines[start_line + 1] == "" and start_line < (total_lines - 1) then
-    start_line = start_line + 1
-  end
-  ------------------------------------------------------------------------------
-  -- (B) Validate that it's actually a task bullet, i.e. '- [ ]' or '- [x]'
-  ------------------------------------------------------------------------------
-  local bullet_line = lines[start_line + 1]
-  if not bullet_line:match("^%s*%- %[[x ]%]") then
-    -- Not a task bullet => show a message and return
-    print("Not a task bullet: no action taken.")
-    vim.cmd("loadview")
-    return
-  end
-  ------------------------------------------------------------------------------
-  -- 1. Identify the chunk boundaries
-  ------------------------------------------------------------------------------
-  local chunk_start = start_line
-  local chunk_end = start_line
-  while chunk_end + 1 < total_lines do
-    local next_line = lines[chunk_end + 2]
-    if next_line == "" or next_line:match("^%s*%-") then
-      break
-    end
-    chunk_end = chunk_end + 1
-  end
-  -- Collect the chunk lines
-  local chunk = {}
-  for i = chunk_start, chunk_end do
-    table.insert(chunk, lines[i + 1])
-  end
-  ------------------------------------------------------------------------------
-  -- 2. Check if chunk has [done: ...] or [untoggled], then transform them
-  ------------------------------------------------------------------------------
-  local has_done_index = nil
-  local has_untoggled_index = nil
-  for i, line in ipairs(chunk) do
-    -- Replace `[done: ...]` -> `` `done: ...` ``
-    chunk[i] = line:gsub("%[done:([^%]]+)%]", "`" .. label_done .. "%1`")
-    -- Replace `[untoggled]` -> `` `untoggled` ``
-    chunk[i] = chunk[i]:gsub("%[untoggled%]", "`untoggled`")
-    if chunk[i]:match("`" .. label_done .. ".-`") then
-      has_done_index = i
-      break
-    end
-  end
-  if not has_done_index then
-    for i, line in ipairs(chunk) do
-      if line:match("`untoggled`") then
-        has_untoggled_index = i
-        break
-      end
-    end
-  end
-  ------------------------------------------------------------------------------
-  -- 3. Helpers to toggle bullet
-  ------------------------------------------------------------------------------
-  -- Convert '- [ ]' to '- [x]'
-  local function bulletToX(line)
-    return line:gsub("^(%s*%- )%[%s*%]", "%1[x]")
-  end
-  -- Convert '- [x]' to '- [ ]'
-  local function bulletToBlank(line)
-    return line:gsub("^(%s*%- )%[x%]", "%1[ ]")
-  end
-  ------------------------------------------------------------------------------
-  -- 4. Insert or remove label *after* the bracket
-  ------------------------------------------------------------------------------
-  local function insertLabelAfterBracket(line, label)
-    local prefix = line:match("^(%s*%- %[[x ]%])")
-    if not prefix then
-      return line
-    end
-    local rest = line:sub(#prefix + 1)
-    return prefix .. " " .. label .. rest
-  end
-  local function removeLabel(line)
-    -- If there's a label (like `` `done: ...` `` or `` `untoggled` ``) right after
-    -- '- [x]' or '- [ ]', remove it
-    return line:gsub("^(%s*%- %[[x ]%])%s+`.-`", "%1")
-  end
-  ------------------------------------------------------------------------------
-  -- 5. Update the buffer with new chunk lines (in place)
-  ------------------------------------------------------------------------------
-  local function updateBufferWithChunk(new_chunk)
-    for idx = chunk_start, chunk_end do
-      lines[idx + 1] = new_chunk[idx - chunk_start + 1]
-    end
-    vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
-  end
-  ------------------------------------------------------------------------------
-  -- 6. Main toggle logic
-  ------------------------------------------------------------------------------
-  if has_done_index then
-    chunk[has_done_index] = removeLabel(chunk[has_done_index]):gsub("`" .. label_done .. ".-`", "`untoggled`")
-    chunk[1] = bulletToBlank(chunk[1])
-    chunk[1] = removeLabel(chunk[1])
-    chunk[1] = insertLabelAfterBracket(chunk[1], "`untoggled`")
-    updateBufferWithChunk(chunk)
-
-    vim.notify("Untoggled", vim.log.levels.INFO)
-  elseif has_untoggled_index then
-    chunk[has_untoggled_index] =
-      removeLabel(chunk[has_untoggled_index]):gsub("`untoggled`", "`" .. label_done .. " " .. timestamp .. "`")
-    chunk[1] = bulletToX(chunk[1])
-    chunk[1] = removeLabel(chunk[1])
-    chunk[1] = insertLabelAfterBracket(chunk[1], "`" .. label_done .. " " .. timestamp .. "`")
-    updateBufferWithChunk(chunk)
-
-    vim.notify("Completed", vim.log.levels.INFO)
-  else
-    local win = api.nvim_get_current_win()
-    local view = api.nvim_win_call(win, function()
-      return vim.fn.winsaveview()
-    end)
-    chunk[1] = bulletToX(chunk[1])
-    chunk[1] = insertLabelAfterBracket(chunk[1], "`" .. label_done .. " " .. timestamp .. "`")
-
-    -- Remove chunk from the original lines
-    for i = chunk_end, chunk_start, -1 do
-      table.remove(lines, i + 1)
-    end
-    -- Append chunk under 'tasks_heading'
-    local heading_index = nil
-    for i, line in ipairs(lines) do
-      if line:match("^" .. tasks_heading) then
-        heading_index = i
-        break
-      end
-    end
-    if heading_index then
-      for _, cLine in ipairs(chunk) do
-        table.insert(lines, heading_index + 1, cLine)
-        heading_index = heading_index + 1
-      end
-      local after_last_item = heading_index + 1
-      if lines[after_last_item] == "" then
-        table.remove(lines, after_last_item)
-      end
-    else
-      table.insert(lines, tasks_heading)
-      for _, cLine in ipairs(chunk) do
-        table.insert(lines, cLine)
-      end
-      local after_last_item = #lines + 1
-      if lines[after_last_item] == "" then
-        table.remove(lines, after_last_item)
-      end
-    end
-    vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
-    vim.notify("Completed", vim.log.levels.INFO)
-    api.nvim_win_call(win, function()
-      vim.fn.winrestview(view)
-    end)
-  end
-  vim.cmd("silent update")
-  vim.cmd("loadview")
-end, { desc = "[P]Toggle task and move it to 'done'" })
+-- Toggle task done/undone and move it under "## Completed Tasks"
+-- (lua/utils/tasks.lua)
+vim.keymap.set("n", "<M-x>", tasks.toggle_done, { desc = "[P]Toggle task and move it to 'done'" })
 
 -- Create task (only in markdown buffers)
 vim.api.nvim_create_autocmd("FileType", {
   pattern = "markdown",
   callback = function(event)
-    vim.keymap.set({ "n", "i" }, "<M-l>", function()
-      -- Get the current line/row/column
-      local cursor_pos = vim.api.nvim_win_get_cursor(0)
-      local row, _ = cursor_pos[1], cursor_pos[2]
-      local line = vim.api.nvim_get_current_line()
-      -- 1) If line is empty => replace it with "- [ ] " and set cursor after the brackets
-      if line:match("^%s*$") then
-        local final_line = "- [ ] "
-        vim.api.nvim_set_current_line(final_line)
-        -- "- [ ] " is 6 characters, so cursor col = 6 places you *after* that space
-        vim.api.nvim_win_set_cursor(0, { row, 6 })
-        return
-      end
-      -- 2) Check if line already has a bullet with possible indentation: e.g. "  - Something"
-      --    We'll capture "  -" (including trailing spaces) as `bullet` plus the rest as `text`.
-      local bullet, text = line:match("^([%s]*[-*]%s+)(.*)$")
-      if bullet then
-        -- Convert bullet => bullet .. "[ ] " .. text
-        local final_line = bullet .. "[ ] " .. text
-        vim.api.nvim_set_current_line(final_line)
-        -- Place the cursor right after "[ ] "
-        -- bullet length + "[ ] " is bullet_len + 4 characters,
-        -- but bullet has trailing spaces, so #bullet includes those.
-        local bullet_len = #bullet
-        -- We want to land after the brackets (four characters: `[ ] `),
-        -- so col = bullet_len + 4 (0-based).
-        vim.api.nvim_win_set_cursor(0, { row, bullet_len + 4 })
-        return
-      end
-      -- 3) If there's text, but no bullet => prepend "- [ ] "
-      --    and place cursor after the brackets
-      local final_line = "- [ ] " .. line
-      vim.api.nvim_set_current_line(final_line)
-      -- "- [ ] " is 6 characters
-      vim.api.nvim_win_set_cursor(0, { row, 6 })
-    end, { desc = "Convert bullet to a task or insert new task bullet", buffer = event.buf })
+    vim.keymap.set(
+      { "n", "i" },
+      "<M-l>",
+      tasks.create,
+      { desc = "Convert bullet to a task or insert new task bullet", buffer = event.buf }
+    )
   end,
 })
 
--- Google Calendar (gcalcli)
--- Create event from current task line. Date comes from a wikilink:
---   - [ ] Sync vault [[2026/04-Apr/2026-04-18-Saturday]]          -> all-day on that date
---   - [ ] Meeting [[2026/04-Apr/2026-04-18-Saturday]] 15:00        -> 1h event at 15:00
---   - [ ] Call [[2026/04-Apr/2026-04-18-Saturday]] 15:00-16:30     -> explicit duration
--- Appends <!-- gcal:<event-id> --> to the line to prevent duplicate creation.
-local GCAL_CALENDAR = "shaparenko.fedor@gmail.com"
-local function gcal_create_from_line()
-  local line = vim.api.nvim_get_current_line()
-
-  if line:match("<!%-%- gcal:") then
-    vim.notify("gcal: event already created for this line", vim.log.levels.WARN)
-    return
-  end
-
-  local date = line:match("%[%[[^%]]-(%d%d%d%d%-%d%d%-%d%d)[^%]]-%]%]")
-  if not date then
-    vim.notify("gcal: no date wikilink [[.../YYYY-MM-DD-...]] on line", vim.log.levels.ERROR)
-    return
-  end
-
-  local start_t, end_t = line:match("(%d?%d:%d%d)%-(%d?%d:%d%d)")
-  if not start_t then
-    start_t = line:match("(%d?%d:%d%d)")
-  end
-  if start_t and #start_t == 4 then
-    start_t = "0" .. start_t
-  end
-  if end_t and #end_t == 4 then
-    end_t = "0" .. end_t
-  end
-  local all_day = start_t == nil
-
-  local title = line
-    :gsub("^%s*%- %[[ x]%]%s*", "")
-    :gsub("^%s*%-%s*", "")
-    :gsub("%[%[[^%]]-%]%]", "")
-    :gsub("%d?%d:%d%d%-%d?%d:%d%d", "")
-    :gsub("%d?%d:%d%d", "")
-    :gsub("<!%-%-.-%-%->", "")
-    :gsub("/[^/<!%s]+/[^/<!%s]*", "")
-    :gsub("%s+", " ")
-    :gsub("%s+$", "")
-    :gsub("^%s+", "")
-
-  if title == "" then
-    vim.notify("gcal: empty title", vim.log.levels.WARN)
-    return
-  end
-
-  local tz = os.date("%z"):gsub("(%+?%-?%d%d)(%d%d)", "%1:%2")
-  local when
-  local duration_min
-  if all_day then
-    when = date .. "T09:00:00" .. tz
-    duration_min = 30
-  else
-    when = date .. "T" .. start_t .. ":00" .. tz
-    if end_t then
-      local sh, sm = start_t:match("(%d+):(%d+)")
-      local eh, em = end_t:match("(%d+):(%d+)")
-      duration_min = (tonumber(eh) * 60 + tonumber(em)) - (tonumber(sh) * 60 + tonumber(sm))
-      if duration_min <= 0 then
-        duration_min = 30
-      end
-    else
-      duration_min = 30
-    end
-  end
-  local cmd = string.format(
-    "gcalcli --calendar %s add --noprompt --title %s --when %s --duration %d --reminder '0 popup' 2>&1",
-    vim.fn.shellescape(GCAL_CALENDAR),
-    vim.fn.shellescape(title),
-    vim.fn.shellescape(when),
-    duration_min
-  )
-
-  vim.fn.jobstart(cmd, {
-    stdout_buffered = true,
-    stderr_buffered = true,
-    on_stdout = function(_, data)
-      local out = table.concat(data or {}, "\n")
-      local event_id = out:match("id=([%w_-]+)") or out:match("eid=([%w_-]+)")
-      vim.schedule(function()
-        local cur = vim.api.nvim_get_current_line()
-        if event_id and not cur:match("<!%-%- gcal:") then
-          vim.api.nvim_set_current_line(cur:gsub("%s+$", "") .. " <!-- gcal:" .. event_id .. " -->")
-        end
-        vim.notify("gcal: event created — " .. title, vim.log.levels.INFO)
-      end)
-    end,
-    on_exit = function(_, code)
-      if code ~= 0 then
-        vim.schedule(function()
-          vim.notify("gcal: error (exit " .. code .. ")", vim.log.levels.ERROR)
-        end)
-      end
-    end,
-  })
-end
-
-vim.keymap.set("n", "<leader>gcc", gcal_create_from_line, { desc = "[P]gcalcli: create event from line" })
-
--- Agenda: show upcoming Google Calendar events in a split
-vim.keymap.set("n", "<leader>gca", function()
-  vim.cmd(
-    "botright 15split | terminal gcalcli --calendar "
-      .. vim.fn.shellescape(GCAL_CALENDAR)
-      .. " agenda --military --details=all"
-  )
-end, { desc = "[P]gcalcli: show agenda" })
+-- Google Calendar (lua/utils/gcal.lua)
+vim.keymap.set("n", "<leader>gcc", gcal.create_from_line, { desc = "[P]gcalcli: create event from line" })
+vim.keymap.set("n", "<leader>gca", gcal.agenda, { desc = "[P]gcalcli: show agenda" })

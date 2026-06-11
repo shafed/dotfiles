@@ -283,18 +283,13 @@ vim.api.nvim_create_autocmd("TermOpen", {
 -- (lua/utils/tasks.lua)
 vim.keymap.set("n", "<M-x>", tasks.toggle_done, { desc = "[P]Toggle task and move it to 'done'" })
 
--- Create task (only in markdown buffers)
-vim.api.nvim_create_autocmd("FileType", {
-  pattern = "markdown",
-  callback = function(event)
-    vim.keymap.set(
-      { "n", "i" },
-      "<M-l>",
-      tasks.create,
-      { desc = "Convert bullet to a task or insert new task bullet", buffer = event.buf }
-    )
-  end,
-})
+-- Create task (markdown only, checked inside the function)
+vim.keymap.set({ "n", "i" }, "<M-l>", function()
+  if vim.bo.filetype ~= "markdown" then
+    return
+  end
+  tasks.create()
+end, { desc = "Convert bullet to a task or insert new task bullet" })
 
 -- Google Calendar (lua/utils/gcal.lua)
 vim.keymap.set("n", "<leader>gcc", gcal.create_from_line, { desc = "[P]gcalcli: create event from line" })

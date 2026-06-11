@@ -25,4 +25,5 @@ exec kitty +kitten panel \
   --columns=90 \
   --focus-policy=exclusive \
   --override=background_opacity=0.95 \
+  --override=close_on_child_death=yes \
   /usr/bin/env bash "$script_dir/youtube.sh" -s

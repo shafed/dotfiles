@@ -118,7 +118,10 @@ open_in_new_firefox_window() {
   local url="$1" workspace="$2" before after i new_addr=""
 
   before="$(firefox_window_addresses)"
-  firefox --new-window "$url" >/dev/null 2>&1 &
+  # </dev/null: never hand Firefox the caller's tty. A QAT panel stays open
+  # while any process holds its tty (kitty close_on_child_death=no), and a
+  # Firefox tied to that tty gets killed when the panel is force-closed.
+  firefox --new-window "$url" </dev/null >/dev/null 2>&1 &
   disown
 
   # Wait for a window address that was not present before the launch.

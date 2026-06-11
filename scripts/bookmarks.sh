@@ -248,13 +248,15 @@ open_or_focus() {
     ;;
   cold)
     # No Firefox yet: launch it, then move the new window to firefox_workspace.
-    xdg-open "$url" >/dev/null 2>&1 &
+    # </dev/null so the cold-started Firefox never holds the panel's tty (it
+    # would die with the panel otherwise).
+    xdg-open "$url" </dev/null >/dev/null 2>&1 &
     disown
     move_firefox_when_up "$firefox_workspace"
     ;;
   *)
     # "tab": a window off the YouTube ws is focused; add a tab to it.
-    xdg-open "$url" >/dev/null 2>&1 &
+    xdg-open "$url" </dev/null >/dev/null 2>&1 &
     disown
     ;;
   esac

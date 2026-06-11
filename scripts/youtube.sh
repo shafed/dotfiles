@@ -329,8 +329,11 @@ if [[ "${1:-}" == "--ythistory" || "${1:-}" == "--ytwatchlater" ]]; then
     # after. Reuse the cache for every keystroke that follows.
     if [[ ! -s "$cache_file" ]]; then
       emit_feed >"$cache_file"
+      # </dev/null: the enricher (and its yt-dlp pool) runs ~20s after the
+      # picker may have exited; an inherited panel tty on stdin would keep the
+      # QAT window open that whole time (kitty close_on_child_death=no).
       [[ -s "$cache_file" ]] &&
-        setsid -f "$script_self" --ytenrich "$cache_file" >/dev/null 2>&1
+        setsid -f "$script_self" --ytenrich "$cache_file" </dev/null >/dev/null 2>&1
     fi
     if [[ -n "$query" ]]; then
       # Match against column 6, which holds the title + dimmed duration·channel.
@@ -475,11 +478,17 @@ tab=$'\t'
 # terminal"). So we do all the slow Hyprland window-shuffling in a DETACHED
 # background subshell (setsid) and return immediately — the panel closes at once
 # while Firefox placement finishes on its own.
+#
+# </dev/null matters as much as setsid: with kitty's default
+# close_on_child_death=no the panel window stays open while ANY process still
+# holds its tty, and an inherited stdin is exactly such a hold. Worse, a
+# cold-started Firefox would inherit that stdin too, tying it to the panel — so
+# force-closing the panel would then kill Firefox (and the just-opened tab).
 open_video() {
   local url="https://www.youtube.com/watch?v=$1"
 
   if ! command -v hyprctl >/dev/null 2>&1 || ! command -v jq >/dev/null 2>&1; then
-    setsid -f xdg-open "$url" >/dev/null 2>&1
+    setsid -f xdg-open "$url" </dev/null >/dev/null 2>&1
     return 0
   fi
 
@@ -502,7 +511,7 @@ open_video() {
     # Firefox only on ws4, or cold start: open a tab and pull Firefox to ws4.
     xdg-open "$url" >/dev/null 2>&1
     move_firefox_when_up "$ws"
-  ' _ "$script_dir/lib.sh" "$url" "$firefox_workspace" >/dev/null 2>&1
+  ' _ "$script_dir/lib.sh" "$url" "$firefox_workspace" </dev/null >/dev/null 2>&1
   return 0
 }
 

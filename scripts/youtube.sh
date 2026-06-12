@@ -17,15 +17,16 @@ source "$script_dir/lib.sh"
 #                                   # video opens, a channel drills into its videos
 #   youtube.sh -p <playlist>        # playlist URL or ID (public only)
 #   youtube.sh -H                   # your YouTube watch history (logged-in)
+#   youtube.sh -L                   # your "Watch later" playlist (logged-in)
 #   youtube.sh -r <channel>         # refresh cache for that channel/playlist
 #   youtube.sh -n <count> <channel> # limit how many recent videos to list
 #
 # Notes:
 #   - Uses yt-dlp. For channels/playlists/search it sees PUBLIC data only:
 #     channel uploads and public / unlisted playlists.
-#   - Watch history (-H) reads your logged-in session from the browser's
-#     cookies (yt-dlp --cookies-from-browser), so it needs you signed into
-#     YouTube in that browser. No OAuth required.
+#   - Watch history (-H) and Watch later (-L) read your logged-in session from
+#     the browser's cookies (yt-dlp --cookies-from-browser), so they need you
+#     signed into YouTube in that browser. No OAuth required.
 
 cache_dir="$HOME/.cache/youtube-fzf"
 thumb_dir="$cache_dir/thumbs"
@@ -414,15 +415,16 @@ Usage:
                                   # video opens, a channel drills into its videos
   youtube.sh -p <playlist>        # playlist URL or ID (public only)
   youtube.sh -H                   # your YouTube watch history (logged-in)
+  youtube.sh -L                   # your "Watch later" playlist (logged-in)
   youtube.sh -r <channel>         # refresh cache for that channel/playlist
   youtube.sh -n <count> <channel> # limit how many recent videos to list
 
 Notes:
   - Uses yt-dlp. For channels/playlists/search it sees PUBLIC data only:
     channel uploads and public / unlisted playlists.
-  - Watch history (-H) reads your logged-in session from the browser's
-    cookies (yt-dlp --cookies-from-browser), so it needs you signed into
-    YouTube in that browser. No OAuth required.
+  - Watch history (-H) and Watch later (-L) read your logged-in session from
+    the browser's cookies (yt-dlp --cookies-from-browser), so they need you
+    signed into YouTube in that browser. No OAuth required.
 EOF
   exit "${1:-0}"
 }
@@ -434,11 +436,12 @@ for tool in yt-dlp fzf; do
   fi
 done
 
-while getopts ":spn:rhH" opt; do
+while getopts ":spn:rhHL" opt; do
   case "$opt" in
   s) mode="search" ;;
   p) mode="playlist" ;;
   H) mode="history" ;;
+  L) mode="later" ;;
   n) limit="$OPTARG" ;;
   r) refresh=true ;;
   h) usage 0 ;;
@@ -691,6 +694,9 @@ if [[ "$mode" == "search" ]]; then
 elif [[ "$mode" == "history" ]]; then
   # History takes no positional argument; the source is your account feed.
   target="watch history"
+elif [[ "$mode" == "later" ]]; then
+  # Watch later takes no positional argument either; the WL playlist is yours.
+  target="watch later"
 else
   target="${1:-}"
 fi
@@ -704,6 +710,11 @@ if [[ "$mode" == "history" ]]; then
   source_url="https://www.youtube.com/feed/history"
   cache_key="history"
   # History is volatile (changes as you watch), so never serve it stale.
+  refresh=true
+elif [[ "$mode" == "later" ]]; then
+  source_url="https://www.youtube.com/playlist?list=WL"
+  cache_key="watchlater"
+  # Watch later is volatile too (videos get added/removed all the time).
   refresh=true
 elif [[ "$mode" == "playlist" ]]; then
   case "$target" in
@@ -743,8 +754,10 @@ if [[ "$needs_fetch" == true ]]; then
   yt_args=(--flat-playlist --no-warnings
     --playlist-end "$limit"
     --print "%(id)s${tab}%(title)s${tab}%(duration_string)s${tab}%(live_status)s")
-  # History needs your logged-in session, read from the browser's cookies.
-  [[ "$mode" == "history" ]] && yt_args+=(--cookies-from-browser "$cookies_browser")
+  # History and Watch later need your logged-in session (both are private),
+  # read from the browser's cookies.
+  [[ "$mode" == "history" || "$mode" == "later" ]] &&
+    yt_args+=(--cookies-from-browser "$cookies_browser")
 
   if ! yt-dlp "${yt_args[@]}" "$source_url" >"$cache_file.tmp" 2>/dev/null; then
     rm -f "$cache_file.tmp"

@@ -141,10 +141,16 @@ open_in_new_firefox_window() {
 
 # move_firefox_when_up <workspace> — poll for a Firefox window (e.g. right
 # after a cold-start xdg-open), then move it to <workspace> and focus it.
+#
+# The window can take several seconds to appear on a true cold start (process
+# launch + profile load + first paint), far longer than the warm case where a
+# running Firefox opens a tab almost instantly. So poll generously — ~12s — or
+# the cold-start window never gets moved and the tab opens on whatever workspace
+# Firefox came up on instead of <workspace>.
 move_firefox_when_up() {
   local workspace="$1" i
 
-  for i in {1..10}; do
+  for i in {1..48}; do
     if firefox_running; then
       hyprctl dispatch movetoworkspace "${workspace},class:firefox" >/dev/null 2>&1 || true
       hyprctl dispatch focuswindow class:firefox >/dev/null 2>&1 || true

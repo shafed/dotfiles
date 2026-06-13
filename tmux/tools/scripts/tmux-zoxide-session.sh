@@ -417,7 +417,7 @@ printf '\033[2J\033[H'
 fzf_out="$(
   fzf --ansi --height=20 --reverse \
     --header="Type to filter, enter open, esc quit" \
-    --prompt="Create New tmux Session (zoxide + ssh) > " \
+    --prompt="Create New tmux Session > " \
     --no-multi \
     --with-nth=2.. \
     --no-sort \

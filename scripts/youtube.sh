@@ -824,14 +824,25 @@ if [[ -n "${channel_base:-}" ]]; then
   ctrl_s_toggle="transform:
     if [[ \"\$(cat '$tab_file')\" == videos ]]; then
       printf streams >'$tab_file'
-      echo \"change-prompt(Open stream > )+change-header($target · STREAMS — Enter open, ^S videos, Esc cancel)+reload($streams_cmd)+first\"
+      echo \"change-prompt(Open stream > )+change-header($target · STREAMS — Enter open, ^S videos, ^A load more, Esc cancel)+reload($streams_cmd)+first\"
     else
       printf videos >'$tab_file'
-      echo \"change-prompt(Open video > )+change-header($base_header · ^S streams)+reload($videos_cmd)+first\"
+      echo \"change-prompt(Open video > )+change-header($base_header · ^S streams · ^A load more)+reload($videos_cmd)+first\"
     fi"
+  # Ctrl-A: "load deeper". The default listing is capped at $limit (40) newest
+  # videos, so old uploads on big channels are never fetched and can't be
+  # filtered. This re-fetches the videos tab with a much higher --playlist-end
+  # into its OWN cache file (a separate path so --yttab can't serve the shallow
+  # 40-row cache as "fresh"), letting you fuzzy-find far-back videos in place.
+  # Whichever tab you're on, this always loads the videos tab deep.
+  deep_limit="${YOUTUBE_FZF_DEEP_LIMIT:-2000}"
+  deep_cache="${cache_file%.tsv}.deep.tsv"
+  deep_cmd="YOUTUBE_FZF_LIMIT=$deep_limit \"$script_self\" --yttab videos '$channel_base' '$deep_cache'"
+  deep_action="execute-silent(printf videos >'$tab_file')+change-prompt(Open video (deep) > )+change-header($target · loading up to $deep_limit videos…)+reload($deep_cmd)+change-header($target · deep · Enter open, ^S streams, Esc cancel)+first"
   fzf_args+=(
-    --header="$base_header · ^S streams"
+    --header="$base_header · ^S streams · ^A load more"
     --bind "ctrl-s:$ctrl_s_toggle"
+    --bind "ctrl-a:$deep_action"
   )
   trap 'rm -f "$tab_file"' EXIT
 fi

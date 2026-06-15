@@ -92,8 +92,8 @@ chords-v2-min-idle 150  ;; after any non-chord keypress, skip chords for 150ms
  ; (t! hrm 400 ; ralt)
 
  ;; define functional keys
- lalt (t! th $tot 160 bspc (layer-while-held numplain)) ;; tap=bspc hold=numbers
- ralt (t! th $tot 160 spc (layer-while-held symbols))   ;; tap=space hold=symbols
+ lalt (t! th $tot 160 bspc (layer-while-held symbols))  ;; tap=bspc hold=symbols (right-hand keys)
+ ralt (t! th $tot 160 spc (layer-while-held numplain))  ;; tap=space hold=numbers (left-hand keys)
  spc (t! th $tot 160 @sw (layer-while-held apps))       ;; tap=switch lang hold=apps
  c (t! th $tap-time $hold-time c C-c)
  v (t! th $tap-time $hold-time v C-v)

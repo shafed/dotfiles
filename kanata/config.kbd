@@ -92,8 +92,9 @@ chords-v2-min-idle 150  ;; after any non-chord keypress, skip chords for 150ms
  ; (t! hrm 400 ; ralt)
 
  ;; define functional keys
- lalt (t! th $tot 160 bspc (layer-while-held apps))
- ralt (t! th $tot 160 XX (layer-while-held apps)) ;; test ret on jk
+ lalt (t! th $tot 160 bspc (layer-while-held numplain)) ;; tap=bspc hold=numbers
+ ralt (t! th $tot 160 spc (layer-while-held symbols))   ;; tap=space hold=symbols
+ spc (t! th $tot 160 @sw (layer-while-held apps))       ;; tap=switch lang hold=apps
  c (t! th $tap-time $hold-time c C-c)
  v (t! th $tap-time $hold-time v C-v)
  b (t! th $tap-time $hold-time b (macro @aterm 100 C-s $tmux-delay spc)) ;; tmux alternate session
@@ -130,7 +131,6 @@ chords-v2-min-idle 150  ;; after any non-chord keypress, skip chords for 150ms
   g (cmd todoist)
   z (cmd zsh -lc "$HOME/.config/kanata/switchApp.sh sioyek 'LIBGL_ALWAYS_SOFTWARE=1 sioyek'")
   p (t! tmux-send C-c)
-  spc (cmd hyprlauncher)
   . (cmd rofimoji -a clipboard)
   caps caps
 )

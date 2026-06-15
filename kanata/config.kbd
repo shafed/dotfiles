@@ -88,8 +88,8 @@ chords-v2-min-idle 150  ;; after any non-chord keypress, skip chords for 150ms
  f (t! hrm 300 f lsft)
  j (t! hrm 300 j rsft)
  k (t! hrm 400 k rctl)
- l (t! hrm 400 l rmet)
- ; (t! hrm 400 ; ralt)
+ l (t! hrm 400 l (layer-while-held numws))   ;; hold -> Super+digit workspace layer
+ ; (t! hrm 400 ; (layer-while-held numtab))  ;; hold -> Alt+digit tab layer
 
  ;; define functional keys
  lalt (t! th $tot 160 bspc (layer-while-held apps))
@@ -149,6 +149,20 @@ chords-v2-min-idle 150  ;; after any non-chord keypress, skip chords for 150ms
   y S-1 u S-2 i S-3 o S-4 p S-5   ;; ! @ # $ %
   h S--  j S-9 k S-0 l =   ; -    ;; _ ( ) = -   (home row: most-used)
   n S-6 m S-7 , S-8 . S-=  / S-\   ;; ^ & * + |
+)
+
+;; left-hand number layers, momentary. hold l (rmet) -> workspace digits
+;; (Super+N, Hyprland); hold ; (ralt) -> Firefox tab digits (Alt+N). digits sit
+;; on the left hand so the holding right hand + left taps stay bilateral.
+;; layout mirrors symbols: home row = 1-5, top row = 6-0.
+(deflayermap (numws)
+  q M-6 w M-7 e M-8 r M-9 t M-0   ;; Super+6..0  (workspaces 6-10)
+  a M-1 s M-2 d M-3 f M-4 g M-5   ;; Super+1..5  (workspaces 1-5)
+)
+
+(deflayermap (numtab)
+  q A-6 w A-7 e A-8 r A-9 t A-0   ;; Alt+6..0  (Firefox tabs; A-9 = last tab)
+  a A-1 s A-2 d A-3 f A-4 g A-5   ;; Alt+1..5
 )
 
 (deflayermap (navi)

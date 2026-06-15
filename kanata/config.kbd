@@ -143,6 +143,14 @@ chords-v2-min-idle 150  ;; after any non-chord keypress, skip chords for 150ms
   r (cmd firefox https://www.reverso.net/text-translation)
 )
 
+;; right-hand programmer symbols, momentary (entered via s+d+f chord held).
+;; left hand holds s/d/f, so all symbols live on the right hand.
+(deflayermap (symbols)
+  y S-1 u S-2 i S-3 o S-4 p S-5   ;; ! @ # $ %
+  h S--  j S-9 k S-0 l =   ; -    ;; _ ( ) = -   (home row: most-used)
+  n S-6 m S-7 , S-8 . S-=  / S-\   ;; ^ & * + |
+)
+
 (deflayermap (navi)
   ;; arrow keys
   h lft j @j-navi k @k-navi l right
@@ -165,6 +173,7 @@ chords-v2-min-idle 150  ;; after any non-chord keypress, skip chords for 150ms
 (s f) (multi lmet lsft) $mod-chord-time all-released ()
 (l j) (multi rmet rsft) $mod-chord-time all-released ()
 (a s) esc $mod-chord-time first-release ()
+(s d f) (layer-while-held symbols) $mod-chord-time all-released ()
 (q w) tab $mod-chord-time all-released ()
 (lsft rsft) (layer-switch base) $chord-time first-release()
 )

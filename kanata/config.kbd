@@ -161,9 +161,10 @@ chords-v2-min-idle 150  ;; after any non-chord keypress, skip chords for 150ms
 ;; chords-v2-min-idle) to get a held Ctrl+Shift. all-released keeps the mods
 ;; down until both keys lift, so you can add a third key (e.g. C-S-tab).
 (d f) (multi lctl lsft) $mod-chord-time all-released ()
-(j k) (multi lctl lsft) $mod-chord-time all-released ()
+(j k) (tap-hold $tap-time $hold-time ret (multi lctl lsft)) $mod-chord-time all-released ()
 (s f) (multi lmet lsft) $mod-chord-time all-released ()
 (l j) (multi rmet rsft) $mod-chord-time all-released ()
+(a s) esc $mod-chord-time first-release ()
 (q w) tab $mod-chord-time all-released ()
 (lsft rsft) (layer-switch base) $chord-time first-release()
 )

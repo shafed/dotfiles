@@ -189,7 +189,7 @@ chords-v2-min-idle 150  ;; after any non-chord keypress, skip chords for 150ms
 (l j) (multi rmet rsft) $mod-chord-time all-released ()
 (s d f) (layer-while-held symbols) $mod-chord-time all-released () ;; symbol layer
 (s d) tab $mod-chord-time all-released () ;; tab
-(w e r) (multi lctl w) $mod-chord-time all-released () ;; symbol layer
+(w e r) C-bspc $mod-chord-time all-released () ;; delete word (works everywhere)
 )
 
 (deflayermap (normal)

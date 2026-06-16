@@ -92,9 +92,8 @@ chords-v2-min-idle 150  ;; after any non-chord keypress, skip chords for 150ms
  ; (t! hrm 400 ; ralt)
 
  ;; define functional keys
- lalt (t! th $tot 160 bspc (layer-while-held symbols))  ;; tap=bspc hold=symbols (right-hand keys)
- ralt (t! th $tot 160 @sw (layer-while-held numplain))  ;; tap=switch lang hold=numbers (left-hand keys)
- spc (t! th $tot 160 spc (layer-while-held apps))       ;; tap=space hold=apps
+ lalt (t! th $tot 160 bspc (layer-while-held apps)) ;; tap=bspc hold=apps
+ ralt (t! th $tot 160 @sw (layer-while-held apps))  ;; tap=switch lang hold=apps
  c (t! th $tap-time $hold-time c C-c)
  v (t! th $tap-time $hold-time v C-v)
  b (t! th $tap-time $hold-time b (macro @aterm 100 C-s $tmux-delay spc)) ;; tmux alternate session
@@ -196,7 +195,7 @@ chords-v2-min-idle 150  ;; after any non-chord keypress, skip chords for 150ms
 (s d f) (layer-while-held symbols) $mod-chord-time all-released () ;; symbol layer
 (j k l) (layer-while-held numplain) $mod-chord-time all-released () ;; number layer
 (k l) (layer-while-held numws) $mod-chord-time all-released ()    ;; Super+digit workspace
-(k l ;) (layer-while-held numtab) $mod-chord-time all-released () ;; Alt+digit firefox tabs
+(l ;) (layer-while-held numtab) $mod-chord-time all-released () ;; Alt+digit firefox tabs
 (s d) tab $mod-chord-time all-released () ;; tab
 (w e r) C-bspc $mod-chord-time all-released () ;; delete word (works everywhere)
 )

@@ -104,7 +104,7 @@ chords-v2-min-idle 150  ;; after any non-chord keypress, skip chords for 150ms
  caps (t! th $tap-time $hold-time XX (layer-toggle navi)) ;; test esc on as
  bspc XX 
  ret (tap-hold $tap-time 600 XX (layer-switch normal)) ;; go to normal layer
- lsft @sw ;; physical LShift taps to switch keyboard layout
+ ;; lsft @sw ;; physical LShift taps to switch keyboard layout
  w (fork w bspc (lctl rctl))
 )
 

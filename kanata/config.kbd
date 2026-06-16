@@ -2,9 +2,9 @@
 process-unmapped-keys (all-except lctl ralt)
 danger-enable-cmd yes
 concurrent-tap-hold yes
-chords-v2-min-idle 150  ;; after any non-chord keypress, skip chords for 150ms
-                        ;; so one-handed mod chords (d+f, j+k) only fire when
-                        ;; pressed deliberately after a pause, not mid-typing.
+chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
+                        ;; so one-handed mod chords (d+f, j+k) fire near-instantly
+                        ;; after a brief pause, but not mid fast typing.
 )
 
 ;; opposite-hand HRM (kanata PR #1955): hold only fires when the next key is on

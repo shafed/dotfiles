@@ -25,6 +25,12 @@ bind-key Space switch-client -l
 
 set -g prefix C-s
 
+set -g history-limit 50000
+
+# Вся история панели в neovim-буфере (аналог kitty_mod+i, но для tmux).
+# capture-pane -S - берёт ВСЮ историю прокрутки, не только видимый экран.
+bind-key i run-shell 'tmux capture-pane -p -e -S - -t "#{pane_id}" > /tmp/tmux-scrollback-#{pane_id}.txt; tmux new-window "nvim --cmd \"set eventignore=FileType\" \"+nnoremap q ZQ\" \"+call nvim_open_term(0, {})\" \"+set nomodified nolist noswapfile\" \"+\\$\" /tmp/tmux-scrollback-#{pane_id}.txt"'
+
 set -g mouse on
 set -g focus-events on # for xkb-switch.nvim
 

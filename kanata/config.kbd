@@ -180,7 +180,7 @@ chords-v2-min-idle 150  ;; after any non-chord keypress, skip chords for 150ms
  f (t! th $tot 160 f lsft)
  d (t! th $tot 300 d lctl)
  s @sshot
- i C-S-i ;; kitty scrollback
+ i (t! tmux-send i) ;; tmux scrollback (prefix i) -> full pane history in nvim
 )
 
 (defchordsv2

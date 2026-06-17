@@ -269,4 +269,7 @@ export ANDROID_HOME="$HOME/Android/Sdk"
 export PATH="$PATH:$ANDROID_HOME/platform-tools"
 
 # Zoxide (must be at end of zshrc, per zoxide doctor)
+# Oh My Zsh registers its own chpwd hooks, which trips zoxide's doctor with a
+# false-positive "initialized too early" warning even though init is last here.
+export _ZO_DOCTOR=0
 eval "$(zoxide init zsh --cmd cd)"

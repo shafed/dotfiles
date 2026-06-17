@@ -38,6 +38,13 @@ set -g allow-passthrough on
 set -ga update-environment TERM
 set -ga update-environment TERM_PROGRAM
 
+# Атомарная перерисовка кадров (synchronized output, DECSET 2026).
+# Без этого TUI вроде Claude Code рвут вывод при быстром потоке:
+# диффы налезают, появляется второй "-- INSERT --", курсор уходит вверх.
+set -as terminal-features ',*:sync'
+# truecolor для внешнего терминала (kitty), иначе тоже бывают артефакты цвета
+set -as terminal-features ',xterm-kitty:RGB'
+
 bind-key h select-pane -L
 bind-key j select-pane -D
 bind-key k select-pane -U

@@ -264,5 +264,9 @@ function zvm_after_lazy_keybindings() {
   zvm_bindkey viins '^[t' tmux_other_pane
 }
 
+# Android SDK
+export ANDROID_HOME="$HOME/Android/Sdk"
+export PATH="$PATH:$ANDROID_HOME/platform-tools"
+
 # Zoxide (must be at end of zshrc, per zoxide doctor)
 eval "$(zoxide init zsh --cmd cd)"

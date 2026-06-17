@@ -1,0 +1,14 @@
+[Unit]
+Description=adrop-relay — FCM wake relay for adrop
+Documentation=https://github.com/shafed/adrop
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/adrop-relay -key %h/.config/adrop/fcm-service-account.json -addr :8080
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

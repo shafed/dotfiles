@@ -146,6 +146,22 @@ build_cache() {
   rm -f "$cache_file.tmp"
 }
 
+# True when the cache is missing or any app dir has changed since it was built.
+# A dir's mtime bumps whenever a .desktop file is added or removed inside it, so
+# this catches newly installed/uninstalled apps without re-scanning every entry.
+# Cheap: a handful of stats per panel open. Edits to a file already in the cache
+# don't bump the dir mtime, but those don't change the name/id/wmclass columns we
+# show anyway, so a stale row there is harmless.
+cache_stale() {
+  [[ -s "$cache_file" ]] || return 0
+  local dir
+  for dir in "${app_dirs[@]}"; do
+    [[ -d "$dir" ]] || continue
+    [[ "$dir" -nt "$cache_file" ]] && return 0
+  done
+  return 1
+}
+
 # Feed the catalog to fzf sorted by launch count (desc), then name (asc) so the
 # most-used apps sit at the top and ties stay alphabetical. Counts are joined
 # from usage_file by desktop-file id; unseen apps get 0 and fall to the bottom.
@@ -262,8 +278,11 @@ launch_app() {
 # alive after every action so kitty only toggles the panel's visibility on the
 # next trigger instead of cold-starting it — same trick as bookmarks.sh.
 run_picker() {
-  # (Re)build the cache when missing or forced with -r.
-  if [[ "$refresh" == true || ! -s "$cache_file" ]]; then
+  # (Re)build the cache when forced with -r, or when it is missing/stale (an app
+  # dir changed since the last build, e.g. a newly installed app). The staleness
+  # check runs on every panel open, so a fresh install shows up the next time the
+  # picker is triggered without a manual -r.
+  if [[ "$refresh" == true ]] || cache_stale; then
     build_cache
   fi
 
@@ -299,6 +318,11 @@ run_picker() {
   local output key selected _name id _path wmclass
   while true; do
     switch_to_english
+    # The --pick process is long-lived (kitty only toggles the panel), so an app
+    # installed after it started would never appear without this: rebuild before
+    # each open when an app dir changed. The reload binds re-read the cache file
+    # on every keystroke, so a rebuild here is reflected immediately.
+    cache_stale && build_cache
     # Esc makes fzf exit non-zero. Treat it as "hide and rearm" so the next
     # keypress shows an already-running picker instead of starting from cold.
     # The list itself comes from the reload binds, so feed fzf an empty stdin.

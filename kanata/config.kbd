@@ -103,7 +103,7 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
  ;; other
  caps (t! th $tap-time $hold-time XX (layer-toggle navi)) ;; test esc on df
  bspc XX 
- ret (tap-hold $tap-time 600 XX (layer-switch normal)) ;; go to normal layer
+ ret (tap-hold $tap-time 600 XX (multi (layer-switch normal) (cmd notify-send -t 1000 "⌨ normal layer"))) ;; go to normal layer
  ;; lsft @sw ;; physical LShift taps to switch keyboard layout
  w (fork w bspc (lctl rctl))
 )
@@ -187,7 +187,7 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
 ;; one-handed Ctrl+Shift: press both keys together (after a >=150ms idle, per
 ;; chords-v2-min-idle) to get a held Ctrl+Shift. all-released keeps the mods
 ;; down until both keys lift, so you can add a third key (e.g. C-S-tab).
-(lsft rsft) (layer-switch base) $chord-time first-release()
+(lsft rsft) (multi (layer-switch base) (cmd notify-send -t 1000 "⌨ base layer")) $chord-time first-release()
 (d f) (tap-hold $tap-time $hold-time esc (multi lctl lsft)) $mod-chord-time all-released () ;; tap=esc hold=C-S
 (j k) (tap-hold $tap-time $hold-time ret (multi lctl lsft)) $mod-chord-time all-released () ;; enter 
 (s f) (multi lmet lsft) $mod-chord-time all-released ()
@@ -206,6 +206,6 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
   lalt lalt
   ralt ralt
   bspc bspc
-  ret (tap-hold $tap-time 600 ret (layer-switch base)) 
+  ret (tap-hold $tap-time 600 ret (multi (layer-switch base) (cmd notify-send -t 1000 "⌨ base layer")))
   caps caps
 )

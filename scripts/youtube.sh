@@ -796,7 +796,23 @@ if [[ ! -s "$cache_file" ]]; then
   exit 1
 fi
 
-base_header="$target — Enter to open in browser, Esc to cancel"
+base_header="Channel search"
+insert_suffix="INSERT · Esc normal"
+normal_suffix="NORMAL · j/k · g/G · i insert · q quit"
+vi_file="$(mktemp -t yt-channel-vi-mode.XXXXXX)"
+header_file="$(mktemp -t yt-channel-header.XXXXXX)"
+printf insert >"$vi_file"
+printf '%s' "$base_header" >"$header_file"
+enter_insert="transform:
+  printf insert >'$vi_file'
+  echo \"enable-search+unbind(j,k,g,G,q,i)+change-header($insert_suffix · \$(cat '$header_file'))\""
+esc_action="transform:
+  if [[ \"\$(cat '$vi_file')\" == insert ]]; then
+    printf normal >'$vi_file'
+    echo \"disable-search+rebind(j,k,g,G,q,i)+change-header($normal_suffix · \$(cat '$header_file'))\"
+  else
+    echo abort
+  fi"
 fzf_args=(
   --height=100%
   --reverse
@@ -804,9 +820,17 @@ fzf_args=(
   --delimiter=$'\t'
   --with-nth=2
   --prompt="Open video > "
-  --header="$base_header"
+  --header="$insert_suffix · $base_header"
   --preview "$script_self --preview {1} {2} {3}"
   --preview-window "right,55%,wrap"
+  --bind "start:unbind(j,k,g,G,q,i)"
+  --bind "esc:$esc_action"
+  --bind "j:down"
+  --bind "k:up"
+  --bind "g:first"
+  --bind "G:last"
+  --bind "q:abort"
+  --bind "i:$enter_insert"
 )
 
 # Ctrl-S: in channel mode, flip between the channel's videos tab and its streams
@@ -824,10 +848,16 @@ if [[ -n "${channel_base:-}" ]]; then
   ctrl_s_toggle="transform:
     if [[ \"\$(cat '$tab_file')\" == videos ]]; then
       printf streams >'$tab_file'
-      echo \"change-prompt(Open stream > )+change-header($target · STREAMS — Enter open, ^S videos, ^A load more, Esc cancel)+reload($streams_cmd)+first\"
+      header='Streams · ^S videos · ^A more'
+      printf '%s' \"\$header\" >'$header_file'
+      if [[ \"\$(cat '$vi_file')\" == normal ]]; then suffix='$normal_suffix'; else suffix='$insert_suffix'; fi
+      echo \"change-prompt(Open stream > )+change-header(\$suffix · \$header)+reload($streams_cmd)+first\"
     else
       printf videos >'$tab_file'
-      echo \"change-prompt(Open video > )+change-header($base_header · ^S streams · ^A load more)+reload($videos_cmd)+first\"
+      header='$base_header · ^S streams · ^A more'
+      printf '%s' \"\$header\" >'$header_file'
+      if [[ \"\$(cat '$vi_file')\" == normal ]]; then suffix='$normal_suffix'; else suffix='$insert_suffix'; fi
+      echo \"change-prompt(Open video > )+change-header(\$suffix · \$header)+reload($videos_cmd)+first\"
     fi"
   # Ctrl-A: "load deeper". The default listing is capped at $limit (40) newest
   # videos, so old uploads on big channels are never fetched and can't be
@@ -838,14 +868,20 @@ if [[ -n "${channel_base:-}" ]]; then
   deep_limit="${YOUTUBE_FZF_DEEP_LIMIT:-2000}"
   deep_cache="${cache_file%.tsv}.deep.tsv"
   deep_cmd="YOUTUBE_FZF_LIMIT=$deep_limit \"$script_self\" --yttab videos '$channel_base' '$deep_cache'"
-  deep_action="execute-silent(printf videos >'$tab_file')+change-prompt(Open video (deep) > )+change-header($target · loading up to $deep_limit videos…)+reload($deep_cmd)+change-header($target · deep · Enter open, ^S streams, Esc cancel)+first"
+  deep_action="transform:
+    printf videos >'$tab_file'
+    header='Deep channel search · ^S streams'
+    printf '%s' \"\$header\" >'$header_file'
+    if [[ \"\$(cat '$vi_file')\" == normal ]]; then suffix='$normal_suffix'; else suffix='$insert_suffix'; fi
+    echo \"change-prompt(Open video (deep) > )+change-header(Loading $deep_limit videos...)+reload($deep_cmd)+change-header(\$suffix · \$header)+first\""
+  printf '%s' "$base_header · ^S streams · ^A more" >"$header_file"
   fzf_args+=(
-    --header="$base_header · ^S streams · ^A load more"
+    --header="$insert_suffix · $base_header · ^S streams · ^A more"
     --bind "ctrl-s:$ctrl_s_toggle"
     --bind "ctrl-a:$deep_action"
   )
-  trap 'rm -f "$tab_file"' EXIT
 fi
+trap 'rm -f "$vi_file" "$header_file" "${tab_file:-}"' EXIT
 
 source_fzf_colors
 if [[ -n "${linkarzu_fzf_colors:-}" ]]; then

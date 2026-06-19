@@ -8,19 +8,25 @@ local function path_to_uri(path)
   return "file://" .. encoded
 end
 
--- Parse a text/uri-list blob into a list of decoded filesystem paths.
--- Handles CRLF or LF line endings, skips blank and "#" comment lines
--- (per RFC 2483), strips the file:// scheme, percent-decodes, and drops any
--- trailing slash so basenames resolve correctly.
+-- Parse a clipboard blob into a list of filesystem paths. Accepts both the plain
+-- paths we now copy (one per line) and the file:// URIs that other apps or older
+-- copies may put on the clipboard. Handles CRLF or LF line endings, skips blank
+-- and "#" comment lines (per RFC 2483), strips the file:// scheme when present,
+-- percent-decodes, and drops any trailing slash so basenames resolve correctly.
 local function uri_list_to_paths(blob)
   local paths = {}
   for line in tostring(blob):gmatch("[^\r\n]+") do
     if not line:match("^%s*#") then
-      local uri = line:gsub("^%s+", ""):gsub("%s+$", "")
-      if uri ~= "" then
-        local p = uri:gsub("^file://", ""):gsub("%%(%x%x)", function(h)
-          return string.char(tonumber(h, 16))
-        end)
+      local entry = line:gsub("^%s+", ""):gsub("%s+$", "")
+      if entry ~= "" then
+        local p = entry
+        -- Only percent-decode file:// URIs; bare paths are taken verbatim so a
+        -- literal "%" in a filename survives.
+        if p:match("^file://") then
+          p = p:gsub("^file://", ""):gsub("%%(%x%x)", function(h)
+            return string.char(tonumber(h, 16))
+          end)
+        end
         p = p:gsub("/+$", "")
         if p ~= "" then
           table.insert(paths, p)
@@ -53,7 +59,14 @@ local function nonconflicting_dest(dir, name)
   end
 end
 
--- Copy the given absolute paths to the system clipboard as a text/uri-list.
+-- Copy the given absolute paths to the system clipboard with BOTH a text/plain
+-- and a text/uri-list representation, using CopyQ. A single wl-copy process can
+-- only serve identical content across its MIME types, so a uri-list copy leaks
+-- "file://..." into text/plain (bad for Claude/terminal), while a plain copy
+-- offers no uri-list (so Telegram/Dolphin paste text instead of the file/image).
+-- CopyQ sets distinct content per MIME type in one command:
+--   text/plain    -> bare paths   (Claude, browser, terminal, our paste handler)
+--   text/uri-list -> file:// URIs (Telegram, Dolphin -> file/image paste)
 local function copy_paths_to_clipboard(paths)
   if #paths == 0 then
     vim.notify("No files selected", vim.log.levels.WARN)
@@ -64,11 +77,20 @@ local function copy_paths_to_clipboard(paths)
     table.insert(uris, path_to_uri(p))
     table.insert(names, vim.fn.fnamemodify(p, ":t"))
   end
-  local result = vim.fn.system({ "wl-copy", "--type", "text/uri-list" }, table.concat(uris, "\n"))
+  -- CopyQ wants uri-list lines CRLF-terminated (RFC 2483).
+  local uri_blob = table.concat(uris, "\r\n") .. "\r\n"
+  local result = vim.fn.system({
+    "copyq",
+    "copy",
+    "text/plain",
+    table.concat(paths, "\n"),
+    "text/uri-list",
+    uri_blob,
+  })
   if vim.v.shell_error ~= 0 then
     vim.notify("Copy failed: " .. result, vim.log.levels.ERROR)
   else
-    vim.notify(string.format("Copied %d item(s):\n%s", #uris, table.concat(names, "\n")), vim.log.levels.INFO)
+    vim.notify(string.format("Copied %d item(s):\n%s", #paths, table.concat(names, "\n")), vim.log.levels.INFO)
   end
 end
 
@@ -217,7 +239,7 @@ return {
       desc = "Toggle multi-select on entry",
     },
     {
-      "<leader>yy",
+      "<leader>y",
       function()
         -- Prefer the ad-hoc multi-selection; fall back to the entry under cursor.
         local marked = Selection.paths()
@@ -239,7 +261,7 @@ return {
     },
 
     {
-      "<leader>yy",
+      "<leader>y",
       function()
         local mini_files = require("mini.files")
         local start_line = vim.fn.line("v")

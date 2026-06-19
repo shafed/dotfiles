@@ -36,45 +36,49 @@ vim.keymap.set(
   { silent = true, desc = "[P]Mouse select (double) -> yank to system clipboard" }
 )
 
--- Yank to system clipboard; in markdown run the selection through Prettier
--- (--prose-wrap never) first so wrapped lines are unwrapped on paste
-vim.keymap.set("v", "y", function()
-  if vim.bo.filetype ~= "markdown" then
-    vim.cmd('normal! "+y')
-    vim.notify("Yanked to system clipboard", vim.log.levels.INFO)
-    return
-  end
-  -- Yank the selected text into register 'z' without affecting the unnamed register
-  vim.cmd('silent! normal! "zy')
-  local text = vim.fn.getreg("z")
-  local temp_file = vim.fn.tempname() .. ".md"
-  local file = io.open(temp_file, "w")
-  if file == nil then
-    vim.notify("Error: Cannot write to temporary file.", vim.log.levels.ERROR)
-    return
-  end
-  file:write(text)
-  file:close()
-  -- Redirect prettier's output, otherwise it shows up in the buffer
-  local cmd = 'prettier --prose-wrap never --write "' .. temp_file .. '" > /dev/null 2>&1'
-  local result = os.execute(cmd)
-  if result ~= 0 then
-    vim.notify("Error: Prettier formatting failed.", vim.log.levels.ERROR)
+if vim.env.KITTY_SIMPLE_SCROLLBACK == "1" then
+  vim.keymap.set("v", "y", [["+y<cmd>q!<cr>]], { desc = "[P]Yank to system clipboard + quit" })
+else
+  -- Yank to system clipboard; in markdown run the selection through Prettier
+  -- (--prose-wrap never) first so wrapped lines are unwrapped on paste
+  vim.keymap.set("v", "y", function()
+    if vim.bo.filetype ~= "markdown" then
+      vim.cmd('normal! "+y')
+      vim.notify("Yanked to system clipboard", vim.log.levels.INFO)
+      return
+    end
+    -- Yank the selected text into register 'z' without affecting the unnamed register
+    vim.cmd('silent! normal! "zy')
+    local text = vim.fn.getreg("z")
+    local temp_file = vim.fn.tempname() .. ".md"
+    local file = io.open(temp_file, "w")
+    if file == nil then
+      vim.notify("Error: Cannot write to temporary file.", vim.log.levels.ERROR)
+      return
+    end
+    file:write(text)
+    file:close()
+    -- Redirect prettier's output, otherwise it shows up in the buffer
+    local cmd = 'prettier --prose-wrap never --write "' .. temp_file .. '" > /dev/null 2>&1'
+    local result = os.execute(cmd)
+    if result ~= 0 then
+      vim.notify("Error: Prettier formatting failed.", vim.log.levels.ERROR)
+      os.remove(temp_file)
+      return
+    end
+    file = io.open(temp_file, "r")
+    if file == nil then
+      vim.notify("Error: Cannot read from temporary file.", vim.log.levels.ERROR)
+      os.remove(temp_file)
+      return
+    end
+    local formatted_text = file:read("*all")
+    file:close()
+    vim.fn.setreg("+", formatted_text)
     os.remove(temp_file)
-    return
-  end
-  file = io.open(temp_file, "r")
-  if file == nil then
-    vim.notify("Error: Cannot read from temporary file.", vim.log.levels.ERROR)
-    os.remove(temp_file)
-    return
-  end
-  local formatted_text = file:read("*all")
-  file:close()
-  vim.fn.setreg("+", formatted_text)
-  os.remove(temp_file)
-  vim.notify("yanked markdown with --prose-wrap never", vim.log.levels.INFO)
-end, { desc = "[P]Copy selection formatted with Prettier", noremap = true, silent = true })
+    vim.notify("yanked markdown with --prose-wrap never", vim.log.levels.INFO)
+  end, { desc = "[P]Copy selection formatted with Prettier", noremap = true, silent = true })
+end
 
 local wk = require("which-key")
 wk.add({

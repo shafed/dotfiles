@@ -253,18 +253,13 @@ export FZF_DEFAULT_OPTS="
   --color=info:#d8a657,spinner:#d8a657,header:#a9b665
   --color=border:#504945,label:#d4be98"
 
-# Kitty window toggle from neovim's <M-t>
-# When focus is in this companion terminal, Alt-t closes it and returns to nvim.
-# Mirrors the open/close toggle in nvim's utils/kitty.lua.
-export KITTY_WINDOW_DIRECTION="right"
-
+# Quick Access Terminal toggle (mirrors nvim's <M-t> in utils/kitty.lua).
+# Inside the QAT panel, Alt-t re-sends the same toggle, which hides (minimises)
+# the panel — it is not closed, so this shell and its processes stay alive.
 function kitty_other_window() {
-  # This is the companion terminal: <M-t> closes it (returns focus to nvim).
-  if [[ -n "$KITTY_WINDOW_ID" ]]; then
-    kitten @ close-window --match="id:$KITTY_WINDOW_ID"
-  else
-    exit
-  fi
+  kitten @ launch --type=background kitten quick-access-terminal \
+    --config "$HOME/dotfiles/kitty/quick-access-terminal-center.conf" \
+    --instance-group nvim-term >/dev/null 2>&1
 }
 zvm_define_widget kitty_other_window
 

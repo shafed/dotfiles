@@ -253,13 +253,17 @@ export FZF_DEFAULT_OPTS="
   --color=info:#d8a657,spinner:#d8a657,header:#a9b665
   --color=border:#504945,label:#d4be98"
 
-# Quick Access Terminal toggle (mirrors nvim's <M-t> in utils/kitty.lua).
-# Inside the QAT panel, Alt-t re-sends the same toggle, which hides (minimises)
-# the panel — it is not closed, so this shell and its processes stay alive.
+# Kitty companion-pane toggle (mirrors nvim's <M-t> in utils/kitty.lua).
+# From this terminal, Alt-t jumps to the nvim window and zooms it (stack),
+# like the old tmux `select-pane -L \; resize-pane -Z`.
+# Direction must match vim.g.tmux_pane_direction in nvim (default: right).
+export KITTY_WINDOW_DIRECTION="right"
+
 function kitty_other_window() {
-  kitten @ launch --type=background kitten quick-access-terminal \
-    --config "$HOME/dotfiles/kitty/quick-access-terminal-right.conf" \
-    --instance-group nvim-term >/dev/null 2>&1
+  local move=left
+  [[ $KITTY_WINDOW_DIRECTION == "right" ]] || move=up
+  kitten @ action neighboring_window "$move"
+  kitten @ action goto_layout stack
 }
 zvm_define_widget kitty_other_window
 

@@ -259,14 +259,15 @@ export FZF_DEFAULT_OPTS="
 export KITTY_WINDOW_DIRECTION="right"
 
 function kitty_other_window() {
-  # Focus the nvim window (the neighbour in the configured direction) and then
-  # toggle stack layout so it fills the tab (mirrors tmux zoom behaviour).
-  if [[ $KITTY_WINDOW_DIRECTION == "right" ]]; then
-    kitten @ action neighboring_window left
-  else
-    kitten @ action neighboring_window up
+  # Mirror of nvim's <M-t>: zoom (stack) then jump focus to the neighbouring
+  # window (nvim), so we land *inside* nvim at full size. Using an explicit
+  # goto_layout (not toggle_layout) keeps both sides in sync.
+  local move=left
+  [[ $KITTY_WINDOW_DIRECTION == "right" ]] || move=up
+  if [[ "$(kitten @ ls | jq -r '.[] | select(.is_focused) | .tabs[] | select(.is_focused) | .layout')" != "stack" ]]; then
+    kitten @ action goto_layout stack
   fi
-  kitten @ action toggle_layout stack
+  kitten @ action neighboring_window "$move"
 }
 zvm_define_widget kitty_other_window
 

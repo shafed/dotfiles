@@ -5,7 +5,6 @@
 # bookmarks.sh, youtube.sh, youtube-qat.sh). Sourced, not executed; everything
 # here is safe under `set -euo pipefail`.
 
-fzf_colors_file="$HOME/dotfiles/colorscheme/active/active-fzf-colors.sh"
 qat_config="$HOME/dotfiles/kitty/quick-access-terminal-center.conf"
 kitty_bin="$(command -v kitty || echo /usr/bin/kitty)"
 
@@ -15,14 +14,6 @@ kitty_bin="$(command -v kitty || echo /usr/bin/kitty)"
 switch_to_english() {
   command -v hyprctl >/dev/null 2>&1 || return 0
   hyprctl switchxkblayout all 0 >/dev/null 2>&1 || true
-}
-
-# Source the active colorscheme's fzf palette (sets $linkarzu_fzf_colors).
-source_fzf_colors() {
-  if [[ -f "$fzf_colors_file" ]]; then
-    # shellcheck disable=SC1090
-    source "$fzf_colors_file"
-  fi
 }
 
 # Print the remote-control socket of the MAIN kitty process. Each QAT creates

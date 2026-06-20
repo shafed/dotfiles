@@ -310,11 +310,6 @@ run_picker() {
     --bind "change:reload($list_reload)"
   )
 
-  source_fzf_colors
-  if [[ -n "${linkarzu_fzf_colors:-}" ]]; then
-    fzf_args+=(--color="$linkarzu_fzf_colors")
-  fi
-
   local output key selected _name id _path wmclass
   while true; do
     switch_to_english

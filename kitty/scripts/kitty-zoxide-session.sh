@@ -63,8 +63,9 @@ if [[ -n "${work_main_dir:-}" ]]; then
   work_main_dir="$(normalize_path "$work_main_dir")"
 fi
 
-base_color="\033[1;38;2;169;182;101m"
-reset_color="\033[0m"
+# No custom palette: pickers inherit the terminal/fzf colorscheme.
+base_color=""
+reset_color=""
 
 bump_zoxide_score() {
   local path="$1"

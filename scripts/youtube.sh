@@ -459,7 +459,7 @@ shift $((OPTIND - 1))
 
 tab=$'\t'
 
-# (source_fzf_colors and switch_to_english come from lib.sh)
+# (switch_to_english comes from lib.sh)
 
 # Open a video in the browser on workspace 4, then focus it.
 #
@@ -528,7 +528,6 @@ open_video() {
 # or exits the whole script directly when a video was opened / nothing picked.
 search_live() {
   local query="$1" sel kind id handle
-  source_fzf_colors
   # Flip to English so the typed query is latin even from a Russian layout. When
   # launched via the QAT panel this only fires on a cold start (the panel toggle
   # reuses the process), so youtube-qat.sh also switches on every show.
@@ -653,7 +652,6 @@ search_live() {
     --preview "\"$script_self\" --preview {2} {4} {5} {3}"
     --preview-window "right,55%,wrap"
   )
-  [[ -n "${linkarzu_fzf_colors:-}" ]] && fzf_args+=(--color="$linkarzu_fzf_colors")
 
   # --ytsearch feeds rows on each keystroke (start/change reload). Column 6 is
   # the prefixed ◉/▶ line fzf shows; columns 1–3 carry kind/id/handle for the
@@ -882,11 +880,6 @@ if [[ -n "${channel_base:-}" ]]; then
   )
 fi
 trap 'rm -f "$vi_file" "$header_file" "${tab_file:-}"' EXIT
-
-source_fzf_colors
-if [[ -n "${linkarzu_fzf_colors:-}" ]]; then
-  fzf_args+=(--color="$linkarzu_fzf_colors")
-fi
 
 selected="$(fzf "${fzf_args[@]}" <"$cache_file")" || exit 0
 

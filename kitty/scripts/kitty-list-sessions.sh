@@ -29,9 +29,10 @@ set_cursor_bar() {
 # Always restore to bar on exit
 trap 'set_cursor_bar' EXIT
 
-base_color="\033[1;38;2;169;182;101m"
-current_color="\033[1;38;2;231;138;78m"
-reset_color="\033[0m"
+# No custom palette: the list inherits the terminal/fzf colorscheme.
+base_color=""
+current_color=""
+reset_color=""
 
 if ! command -v fzf >/dev/null 2>&1; then
   echo "fzf is not installed or not in PATH."

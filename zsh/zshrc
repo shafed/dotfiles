@@ -244,6 +244,15 @@ alias sioyek="LIBGL_ALWAYS_SOFTWARE=1 sioyek"
 export TODOIST_API_TOKEN="f3736efb85c6f5c726090bb92df83fa9b07a6b19"
 alias copyq='QT_QPA_PLATFORM=xcb copyq'
 
+# fzf colors: gruvbox-material (matches kitty current-theme.conf and nvim).
+# Applies to every fzf invocation (Ctrl-R, pickers, nvim fzf, etc.).
+export FZF_DEFAULT_OPTS="
+  --color=bg:#1d2021,bg+:#32302f,fg:#d4be98,fg+:#d4be98
+  --color=hl:#e78a4e,hl+:#e78a4e,gutter:#1d2021
+  --color=prompt:#7daea3,pointer:#a9b665,marker:#a9b665
+  --color=info:#d8a657,spinner:#d8a657,header:#a9b665
+  --color=border:#504945,label:#d4be98"
+
 # Kitty window toggle from neovim's <M-t>
 # When focus is in this zsh window, Alt-t jumps back to the neovim window and zooms it.
 # Direction must match vim.g.tmux_pane_direction in nvim (default: right).

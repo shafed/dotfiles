@@ -1,0 +1,7 @@
+layout tall
+
+cd ~/projects
+
+launch --title "projects" /bin/zsh -i -c 'nvim "+lua require(\"persistence\").load()"'
+focus
+focus_os_window

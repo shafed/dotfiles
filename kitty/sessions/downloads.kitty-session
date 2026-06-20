@@ -1,0 +1,7 @@
+layout tall
+
+cd ~/Downloads
+
+launch --title "downloads" /bin/zsh -i -c 'nvim'
+focus
+focus_os_window

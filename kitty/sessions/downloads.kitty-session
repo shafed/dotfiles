@@ -2,6 +2,6 @@ layout tall
 
 cd ~/Downloads
 
-launch --title "downloads" /bin/zsh -i -c 'nvim'
+launch --title "downloads" /bin/zsh -i -c 'nvim; exec zsh'
 focus
 focus_os_window

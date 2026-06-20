@@ -2,6 +2,6 @@ layout tall
 
 cd ~/dotfiles
 
-launch --title "dotfiles" /bin/zsh -i -c 'nvim "+lua require(\"persistence\").load()"'
+launch --title "dotfiles" /bin/zsh -i -c 'nvim "+lua require(\"persistence\").load()"; exec zsh'
 focus
 focus_os_window

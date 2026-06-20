@@ -2,6 +2,6 @@ layout tall
 
 cd ~/obsidian
 
-launch --title "obsidian" /bin/zsh -i -c 'git pull && nvim "+lua require(\"persistence\").load()"'
+launch --title "obsidian" /bin/zsh -i -c 'git pull && nvim "+lua require(\"persistence\").load()"; exec zsh'
 focus
 focus_os_window

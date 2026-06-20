@@ -43,7 +43,7 @@ session_file="${kitty_session_dir}/daily-${note_name}.kitty-session"
 cat >"$session_file" <<EOF
 layout tall
 cd ${note_dir}
-launch --title "${note_name}" zsh -ic 'git -C ~/obsidian pull && nvim "+norm G" "+lua require(\"persistence\").load()" ${full_path}'
+launch --title "${note_name}" zsh -ic 'git -C ~/obsidian pull && nvim "+norm G" "+lua require(\"persistence\").load()" ${full_path}; exec zsh'
 focus
 focus_os_window
 EOF

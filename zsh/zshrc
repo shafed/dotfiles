@@ -258,7 +258,7 @@ export FZF_DEFAULT_OPTS="
 # the panel — it is not closed, so this shell and its processes stay alive.
 function kitty_other_window() {
   kitten @ launch --type=background kitten quick-access-terminal \
-    --config "$HOME/dotfiles/kitty/quick-access-terminal-center.conf" \
+    --config "$HOME/dotfiles/kitty/quick-access-terminal-right.conf" \
     --instance-group nvim-term >/dev/null 2>&1
 }
 zvm_define_widget kitty_other_window

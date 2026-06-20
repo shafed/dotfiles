@@ -11,7 +11,7 @@
 local M = {}
 
 local INSTANCE_GROUP = "nvim-term"
-local QAT_CONFIG = vim.fn.expand("~/dotfiles/kitty/quick-access-terminal-center.conf")
+local QAT_CONFIG = vim.fn.expand("~/dotfiles/kitty/quick-access-terminal-right.conf")
 
 M.open = function(dir)
   local file_dir = dir or vim.fn.expand("%:p:h")

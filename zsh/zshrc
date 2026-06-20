@@ -259,13 +259,13 @@ export FZF_DEFAULT_OPTS="
 export KITTY_WINDOW_DIRECTION="right"
 
 function kitty_other_window() {
-  # Mirror of nvim's <M-t>: zoom (stack) then jump focus to the neighbouring
-  # window (nvim), so we land *inside* nvim at full size. Using an explicit
-  # goto_layout (not toggle_layout) keeps both sides in sync.
+  # Mirror of nvim's <M-t>: just move focus to the neighbouring window (nvim).
+  # Both windows stay visible side by side (no zoom). If we somehow ended up
+  # in stack layout, restore the split first.
   local move=left
   [[ $KITTY_WINDOW_DIRECTION == "right" ]] || move=up
-  if [[ "$(kitten @ ls | jq -r '.[] | select(.is_focused) | .tabs[] | select(.is_focused) | .layout')" != "stack" ]]; then
-    kitten @ action goto_layout stack
+  if [[ "$(kitten @ ls | jq -r '.[] | select(.is_focused) | .tabs[] | select(.is_focused) | .layout')" == "stack" ]]; then
+    kitten @ action goto_layout tall
   fi
   kitten @ action neighboring_window "$move"
 }

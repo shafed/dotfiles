@@ -68,26 +68,29 @@ M.open = function(dir)
   local move = (pane_direction == "right") and "right" or "down"
 
   if has_companion() then
-    -- A companion window exists. <M-t> should jump focus to the companion
-    -- (the terminal) and zoom it, so we land *inside* the terminal.
+    -- A companion window exists. <M-t> just moves focus to it (both stay
+    -- visible side by side, no zoom). cd it to the new directory if changed.
     if auto_cd_to_new_dir and vim.g.kitty_pane_dir ~= escaped_dir then
-      -- cd the companion (the unfocused window) to the new directory.
       vim.fn.system(
         "kitten @ send-text --match='not state:focused' 'cd \"" .. escaped_dir .. "\"\n'"
       )
       vim.g.kitty_pane_dir = escaped_dir
     end
-    -- Ensure we're zoomed (stack), then move focus to the neighbouring window.
-    -- In stack layout the focused window fills the tab, so this lands us in
-    -- the terminal at full size.
-    if not is_stack_layout() then
-      vim.fn.system("kitten @ action goto_layout stack")
+    -- If we somehow ended up in stack layout, restore the split so both are
+    -- visible, then move focus to the neighbouring (terminal) window.
+    if is_stack_layout() then
+      vim.fn.system("kitten @ action goto_layout tall")
     end
     vim.fn.system("kitten @ action neighboring_window " .. move)
   else
-    -- No companion yet: launch one and focus *into* it (no --keep-focus).
+    -- No companion yet: launch one beside nvim and focus into it.
     if vim.g.kitty_pane_dir == nil then
       vim.g.kitty_pane_dir = escaped_dir
+    end
+    -- Make sure the tab is in a split layout first; launching in stack would
+    -- open the new window full-screen instead of to the side.
+    if is_stack_layout() then
+      vim.fn.system("kitten @ action goto_layout tall")
     end
     vim.fn.system(
       "kitten @ launch --location="

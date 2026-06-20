@@ -29,10 +29,10 @@ set_cursor_bar() {
 # Always restore to bar on exit
 trap 'set_cursor_bar' EXIT
 
-# No custom palette: the list inherits the terminal/fzf colorscheme.
-base_color=""
-current_color=""
-reset_color=""
+# Gruvbox Material colors from ../current-theme.conf.
+base_color=$'\033[1;38;2;169;182;101m'    # color2: #a9b665
+current_color=$'\033[1;38;2;231;138;78m' # color3: #e78a4e
+reset_color=$'\033[0m'
 
 if ! command -v fzf >/dev/null 2>&1; then
   echo "fzf is not installed or not in PATH."

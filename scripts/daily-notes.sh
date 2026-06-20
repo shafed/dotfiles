@@ -31,20 +31,21 @@ if [[ ! -f "$full_path" ]]; then
 EOF
 fi
 
-# One tmux session per day, named after the note. On first use: pull the vault,
+# One kitty session per day, named after the note. On first use: pull the vault,
 # then open the note in neovim with the cursor on the last line (+norm G).
-tmux_session_name="$note_name"
+# persistence.load() reproduces the "reopen session" behaviour the old tmux
+# script achieved by pressing "s" in the start screen.
 
-if ! tmux has-session -t="$tmux_session_name" 2>/dev/null; then
-  tmux new-session -d -s "$tmux_session_name" -c "$note_dir"
-  tmux send-keys -t "$tmux_session_name" "git -C ~/obsidian pull && nvim +norm\\ G $full_path" C-m
-else
-  # Session exists but neovim was closed: reopen it, then press "s" in the
-  # start screen.
-  if ! tmux list-panes -t "$tmux_session_name" -F "#{pane_current_command}" | grep -q "nvim"; then
-    tmux send-keys -t "$tmux_session_name" "nvim" C-m
-    tmux send-keys -t "$tmux_session_name" "s"
-  fi
-fi
+kitty_session_dir="${XDG_CACHE_HOME:-$HOME/.cache}/kitty-sessions"
+mkdir -p "$kitty_session_dir"
+session_file="${kitty_session_dir}/daily-${note_name}.kitty-session"
 
-tmux switch-client -t "$tmux_session_name"
+cat >"$session_file" <<EOF
+layout tall
+cd ${note_dir}
+launch --title "${note_name}" zsh -ic 'git -C ~/obsidian pull && nvim "+norm G" "+lua require(\"persistence\").load()" ${full_path}'
+focus
+focus_os_window
+EOF
+
+kitten @ action goto_session "$session_file"

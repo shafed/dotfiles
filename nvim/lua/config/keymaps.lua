@@ -5,10 +5,10 @@ local obsidian = require("utils.obsidian")
 
 vim.keymap.set("x", "p", '"_dP') -- Don't copy visual in clipboard
 
--- Toggle a tmux pane (zsh) on the right with the current file's directory
+-- Toggle a kitty window (zsh) on the right with the current file's directory
 vim.keymap.set({ "n", "v", "i" }, "<M-t>", function()
-  require("utils.tmux").open()
-end, { desc = "[P]Terminal on tmux pane" })
+  require("utils.kitty").open()
+end, { desc = "[P]Terminal on kitty window" })
 
 -- Copy to clipboard
 vim.keymap.set({ "n", "v" }, "<leader>y", '"+y')

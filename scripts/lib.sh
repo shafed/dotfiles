@@ -8,6 +8,18 @@
 qat_config="$HOME/dotfiles/kitty/quick-access-terminal-center.conf"
 kitty_bin="$(command -v kitty || echo /usr/bin/kitty)"
 
+# QAT pickers run under bash, so they do not reliably inherit the interactive
+# zsh FZF_DEFAULT_OPTS. Keep their fzf palette pinned to kitty's Gruvbox
+# Material Dark Medium theme.
+export FZF_DEFAULT_OPTS="
+  --color=bg:#282828,bg+:#32302f,fg:#d4be98,fg+:#d4be98
+  --color=hl:#e78a4e,hl+:#e78a4e,gutter:#282828,alt-gutter:#282828
+  --color=prompt:#7daea3,pointer:#d8a657,marker:#89b482
+  --color=info:#d8a657,spinner:#d8a657,header:#a9b665
+  --color=border:#3c3836,list-border:#3c3836,preview-border:#3c3836
+  --color=scrollbar:#a89984,preview-scrollbar:#a89984,label:#d4be98
+  --pointer='▌' --marker='┃' --scrollbar='▐▌'"
+
 # Force the keyboard to English so fzf queries type as latin even when the
 # active layout is Russian. Index 0 is "us" in hyprland.conf's kb_layout
 # (us,ru). Best-effort: silently no-op outside Hyprland.

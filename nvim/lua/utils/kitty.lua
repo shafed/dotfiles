@@ -1,14 +1,9 @@
--- Toggle a kitty window (right or bottom) with zsh in the directory of the
--- current file, or in `dir` if provided.
+-- Toggle a companion kitty terminal window beside nvim, in the directory of
+-- the current file (or in `dir` if provided).
 --
--- Behavior:
---   * No companion window exists -> launch a new one (vsplit or hsplit) and
---     cd into target dir.
---   * Companion window exists, not in stack layout -> toggle_layout stack
---     (fills the tab with the current nvim window, like tmux zoom).
---   * Companion window exists, already in stack layout -> unstack, focus the
---     companion window, and (if auto_cd_to_new_dir) cd into the new directory
---     when it differs from the previously remembered one.
+-- Behavior (pure open/close toggle):
+--   * No companion window -> launch one (vsplit or hsplit) and focus into it.
+--   * Companion window exists -> close it and return to nvim.
 --
 -- Reads vim.g.tmux_pane_direction for call-site compatibility:
 --   "right" (default) -> vsplit (side-by-side)
@@ -57,7 +52,6 @@ local function has_companion()
 end
 
 M.open = function(dir)
-  local auto_cd_to_new_dir = true
   -- Honour the existing call-site global for direction
   local pane_direction = vim.g.tmux_pane_direction or "right"
   local split_location = (pane_direction == "right") and "vsplit" or "hsplit"
@@ -65,28 +59,15 @@ M.open = function(dir)
   local file_dir = dir or vim.fn.expand("%:p:h")
   local escaped_dir = file_dir:gsub("'", "'\\''")
 
-  local move = (pane_direction == "right") and "right" or "down"
-
   if has_companion() then
-    -- A companion window exists. <M-t> just moves focus to it (both stay
-    -- visible side by side, no zoom). cd it to the new directory if changed.
-    if auto_cd_to_new_dir and vim.g.kitty_pane_dir ~= escaped_dir then
-      vim.fn.system(
-        "kitten @ send-text --match='not state:focused' 'cd \"" .. escaped_dir .. "\"\n'"
-      )
-      vim.g.kitty_pane_dir = escaped_dir
-    end
-    -- If we somehow ended up in stack layout, restore the split so both are
-    -- visible, then move focus to the neighbouring (terminal) window.
-    if is_stack_layout() then
-      vim.fn.system("kitten @ action goto_layout tall")
-    end
-    vim.fn.system("kitten @ action neighboring_window " .. move)
+    -- Toggle OFF: a companion terminal exists -> close it and return to nvim.
+    -- This call comes from nvim (focus is on nvim), so close every other
+    -- window in the focused tab.
+    vim.fn.system("kitten @ close-window --match='not state:focused'")
+    vim.g.kitty_pane_dir = nil
   else
-    -- No companion yet: launch one beside nvim and focus into it.
-    if vim.g.kitty_pane_dir == nil then
-      vim.g.kitty_pane_dir = escaped_dir
-    end
+    -- Toggle ON: no companion -> launch one beside nvim and focus into it.
+    vim.g.kitty_pane_dir = escaped_dir
     -- Make sure the tab is in a split layout first; launching in stack would
     -- open the new window full-screen instead of to the side.
     if is_stack_layout() then

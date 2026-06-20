@@ -254,20 +254,17 @@ export FZF_DEFAULT_OPTS="
   --color=border:#504945,label:#d4be98"
 
 # Kitty window toggle from neovim's <M-t>
-# When focus is in this zsh window, Alt-t jumps back to the neovim window and zooms it.
-# Direction must match vim.g.tmux_pane_direction in nvim (default: right).
+# When focus is in this companion terminal, Alt-t closes it and returns to nvim.
+# Mirrors the open/close toggle in nvim's utils/kitty.lua.
 export KITTY_WINDOW_DIRECTION="right"
 
 function kitty_other_window() {
-  # Mirror of nvim's <M-t>: just move focus to the neighbouring window (nvim).
-  # Both windows stay visible side by side (no zoom). If we somehow ended up
-  # in stack layout, restore the split first.
-  local move=left
-  [[ $KITTY_WINDOW_DIRECTION == "right" ]] || move=up
-  if [[ "$(kitten @ ls | jq -r '.[] | select(.is_focused) | .tabs[] | select(.is_focused) | .layout')" == "stack" ]]; then
-    kitten @ action goto_layout tall
+  # This is the companion terminal: <M-t> closes it (returns focus to nvim).
+  if [[ -n "$KITTY_WINDOW_ID" ]]; then
+    kitten @ close-window --match="id:$KITTY_WINDOW_ID"
+  else
+    exit
   fi
-  kitten @ action neighboring_window "$move"
 }
 zvm_define_widget kitty_other_window
 

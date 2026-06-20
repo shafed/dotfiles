@@ -72,13 +72,24 @@ M.open = function(dir)
       vim.fn.system("kitten @ action goto_layout stack")
     end
   else
-    -- No companion yet -> split a new one beside nvim.
+    -- No companion yet -> split a new one beside nvim, as a narrow edge-right
+    -- pane (not half/full screen).
     if vim.g.kitty_pane_dir == nil then
       vim.g.kitty_pane_dir = escaped_dir
     end
+    -- Make sure the tab is in a split layout first; launching in stack would
+    -- open the new window full-screen instead of to the side.
+    if tab and tab.layout ~= "tall" then
+      vim.fn.system("kitten @ action goto_layout tall")
+    end
+    -- --bias sets the new window's size: ~35% width for a vsplit (right edge),
+    -- ~30% height for an hsplit (bottom edge).
+    local bias = (pane_direction == "right") and 35 or 30
     vim.fn.system(
       "kitten @ launch --location="
         .. split_location
+        .. " --bias "
+        .. bias
         .. " --cwd '"
         .. escaped_dir
         .. "' --env DISABLE_PULL=1 zsh"

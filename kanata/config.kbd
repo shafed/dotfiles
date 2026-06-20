@@ -23,8 +23,7 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
                      ;; keys must land near-simultaneously, so sequential rolls
                      ;; like "fd" don't trigger Ctrl+Shift.
   subl-time 200
-  tmux-delay 20
-  aterm-settle 250  ;; kitty-launch settle time before sending tmux keys
+  aterm-settle 250  ;; kitty-focus settle time before sending the session hotkey
 )
 
 (deftemplate th (timeouttap timeouthold keytap keyhold)
@@ -59,9 +58,10 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
   )
 )
 
-;; tmux-send focuses kitty, then sends the tmux prefix (C-s) followed by $key
-(deftemplate tmux-send (key)
-  (macro @aterm $aterm-settle C-s $tmux-delay $key)
+;; kitty-send focuses kitty, then sends a kitty hotkey (kitty_mod = C-S-)
+;; that drives native sessions. Replaces the old tmux prefix (C-s) scheme.
+(deftemplate kitty-send (key)
+  (macro @aterm $aterm-settle $key)
 )
 
 (defalias
@@ -96,7 +96,7 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
  ralt (t! th $tot 160 @sw (layer-while-held apps))  ;; tap=switch lang hold=apps
  c (t! th $tap-time $hold-time c C-c)
  v (t! th $tap-time $hold-time v C-v)
- b (t! th $tap-time $hold-time b (macro @aterm 100 C-s $tmux-delay spc)) ;; tmux alternate session
+ b (t! th $tap-time $hold-time b (macro @aterm 100 A-tab)) ;; kitty last session (goto_session -1)
  x (t! th $tap-time $hold-time x (cmd hyprctl dispatch cyclenext)) ;; focus last window in current workspace
  z (t! th $tap-time $hold-time z (cmd hyprctl dispatch workspace previous)) ;; focus last workspace
 
@@ -110,26 +110,25 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
 
 (deflayermap (apps)
    
-  f (t! tmux-send f)
-  j (t! tmux-send s)
+  f (t! kitty-send C-S-f)   ;; zoxide session picker
+  j (t! kitty-send C-S-s)   ;; list sessions picker
   q (cmd hyprctl dispatch killactive)
-  e (t! tmux-send C-y)
-  t (t! tmux-send C-t)
-  r (t! tmux-send C-1)
+  t (t! kitty-send C-S-t)   ;; todos session
+  r (t! kitty-send C-S-1)   ;; daily note
   y (cmd firefox --new-window https://www.youtube.com/playlist?list=WL)
   u (cmd zsh -lc "$HOME/dotfiles/scripts/youtube-qat.sh") ;; yoUtube channel search QAT
   b (cmd zsh -lc "$HOME/dotfiles/scripts/bookmarks.sh") ;; Bookmarks fzf QAT
   a (cmd zsh -lc "$HOME/dotfiles/scripts/apps.sh") ;; Applications fzf QAT
-  o (t! tmux-send C-o)
-  w (t! tmux-send C-w)
-  h (t! tmux-send C-a)
+  o (t! kitty-send C-S-o)   ;; obsidian session
+  w (t! kitty-send C-S-w)   ;; downloads session
+  h (t! kitty-send C-S-a)   ;; home session
   s (tap-hold-press $subl-time $subl-time (cmd firefox) (layer-toggle browser))
   ;; a (layer-while-held terminal)
   ;; t (multi (cmd hyprctl dispatch workspace 5) (cmd telegram-desktop))
-  d (t! tmux-send C-d)
+  d (t! kitty-send C-S-d)   ;; dotfiles session
   g (cmd todoist)
   z (cmd zsh -lc "$HOME/.config/kanata/switchApp.sh sioyek 'LIBGL_ALWAYS_SOFTWARE=1 sioyek'")
-  p (t! tmux-send C-c)
+  p (t! kitty-send C-S-c)   ;; projects session
   . (cmd rofimoji -a clipboard)
   caps caps
 )
@@ -180,7 +179,7 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
  f (t! th $tot 160 f lsft)
  d (t! th $tot 300 d lctl)
  s @sshot
- i (t! tmux-send i) ;; tmux scrollback (prefix i) -> full pane history in nvim
+ i (t! kitty-send C-S-i) ;; kitty scrollback -> full pane history in nvim
 )
 
 (defchordsv2

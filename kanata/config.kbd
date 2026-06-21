@@ -78,8 +78,6 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
 )
 
 (defvirtualkeys
-  sym-us (cmd /usr/bin/python /home/shafed/dotfiles/scripts/symlayout-watch.py enter)
-  sym-restore (cmd /usr/bin/python /home/shafed/dotfiles/scripts/symlayout-watch.py leave)
   sym-us (cmd /bin/sh /home/shafed/dotfiles/scripts/symlayout-watch.sh enter)
   sym-restore (cmd /bin/sh /home/shafed/dotfiles/scripts/symlayout-watch.sh leave)
 )
@@ -118,7 +116,7 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
 (deflayermap (apps)
    
   f (t! kitty-send C-S-f)   ;; zoxide session picker
-  j (t! kitty-send C-S-s)   ;; list sessions picker
+  j (layer-while-held numws)  ;; hold: switch workspace (Super+digit, left-hand digits)
   q (cmd hyprctl dispatch killactive)
   t (t! kitty-send C-S-2)   ;; todos session
   r (t! kitty-send C-S-1)   ;; daily note
@@ -135,6 +133,10 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
   d (t! kitty-send C-S-d)   ;; dotfiles session
   g (cmd todoist)
   z (cmd zsh -lc "$HOME/.config/kanata/switchApp.sh sioyek 'LIBGL_ALWAYS_SOFTWARE=1 sioyek'")
+  k (layer-while-held movews) ;; hold: Move focused window to workspace (left-hand digits)
+  ; (layer-while-held numplain) ;; hold: plain digits (left-hand)
+  e (multi (on-press tap-vkey sym-us) (on-release tap-vkey sym-restore) (layer-while-held symbols)) ;; hold (use LALT): symbol layer; add r for symbols2. left-hand hold keeps right hand free
+  l (t! kitty-send C-S-s)   ;; list sessions picker
   p (t! kitty-send C-S-c)   ;; projects session
   . (cmd rofimoji -a clipboard)
   caps caps
@@ -164,6 +166,7 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
   y grv u [   i ]   o =   p \        ;; ` [ ] = \
   h S-2 j S-9 k S-0 l S-\ ; ;   ' '  ;; @ ( ) | ; '
   n S-- m - , S-6 . S-4   / S-/      ;; _ - ^ $ ?
+  r (layer-while-held symbols2)      ;; escalate: add r (index) -> symbols2
 )
 
 ;; second symbol set, momentary (entered via a+s+d+f chord held). longer chord
@@ -190,6 +193,13 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
 (deflayermap (numtab)
   q A-6 w A-7 e A-8 r A-9 t A-0   ;; Alt+6..0  (Firefox tabs; A-9 = last tab)
   a A-1 s A-2 d A-3 f A-4 g A-5   ;; Alt+1..5
+)
+
+;; move focused window to workspace, momentary (apps layer: hold lalt/ralt + k).
+;; mirrors numws but with Super+Shift (Hyprland movetoworkspace).
+(deflayermap (movews)
+  q M-S-6 w M-S-7 e M-S-8 r M-S-9 t M-S-0   ;; Super+Shift+6..0  (workspaces 6-10)
+  a M-S-1 s M-S-2 d M-S-3 f M-S-4 g M-S-5   ;; Super+Shift+1..5  (workspaces 1-5)
 )
 
 ;; plain digits on the left hand, momentary (entered via j+k+l held).

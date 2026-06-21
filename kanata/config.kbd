@@ -115,7 +115,8 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
 
 (deflayermap (apps)
    
-  f (t! kitty-send C-S-f)   ;; zoxide session picker
+  e (t! kitty-send C-S-f)   ;; zoxide session picker
+  f (multi (on-press tap-vkey sym-us) (on-release tap-vkey sym-restore) (layer-while-held symbols)) ;; hold (use LALT): symbol layer; add d for symbols2. left-hand hold keeps right hand free
   j (layer-while-held numws)  ;; hold: switch workspace (Super+digit, left-hand digits)
   q (cmd hyprctl dispatch killactive)
   t (t! kitty-send C-S-2)   ;; todos session
@@ -135,7 +136,6 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
   z (cmd zsh -lc "$HOME/.config/kanata/switchApp.sh sioyek 'LIBGL_ALWAYS_SOFTWARE=1 sioyek'")
   k (layer-while-held movews) ;; hold: Move focused window to workspace (left-hand digits)
   ; (layer-while-held numplain) ;; hold: plain digits (left-hand)
-  e (multi (on-press tap-vkey sym-us) (on-release tap-vkey sym-restore) (layer-while-held symbols)) ;; hold (use LALT): symbol layer; add r for symbols2. left-hand hold keeps right hand free
   l (t! kitty-send C-S-s)   ;; list sessions picker
   p (t! kitty-send C-S-c)   ;; projects session
   . (cmd rofimoji -a clipboard)
@@ -166,7 +166,7 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
   y grv u [   i ]   o =   p \        ;; ` [ ] = \
   h S-2 j S-9 k S-0 l S-\ ; ;   ' '  ;; @ ( ) | ; '
   n S-- m - , S-6 . S-4   / S-/      ;; _ - ^ $ ?
-  r (layer-while-held symbols2)      ;; escalate: add r (index) -> symbols2
+  d (layer-while-held symbols2)      ;; escalate: add d (middle) -> symbols2
 )
 
 ;; second symbol set, momentary (entered via a+s+d+f chord held). longer chord

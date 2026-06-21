@@ -150,24 +150,27 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
 ;; left hand holds s/d/f, so all symbols live on the right hand.
 ;; Kanata switches the kanata xkb device to US while this layer is held, so the
 ;; plain S-... keycodes output identical symbols on both US and RU layouts.
-;; KEY-ALIGNED: most keys hold a symbol/Shift PAIR across both layers, so
-;; symbols2 (a+s+d+f) is the same key with the pinky added. exceptions: m holds
-;; #/$ (both common, neither in any other slot) and , holds </> (rarely used).
-;; top row = y u i o p (5 keys). brackets () on the strong home-row j k.
+;; FREQUENCY-ORDERED: the hot symbols sit on the strong home row. () on j k
+;; (function calls), @ on h (claude-code @file, email), | on l (cli pipes),
+;; ` on y (code spans). bottom row keeps the frequent _ - pair plus ^ $ for
+;; nvim/shell. the rarer ! # * % & < > live on symbols2 below.
+;; top row = y u i o p (5 keys).
 (deflayermap (symbols)
-  y grv u [   i ]   o =   p \      ;; ` [ ] = \
-  h S-8 j S-9 k S-0 ; ;   ' '      ;; * ( ) ; '
-  n S-6 m S-3 , S-, . -   / S-/    ;; ^ # < - ?
+  y grv u [   i ]   o =   p \        ;; ` [ ] = \
+  h S-2 j S-9 k S-0 l S-\ ; ;   ' '  ;; @ ( ) | ; '
+  n S-- m - , S-6 . S-4   / S-/      ;; _ - ^ $ ?
 )
 
 ;; second symbol set, momentary (entered via a+s+d+f chord held). longer chord
 ;; wins over (s d f), so adding the `a` pinky shifts into this layer.
-;; the number-row shifts ! @ # $ % ^ & * sit in physical keyboard order on the
-;; two bottom rows: h j k l = ! @ # $, n m , . = % ^ & *. : " / fill the rest.
+;; holds the symbols that don't fit on symbols: the shifted brackets ~ { } +,
+;; then ! # * & on the home row, % < > on the bottom row. : " on ; ' keys.
+;; @ ( ) | _ - ^ $ ` deliberately live on symbols (the shorter, hotter chord)
+;; and are NOT duplicated here.
 (deflayermap (symbols2)
-  y S-grv u S-[ i S-] o S-= p S-\      ;; ~ { } + |
-  h S-1 j S-2 k S-3 l S-4 ; S-; ' S-'  ;; ! @ # $ : "
-  n S-5 m S-6 , S-7 . S-8 / /          ;; % ^ & * /
+  y S-grv u S-[ i S-] o S-= p XX       ;; ~ { } +     (| is on symbols, l)
+  h S-1 j S-3 k S-8 l S-7  ; S-; ' S-' ;; ! # * & : "
+  n S-5 m XX  , S-, . S-. / /          ;; %   < > /
 )
 
 ;; left-hand number layers, momentary. entered via chords: (k l) -> numws

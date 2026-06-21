@@ -143,10 +143,26 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
 
 ;; right-hand programmer symbols, momentary (entered via s+d+f chord held).
 ;; left hand holds s/d/f, so all symbols live on the right hand.
+;; symbols are plain S-..., correct in BOTH terminals and GUI -- but only on the
+;; US xkb layout (on RU/ЙЦУКЕН, Shift+2 = " etc.). a TCP watcher daemon
+;; (scripts/symlayout-watch.py) listens for LayerChange over kanata's --port and
+;; forces US while these layers are active, restoring the previous layout on exit.
+;; KEY-ALIGNED: every key holds a symbol/Shift PAIR across both layers, so
+;; symbols2 (a+s+d+f) is the same key with the pinky added.
+;; top row = y u i o p (5 keys). brackets () on the strong home-row j k.
 (deflayermap (symbols)
-  y S-1 u S-2 i S-3 o S-4 p S-5   ;; ! @ # $ %
-  h S--  j S-9 k S-0 l =   ; -    ;; _ ( ) = -   (home row: most-used)
-  n S-6 m S-7 , S-8 . S-=  / S-\   ;; ^ & * + |
+  y grv u [   i ]   o =   p \      ;; ` [ ] = \
+  h S-8 j S-9 k S-0 l ;   ; '      ;; * ( ) ; '
+  n S-6 m ,   , .   . -   / S-/    ;; ^ , . - ?
+)
+
+;; second symbol set, momentary (entered via a+s+d+f chord held). longer chord
+;; wins over (s d f), so adding the `a` pinky shifts into this layer.
+;; each key = the Shift of its symbols-layer value (same key, pinky added).
+(deflayermap (symbols2)
+  y S-grv u S-[ i S-] o S-= p S-\  ;; ~ { } + |
+  h S-7 j S-1 k S-2 l S-; ; S-'    ;; & ! @ : "
+  n S-5 m S-, , S-. . S-- / /      ;; % < > _ /
 )
 
 ;; left-hand number layers, momentary. entered via chords: (k l) -> numws
@@ -192,6 +208,7 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
 (s f) (multi lmet lsft) $mod-chord-time all-released ()
 (l j) (multi rmet rsft) $mod-chord-time all-released ()
 (s d f) (layer-while-held symbols) $mod-chord-time all-released () ;; symbol layer
+(a s d f) (layer-while-held symbols2) $mod-chord-time all-released () ;; symbol layer 2 (! @ # $ %)
 (j k l) (layer-while-held numplain) $mod-chord-time all-released () ;; number layer
 (k l) (layer-while-held numws) $mod-chord-time all-released ()    ;; Super+digit workspace
 (l ;) (layer-while-held numtab) $mod-chord-time all-released () ;; Alt+digit firefox tabs

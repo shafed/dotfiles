@@ -44,6 +44,126 @@ cache_dir="$HOME/.cache/bookmarks-fzf"
 recent_file="$cache_dir/recent.tsv"
 recent_max=50
 
+# Search engine used when the typed query matches no bookmark (or the user hits
+# Enter on an empty result list). %s is replaced with the URL-encoded query.
+search_url_template="https://www.google.com/search?q=%s"
+
+# URL-encode a string for use in a query parameter. Iterates byte-by-byte under
+# the C locale so multibyte (UTF-8) characters are percent-escaped per byte,
+# yielding valid encodings like %C3%A9 for "é".
+urlencode() {
+  local s="$1" out="" c i
+  local LC_ALL=C
+  for ((i = 0; i < ${#s}; i++)); do
+    c="${s:i:1}"
+    case "$c" in
+    [a-zA-Z0-9.~_-]) out+="$c" ;;
+    *) printf -v c '%%%02X' "'$c"; out+="$c" ;;
+    esac
+  done
+  printf '%s\n' "$out"
+}
+
+# Build a search-engine URL for a raw query string.
+search_url_for() {
+  local q
+  q="$(urlencode "$1")"
+  printf "${search_url_template}\n" "$q"
+}
+
+# Display-column icons. Bookmark/recent rows are tagged with a star, live web
+# suggestions with a magnifier, so the merged list reads like a browser address
+# bar. Icons live only in the display column (1); column 2 stays a clean URL so
+# open_or_focus and the recents log are unaffected.
+bookmark_icon="★"
+suggest_icon="🔍"
+# Endpoint for live search suggestions. client=firefox returns simple JSON:
+# [query, [suggestion, ...], ...]. Tunable alongside search_url_template.
+suggest_url_template="https://suggestqueries.google.com/complete/search?client=firefox&q=%s"
+# Debounce before a suggestion fetch actually hits the network. fzf kills the
+# previous reload process on each keystroke, so this leading pause means only a
+# lull in typing lets the curl run — no request per character.
+suggest_debounce="0.18"
+suggest_max=8
+
+# Fetch live search suggestions for a query and print them as picker rows:
+# "<icon> <suggestion>\t<suggestion text>\tsuggest". Column 2 holds the raw
+# suggestion; the picker loop turns it into a search URL (search_url_for) when it
+# opens a type=suggest row, keeping URL-encoding in bash rather than jq.
+# Prints nothing (and never errors) on empty query, missing tools, or no network.
+suggest_rows() {
+  local q="$1" encoded json
+  [[ -n "$q" ]] || return 0
+  command -v curl >/dev/null 2>&1 || return 0
+  command -v jq >/dev/null 2>&1 || return 0
+
+  # Leading debounce: if the user is still typing, fzf kills us before this
+  # returns and no request is made.
+  sleep "$suggest_debounce"
+
+  encoded="$(urlencode "$q")"
+  json="$(curl -s --max-time 2 "$(printf "$suggest_url_template" "$encoded")" 2>/dev/null)" || return 0
+  [[ -n "$json" ]] || return 0
+
+  local rows
+  rows="$(printf '%s' "$json" | jq -r --arg icon "$suggest_icon" --argjson max "$suggest_max" '
+    (.[1] // [])[:$max][]
+    | select(. != null and . != "")
+    | "\($icon) \(.)\t\(.)\tsuggest"
+  ' 2>/dev/null)"
+  [[ -n "$rows" ]] || return 0
+
+  # Non-selectable separator (empty col2 + type "sep"); printed only when there
+  # are real suggestions to sit under it, so it never flashes alone.
+  printf '%s\t\tsep\n' "────────────────────────────"
+  printf '%s\n' "$rows"
+}
+
+# Add the bookmark icon to disk-backed rows and a trailing type column so the
+# merged list is uniform: "<icon> <name>\t<url>\tbookmark". Reads name<tab>url.
+decorate_bookmarks() {
+  awk -F'\t' -v icon="$bookmark_icon" 'NF >= 2 { printf "%s %s\t%s\tbookmark\n", icon, $1, $2 }'
+}
+
+# Filter "name<tab>url" rows by a query, matched as a case-insensitive,
+# whitespace-tolerant subsequence over name+url (so "rs async" matches
+# "Rust async book"). Keeps input order. Empty query passes everything through.
+filter_bookmarks() {
+  local q="$1"
+  [[ -n "$q" ]] || { cat; return 0; }
+  awk -F'\t' -v q="$q" '
+    BEGIN {
+      n = split(tolower(q), terms, /[ \t]+/)
+    }
+    {
+      hay = tolower($1 " " $2)
+      ok = 1
+      for (i = 1; i <= n; i++) {
+        if (terms[i] != "" && index(hay, terms[i]) == 0) { ok = 0; break }
+      }
+      if (ok) print
+    }
+  '
+}
+
+# The combined list fzf reloads on every keystroke. fzf's reload() streams, so
+# we print the fast local part (filtered, decorated bookmarks) first — it shows
+# instantly — then the debounced web suggestions, which stream in after the
+# network round-trip. Empty query -> decorated recents only.
+#
+# The separator is printed by suggest_rows itself (only when suggestions exist)
+# so it never appears alone before the slow fetch resolves.
+combined_list() {
+  local q="$1"
+  if [[ -z "$q" ]]; then
+    recent_bookmarks | decorate_bookmarks
+    return 0
+  fi
+
+  all_bookmarks | filter_bookmarks "$q" | decorate_bookmarks
+  suggest_rows "$q"
+}
+
 # Print every bookmark row from all sources (the full search list). Used when a
 # query is typed. Kept as its own subcommand so fzf can reload it cheaply.
 all_bookmarks() {
@@ -364,47 +484,91 @@ run_picker() {
     exit 1
   fi
 
-  # Empty query -> recently opened; any typed query -> full catalog. fzf re-runs
-  # these subcommands of ourself on start and on every keystroke.
+  # fzf re-runs this subcommand of ourself on start and on every keystroke,
+  # passing the current query. combined_list returns decorated bookmarks (and,
+  # for a non-empty query, live web suggestions below a separator).
   local quoted_self list_reload
   printf -v quoted_self '%q' "$script_path"
-  list_reload="if [[ -z {q} ]]; then $quoted_self --recent; else $quoted_self --all; fi"
+  list_reload="$quoted_self --list {q}"
 
   local fzf_args=(
     --height=100%
     --reverse
     --delimiter=$'\t'
     --with-nth=1
-    --header="Empty = recent, type to search all"
+    --print-query
+    # We do all matching/ordering in combined_list and feed fzf the final list,
+    # so disable fzf's own filtering. {q} still reflects the typed query for the
+    # reload binds; fzf is just a chooser over our pre-built rows.
+    --disabled
+    --header="★ bookmarks · 🔍 web suggestions · Enter on no match = web search"
     --prompt="Open bookmark > "
     --bind "start:reload($list_reload)"
     --bind "change:reload($list_reload)"
   )
 
-  local selected _name url
+  local out rc query selected _disp url _type _name
   while true; do
-    # Esc makes fzf exit non-zero. Treat it as "hide and rearm" so the next
-    # keypress shows an already-running picker instead of starting from cold.
+    # --print-query makes fzf emit the typed query as the first output line,
+    # followed by the selected row (if any). Exit codes:
+    #   0   - a row was selected (Enter on a match)
+    #   1   - no match for the query (Enter with nothing to select)
+    #   130 - aborted (Esc)
     # The list itself comes from the reload binds, so feed fzf an empty stdin.
-    if ! selected=$(: | fzf "${fzf_args[@]}"); then
+    out=$(: | fzf "${fzf_args[@]}") && rc=0 || rc=$?
+
+    # Esc: hide and rearm so the next keypress shows the already-running picker
+    # instead of cold-starting it.
+    if [[ "$rc" -eq 130 ]]; then
       toggle_qat "$bookmarks_group"
       continue
     fi
 
-    IFS=$'\t' read -r _name url <<<"$selected"
+    # First line is the query; remaining line (if any) is the selected row.
+    query="${out%%$'\n'*}"
+    selected=""
+    [[ "$out" == *$'\n'* ]] && selected="${out#*$'\n'}"
 
-    if [[ -z "${url:-}" ]]; then
-      echo "Invalid bookmark: $selected"
-      read -r -p "Press enter to continue. "
-      toggle_qat "$bookmarks_group"
+    # No bookmark matched: fall back to a web search for the typed query so a
+    # miss still lands somewhere useful instead of dead-ending.
+    if [[ "$rc" -ne 0 || -z "$selected" ]]; then
+      if [[ -n "$query" ]]; then
+        toggle_qat "$bookmarks_group"
+        open_or_focus "$(search_url_for "$query")"
+      else
+        toggle_qat "$bookmarks_group"
+      fi
       continue
     fi
 
-    # Log this open so the bookmark rises to the top of next time's recents.
-    record_open "$_name" "$url"
+    # Rows are "<icon> <name>\t<col2>\t<type>". col2 is a URL for bookmarks and
+    # the raw suggestion text for suggestions; the separator has empty col2.
+    IFS=$'\t' read -r _disp url _type <<<"$selected"
 
+    case "$_type" in
+    suggest)
+      # Turn the chosen suggestion into a search and open it. Nothing logged to
+      # recents — suggestions are transient.
+      toggle_qat "$bookmarks_group"
+      [[ -n "$url" ]] && open_or_focus "$(search_url_for "$url")"
+      continue
+      ;;
+    bookmark)
+      # Real bookmark: log it so it rises in next time's recents (icon stripped).
+      if [[ -n "${url:-}" ]]; then
+        _name="${_disp#"$bookmark_icon" }"
+        record_open "$_name" "$url"
+        toggle_qat "$bookmarks_group"
+        open_or_focus "$url"
+        continue
+      fi
+      ;;
+    esac
+
+    # Separator or any urless row: fall back to a web search for the typed query
+    # rather than dead-ending.
     toggle_qat "$bookmarks_group"
-    open_or_focus "$url"
+    [[ -n "$query" ]] && open_or_focus "$(search_url_for "$query")"
   done
 }
 
@@ -416,6 +580,11 @@ case "${1:-}" in
   ;;
 --all)
   all_bookmarks
+  ;;
+--list)
+  # Combined provider for fzf's reload binds: decorated bookmarks + live web
+  # suggestions for the (possibly empty) query in $2.
+  combined_list "${2:-}"
   ;;
 --sync-firefox)
   export_firefox_bookmarks

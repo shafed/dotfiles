@@ -120,7 +120,7 @@ fi
 # types, so it must be self-contained and fast (flat search, no per-item fetch).
 #
 # Called as: --ytsearch <mode> <query>, where mode is "videos" or "channels"
-# (toggled in the picker with Ctrl-T). The two are separate searches, not merged,
+# (picked in the picker with Ctrl-V/Ctrl-C). The two are separate searches, not merged,
 # so each mode shows a clean single list:
 #   videos   — plain `ytsearch:` = YouTube's "All" tab, in relevance order. Mostly
 #              videos; reads like the real YouTube search bar.
@@ -459,7 +459,7 @@ shift $((OPTIND - 1))
 
 tab=$'\t'
 
-# (source_fzf_colors and switch_to_english come from lib.sh)
+# (switch_to_english comes from lib.sh)
 
 # Open a video in the browser on workspace 4, then focus it.
 #
@@ -520,29 +520,28 @@ open_video() {
 
 # Live YouTube search, like the site's search bar: the user types in fzf and
 # every keystroke re-queries YouTube (change:reload calls us back in
-# --ytsearch mode). Two modes, toggled with Ctrl-T: videos (▶, the default) and
-# channels (◉). Enter on a video opens it; Enter on a channel sets $target to its
+# --ytsearch mode). Two modes: videos (▶, the default, Ctrl-V) and channels
+# (◉, Ctrl-C). Enter on a video opens it; Enter on a channel sets $target to its
 # @handle and returns so the caller falls through to that channel's video listing.
 #
 # Returns 0 with $target set to an @handle (caller continues in channel mode),
 # or exits the whole script directly when a video was opened / nothing picked.
 search_live() {
   local query="$1" sel kind id handle
-  source_fzf_colors
   # Flip to English so the typed query is latin even from a Russian layout. When
   # launched via the QAT panel this only fires on a cold start (the panel toggle
   # reuses the process), so youtube-qat.sh also switches on every show.
   switch_to_english
 
   # Mode (videos|channels) lives in a temp file so fzf's static reload binds can
-  # read the current value; Ctrl-T rewrites it and reloads. Start in videos mode.
+  # read the current value; Ctrl-V/Ctrl-C rewrite it and reload. Start in videos mode.
   local mode_file
   mode_file="$(mktemp -t yt-search-mode.XXXXXX)"
   printf 'videos' >"$mode_file"
   # (state files are cleaned by the RETURN trap set up with $vi_file below)
 
   # The "source" decides what typing searches: live YouTube (search), or WITHIN
-  # the loaded history / watch-later list. Ctrl-H/Ctrl-L flip it; Ctrl-T (and a
+  # the loaded history / watch-later list. Ctrl-H/Ctrl-L flip it; Ctrl-V/Ctrl-C (and a
   # fresh search) flip it back to "search". The change bind reads this to pick
   # which command a keystroke reloads. Cache files hold the once-fetched
   # history/later rows so per-keystroke filtering stays local (no re-fetch).
@@ -553,7 +552,7 @@ search_live() {
   watchlater_cache="$(mktemp -t yt-watchlater.XXXXXX)"
 
   # The reload binds call --ytsearch with the mode read from $mode_file, so a
-  # Ctrl-T flip takes effect on the very next reload without re-launching fzf.
+  # Ctrl-V/Ctrl-C flip takes effect on the very next reload without re-launching fzf.
   local search_cmd="\"$script_self\" --ytsearch \"\$(cat '$mode_file')\" {q}"
   # Ctrl-H / Ctrl-L load the watch history / "Watch later" playlist into the same
   # picker (rows are emitted in the search format, kind=video, so Enter opens them
@@ -653,7 +652,6 @@ search_live() {
     --preview "\"$script_self\" --preview {2} {4} {5} {3}"
     --preview-window "right,55%,wrap"
   )
-  [[ -n "${linkarzu_fzf_colors:-}" ]] && fzf_args+=(--color="$linkarzu_fzf_colors")
 
   # --ytsearch feeds rows on each keystroke (start/change reload). Column 6 is
   # the prefixed ◉/▶ line fzf shows; columns 1–3 carry kind/id/handle for the
@@ -882,11 +880,6 @@ if [[ -n "${channel_base:-}" ]]; then
   )
 fi
 trap 'rm -f "$vi_file" "$header_file" "${tab_file:-}"' EXIT
-
-source_fzf_colors
-if [[ -n "${linkarzu_fzf_colors:-}" ]]; then
-  fzf_args+=(--color="$linkarzu_fzf_colors")
-fi
 
 selected="$(fzf "${fzf_args[@]}" <"$cache_file")" || exit 0
 

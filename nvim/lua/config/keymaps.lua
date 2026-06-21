@@ -5,10 +5,10 @@ local obsidian = require("utils.obsidian")
 
 vim.keymap.set("x", "p", '"_dP') -- Don't copy visual in clipboard
 
--- Toggle a tmux pane (zsh) on the right with the current file's directory
+-- Toggle a kitty window (zsh) on the right with the current file's directory
 vim.keymap.set({ "n", "v", "i" }, "<M-t>", function()
-  require("utils.tmux").open()
-end, { desc = "[P]Terminal on tmux pane" })
+  require("utils.kitty").open()
+end, { desc = "[P]Terminal on kitty window" })
 
 -- Copy to clipboard
 vim.keymap.set({ "n", "v" }, "<leader>y", '"+y')
@@ -38,6 +38,21 @@ vim.keymap.set(
 
 if vim.env.KITTY_SIMPLE_SCROLLBACK == "1" then
   vim.keymap.set("v", "y", [["+y<cmd>q!<cr>]], { desc = "[P]Yank to system clipboard + quit" })
+  -- Also quit after a normal-mode yank (yy, yw, yip, ...). `y` is an operator there
+  -- so it can't be mapped directly; TextYankPost fires once the yank completes.
+  -- clipboard="" (options.lua) means a bare yank lands only in the unnamed register,
+  -- so mirror the yanked text into "+ before leaving. quit can't run inside the
+  -- autocmd (textlock), so defer it via vim.schedule.
+  vim.api.nvim_create_autocmd("TextYankPost", {
+    callback = function()
+      if vim.v.event.operator == "y" and vim.fn.mode() == "n" then
+        vim.fn.setreg("+", vim.v.event.regcontents, vim.v.event.regtype)
+        vim.schedule(function()
+          vim.cmd("q!")
+        end)
+      end
+    end,
+  })
 else
   -- Yank to system clipboard; in markdown run the selection through Prettier
   -- (--prose-wrap never) first so wrapped lines are unwrapped on paste

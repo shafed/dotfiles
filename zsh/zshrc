@@ -8,7 +8,7 @@ export ZSH="$HOME/.oh-my-zsh"
 # load a random theme each time Oh My Zsh is loaded, in which case,
 # to know which specific one was loaded, run: echo $RANDOM_THEME
 # See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
-ZSH_THEME="robbyrussell"
+ZSH_THEME="gruvbox-material"
 
 # Set list of themes to pick from when loading at random
 # Setting this variable when ZSH_THEME=random will cause zsh to load
@@ -244,24 +244,87 @@ alias sioyek="LIBGL_ALWAYS_SOFTWARE=1 sioyek"
 export TODOIST_API_TOKEN="f3736efb85c6f5c726090bb92df83fa9b07a6b19"
 alias copyq='QT_QPA_PLATFORM=xcb copyq'
 
-# Tmux pane toggle from neovim's <M-t>
-# When focus is in this zsh pane, Alt-t jumps back to the neovim pane and zooms it.
-# Direction must match vim.g.tmux_pane_direction in nvim (default: bottom).
-export TMUX_PANE_DIRECTION="right"
+# Terminal colors: gruvbox-material dark medium, matching kitty/current-theme.conf.
+typeset -g GRUVBOX_BG="#282828"
+typeset -g GRUVBOX_BG_ALT="#32302f"
+typeset -g GRUVBOX_BG_SOFT="#3c3836"
+typeset -g GRUVBOX_FG="#d4be98"
+typeset -g GRUVBOX_GRAY="#928374"
+typeset -g GRUVBOX_GRAY_DIM="#a89984"
+typeset -g GRUVBOX_RED="#ea6962"
+typeset -g GRUVBOX_GREEN="#a9b665"
+typeset -g GRUVBOX_YELLOW="#d8a657"
+typeset -g GRUVBOX_ORANGE="#e78a4e"
+typeset -g GRUVBOX_BLUE="#7daea3"
+typeset -g GRUVBOX_PURPLE="#d3869b"
+typeset -g GRUVBOX_AQUA="#89b482"
 
-function tmux_other_pane() {
-  if [[ $TMUX_PANE_DIRECTION == "right" ]]; then
-    tmux select-pane -L \; resize-pane -Z
-  else
-    tmux select-pane -U \; resize-pane -Z
-  fi
+# Plugin colors.
+ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#928374"
+typeset -gA ZSH_HIGHLIGHT_STYLES
+ZSH_HIGHLIGHT_STYLES[unknown-token]="fg=#ea6962"
+ZSH_HIGHLIGHT_STYLES[reserved-word]="fg=#d3869b,bold"
+ZSH_HIGHLIGHT_STYLES[alias]="fg=#a9b665"
+ZSH_HIGHLIGHT_STYLES[suffix-alias]="fg=#a9b665"
+ZSH_HIGHLIGHT_STYLES[builtin]="fg=#a9b665"
+ZSH_HIGHLIGHT_STYLES[function]="fg=#a9b665"
+ZSH_HIGHLIGHT_STYLES[command]="fg=#a9b665"
+ZSH_HIGHLIGHT_STYLES[precommand]="fg=#d8a657"
+ZSH_HIGHLIGHT_STYLES[commandseparator]="fg=#928374"
+ZSH_HIGHLIGHT_STYLES[path]="fg=#7daea3"
+ZSH_HIGHLIGHT_STYLES[path_pathseparator]="fg=#928374"
+ZSH_HIGHLIGHT_STYLES[globbing]="fg=#d3869b"
+ZSH_HIGHLIGHT_STYLES[history-expansion]="fg=#d3869b"
+ZSH_HIGHLIGHT_STYLES[single-hyphen-option]="fg=#e78a4e"
+ZSH_HIGHLIGHT_STYLES[double-hyphen-option]="fg=#e78a4e"
+ZSH_HIGHLIGHT_STYLES[single-quoted-argument]="fg=#d8a657"
+ZSH_HIGHLIGHT_STYLES[double-quoted-argument]="fg=#d8a657"
+ZSH_HIGHLIGHT_STYLES[dollar-quoted-argument]="fg=#d8a657"
+ZSH_HIGHLIGHT_STYLES[redirection]="fg=#89b482"
+ZSH_HIGHLIGHT_STYLES[arg0]="fg=#a9b665"
+
+# Directory colors for GNU ls/eza-compatible consumers.
+export LS_COLORS="di=38;2;169;182;101:ln=38;2;125;174;163:so=38;2;211;134;155:pi=38;2;211;134;155:ex=38;2;216;166;87:bd=38;2;231;138;78:cd=38;2;231;138;78:su=38;2;234;105;98:sg=38;2;234;105;98:tw=38;2;146;131;116:ow=38;2;146;131;116:st=38;2;146;131;116:mi=38;2;234;105;98:or=38;2;234;105;98"
+
+# Man pages / less / bat.
+export BAT_THEME="gruvbox-dark"
+export LESS_TERMCAP_mb=$'\e[1;38;2;216;166;87m'
+export LESS_TERMCAP_md=$'\e[1;38;2;216;166;87m'
+export LESS_TERMCAP_me=$'\e[0m'
+export LESS_TERMCAP_se=$'\e[0m'
+export LESS_TERMCAP_so=$'\e[48;2;60;56;54;38;2;212;190;152m'
+export LESS_TERMCAP_ue=$'\e[0m'
+export LESS_TERMCAP_us=$'\e[4;38;2;125;174;163m'
+
+# fzf colors: gruvbox-material (matches kitty current-theme.conf and nvim).
+# Applies to every fzf invocation (Ctrl-R, pickers, nvim fzf, etc.).
+export FZF_DEFAULT_OPTS="
+  --color=bg:${GRUVBOX_BG},bg+:${GRUVBOX_BG_ALT},fg:${GRUVBOX_FG},fg+:${GRUVBOX_FG}
+  --color=hl:${GRUVBOX_ORANGE},hl+:${GRUVBOX_ORANGE},gutter:${GRUVBOX_BG},alt-gutter:${GRUVBOX_BG}
+  --color=prompt:${GRUVBOX_BLUE},pointer:${GRUVBOX_YELLOW},marker:${GRUVBOX_AQUA}
+  --color=info:${GRUVBOX_YELLOW},spinner:${GRUVBOX_YELLOW},header:${GRUVBOX_GREEN}
+  --color=border:${GRUVBOX_BG_SOFT},list-border:${GRUVBOX_BG_SOFT},preview-border:${GRUVBOX_BG_SOFT}
+  --color=scrollbar:${GRUVBOX_GRAY_DIM},preview-scrollbar:${GRUVBOX_GRAY_DIM},label:${GRUVBOX_FG}
+  --pointer='▌' --marker='┃' --scrollbar='▐▌'"
+
+# Kitty companion-pane toggle (mirrors nvim's <M-t> in utils/kitty.lua).
+# From this terminal, Alt-t jumps to the nvim window and zooms it (stack),
+# like the old tmux `select-pane -L \; resize-pane -Z`.
+# Direction must match vim.g.tmux_pane_direction in nvim (default: right).
+export KITTY_WINDOW_DIRECTION="right"
+
+function kitty_other_window() {
+  local move=left
+  [[ $KITTY_WINDOW_DIRECTION == "right" ]] || move=up
+  kitten @ action neighboring_window "$move"
+  kitten @ action goto_layout stack
 }
-zvm_define_widget tmux_other_pane
+zvm_define_widget kitty_other_window
 
 function zvm_after_lazy_keybindings() {
   # ^[t == Alt-t (verify with `cat -v` then press Alt-t)
-  zvm_bindkey vicmd '^[t' tmux_other_pane
-  zvm_bindkey viins '^[t' tmux_other_pane
+  zvm_bindkey vicmd '^[t' kitty_other_window
+  zvm_bindkey viins '^[t' kitty_other_window
 }
 
 # Android SDK

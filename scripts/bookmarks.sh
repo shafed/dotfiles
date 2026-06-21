@@ -381,11 +381,6 @@ run_picker() {
     --bind "change:reload($list_reload)"
   )
 
-  source_fzf_colors
-  if [[ -n "${linkarzu_fzf_colors:-}" ]]; then
-    fzf_args+=(--color="$linkarzu_fzf_colors")
-  fi
-
   local selected _name url
   while true; do
     # Esc makes fzf exit non-zero. Treat it as "hide and rearm" so the next

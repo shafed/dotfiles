@@ -32,6 +32,16 @@ usage_file="$cache_dir/usage.tsv"
 refresh=false
 tab=$'\t'
 
+# Apps to keep out of the empty-query "recent" list no matter how often they are
+# launched. The picker still finds them when you type, and they still rank in the
+# full catalog — they just don't clutter the open-on-empty view. Matched
+# case-insensitively as a substring of the display name (so it survives the
+# desktop-file id changing, e.g. Telegram's hashed Flatpak id, and catches name
+# variants like both "Telegram" and "Telegram Desktop").
+recent_exclude_names=(
+  "Telegram"
+)
+
 # Directories that hold .desktop entries, lowest to highest priority. Later
 # dirs win on duplicate desktop-file IDs (user overrides system).
 app_dirs=(
@@ -184,12 +194,22 @@ sorted_apps() {
 # opens to "recently/most used" instead of the whole catalog. Typing anything
 # switches back to the full list (see the change:reload bind below).
 recent_apps() {
-  awk -F'\t' -v usage="$usage_file" '
+  # Join the exclude list into one lowercased, NUL-free string awk can look up.
+  local exclude
+  exclude="$(printf '%s\n' "${recent_exclude_names[@]+"${recent_exclude_names[@]}"}")"
+  awk -F'\t' -v usage="$usage_file" -v exclude="$exclude" '
     BEGIN {
       while ((getline line < usage) > 0) {
         split(line, u, "\t")
         if (u[1] != "") count[u[1]] = u[2] + 0
       }
+      n = split(exclude, ex, "\n")
+      for (i = 1; i <= n; i++)
+        if (ex[i] != "") hidden[tolower(ex[i])] = 1
+    }
+    {
+      name = tolower($1)
+      for (h in hidden) if (index(name, h)) next
     }
     (($2 in count) && count[$2] > 0) { print count[$2] "\t" $0 }
   ' "$cache_file" |
@@ -309,11 +329,6 @@ run_picker() {
     --bind "start:reload($list_reload)"
     --bind "change:reload($list_reload)"
   )
-
-  source_fzf_colors
-  if [[ -n "${linkarzu_fzf_colors:-}" ]]; then
-    fzf_args+=(--color="$linkarzu_fzf_colors")
-  fi
 
   local output key selected _name id _path wmclass
   while true; do

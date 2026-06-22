@@ -249,7 +249,7 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
 (a s d f) (multi (on-press tap-vkey sym-us) (on-release tap-vkey sym-restore) (layer-while-held symbols2)) $mod-chord-time all-released () ;; symbol layer 2 (! @ # $ %)
 (j k l) (layer-while-held numplain) $mod-chord-time all-released () ;; number layer
 (k l) (layer-while-held numws) $mod-chord-time all-released ()    ;; Super+digit workspace
-(l ;) (layer-while-held numtab) $mod-chord-time all-released () ;; Alt+digit firefox tabs
+(j l) (layer-while-held movews) $mod-chord-time all-released () ;; Super+Shift+digit: move window to workspace (numws + pinky)
 (s d) tab $mod-chord-time all-released () ;; tab
 (w e r) C-bspc $mod-chord-time all-released () ;; delete word (works everywhere)
 )

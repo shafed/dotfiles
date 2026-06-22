@@ -116,7 +116,8 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
  bspc XX 
  ret (tap-hold $tap-time 600 XX (multi (layer-switch normal) (cmd notify-send -t 1000 "⌨ normal layer"))) ;; go to normal layer
  ;; lsft @sw ;; physical LShift taps to switch keyboard layout
- w (fork w bspc (lctl rctl))
+ ;; tap=w, hold=navi; Ctrl+w still -> bspc (fork checks Ctrl first).
+ w (fork (t! th $tot 160 w (layer-while-held navi)) bspc (lctl rctl))
 )
 
 (deflayermap (apps)
@@ -214,17 +215,24 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
   a 1 s 2 d 3 f 4 g 5
 )
 
+;; entered via hold w (left hand). all motions live on the right hand so the
+;; left stays on the w hold. word-nav moved off w/b onto n/. (w now holds).
 (deflayermap (navi)
   ;; arrow keys
   h lft j @j-navi k @k-navi l right
-  ;; words navigation
-  w C-right b C-lft
+  ;; word navigation (was w/b; moved right-hand: n=C-left . =C-right)
+  n C-lft m C-right
+  ;; browser tabs: y=prev u=next; home/end on i/o
+  y C-S-tab u C-tab
+  i home o end
+  ;; browser history: [ back ] fwd; ;=close '=reopen
+  [ A-lft ] A-right
+  ; C-w ' C-S-t
 
-  ;; mods
+  ;; mods (left hand, free while w is held)
  f (t! th $tot 160 f lsft)
  d (t! th $tot 300 d lctl)
  s @sshot
- i (t! kitty-send C-S-i) ;; kitty scrollback -> full pane history in nvim
 )
 
 (defchordsv2

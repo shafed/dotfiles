@@ -100,11 +100,8 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
  ; (t! hrm 400 ; ralt)
 
  ;; define functional keys
- ;; thumbs: tap=bspc/lang, hold=symbols/numplain. holding BOTH thumbs -> apps
- ;; (the (lalt ralt) chord in defchordsv2). symbols live on the right hand
- ;; (left thumb holds); numplain on the left hand (right thumb holds).
- lalt (t! th $tot 160 bspc @sym-enter)              ;; tap=bspc, hold=symbols
- ralt (t! th $tot 160 @sw (layer-while-held numplain))  ;; tap=lang, hold=numplain
+ lalt (t! th $tot 160 bspc (layer-while-held apps)) ;; tap=bspc hold=apps
+ ralt (t! th $tot 160 @sw (layer-while-held apps))  ;; tap=switch lang hold=apps
  c (t! th $tap-time $hold-time c C-c)
  v (t! th $tap-time $hold-time v C-v)
  b (t! th $tap-time $hold-time b (macro @aterm 100 A-tab)) ;; kitty last session (goto_session -1)
@@ -123,7 +120,6 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
 (deflayermap (apps)
    
   e (t! kitty-send C-S-f)   ;; zoxide session picker
-  f @sym-enter ;; hold (use LALT): symbol layer; add d for symbols2. left-hand hold keeps right hand free
   j (layer-while-held numws)  ;; hold: switch workspace (Super+digit, left-hand digits)
   q (cmd hyprctl dispatch killactive)
   t (t! kitty-send C-S-2)   ;; todos session
@@ -157,12 +153,12 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
   r (cmd firefox https://www.reverso.net/text-translation)
 )
 
-;; right-hand programmer symbols, momentary (entered via s+d+f chord held).
-;; left hand holds s/d/f, so all symbols live on the right hand.
+;; right-hand programmer symbols, momentary (entered via s+d chord held).
+;; left hand holds s/d, so all symbols live on the right hand.
 ;; Kanata switches the kanata xkb device to US while this layer is held, so the
 ;; plain S-... keycodes output identical symbols on both US and RU layouts.
 ;; KEY-ALIGNED: every key holds a symbol/Shift PAIR across both layers, so
-;; symbols2 (a+s+d+f) is the same key with the pinky added.
+;; symbols2 (s+d+f) is the same key with the f (index) added.
 ;; top row = y u i o p (5 keys). brackets () on the strong home-row j k.
 ;; FREQUENCY-ORDERED: the hot symbols sit on the strong home row. () on j k
 ;; (function calls), @ on h (claude-code @file, email), | on l (cli pipes),
@@ -173,11 +169,11 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
   y grv u [   i ]   o =   p \        ;; ` [ ] = \
   h S-2 j S-9 k S-0 l S-\ ; ;   ' '  ;; @ ( ) | ; '
   n S-- m - , S-6 . S-4   / S-/      ;; _ - ^ $ ?
-  d (layer-while-held symbols2)      ;; escalate: add d (middle) -> symbols2
+  f (layer-while-held symbols2)      ;; escalate: add f (index) -> symbols2
 )
 
-;; second symbol set, momentary (entered via a+s+d+f chord held). longer chord
-;; wins over (s d f), so adding the `a` pinky shifts into this layer.
+;; second symbol set, momentary (entered via s+d+f chord held). longer chord
+;; wins over (s d), so adding the `f` index shifts into this layer.
 ;; holds the symbols that don't fit on symbols: the shifted brackets ~ { } +,
 ;; then ! # * & on the home row, % < > on the bottom row. : " on ; ' keys.
 ;; @ ( ) | _ - ^ $ ` deliberately live on symbols (the shorter, hotter chord)
@@ -240,18 +236,15 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
 ;; chords-v2-min-idle) to get a held Ctrl+Shift. all-released keeps the mods
 ;; down until both keys lift, so you can add a third key (e.g. C-S-tab).
 (lsft rsft) (multi (layer-switch base) (cmd notify-send -t 1000 "⌨ base layer")) $chord-time first-release()
-(lalt ralt) (layer-while-held apps) $chord-time all-released () ;; both thumbs held -> apps
 (d f) (tap-hold $tap-time $hold-time esc (multi lctl lsft)) $mod-chord-time all-released () ;; tap=esc hold=C-S
 (j k) (tap-hold $tap-time $hold-time ret (multi lctl lsft)) $mod-chord-time all-released () ;; enter 
 (s f) (multi lmet lsft) $mod-chord-time all-released ()
-(l j) (multi rmet rsft) $mod-chord-time all-released ()
-(s d f) @sym-enter $mod-chord-time all-released () ;; symbol layer
-(a s d f) (multi (on-press tap-vkey sym-us) (on-release tap-vkey sym-restore) (layer-while-held symbols2)) $mod-chord-time all-released () ;; symbol layer 2 (! @ # $ %)
+(s d) @sym-enter $mod-chord-time all-released () ;; symbol layer (s+d)
+(s d f) (multi (on-press tap-vkey sym-us) (on-release tap-vkey sym-restore) (layer-while-held symbols2)) $mod-chord-time all-released () ;; symbol layer 2 (s+d+f: ! # * & ...)
 (j k l) (layer-while-held numplain) $mod-chord-time all-released () ;; number layer
 (k l) (layer-while-held numws) $mod-chord-time all-released ()    ;; Super+digit workspace
 (j l) (layer-while-held movews) $mod-chord-time all-released () ;; Super+Shift+digit: move window to workspace (numws + pinky)
-(s d) tab $mod-chord-time all-released () ;; tab
-(w e r) C-bspc $mod-chord-time all-released () ;; delete word (works everywhere)
+(w e) tab $mod-chord-time all-released () ;; tab (moved off s+d, now symbols)
 )
 
 (deflayermap (normal)

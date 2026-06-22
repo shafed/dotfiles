@@ -75,6 +75,9 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
     ((input real lalt)) @sw break
     () lsft break
   )
+  ;; symbol-layer entry wrapped with the xkb US switch (so S-... keycodes emit
+  ;; the same symbols on RU/US). reused by the thumb hold and the chord/apps entries.
+  sym-enter (multi (on-press tap-vkey sym-us) (on-release tap-vkey sym-restore) (layer-while-held symbols))
 )
 
 (defvirtualkeys
@@ -97,8 +100,11 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
  ; (t! hrm 400 ; ralt)
 
  ;; define functional keys
- lalt (t! th $tot 160 bspc (layer-while-held apps)) ;; tap=bspc hold=apps
- ralt (t! th $tot 160 @sw (layer-while-held apps))  ;; tap=switch lang hold=apps
+ ;; thumbs: tap=bspc/lang, hold=symbols/numplain. holding BOTH thumbs -> apps
+ ;; (the (lalt ralt) chord in defchordsv2). symbols live on the right hand
+ ;; (left thumb holds); numplain on the left hand (right thumb holds).
+ lalt (t! th $tot 160 bspc @sym-enter)              ;; tap=bspc, hold=symbols
+ ralt (t! th $tot 160 @sw (layer-while-held numplain))  ;; tap=lang, hold=numplain
  c (t! th $tap-time $hold-time c C-c)
  v (t! th $tap-time $hold-time v C-v)
  b (t! th $tap-time $hold-time b (macro @aterm 100 A-tab)) ;; kitty last session (goto_session -1)
@@ -116,7 +122,7 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
 (deflayermap (apps)
    
   e (t! kitty-send C-S-f)   ;; zoxide session picker
-  f (multi (on-press tap-vkey sym-us) (on-release tap-vkey sym-restore) (layer-while-held symbols)) ;; hold (use LALT): symbol layer; add d for symbols2. left-hand hold keeps right hand free
+  f @sym-enter ;; hold (use LALT): symbol layer; add d for symbols2. left-hand hold keeps right hand free
   j (layer-while-held numws)  ;; hold: switch workspace (Super+digit, left-hand digits)
   q (cmd hyprctl dispatch killactive)
   t (t! kitty-send C-S-2)   ;; todos session
@@ -226,11 +232,12 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
 ;; chords-v2-min-idle) to get a held Ctrl+Shift. all-released keeps the mods
 ;; down until both keys lift, so you can add a third key (e.g. C-S-tab).
 (lsft rsft) (multi (layer-switch base) (cmd notify-send -t 1000 "⌨ base layer")) $chord-time first-release()
+(lalt ralt) (layer-while-held apps) $chord-time all-released () ;; both thumbs held -> apps
 (d f) (tap-hold $tap-time $hold-time esc (multi lctl lsft)) $mod-chord-time all-released () ;; tap=esc hold=C-S
 (j k) (tap-hold $tap-time $hold-time ret (multi lctl lsft)) $mod-chord-time all-released () ;; enter 
 (s f) (multi lmet lsft) $mod-chord-time all-released ()
 (l j) (multi rmet rsft) $mod-chord-time all-released ()
-(s d f) (multi (on-press tap-vkey sym-us) (on-release tap-vkey sym-restore) (layer-while-held symbols)) $mod-chord-time all-released () ;; symbol layer
+(s d f) @sym-enter $mod-chord-time all-released () ;; symbol layer
 (a s d f) (multi (on-press tap-vkey sym-us) (on-release tap-vkey sym-restore) (layer-while-held symbols2)) $mod-chord-time all-released () ;; symbol layer 2 (! @ # $ %)
 (j k l) (layer-while-held numplain) $mod-chord-time all-released () ;; number layer
 (k l) (layer-while-held numws) $mod-chord-time all-released ()    ;; Super+digit workspace

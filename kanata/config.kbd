@@ -78,6 +78,8 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
   ;; symbol-layer entry wrapped with the xkb US switch (so S-... keycodes emit
   ;; the same symbols on RU/US). reused by the thumb hold and the chord/apps entries.
   sym-enter (multi (on-press tap-vkey sym-us) (on-release tap-vkey sym-restore) (layer-while-held symbols))
+  ;; same xkb-US wrap but for symbols2 (used by the (s d f) chord and hold r).
+  sym-enter2 (multi (on-press tap-vkey sym-us) (on-release tap-vkey sym-restore) (layer-while-held symbols2))
 )
 
 (defvirtualkeys
@@ -115,6 +117,14 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
  ;; lsft @sw ;; physical LShift taps to switch keyboard layout
  ;; tap=w, hold=navi; Ctrl+w still -> bspc (fork checks Ctrl first).
  w (fork (t! th $tot 160 w (layer-while-held navi)) bspc (lctl rctl))
+ ;; tap=n, hold=numplain. th (press-decided) so the layer is instant like w;
+ ;; note n is a frequent letter, so n+left-hand bigrams (na/nd/nt...) can misfire.
+ n (t! th $tot 160 n (layer-while-held numplain))
+ ;; tap=e/r, hold=symbols/symbols2 (left hand holds; symbols live on the right).
+ ;; @sym-enter wraps the xkb US switch. instant like w/n; e/r are frequent so
+ ;; e/r + right-hand bigrams can misfire (same trade-off as n).
+ e (t! th $tot 160 e @sym-enter)
+ r (t! th $tot 160 r @sym-enter2)
 )
 
 (deflayermap (apps)
@@ -240,7 +250,7 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
 (j k) (tap-hold $tap-time $hold-time ret (multi lctl lsft)) $mod-chord-time all-released () ;; enter 
 (s f) (multi lmet lsft) $mod-chord-time all-released ()
 (s d) @sym-enter $mod-chord-time all-released () ;; symbol layer (s+d)
-(s d f) (multi (on-press tap-vkey sym-us) (on-release tap-vkey sym-restore) (layer-while-held symbols2)) $mod-chord-time all-released () ;; symbol layer 2 (s+d+f: ! # * & ...)
+(s d f) @sym-enter2 $mod-chord-time all-released () ;; symbol layer 2 (s+d+f: ! # * & ...)
 (j k l) (layer-while-held numplain) $mod-chord-time all-released () ;; number layer
 (k l) (layer-while-held numws) $mod-chord-time all-released ()    ;; Super+digit workspace
 (j l) (layer-while-held movews) $mod-chord-time all-released () ;; Super+Shift+digit: move window to workspace (numws + pinky)

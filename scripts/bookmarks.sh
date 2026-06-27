@@ -58,7 +58,10 @@ urlencode() {
     c="${s:i:1}"
     case "$c" in
     [a-zA-Z0-9.~_-]) out+="$c" ;;
-    *) printf -v c '%%%02X' "'$c"; out+="$c" ;;
+    *)
+      printf -v c '%%%02X' "'$c"
+      out+="$c"
+      ;;
     esac
   done
   printf '%s\n' "$out"
@@ -130,7 +133,10 @@ decorate_bookmarks() {
 # "Rust async book"). Keeps input order. Empty query passes everything through.
 filter_bookmarks() {
   local q="$1"
-  [[ -n "$q" ]] || { cat; return 0; }
+  [[ -n "$q" ]] || {
+    cat
+    return 0
+  }
   awk -F'\t' -v q="$q" '
     BEGIN {
       n = split(tolower(q), terms, /[ \t]+/)

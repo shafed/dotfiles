@@ -202,7 +202,7 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
   a M-S-1 s M-S-2 d M-S-3 f M-S-4 g M-S-5   ;; Super+Shift+1..5  (workspaces 1-5)
 )
 
-;; plain digits on the left hand, momentary (entered via j+k+l held).
+;; plain digits on the left hand
 (deflayermap (numplain)
   q 6 w 7 e 8 r 9 t 0
   a 1 s 2 d 3 f 4 g 5
@@ -230,13 +230,13 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
 (j k) (tap-hold $tap-time $hold-time ret (multi lctl lsft)) $mod-chord-time all-released () ;; enter 
 (s f) (multi lmet lsft) $mod-chord-time all-released ()
 (l j) (multi rmet rsft) $mod-chord-time all-released ()
-(s d f) (multi (on-press tap-vkey sym-us) (on-release tap-vkey sym-restore) (layer-while-held symbols)) $mod-chord-time all-released () ;; symbol layer
-(a s d f) (multi (on-press tap-vkey sym-us) (on-release tap-vkey sym-restore) (layer-while-held symbols2)) $mod-chord-time all-released () ;; symbol layer 2 (! @ # $ %)
-(j k l) (layer-while-held numplain) $mod-chord-time all-released () ;; number layer
-(k l) (layer-while-held numws) $mod-chord-time all-released ()    ;; Super+digit workspace
 (l ;) (layer-while-held numtab) $mod-chord-time all-released () ;; Alt+digit firefox tabs
-(s d) tab $mod-chord-time all-released () ;; tab
-(w e r) C-bspc $mod-chord-time all-released () ;; delete word (works everywhere)
+(s d) @sym-enter $mod-chord-time all-released () ;; symbol layer (s+d)
+(s d f) @sym-enter2 $mod-chord-time all-released () ;; symbol layer 2 (s+d+f: ! # * & ...)
+(k l) (layer-while-held numplain) $mod-chord-time all-released () ;; number layer
+(j k l) (layer-while-held numws) $mod-chord-time all-released ()    ;; Super+digit workspace
+(j l) (layer-while-held movews) $mod-chord-time all-released () ;; Super+Shift+digit: move window to workspace (numws + pinky)
+(w e) tab $mod-chord-time all-released () ;; tab (moved off s+d, now symbols)
 )
 
 (deflayermap (normal)

@@ -253,7 +253,6 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
 (j k l) (layer-while-held numws) $mod-chord-time all-released ()    ;; Super+digit workspace
 (s d) @sym-enter $mod-chord-time all-released () ;; symbol layer (s+d)
 (s d f) @sym-enter2 $mod-chord-time all-released () ;; symbol layer 2 (s+d+f: ! # * & ...)
-(k l) (layer-while-held numws) $mod-chord-time all-released ()    ;; Super+digit workspace
 (j l) (layer-while-held movews) $mod-chord-time all-released () ;; Super+Shift+digit: move window to workspace (numws + pinky)
 (w e) tab $mod-chord-time all-released () ;; tab (moved off s+d, now symbols)
 )

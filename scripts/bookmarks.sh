@@ -129,8 +129,15 @@ decorate_bookmarks() {
 }
 
 # Filter "name<tab>url" rows by a query, matched as a case-insensitive,
-# whitespace-tolerant subsequence over name+url (so "rs async" matches
-# "Rust async book"). Keeps input order. Empty query passes everything through.
+# whitespace-tolerant set of terms over name+url (so "rs async" matches
+# "Rust async book"). Empty query passes everything through.
+#
+# Matches are ranked so the result reads like a browser address bar instead of
+# raw file order: a term that matches the *name* beats one that only matches the
+# url, a match at the start of the name beats one buried mid-word, and an earlier
+# match beats a later one. This is what makes "re" surface "reverso" (name starts
+# with it) above "online-edumirea" (only "re" mid-url/name). Ties keep input
+# order, so recents/dateAdded ordering still shows through.
 filter_bookmarks() {
   local q="$1"
   [[ -n "$q" ]] || {
@@ -142,14 +149,36 @@ filter_bookmarks() {
       n = split(tolower(q), terms, /[ \t]+/)
     }
     {
-      hay = tolower($1 " " $2)
+      name = tolower($1)
+      url  = tolower($2)
       ok = 1
+      score = 0
       for (i = 1; i <= n; i++) {
-        if (terms[i] != "" && index(hay, terms[i]) == 0) { ok = 0; break }
+        t = terms[i]
+        if (t == "") continue
+        np = index(name, t)
+        up = index(url, t)
+        if (np == 0 && up == 0) { ok = 0; break }
+
+        # Per-term contribution. Name hits outrank url-only hits; among name
+        # hits, a start-of-name or start-of-word hit outranks a mid-word one;
+        # earlier positions outrank later ones.
+        if (np > 0) {
+          base = 3000
+          if (np == 1) base += 2000                      # name starts with term
+          else if (substr(name, np - 1, 1) ~ /[^a-z0-9]/) base += 1000  # word start
+          score += base - np
+        } else {
+          score += 1000 - up                             # url-only match
+        }
       }
-      if (ok) print
+      if (ok) printf "%012d\t%d\t%s\n", score, NR, $0
     }
-  '
+  ' |
+    # Highest score first; original input order (NR) breaks ties. Strip the two
+    # sort keys, leaving the original "name<tab>url" rows.
+    sort -t$'\t' -k1,1nr -k2,2n |
+    cut -f3-
 }
 
 # The combined list fzf reloads on every keystroke. fzf's reload() streams, so

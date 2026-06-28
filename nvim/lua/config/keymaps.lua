@@ -143,7 +143,10 @@ for key, level in pairs({ j = 1, k = 2, l = 3, [";"] = 4 }) do
   vim.keymap.set("n", "z" .. key, function()
     -- "Update" saves only if the buffer has been modified since the last save
     vim.cmd("silent update")
-    -- Reloads the file to refresh folds, otherwise you have to re-open neovim
+    -- Reloads the file to refresh folds, otherwise you have to re-open neovim.
+    -- skip_loadview stops the BufWinEnter autocmd from restoring saved folds
+    -- (which would clobber the ones we apply below).
+    vim.b.skip_loadview = true
     vim.cmd("edit!")
     -- Unfold everything first or I had issues
     vim.cmd("normal! zR")
@@ -176,6 +179,7 @@ vim.keymap.set("n", "zu", function()
   -- "Update" saves only if the buffer has been modified since the last save
   vim.cmd("silent update")
   -- Reloads the file to reflect the changes
+  vim.b.skip_loadview = true
   vim.cmd("edit!")
   vim.cmd("normal! zR") -- Unfold all headings
   vim.cmd("normal! zz") -- center the cursor line on screen

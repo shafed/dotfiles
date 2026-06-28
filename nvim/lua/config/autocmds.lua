@@ -57,6 +57,13 @@ vim.api.nvim_create_autocmd("BufWinLeave", {
 vim.api.nvim_create_autocmd("BufWinEnter", {
   pattern = "*.md",
   callback = function()
+    -- The fold keymaps run `edit!`, which re-triggers BufWinEnter. They set
+    -- vim.b.skip_loadview so loadview doesn't fire afterwards and clobber the
+    -- folds they just applied (loadview is deferred, so it would run last).
+    if vim.b.skip_loadview then
+      vim.b.skip_loadview = false
+      return
+    end
     -- defer until after the FileType foldexpr has finished, otherwise
     -- loadview can restore folds before they're computed (flaky state)
     vim.schedule(function()

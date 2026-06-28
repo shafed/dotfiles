@@ -142,13 +142,9 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
   w (t! kitty-send C-S-w)   ;; downloads session
   h (t! kitty-send C-S-a)   ;; home session
   s (tap-hold-press $subl-time $subl-time (cmd firefox) (layer-toggle browser))
-  ;; a (layer-while-held terminal)
-  ;; t (multi (cmd hyprctl dispatch workspace 5) (cmd telegram-desktop))
   d (t! kitty-send C-S-d)   ;; dotfiles session
   g (cmd todoist)
   z (cmd zsh -lc "$HOME/.config/kanata/switchApp.sh sioyek 'LIBGL_ALWAYS_SOFTWARE=1 sioyek'")
-  k (layer-while-held movews) ;; hold: Move focused window to workspace (left-hand digits)
-  l (layer-while-held numplain) ;; hold: plain digits (left-hand)
   c (t! kitty-send C-S-s)   ;; list sessions picker
   p (t! kitty-send C-S-c)   ;; projects session
   . (cmd rofimoji -a clipboard)
@@ -177,7 +173,7 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
 ;; top row = y u i o p (5 keys).
 (deflayermap (symbols)
   y grv u [   i ]   o =   p \        ;; ` [ ] = \
-  h S-2 j S-9 k S-0 l S-\ ; ;   ' '  ;; @ ( ) | ; '
+  h S-2 j S-9 k S-0 l S-\ ; S-;   ' '  ;; @ ( ) | ; '
   n - m S-- , S-6 . S-4   / S-/      ;; _ - ^ $ ?
   f (layer-while-held symbols2)      ;; escalate: add f (index) -> symbols2
 )
@@ -190,7 +186,7 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
 ;; and are NOT duplicated here.
 (deflayermap (symbols2)
   y S-grv u S-[ i S-] o S-= p XX       ;; ~ { } +     (| is on symbols, l)
-  h S-1 j S-3 k S-8 l S-7  ; S-; ' S-' ;; ! # * & : "
+  h S-1 j S-3 k S-8 l S-7  ; ; ' S-' ;; ! # * & : "
   n S-5 m XX  , S-, . S-. / /          ;; %   < > /
 )
 

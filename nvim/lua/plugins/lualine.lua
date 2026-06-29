@@ -1,10 +1,23 @@
 return {
   "nvim-lualine/lualine.nvim",
   dependencies = { "nvim-tree/nvim-web-devicons" },
+  init = function()
+    -- Принудительно держим tabline видимым всегда (даже при одном буфере).
+    -- Что-то в LazyVim сбрасывает showtabline на 1 после загрузки lualine.
+    vim.opt.showtabline = 2
+    vim.api.nvim_create_autocmd({ "BufAdd", "BufDelete", "BufEnter", "VimEnter" }, {
+      callback = function()
+        if vim.o.showtabline ~= 2 then
+          vim.opt.showtabline = 2
+        end
+      end,
+    })
+  end,
   opts = {
     options = {
       theme = "auto",
       globalstatus = true,
+      always_show_tabline = true,
       icons_enabled = true,
       section_separators = "",
       component_separators = { left = "│", right = "│" },
@@ -25,6 +38,7 @@ return {
         },
         {
           "filename",
+          path = 0,
           padding = { left = 0, right = 1 },
           color = { fg = "#756a5e", bg = "#32302f", gui = "bold" },
         },
@@ -37,6 +51,10 @@ return {
         {
           function()
             local path = vim.fn.expand("%:p:h")
+            -- Если у буфера нет своего пути — показываем рабочую директорию
+            if path == "" or path == "." then
+              path = vim.fn.getcwd()
+            end
             -- Заменяем домашнюю директорию на ~
             local home = os.getenv("HOME")
             if home then

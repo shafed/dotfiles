@@ -80,11 +80,15 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
   sym-enter (multi (on-press tap-vkey sym-us) (on-release tap-vkey sym-restore) (layer-while-held symbols))
   ;; same xkb-US wrap but for symbols2 (used by the (s d f) chord and hold r).
   sym-enter2 (multi (on-press tap-vkey sym-us) (on-release tap-vkey sym-restore) (layer-while-held symbols2))
+  ;; apps-layer entry wrapped with the same xkb US switch as the symbol layers
+  ;; (apps and symbols are mutually exclusive, so they can share the state file),
+  ;; so holding apps forces English and restores the previous layout on release.
+  apps-enter (multi (on-press tap-vkey sym-us) (on-release tap-vkey sym-restore) (layer-while-held apps))
 )
 
 (defvirtualkeys
-  sym-us (cmd /bin/sh /home/shafed/dotfiles/scripts/symlayout-watch.sh enter)
-  sym-restore (cmd /bin/sh /home/shafed/dotfiles/scripts/symlayout-watch.sh leave)
+  sym-us (cmd /home/shafed/dotfiles/scripts/symlayout-watch.sh enter)
+  sym-restore (cmd /home/shafed/dotfiles/scripts/symlayout-watch.sh leave)
 )
 
 (defsrc )
@@ -102,8 +106,8 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
  ; (t! hrm 400 ; ralt)
 
  ;; define functional keys
- lalt (t! th $tot 160 bspc (layer-while-held apps)) ;; tap=bspc hold=apps
- ralt (t! th $tot 160 @sw (layer-while-held apps))  ;; tap=switch lang hold=apps
+ lalt (t! th $tot 160 bspc @apps-enter) ;; tap=bspc hold=apps (forces English while held)
+ ralt (t! th $tot 160 @sw @apps-enter)  ;; tap=switch lang hold=apps (forces English while held)
  c (t! th $tap-time $hold-time c C-c)
  v (t! th $tap-time $hold-time v C-v)
  b (t! th $tap-time $hold-time b (macro @aterm 100 A-tab)) ;; kitty last session (goto_session -1)
@@ -215,6 +219,7 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
 (deflayermap (numplain)
   q 6 w 7 e 8 r 9 t 0
   a 1 s 2 d 3 f 4 g 5
+  m -
 )
 
 ;; entered via hold w (left hand). all motions live on the right hand so the
@@ -250,7 +255,7 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
 (s d) @sym-enter $mod-chord-time all-released () ;; symbol layer (s+d)
 (s d f) @sym-enter2 $mod-chord-time all-released () ;; symbol layer 2 (s+d+f: ! # * & ...)
 (j l) (layer-while-held movews) $mod-chord-time all-released () ;; Super+Shift+digit: move window to workspace (numws + pinky)
-(w e) tab $mod-chord-time all-released () ;; tab (moved off s+d, now symbols)
+(w e) tab $mod-chord-time all-released () ;; tab
 )
 
 (deflayermap (normal)

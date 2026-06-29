@@ -163,6 +163,8 @@ return {
           live = false,
           -- restrict search to the current working directory
           dirs = { vim.fn.getcwd() },
+          -- I want to filter this to only show markdown files
+          glob = "*.md",
           -- include files ignored by .gitignore
           args = { "--no-ignore" },
           -- Start in normal mode
@@ -174,6 +176,40 @@ return {
           show_empty = true,
           supports_live = false,
           layout = "ivy",
+          actions = {
+            -- Toggle the selected task done (and move it under "## Completed
+            -- Tasks") without leaving the picker, then refresh the list
+            task_done = function(picker, item)
+              picker:norm(function()
+                item = item or picker:current()
+                local path = item and Snacks.picker.util.path(item)
+                local line = item and item.pos and item.pos[1]
+                if not path or not line then
+                  vim.notify("No task selected", vim.log.levels.WARN)
+                  return
+                end
+                local changed = require("utils.tasks").toggle_done({
+                  file = path,
+                  line = line,
+                })
+                if changed then
+                  picker:refresh()
+                end
+              end)
+            end,
+          },
+          win = {
+            input = {
+              keys = {
+                ["<M-x>"] = { "task_done", mode = { "n", "i" } },
+              },
+            },
+            list = {
+              keys = {
+                ["<M-x>"] = "task_done",
+              },
+            },
+          },
         })
       end,
       desc = "[P]Search for incomplete tasks",

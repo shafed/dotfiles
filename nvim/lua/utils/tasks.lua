@@ -4,13 +4,73 @@
 
 local M = {}
 
+local function restore_view(win)
+  if win and vim.api.nvim_win_is_valid(win) then
+    vim.api.nvim_win_call(win, function()
+      vim.cmd("loadview")
+    end)
+  end
+end
+
+local function save_buffer(buf)
+  vim.api.nvim_buf_call(buf, function()
+    vim.cmd("silent update")
+  end)
+end
+
+-- Resolve which buffer/line to operate on. When called with `opts.file` (e.g.
+-- from the Snacks task picker) it loads that file off-screen so the task can be
+-- toggled without the file being the current buffer. With no opts it falls back
+-- to the current window/cursor (used by the in-buffer <M-x> mapping).
+local function get_task_context(opts)
+  opts = opts or {}
+
+  if opts.file then
+    local path = vim.fn.fnamemodify(vim.fn.expand(opts.file), ":p")
+    local buf = vim.fn.bufadd(path)
+    vim.fn.bufload(buf)
+
+    if not vim.api.nvim_buf_is_loaded(buf) then
+      vim.notify("Could not load task file: " .. path, vim.log.levels.ERROR)
+      return nil
+    end
+
+    return {
+      buf = buf,
+      start_line = math.max((opts.line or 1) - 1, 0),
+      win = nil,
+    }
+  end
+
+  local win = vim.api.nvim_get_current_win()
+  local cursor_pos = vim.api.nvim_win_get_cursor(win)
+
+  vim.api.nvim_win_call(win, function()
+    vim.cmd("mkview")
+  end)
+
+  return {
+    buf = vim.api.nvim_get_current_buf(),
+    start_line = cursor_pos[1] - 1,
+    win = win,
+  }
+end
+
 -- If there is no `untoggled` or `done` label on an item, mark it as done
 -- and move it to the "## completed tasks" markdown heading in the same file, if
 -- the heading does not exist, it will be created, if it exists, items will be
 -- appended to it at the top lamw25wmal
 --
 -- If an item is moved to that heading, it will be added the `done` label
-function M.toggle_done()
+--
+-- `opts` is optional: { file = <path>, line = <1-based line> }. When omitted the
+-- current window/cursor is used. Returns true if a task was changed.
+function M.toggle_done(opts)
+  local context = get_task_context(opts)
+  if not context then
+    return false
+  end
+
   -- Customizable variables
   -- NOTE: Customize the completion label
   local label_done = "done:"
@@ -18,19 +78,16 @@ function M.toggle_done()
   local timestamp = os.date("%Y-%m-%d-%H:%M")
   -- NOTE: Customize the heading and its level
   local tasks_heading = "## Completed Tasks"
-  -- Save the view to preserve folds
-  vim.cmd("mkview")
   local api = vim.api
   -- Retrieve buffer & lines
-  local buf = api.nvim_get_current_buf()
-  local cursor_pos = vim.api.nvim_win_get_cursor(0)
-  local start_line = cursor_pos[1] - 1
+  local buf = context.buf
+  local start_line = context.start_line
   local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
   local total_lines = #lines
   -- If cursor is beyond last line, do nothing
   if start_line >= total_lines then
-    vim.cmd("loadview")
-    return
+    restore_view(context.win)
+    return false
   end
   ------------------------------------------------------------------------------
   -- (A) Move upwards to find the bullet line (if user is somewhere in the chunk)
@@ -54,8 +111,8 @@ function M.toggle_done()
   if not bullet_line:match("^%s*%- %[[x ]%]") then
     -- Not a task bullet => show a message and return
     print("Not a task bullet: no action taken.")
-    vim.cmd("loadview")
-    return
+    restore_view(context.win)
+    return false
   end
   ------------------------------------------------------------------------------
   -- 1. Identify the chunk boundaries
@@ -154,10 +211,11 @@ function M.toggle_done()
 
     vim.notify("Completed", vim.log.levels.INFO)
   else
-    local win = api.nvim_get_current_win()
-    local view = api.nvim_win_call(win, function()
+    -- Save original window view before modifications
+    local win = context.win
+    local view = win and api.nvim_win_is_valid(win) and api.nvim_win_call(win, function()
       return vim.fn.winsaveview()
-    end)
+    end) or nil
     chunk[1] = bulletToX(chunk[1])
     chunk[1] = insertLabelAfterBracket(chunk[1], "`" .. label_done .. " " .. timestamp .. "`")
 
@@ -194,12 +252,17 @@ function M.toggle_done()
     end
     vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
     vim.notify("Completed", vim.log.levels.INFO)
-    api.nvim_win_call(win, function()
-      vim.fn.winrestview(view)
-    end)
+    -- Restore window view to preserve scroll position
+    if win and view then
+      api.nvim_win_call(win, function()
+        vim.fn.winrestview(view)
+      end)
+    end
   end
-  vim.cmd("silent update")
-  vim.cmd("loadview")
+  -- Write changes and restore view to preserve folds
+  save_buffer(buf)
+  restore_view(context.win)
+  return true
 end
 
 -- Convert the current line into a "- [ ]" task bullet (or insert a fresh one

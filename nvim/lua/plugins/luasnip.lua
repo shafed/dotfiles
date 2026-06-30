@@ -103,6 +103,19 @@ return {
     table.insert(
       snippets,
       s({
+        trig = "date",
+        name = "Current date ISO 8601",
+        desc = "Insert current date in YYYY-MM-DD format",
+      }, {
+        f(function()
+          return os.date("%Y-%m-%d")
+        end, {}),
+      })
+    )
+
+    table.insert(
+      snippets,
+      s({
         trig = "mail",
         name = "My Gmail",
         desc = "My Gmail",

@@ -141,6 +141,7 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
   y (cmd firefox --new-window https://www.youtube.com/playlist?list=WL)
   u (cmd zsh -lc "$HOME/dotfiles/scripts/youtube-qat.sh") ;; yoUtube channel search QAT
   b (cmd zsh -lc "$HOME/dotfiles/scripts/bookmarks.sh") ;; Bookmarks fzf QAT
+  f (cmd zsh -lc "$HOME/dotfiles/scripts/search.sh") ;; web search (Find) fzf QAT
   a (cmd zsh -lc "$HOME/dotfiles/scripts/apps.sh") ;; Applications fzf QAT
   o (t! kitty-send C-S-o)   ;; obsidian session
   w (t! kitty-send C-S-w)   ;; downloads session

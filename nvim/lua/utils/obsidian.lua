@@ -195,6 +195,23 @@ function M.save_training_note()
   vim.fn.writefile(buf_lines, training_path)
 
   vim.notify("Training note saved: " .. training_filename, vim.log.levels.INFO)
+
+  --------------------------------------------------------------------------
+  -- Regenerate the training logbook HTML from dotfiles.
+  --------------------------------------------------------------------------
+  local script = vim.fn.expand("~/dotfiles/scripts/generate_logbook.py")
+  vim.fn.jobstart({ "python3", script }, {
+    cwd = vim.fn.expand("~/obsidian/periodic"),
+    on_exit = function(_, code)
+      vim.schedule(function()
+        if code == 0 then
+          vim.notify("logbook.html regenerated", vim.log.levels.INFO)
+        else
+          vim.notify("generate_logbook.py failed (exit " .. code .. ")", vim.log.levels.ERROR)
+        end
+      end)
+    end,
+  })
 end
 
 return M

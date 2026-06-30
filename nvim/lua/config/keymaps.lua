@@ -237,6 +237,40 @@ end, { desc = "[P]Go to next markdown header" })
 vim.keymap.set("n", "<leader>lc", obsidian.copy_workout_table, { desc = "[P]Log Copy: workout table to clipboard" })
 vim.keymap.set("n", "<leader>lp", obsidian.save_training_note, { desc = "[P]Log Paste: save training note" })
 
+vim.keymap.set("n", "<leader>lv", function()
+  local logbook = vim.fn.expand("~/obsidian/periodic/training/logbook.html")
+  if vim.fn.filereadable(logbook) == 0 then
+    vim.notify("Logbook not found: " .. logbook, vim.log.levels.ERROR)
+    return
+  end
+
+  if vim.ui.open then
+    vim.ui.open(logbook)
+  else
+    vim.fn.jobstart({ "xdg-open", logbook }, { detach = true })
+  end
+end, { desc = "[P]Logbook View: open HTML" })
+
+-- Regenerate the training logbook HTML
+vim.keymap.set("n", "<leader>lr", function()
+  local script = vim.fn.expand("~/dotfiles/scripts/generate_logbook.py")
+  if vim.fn.filereadable(script) == 0 then
+    vim.notify("Logbook generator not found: " .. script, vim.log.levels.ERROR)
+    return
+  end
+  vim.notify("Regenerating logbook…", vim.log.levels.INFO)
+  vim.system({ "python3", script }, { text = true }, function(res)
+    vim.schedule(function()
+      local out = (res.stdout or "") .. (res.stderr or "")
+      if res.code == 0 then
+        vim.notify(vim.trim(out), vim.log.levels.INFO)
+      else
+        vim.notify("Logbook generation failed:\n" .. vim.trim(out), vim.log.levels.ERROR)
+      end
+    end)
+  end)
+end, { desc = "[P]Logbook Reload: rebuild HTML" })
+
 -- Автопуш Obsidian Vault при разных событиях
 vim.api.nvim_create_autocmd({
   "FocusLost", -- переключился на другое окно

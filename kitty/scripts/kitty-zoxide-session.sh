@@ -346,6 +346,11 @@ EOF
   kitten @ action goto_session "$session_file"
 }
 
+if [[ "${1:-}" == "--named" ]]; then
+  focus_or_launch_named_session "${2:-}"
+  exit 0
+fi
+
 set +e
 printf '\033[2J\033[H'
 fzf_out="$(

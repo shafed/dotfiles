@@ -484,13 +484,21 @@ h1{font:600 26px/1 'Georgia',serif;letter-spacing:-.01em;margin:0 0 6px}
 .meta{color:var(--soft);font-size:12px;letter-spacing:.04em}
 
 .controls{position:sticky;top:0;z-index:5;background:var(--paper);
-  padding:10px 0;margin-bottom:8px;border-bottom:1px solid var(--line);
-  display:flex;justify-content:center}
-#search{width:100%;max-width:600px;font:inherit;font-size:14px;padding:9px 12px;
-  border-radius:7px;border:1px solid var(--line);background:var(--panel);
-  color:var(--ink);text-align:center}
+  padding:10px 0;margin-bottom:8px;border-bottom:1px solid var(--line)}
+.searchwrap{position:relative;display:flex;align-items:center}
+.searchicon{position:absolute;left:14px;width:16px;height:16px;color:var(--soft);
+  pointer-events:none}
+#search{width:100%;font:inherit;font-size:14px;padding:11px 44px 11px 40px;
+  border-radius:9px;border:1px solid var(--line);background:var(--panel);
+  color:var(--ink);transition:border-color .15s,box-shadow .15s}
 #search::placeholder{color:var(--soft)}
-#search:focus{text-align:left}
+#search:hover{border-color:var(--soft)}
+#search:focus{outline:none;border-color:var(--accent);
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 22%,transparent)}
+.searchkbd{position:absolute;right:12px;font:500 11px/1 'Iosevka',ui-monospace,monospace;
+  color:var(--soft);border:1px solid var(--line);background:var(--grid-alt);
+  border-radius:5px;padding:3px 6px;pointer-events:none}
+.searchwrap:focus-within .searchkbd{display:none}
 
 .tabs{display:flex;gap:2px;margin:12px 0 6px;border-bottom:1px solid var(--line)}
 .tab{appearance:none;border:0;background:none;font:inherit;font-size:13px;
@@ -761,7 +769,14 @@ def main() -> int:
 </header>
 
 <div class="controls">
-  <input id="search" type="search" placeholder="Search" autocomplete="off">
+  <div class="searchwrap">
+    <svg class="searchicon" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="9" cy="9" r="6.5" stroke="currentColor" stroke-width="1.6"/>
+      <line x1="13.6" y1="13.6" x2="18" y2="18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+    </svg>
+    <input id="search" type="search" placeholder="Search" autocomplete="off">
+    <kbd class="searchkbd">/</kbd>
+  </div>
 </div>
 
 <div class="tabs" role="tablist">

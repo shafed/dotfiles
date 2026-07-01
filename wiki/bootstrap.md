@@ -9,26 +9,60 @@ covers:
 
 # Bootstrap — развёртывание на новой машине
 
-🌱 Заглушка. Наполнить.
-
-Платформа: Arch Linux + Hyprland. Windows/WSL-часть удалена (см. [decisions](decisions.md)).
+🚧 Платформа: Arch Linux + Hyprland. Windows/WSL-часть удалена (см.
+[[decisions]]). Автозапуск сессии — `../zsh/zprofile`: на tty1 без
+`$DISPLAY` делает `exec start-hyprland`.
 
 ## Механизм деплоя
 
-Установочного скрипта **нет**. Конфиги подключаются **ручными симлинками** из
-`~/.config/<tool> → ~/dotfiles/<tool>`. Проверено на текущей машине:
-`hypr`, `kitty`, `nvim`, `kanata`, `waybar`, `yazi` симлинкнуты в `~/.config/`;
-`~/.zshrc → ~/dotfiles/zsh/zshrc`.
+Установочного скрипта **нет**. Конфиги подключаются **ручными симлинками**
+`~/.config/<tool> → ~/dotfiles/<tool>` (плюс `~/.zshrc`). Причина выбора и
+отвергнутый `stow` — см. [[decisions]].
 
-## TODO наполнить
+Симлинки, подтверждённые на текущей машине (`ls -la ~/.config/`):
 
-- [ ] Точный список пакетов (pacman/AUR): hyprland, kanata, kitty, waybar, yazi,
-      nvim, zsh, oh-my-zsh, fzf, yt-dlp, brotab, …
-- [ ] Полный список симлинков (одной таблицей source → target).
-- [ ] Порядок установки и зависимости между шагами.
-- [ ] Что requires ручной настройки вне репо (Firefox-расширение brotab,
-      systemd user-сервисы, im-select/xkb).
-- [ ] Секреты: `OPENROUTER_API_KEY` сейчас захардкожен в zshrc — вынести из репо.
+| target (~/.config/) | source (~/dotfiles/) |
+| --- | --- |
+| `hypr` | `hypr` |
+| `kitty` | `kitty` |
+| `nvim` | `nvim` |
+| `kanata` | `kanata` |
+| `waybar` | `waybar` |
+| `yazi` | `yazi` |
+| `darkman` | `darkman` |
+| `lazygit` | `lazygit` |
+| `sioyek` | `sioyek` |
+| `zathura` | `zathura` |
+| `systemd` | `systemd` |
+| `xray` | `xray` |
+| `~/.zshrc` | `zsh/zshrc` |
 
-⚠️ Gotcha: рассмотреть `stow` или install-скрипт, если симлинков станет много —
-сейчас отвергнуто в пользу простоты (см. [decisions](decisions.md)).
+✅ исправлено 2026-07-01: легаси-симлинки `~/.config/tmux` и `~/.config/wezterm`
+(оба указывали в dotfiles) сняты — переход на kitty native sessions завершён
+(см. [[decisions]]). Каталоги `tmux/`/`wezterm/` в репозитории
+не трогались.
+
+## Пакеты
+
+Подтверждаются конфигами репозитория (не выдумано): `hyprland`, `kanata`,
+`kitty`, `waybar`, `yazi`, `neovim`, `zsh` + `oh-my-zsh` (автоустановка из
+zshrc), `zoxide`, `fzf`, `darkman`, `lazygit`, `sioyek`, `zathura`, `xray`.
+Из [[scripts]]/[[zsh]] видны также `yt-dlp`, `brotab`, `aichat`,
+`taskwarrior`, `todoist`, `copyq`, `python` (generate_logbook.py).
+
+TODO: точные имена пакетов pacman vs AUR и версии — не зафиксированы (проверять
+при развёртывании).
+
+## Ручная настройка вне репо (TODO уточнить)
+
+- Firefox-расширение для `brotab` (bookmarks.sh фокусит вкладку), см.
+  [[scripts]].
+- systemd user-сервисы из `~/.config/systemd`.
+- Раскладки: kanata (см. [[keymap]]). Старый `im-select` в [[zsh]]
+  (Windows-путь) удалён 2026-07-01.
+- oh-my-zsh и custom-плагины подтягиваются автоматически при первом запуске
+  zshrc (install-скрипт не нужен).
+
+✅ исправлено 2026-07-01: секреты (`OPENROUTER_API_KEY`, `TODOIST_API_TOKEN`)
+удалены из `../zsh/zshrc`. Ключи остаются в git-истории — ротировать
+(см. [[zsh]]).

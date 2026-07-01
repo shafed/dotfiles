@@ -8,41 +8,42 @@ updated: 2026-07-01
 
 База знаний по этим dotfiles. Отвечает на вопрос **«почему так сделано»** и
 описывает устройство нетривиальных частей (в первую очередь `scripts/`). Правила
-ведения — в [CONVENTIONS.md](CONVENTIONS.md). Правила для агента — в
+ведения — в [[CONVENTIONS]]. Правила для агента — в
 [../CLAUDE.md](../CLAUDE.md).
 
-Статус: 🌱 скелет — большинство страниц заглушки, наполняются постепенно.
+Статус: 🚧 все страницы наполнены краткими сведениями (первый проход агентами
+2026-07-01); углубляются по мере правок.
 Легенда: ✅ наполнено · 🚧 частично · 🌱 заглушка.
 
 ## Setup
 
 | Страница                     | О чём                                                                                                                                     |
 | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| 🌱 [bootstrap](bootstrap.md) | Развёртывание на новой машине: пакеты, симлинки `~/.config → ~/dotfiles`, порядок. Установочного скрипта нет — симлинки ставятся вручную. |
+| 🚧 [[bootstrap]] | Развёртывание на новой машине: пакеты, симлинки `~/.config → ~/dotfiles`, порядок. Установочного скрипта нет — симлинки ставятся вручную. |
 
 ## Components
 
 | Страница                 | Покрывает  | О чём                                                                                                                                                                                                    |
 | ------------------------ | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 🌱 [kanata](kanata.md)   | `kanata/`  | Слои клавиатуры, opposite-hand HRM, chords, kitty-send вместо tmux-prefix, xkb US-wrap для символов. Самая продуманная и хрупкая часть keymap.                                                           |
-| 🌱 [scripts](scripts.md) | `scripts/` | fzf-пикеры (apps/bookmarks/search/youtube) на общем `lib.sh`; training logbook (`generate_logbook.py`, `import_training_log_xlsx.py`); daily-notes; nvim-edit-handler. Самая живая и сложная часть репо. |
-| 🌱 [hypr](hypr.md)       | `hypr/`    | Hyprland: биндинги, monitors, exec-at-launch, hypridle/hyprlock/hyprsunset.                                                                                                                              |
-| 🌱 [kitty](kitty.md)     | `kitty/`   | Терминал: нативные сессии, quick-access-terminal, get_layout/pass_keys, темы (gruvbox). Большой конфиг — в основном закомментированные дефолты.                                                          |
-| 🌱 [nvim](nvim.md)       | `nvim/`    | LazyVim-база, кастомные плагины/снипеты, интеграция с logbook, harper-исключения.                                                                                                                        |
-| 🌱 [zsh](zsh.md)         | `zsh/`     | oh-my-zsh, алиасы, функции (yazi cd, im-select), aichat.                                                                                                                                                 |
-| 🌱 [waybar](waybar.md)   | `waybar/`  | Статус-бар для Hyprland.                                                                                                                                                                                 |
-| 🌱 [yazi](yazi.md)       | `yazi/`    | Файловый менеджер: плагины, flavors, keymap.                                                                                                                                                             |
+| 🚧 [[kanata]]   | `kanata/`  | Слои клавиатуры, opposite-hand HRM, chords, kitty-send вместо tmux-prefix, xkb US-wrap для символов. Самая продуманная и хрупкая часть keymap.                                                           |
+| 🚧 [[scripts]] | `scripts/` | fzf-пикеры (apps/bookmarks/search/youtube) на общем `lib.sh`; training logbook (`generate_logbook.py`, `import_training_log_xlsx.py`); daily-notes; nvim-edit-handler. Самая живая и сложная часть репо. |
+| 🚧 [[hypr]]       | `hypr/`    | Hyprland: биндинги, monitors, exec-at-launch, hypridle/hyprlock/hyprsunset.                                                                                                                              |
+| 🚧 [[kitty]]     | `kitty/`   | Терминал: нативные сессии, quick-access-terminal, get_layout/pass_keys, темы (gruvbox). Большой конфиг — в основном закомментированные дефолты.                                                          |
+| 🚧 [[nvim]]       | `nvim/`    | LazyVim-база, кастомные плагины/снипеты, интеграция с logbook, harper-исключения.                                                                                                                        |
+| 🚧 [[zsh]]         | `zsh/`     | oh-my-zsh, алиасы, функции (yazi cd, im-select), aichat.                                                                                                                                                 |
+| 🚧 [[waybar]]   | `waybar/`  | Статус-бар для Hyprland.                                                                                                                                                                                 |
+| 🚧 [[yazi]]       | `yazi/`    | Файловый менеджер: плагины, flavors, keymap.                                                                                                                                                             |
 
 ## Cross-cutting
 
 | Страница                   | О чём                                                                                                                             |
 | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| 🌱 [keymap](keymap.md)     | Сквозная карта клавиш: как kanata-слои, hypr-биндинги и kitty-хоткеи сочетаются и не конфликтуют. Единая точка правды по хоткеям. |
-| 🌱 [sessions](sessions.md) | Нативные kitty-сессии (миграция с tmux): kanata шлёт C-S-хоткеи, kitty-zoxide-session, obsidian-сессия для logbook.               |
-| 🌱 [theming](theming.md)   | Gruvbox везде; darkman + hyprsunset для light/dark переключения.                                                                  |
+| 🚧 [[keymap]]     | Сквозная карта клавиш: как kanata-слои, hypr-биндинги и kitty-хоткеи сочетаются и не конфликтуют. Единая точка правды по хоткеям. |
+| 🚧 [[sessions]] | Нативные kitty-сессии (миграция с tmux): kanata шлёт C-S-хоткеи, kitty-zoxide-session, obsidian-сессия для logbook.               |
+| 🚧 [[theming]]   | Gruvbox dark везде (копия палитры в каждом компоненте); динамического light/dark нет (darkman-заготовка пуста, hyprsunset — только гамма). |
 
 ## Decisions
 
 | Страница                     | О чём                                                                                                                                                                |
 | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 🌱 [decisions](decisions.md) | Крупные решения и отвергнутые альтернативы: tmux → kitty native sessions; kanata как единый keymap-движок; удаление Windows/WSL-легаси; ручные симлинки вместо stow. |
+| 🚧 [[decisions]] | Крупные решения и отвергнутые альтернативы: tmux → kitty native sessions; kanata как единый keymap-движок; удаление Windows/WSL-легаси; ручные симлинки вместо stow. |

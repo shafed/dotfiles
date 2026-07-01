@@ -1,12 +1,12 @@
 # CLAUDE.md
 
-Основные инструкции для этого репозитория — в [`AGENTS.md`](AGENTS.md) (общий
-файл для всех AI-агентов: Claude Code, Codex и т.п.). **Прочитай его.** Ключевое:
-перед работой над конфигом читай `wiki/index.md` и поддерживай wiki
+The main instructions for this repo are in [`AGENTS.md`](AGENTS.md) (the shared
+file for all AI agents: Claude Code, Codex, etc.). **Read it.** Key point: before
+working on a config, read `wiki/index.md` and maintain the wiki
 (ingest/update/lint).
 
-Claude-специфичное:
+Claude-specific:
 
-- Не добавляй `Co-Authored-By: Claude` в git-коммиты.
-- Точечные настройки прав Claude Code — в локальных `.claude/` внутри `kanata/`,
-  `scripts/`, `nvim/lua/config/`.
+- Don't add `Co-Authored-By: Claude` to git commits.
+- Scoped Claude Code permission settings live in local `.claude/` dirs inside
+  `kanata/`, `scripts/`, `nvim/lua/config/`.

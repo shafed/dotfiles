@@ -7,19 +7,19 @@ covers:
   - zsh/zprofile
 ---
 
-# Bootstrap — развёртывание на новой машине
+# Bootstrap — deploying on a new machine
 
-🚧 Платформа: Arch Linux + Hyprland. Windows/WSL-часть удалена (см.
-[[decisions]]). Автозапуск сессии — `../zsh/zprofile`: на tty1 без
-`$DISPLAY` делает `exec start-hyprland`.
+🚧 Platform: Arch Linux + Hyprland. The Windows/WSL part is removed (see
+[[decisions]]). Session autostart — `../zsh/zprofile`: on tty1 with no
+`$DISPLAY`, runs `exec start-hyprland`.
 
-## Механизм деплоя
+## Deployment mechanism
 
-Установочного скрипта **нет**. Конфиги подключаются **ручными симлинками**
-`~/.config/<tool> → ~/dotfiles/<tool>` (плюс `~/.zshrc`). Причина выбора и
-отвергнутый `stow` — см. [[decisions]].
+There is **no** install script. Configs are wired up via **manual symlinks**
+`~/.config/<tool> → ~/dotfiles/<tool>` (plus `~/.zshrc`). Reason for the choice and
+the rejected `stow` — see [[decisions]].
 
-Симлинки, подтверждённые на текущей машине (`ls -la ~/.config/`):
+Symlinks confirmed on the current machine (`ls -la ~/.config/`):
 
 | target (~/.config/) | source (~/dotfiles/) |
 | --- | --- |
@@ -37,32 +37,32 @@ covers:
 | `xray` | `xray` |
 | `~/.zshrc` | `zsh/zshrc` |
 
-✅ исправлено 2026-07-01: легаси-симлинки `~/.config/tmux` и `~/.config/wezterm`
-(оба указывали в dotfiles) сняты — переход на kitty native sessions завершён
-(см. [[decisions]]). Каталоги `tmux/`/`wezterm/` в репозитории
-не трогались.
+✅ fixed 2026-07-01: legacy symlinks `~/.config/tmux` and `~/.config/wezterm`
+(both pointed into dotfiles) were removed — the switch to kitty native sessions is
+complete (see [[decisions]]). The `tmux/`/`wezterm/` directories in the repo
+were left untouched.
 
-## Пакеты
+## Packages
 
-Подтверждаются конфигами репозитория (не выдумано): `hyprland`, `kanata`,
-`kitty`, `waybar`, `yazi`, `neovim`, `zsh` + `oh-my-zsh` (автоустановка из
+Confirmed by the repo's configs (not guessed): `hyprland`, `kanata`,
+`kitty`, `waybar`, `yazi`, `neovim`, `zsh` + `oh-my-zsh` (auto-installed from
 zshrc), `zoxide`, `fzf`, `darkman`, `lazygit`, `sioyek`, `zathura`, `xray`.
-Из [[scripts]]/[[zsh]] видны также `yt-dlp`, `brotab`, `aichat`,
+From [[scripts]]/[[zsh]] also visible: `yt-dlp`, `brotab`, `aichat`,
 `taskwarrior`, `todoist`, `copyq`, `python` (generate_logbook.py).
 
-TODO: точные имена пакетов pacman vs AUR и версии — не зафиксированы (проверять
-при развёртывании).
+TODO: exact pacman vs AUR package names and versions — not recorded (check
+during deployment).
 
-## Ручная настройка вне репо (TODO уточнить)
+## Manual setup outside the repo (TODO clarify)
 
-- Firefox-расширение для `brotab` (bookmarks.sh фокусит вкладку), см.
+- Firefox extension for `brotab` (bookmarks.sh focuses the tab), see
   [[scripts]].
-- systemd user-сервисы из `~/.config/systemd`.
-- Раскладки: kanata (см. [[keymap]]). Старый `im-select` в [[zsh]]
-  (Windows-путь) удалён 2026-07-01.
-- oh-my-zsh и custom-плагины подтягиваются автоматически при первом запуске
-  zshrc (install-скрипт не нужен).
+- systemd user services from `~/.config/systemd`.
+- Layouts: kanata (see [[keymap]]). The old `im-select` in [[zsh]]
+  (Windows path) removed 2026-07-01.
+- oh-my-zsh and custom plugins are pulled in automatically on the first run of
+  zshrc (no install script needed).
 
-✅ исправлено 2026-07-01: секреты (`OPENROUTER_API_KEY`, `TODOIST_API_TOKEN`)
-удалены из `../zsh/zshrc`. Ключи остаются в git-истории — ротировать
-(см. [[zsh]]).
+✅ fixed 2026-07-01: secrets (`OPENROUTER_API_KEY`, `TODOIST_API_TOKEN`)
+removed from `../zsh/zshrc`. The keys remain in git history — rotate them
+(see [[zsh]]).

@@ -9,36 +9,36 @@ covers:
 
 # waybar
 
-🚧 Статус-бар для Hyprland. Цвета — [[theming]].
+🚧 Status bar for Hyprland. Colors — [[theming]].
 
-## Компоновка и модули
+## Layout and modules
 
-Бар сверху, высота 30. Раскладка:
+Bar at the top, height 30. Layout:
 
-- **left**: `hyprland/workspaces` (иконки, `all-outputs`), `hyprland/mode`,
+- **left**: `hyprland/workspaces` (icons, `all-outputs`), `hyprland/mode`,
   `hyprland/scratchpad`, `custom/media`.
-- **center**: `hyprland/window` (заголовок активного окна).
+- **center**: `hyprland/window` (active window title).
 - **right**: `mpd`, `pulseaudio`, `network`, `power-profiles-daemon`, `backlight`,
-  `hyprland/language` (индикатор раскладки), `battery` + `battery#bat2`, `clock`,
+  `hyprland/language` (layout indicator), `battery` + `battery#bat2`, `clock`,
   `tray`, `custom/power`.
 
-⚠️ Gotcha: часть модулей закомментирована в `modules-right` (`idle_inhibitor`,
-`cpu`, `memory`, `temperature`, `keyboard-state`) — их конфиги в файле остаются,
-но в баре они не показываются. Не удивляйся «мёртвым» блокам конфига.
+⚠️ Gotcha: some modules are commented out in `modules-right` (`idle_inhibitor`,
+`cpu`, `memory`, `temperature`, `keyboard-state`) — their configs remain in the file,
+but they aren't shown on the bar. Don't be surprised by "dead" config blocks.
 
-## Кастомные модули (скрипты/меню)
+## Custom modules (scripts/menus)
 
 - **`custom/media`** — `exec: $HOME/.config/waybar/mediaplayer.py` (JSON,
-  playerctl/MPRIS). ⚠️ Скрипт `mediaplayer.py` НЕ лежит в этом репо (ожидается в
-  `~/.config/waybar/`); в dotfiles только `config.jsonc` и `style.css`.
-- **`custom/power`** — кнопка `⏻` с меню на клик (`menu-file:
-  power_menu.xml`, тоже вне репо): shutdown/reboot/suspend/hibernate.
-- **`hyprland/language`** — показывает раскладку, которую переключает kanata
-  (см. [[keymap]]); waybar только отображает состояние.
+  playerctl/MPRIS). ⚠️ The `mediaplayer.py` script does NOT live in this repo (expected at
+  `~/.config/waybar/`); dotfiles only has `config.jsonc` and `style.css`.
+- **`custom/power`** — a `⏻` button with a click menu (`menu-file:
+  power_menu.xml`, also outside the repo): shutdown/reboot/suspend/hibernate.
+- **`hyprland/language`** — shows the layout that kanata switches
+  (see [[keymap]]); waybar only displays the state.
 
 ## style.css — gruvbox
 
-Цвета заданы через `@define-color gb_*` (полная gruvbox-палитра: bg `#282828`,
-fg `#d4be98`, акценты red/green/yellow/orange/blue/purple/aqua). Бар полупрозрачный
-(`rgba(40,40,40,0.88)`). Это локальная копия палитры (не общий источник) — тот же
-приём, что в kitty/nvim; единый гайд по цветам — [[theming]].
+Colors are set via `@define-color gb_*` (the full gruvbox palette: bg `#282828`,
+fg `#d4be98`, accents red/green/yellow/orange/blue/purple/aqua). The bar is semi-transparent
+(`rgba(40,40,40,0.88)`). This is a local copy of the palette (not a shared source) — the same
+approach as in kitty/nvim; the single color guide is [[theming]].

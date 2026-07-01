@@ -9,79 +9,79 @@ covers:
   - scripts/daily-notes.sh
 ---
 
-# sessions — нативные kitty-сессии
+# sessions — native kitty sessions
 
-🚧 Частично наполнено. См. [[kanata]] (как драйвятся) и [[keymap]].
+🚧 Partially filled in. See [[kanata]] (how they're driven) and [[keymap]].
 
-## Миграция tmux → kitty native sessions
+## Migration from tmux to kitty native sessions
 
-Раньше сессии/панели держал tmux (prefix `C-s`). Перешли на **нативные
-kitty-сессии** (`goto_session`, session-файлы в
-[`../kitty/sessions/`](../kitty/sessions/)). Почему:
+Previously sessions/panes were held by tmux (prefix `C-s`). Moved to **native
+kitty sessions** (`goto_session`, session files in
+[`../kitty/sessions/`](../kitty/sessions/)). Why:
 
-- один слой меньше — не нужен tmux поверх kitty; управление (сплиты, вкладки,
-  скроллбэк в nvim) уже есть в kitty.
-- kitty-нативность: `tab_bar_filter session:~ or session:^$` показывает только
-  вкладки текущей сессии; `goto_session` создаёт-или-переключает по имени файла.
-- session-файл декларативен: `layout`, `cd`, `launch --title ...`, `focus`.
+- one less layer — no need for tmux on top of kitty; management (splits, tabs,
+  scrollback in nvim) is already in kitty.
+- kitty-nativeness: `tab_bar_filter session:~ or session:^$` shows only
+  the tabs of the current session; `goto_session` creates-or-switches by file name.
+- the session file is declarative: `layout`, `cd`, `launch --title ...`, `focus`.
 
-Trade-off: часть tmux-удобств (persistence раскладки, «reopen last session»)
-пришлось воспроизводить руками. Например daily-note-сессия эмулирует старое
-«нажать s на стартовом экране» через `require("persistence").load()` в nvim.
+Trade-off: some tmux conveniences (layout persistence, "reopen last session")
+had to be reproduced by hand. For example the daily-note session emulates the old
+"press s on the start screen" via `require("persistence").load()` in nvim.
 
-## Как kanata драйвит сессии
+## How kanata drives sessions
 
-kanata из слоя `apps` шлёт `C-S-`-хоткеи (`kitty_mod = ctrl+shift`) через
-`deftemplate kitty-send` (фокус kitty → задержка `aterm-settle` → хоткей). См.
-[[kanata]]. Маппинг (kitty.conf, секция «Session & navigation»):
+kanata from the `apps` layer sends `C-S-` hotkeys (`kitty_mod = ctrl+shift`) via
+`deftemplate kitty-send` (focus kitty → `aterm-settle` delay → hotkey). See
+[[kanata]]. Mapping (kitty.conf, "Session & navigation" section):
 
 - `apps+h → C-S-a` = home, `apps+t → C-S-2` = todos, `apps+w → C-S-w` = downloads,
   `apps+o → C-S-o` = obsidian, `apps+p → C-S-c` = projects, `apps+d → C-S-d` = dotfiles.
 - `apps+b → A-tab` = last session (`goto_session -1`).
-- `apps+e → C-S-f` = zoxide-picker, `apps+c → C-S-s` = list-sessions-picker,
+- `apps+e → C-S-f` = zoxide picker, `apps+c → C-S-s` = list-sessions picker,
   `apps+r → C-S-1` = daily note.
 
 ## kitty-zoxide-session
 
 [`../kitty/scripts/kitty-zoxide-session.sh`](../kitty/scripts/kitty-zoxide-session.sh)
-(`C-S-f`, overlay) — переключение/создание сессии по каталогу через zoxide.
-Поддерживает `--named <name>` для адресного вызова (используется nvim-edit-handler).
+(`C-S-f`, overlay) — switch/create a session by directory via zoxide.
+Supports `--named <name>` for addressed invocation (used by nvim-edit-handler).
 
-## obsidian-сессия и training logbook
+## obsidian session and training logbook
 
-Сессия `obsidian` ([`../kitty/sessions/obsidian.kitty-session`](../kitty/sessions/obsidian.kitty-session))
-запускает nvim в `~/obsidian` после `git pull`, восстанавливая раскладку через
+The `obsidian` session ([`../kitty/sessions/obsidian.kitty-session`](../kitty/sessions/obsidian.kitty-session))
+launches nvim in `~/obsidian` after `git pull`, restoring the layout via
 persistence.
 
-Логбук тренировок открывает файлы через ссылки `nvim-edit://<path>`, которые
-ловит [`../scripts/nvim-edit-handler.sh`](../scripts/nvim-edit-handler.sh) (см.
-[[scripts]]). Он:
-1. находит основной (не floating) kitty-сокет,
-2. переключается/создаёт сессию `obsidian` через `kitty-zoxide-session.sh --named obsidian`,
-3. открывает файл новой вкладкой в **уже запущенном** nvim этой сессии — сначала
-   через `--server <sock> --remote-tab`, иначе fallback на `send-text` `:tabedit`.
+The training logbook opens files via `nvim-edit://<path>` links, which are
+caught by [`../scripts/nvim-edit-handler.sh`](../scripts/nvim-edit-handler.sh) (see
+[[scripts]]). It:
+1. finds the main (non-floating) kitty socket,
+2. switches to/creates the `obsidian` session via `kitty-zoxide-session.sh --named obsidian`,
+3. opens the file as a new tab in the **already running** nvim of that session — first
+   via `--server <sock> --remote-tab`, otherwise falls back to `send-text` `:tabedit`.
 
-⚠️ Gotcha: nvim-сокет ищется перебором PID вокруг pid nvim (`delta 0,1,-1,2,...`),
-т.к. точный `nvim.<pid>.0` не всегда совпадает с pid форграунд-процесса. Хрупкое
-место — если nvim не поднял `--listen`-сокет, срабатывает send-text fallback.
+⚠️ Gotcha: the nvim socket is found by iterating over PIDs near the nvim pid (`delta 0,1,-1,2,...`),
+since the exact `nvim.<pid>.0` doesn't always match the foreground process's pid. Fragile
+spot — if nvim didn't bring up a `--listen` socket, the send-text fallback kicks in.
 
-## daily-notes.sh — статус (tmux уже НЕ используется)
+## daily-notes.sh — status (tmux is no longer used)
 
-⚠️ Факт на 2026-07-01: shebang-**комментарий** в
-[`../scripts/daily-notes.sh`](../scripts/daily-notes.sh) всё ещё говорит «tmux
-session», но код tmux **не использует**. Скрипт генерирует временный
-kitty-session-файл в `~/.cache/kitty-sessions/daily-<note>.kitty-session` и
-вызывает `kitten @ action goto_session`. Одна kitty-сессия на день, nvim с
-`persistence.load()`. Комментарий устарел — можно поправить при случае, поведение
-уже нативно-kitty.
+⚠️ Fact as of 2026-07-01: the shebang **comment** in
+[`../scripts/daily-notes.sh`](../scripts/daily-notes.sh) still says "tmux
+session", but the code **doesn't use** tmux. The script generates a temporary
+kitty session file at `~/.cache/kitty-sessions/daily-<note>.kitty-session` and
+calls `kitten @ action goto_session`. One kitty session per day, nvim with
+`persistence.load()`. The comment is stale — worth fixing at some point, the behavior
+is already native-kitty.
 
-## Сплиты и layout
+## Splits and layout
 
-Сплиты: `C-S--` = hsplit, `C-S-\` = vsplit (`launch --location=... --cwd=current`).
-`C-h/j/k/l` — контекстная навигация split/window через `pass_keys.py` (в nvim/fzf
-проброс, иначе перемещение между окнами kitty).
+Splits: `C-S--` = hsplit, `C-S-\` = vsplit (`launch --location=... --cwd=current`).
+`C-h/j/k/l` — context-aware split/window navigation via `pass_keys.py` (passes through
+in nvim/fzf, otherwise moves between kitty windows).
 
-⚠️ Gotcha (`tab.layout`): tab-title и session-фильтр завязаны на
-`session_name`/`tab.active_wd`; session-файлы задают `layout` (обычно `tall`) явно
-на первой строке. Прежний `M-t`-toggle сплита в текущем kitty.conf отсутствует —
-сплиты теперь через `C-S--` / `C-S-\`.
+⚠️ Gotcha (`tab.layout`): tab title and session filter are tied to
+`session_name`/`tab.active_wd`; session files set `layout` (usually `tall`) explicitly
+on the first line. The former `M-t` split toggle is absent in the current kitty.conf —
+splits now go through `C-S--` / `C-S-\`.

@@ -1,78 +1,80 @@
 # AGENTS.md — dotfiles
 
-Инструкции для любого AI-агента (Claude Code, Codex и т.п.), работающего в этом
-репозитории. Личные dotfiles: Arch Linux + Hyprland + kanata + kitty + nvim.
-Деплой — ручными симлинками `~/.config/<tool> → ~/dotfiles/<tool>`
-(установочного скрипта нет).
+Instructions for any AI agent (Claude Code, Codex, etc.) working in this repo.
+Personal dotfiles: Arch Linux + Hyprland + kanata + kitty + nvim. Deployed via
+manual symlinks `~/.config/<tool> → ~/dotfiles/<tool>` (no install script).
 
-## Wiki-first: читай перед работой
+## Wiki-first: read before working
 
-В `wiki/` живёт база знаний по этим dotfiles, отвечающая на вопрос **«почему так
-сделано»** (решения, компромиссы, грабли, связи между компонентами). Это паттерн
-"LLM Wiki" Андрея Карпати — персистентный, накапливающийся артефакт, который
-агент читает перед работой и **поддерживает** после изменений.
+`wiki/` holds the knowledge base for these dotfiles, answering **"why it's built
+this way"** (decisions, trade-offs, gotchas, links between components). It's the
+"LLM Wiki" pattern by Andrej Karpathy — a persistent, compounding artifact the
+agent reads before working and **maintains** after changes.
 
-**В начале задачи, затрагивающей любой конфиг:**
+**At the start of any task that touches a config:**
 
-1. Прочитай [`wiki/index.md`](wiki/index.md) — каталог всех страниц.
-2. Открой релевантную страницу по полю `covers:` (какие пути репо она
-   описывает).
-3. Конвенции wiki — в [`wiki/CONVENTIONS.md`](wiki/CONVENTIONS.md).
+1. Read [`wiki/index.md`](wiki/index.md) — the catalog of all pages.
+2. Open the relevant page via its `covers:` field (which repo paths it
+   describes).
+3. Wiki conventions are in [`wiki/CONVENTIONS.md`](wiki/CONVENTIONS.md).
 
-Wiki описывает _почему_, код — _как_. Не дублируй код в wiki; фиксируй решения.
+The wiki explains _why_, the code shows _how_. Don't duplicate code in the wiki;
+record decisions.
 
-## Агент обязан поддерживать wiki (ingest / update / lint)
+## The agent must maintain the wiki (ingest / update / lint)
 
-Wiki устаревает, если её не вести. Задача агента — держать её синхронной с кодом.
-Рутина bookkeeping — на агенте, не на человеке.
+The wiki goes stale if it isn't kept up. The agent's job is to keep it in sync
+with the code. The bookkeeping is on the agent, not the human.
 
-### UPDATE — после изменения конфига
+### UPDATE — after changing a config
 
-Меняешь поведение конфига (`kanata/config.kbd`, `hypr/`, `scripts/`, `zsh/…`) —
-в **том же** изменении:
+When you change a config's behavior (`kanata/config.kbd`, `hypr/`, `scripts/`,
+`zsh/…`), in the **same** change:
 
-- Найди страницу, чей `covers:` включает изменённый путь, и обнови её:
-  зафиксируй новое поведение и **причину** (не только «что», но «почему»).
-- Обнови `updated:` во frontmatter на сегодняшнюю дату.
-- Если изменение сдвигает статус (🌱→🚧→✅) — поправь строку в `index.md`.
-- Затрагивает несколько компонентов (напр. хоткей) — обнови и сквозную страницу
-  ([[keymap]], [[sessions]], [[theming]]).
-- Крупное/архитектурное решение или отвергнутая альтернатива → добавь запись в
+- Find the page whose `covers:` includes the changed path and update it: record
+  the new behavior and the **reason** (not just "what", but "why").
+- Bump `updated:` in the frontmatter to today's date.
+- If the change shifts status (🌱→🚧→✅), fix the row in `index.md`.
+- If it touches several components (e.g. a hotkey), update the cross-cutting
+  page too ([[keymap]], [[sessions]], [[theming]]).
+- A major/architectural decision or a rejected alternative → add an entry to
   [`wiki/decisions.md`](wiki/decisions.md).
-- Допиши строку в [`wiki/log.md`](wiki/log.md) с префиксом `UPDATE` (или
-  `DECISION`).
+- Append a line to [`wiki/log.md`](wiki/log.md) with an `UPDATE` (or `DECISION`)
+  prefix.
 
-### INGEST — новый компонент/тема
+### INGEST — a new component/topic
 
-Появился новый инструмент или крупная тема:
+When a new tool or major topic appears:
 
-- Создай страницу по [CONVENTIONS.md](wiki/CONVENTIONS.md) (frontmatter +
+- Create a page per [CONVENTIONS.md](wiki/CONVENTIONS.md) (frontmatter +
   `covers:`).
-- Добавь её в нужную секцию `index.md` со статусом и однострочным summary.
-- Проставь backlinks с/на связанные страницы (`[[wikilinks]]`).
-- Строка в `log.md` с префиксом `INGEST`.
+- Add it to the right section of `index.md` with a status and one-line summary.
+- Add backlinks to/from related pages (`[[wikilinks]]`).
+- A line in `log.md` with an `INGEST` prefix.
 
-### LINT — периодическая проверка здоровья
+### LINT — periodic health check
 
-Когда просят «прогнать lint по wiki» (или по своей инициативе, если заметил):
+When asked to "lint the wiki" (or on your own initiative, if you notice):
 
-- **Противоречия** между страницей и текущим кодом (код — источник истины).
-- **Устаревшее**: `covers:`-пути, которых больше нет; старый `updated:` при явно
-  изменившемся коде.
-- **Осиротевшие** страницы: нет входящих ссылок из index/других страниц.
-- **Битые ссылки** и `covers:`, не совпадающие с реальными путями.
-- **Незакрытые заглушки** (🌱), где код уже стабилен — предложи наполнить.
-- Итог — строкой в `log.md` с префиксом `LINT` (что нашёл/починил).
+- **Contradictions** between a page and the current code (code is the source of
+  truth).
+- **Stale**: `covers:` paths that no longer exist; an old `updated:` while the
+  covered code has clearly changed.
+- **Orphaned** pages: no incoming links from index or other pages.
+- **Broken links** and `covers:` entries that don't match real paths.
+- **Unclosed stubs** (🌱) where the code is already stable — propose filling.
+- Result — a line in `log.md` with a `LINT` prefix (what you found / fixed).
 
-## Разделение ответственности
+## Division of responsibility
 
-- **Человек**: направление, какие решения важны, ревью содержания.
-- **Агент**: суммаризация, backlinks, обновление index/log, bookkeeping,
-  выявление противоречий и устаревшего.
+- **Human**: direction, which decisions matter, reviewing content.
+- **Agent**: summarizing, backlinks, updating index/log, bookkeeping, surfacing
+  contradictions and staleness.
 
-## Прочее
+## Misc
 
-- Не добавляй `Co-Authored-By`-строки в git-коммиты.
-- Ссылки между страницами wiki — `[[wikilinks]]` (см. CONVENTIONS.md).
-- Локальные `.claude/` есть в `kanata/`, `scripts/`, `nvim/lua/config/` — это
-  точечные настройки прав Claude Code, не путать с wiki.
+- Don't add `Co-Authored-By` lines to git commits.
+- Links between wiki pages use `[[wikilinks]]` (see CONVENTIONS.md).
+- There are local `.claude/` dirs in `kanata/`, `scripts/`, `nvim/lua/config/` —
+  these are scoped Claude Code permission settings, not to be confused with the
+  wiki.

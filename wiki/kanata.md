@@ -10,104 +10,110 @@ covers:
 
 # kanata
 
-🚧 Частично наполнено. Самая продуманная и хрупкая часть keymap. См. также
-сквозную [[keymap]] и [[sessions]].
+🚧 Partially filled in. The most thought-out and fragile part of the keymap. See
+also the cross-cutting [[keymap]] and [[sessions]].
 
 ## Opposite-hand HRM (home-row mods)
 
-Home-row mods по схеме **AGCS** (Alt-GUI-Ctrl-Shift от мизинца к указательному,
-зеркально: `a/;`=Alt, `s/l`=Super, `d/k`=Ctrl, `f/j`=Shift). Реализованы через
-`tap-hold-opposite-hand-release` (kanata PR #1955) поверх `defhands` — hold
-срабатывает, **только если следующая клавиша на другой руке**. Это убрало
-misfire вроде `sh → Super+h` без ручных списков «typing keys», которые
-приходилось вести раньше.
+Home-row mods follow the **AGCS** scheme (Alt-GUI-Ctrl-Shift from pinky to index
+finger, mirrored: `a/;`=Alt, `s/l`=Super, `d/k`=Ctrl, `f/j`=Shift). Implemented
+via `tap-hold-opposite-hand-release` (kanata PR #1955) on top of `defhands` —
+hold fires **only if the next key is on the other hand**. This removed misfires
+like `sh → Super+h` without the manual "typing keys" lists that had to be
+maintained before.
 
-Почему именно `-release`-вариант: решение принимается по **отпусканию**
-прерывающей клавиши. Если при быстром ролле/биграмме вторая клавиша поднимается
-раньше HRM-клавиши — обе резолвятся в буквы. Это и есть главный киллер
-кросс-хэнд-misfire.
+Why the `-release` variant specifically: the decision is made on the **release**
+of the interrupting key. If during a fast roll/bigram the second key comes up
+before the HRM key does, both resolve as letters. This is the main killer of
+cross-hand misfires.
 
-Настройки внутри `hrm`-шаблона:
-- `(neutral hold)` + `neutral-keys` (цифры, spc/tab/ret/bspc/esc) — эти клавиши
-  вне `defhands`, но должны **сохранять** hold, чтобы работали Super+2, Ctrl+Space,
-  Shift+Tab, Ctrl+Enter.
-- `(timeout hold)` — если прерывающую клавишу **удержали** дольше таймаута (и
-  `-release` не сработал), форсим hold. Так получаются комбо `hold j (Shift) +
-  hold v (C-v) → C-S-v`.
-- ⚠️ Gotcha: same-hand по умолчанию `tap`. Одноручные mod-комбо (например `d+f`
-  как Ctrl+Shift **на одной левой руке**) через HRM больше **не работают** — их
-  надо брать через разные руки. Одноручный Ctrl+Shift вынесен в отдельный chord
-  (см. ниже).
+Settings inside the `hrm` template:
 
-## Chords (chords-v2) и тайминги
+- `(neutral hold)` + `neutral-keys` (digits, spc/tab/ret/bspc/esc) — these keys
+  are outside `defhands`, but must **preserve** hold so that Super+2,
+  Ctrl+Space, Shift+Tab, Ctrl+Enter work.
+- `(timeout hold)` — if the interrupting key was **held** longer than the
+  timeout (and `-release` didn't fire), force hold. This produces combos like
+  `hold j (Shift) + hold v (C-v) → C-S-v`.
+- ⚠️ Gotcha: same-hand defaults to `tap`. One-handed mod combos (e.g. `d+f` as
+  Ctrl+Shift **on one left hand**) no longer work through HRM — they have to be
+  taken across different hands. One-handed Ctrl+Shift is moved out to a separate
+  chord (see below).
 
-`concurrent-tap-hold yes` + `defchordsv2`. Ключевые тайминги:
-- `mod-chord-time 35` — очень узкое окно для одноручных mod-chords (`d+f`, `j+k`,
-  `s+f`, `k+l`…): обе клавиши должны лечь почти одновременно, чтобы
-  последовательный ролл вроде `fd` **не** триггерил Ctrl+Shift.
-- `chords-v2-min-idle 80` — после любого не-chord-нажатия chords пропускаются
-  80 мс. Итог: одноручный mod-chord срабатывает почти мгновенно после короткой
-  паузы, но не посреди быстрого набора.
-- `all-released` в большинстве chords держит модификаторы, пока не поднимутся обе
-  клавиши, — можно добавить третью (напр. `C-S-tab`).
+## Chords (chords-v2) and timings
 
-⚠️ Gotcha (rolls vs. mod-combos): это фундаментальный trade-off. Слишком широкое
-окно ловит ложные mod-комбо на роллах; слишком узкое — не даёт нажать комбо
-намеренно. Значения 35/80 подобраны эмпирически; менять осторожно.
+`concurrent-tap-hold yes` + `defchordsv2`. Key timings:
 
-Что живёт на chords: `d+f`=tap Esc / hold C-S, `j+k`=tap Enter / hold C-S,
-`s+f`=Super+Shift, `w+e`=Tab, `k+l`=numplain, `j+k+l`=numplain2 (shifted числа),
-`s+d`=symbols, `s+d+f`=symbols2, `j+l`=movews, `lsft+rsft`=выход в base.
+- `mod-chord-time 35` — a very narrow window for one-handed mod chords (`d+f`,
+  `j+k`, `s+f`, `k+l`…): both keys must land almost simultaneously so that a
+  sequential roll like `fd` does **not** trigger Ctrl+Shift.
+- `chords-v2-min-idle 80` — after any non-chord keypress, chords are skipped for
+  80 ms. The result: a one-handed mod chord fires almost instantly after a short
+  pause, but not in the middle of fast typing.
+- `all-released` in most chords holds the modifiers until both keys come up —
+  letting you add a third one (e.g. `C-S-tab`).
 
-## Символьные слои + xkb US-wrap
+⚠️ Gotcha (rolls vs. mod-combos): this is a fundamental trade-off. Too wide a
+window catches false mod combos on rolls; too narrow a window doesn't let you
+press a combo intentionally. The 35/80 values were tuned empirically; change
+with care.
 
-Символы (`symbols`, `symbols2`) держат `S-...`-keycodes на правой руке (левая
-удерживает вход). ⚠️ Проблема: на RU-раскладке `S-2` даёт `"`, а не `@`. Решение
-— на входе в слой переключаем **xkb-устройство kanata на US** (index 0), на
-выходе восстанавливаем прежний индекс. Так `S-...` выдаёт одинаковые символы на
-US и RU.
+What lives on chords: `d+f`=tap Esc / hold C-S, `j+k`=tap Enter / hold C-S,
+`s+f`=Super+Shift, `w+e`=Tab, `k+l`=numplain, `j+k+l`=numplain2 (shifted
+numbers), `s+d`=symbols, `s+d+f`=symbols2, `j+l`=movews, `lsft+rsft`=exit to
+base.
 
-Механика: алиасы `sym-enter`/`sym-enter2` оборачивают `layer-while-held` в
-`(on-press tap-vkey sym-us)` / `(on-release tap-vkey sym-restore)`. Vkeys дёргают
+## Symbol layers + xkb US-wrap
+
+Symbols (`symbols`, `symbols2`) hold `S-...` keycodes on the right hand (the
+left holds the entry key). ⚠️ Problem: on the RU layout `S-2` produces `"`, not
+`@`. The fix is to switch **kanata's xkb device to US** (index 0) on layer
+entry, and restore the previous index on exit. That way `S-...` produces the
+same symbols on US and RU.
+
+Mechanics: the `sym-enter`/`sym-enter2` aliases wrap `layer-while-held` in
+`(on-press tap-vkey sym-us)` / `(on-release tap-vkey sym-restore)`. Vkeys call
 [`../scripts/symlayout-watch.sh`](../scripts/symlayout-watch.sh) `enter`/`leave`
-напрямую (без TCP-сервера; POSIX-порт старого Python — на ~13 мс быстрее на вызов).
-Скрипт хранит прежний индекс в `/tmp/symlayout-watch-$UID-kanata.layout` и
-guard'ит двойной enter.
+directly (no TCP server; a POSIX port of the old Python — about 13 ms faster per
+call). The script stores the previous index in
+`/tmp/symlayout-watch-$UID-kanata.layout` and guards against a double enter.
 
-Раскладка символов **frequency-ordered**: горячие символы на сильном home row —
-`()` на `j k`, `@` на `h`, `|` на `l`, `` ` `` на `y`. `symbols2` — эскалация:
-добавив указательный `f`, попадаешь в редкие `! # * & % < >`. Символы не
-дублируются между слоями (короткий = горячий chord).
+The symbol layout is **frequency-ordered**: hot symbols sit on the strong home
+row — `()` on `j k`, `@` on `h`, `|` on `l`, `` ` `` on `y`. `symbols2` is an
+escalation: adding the index finger `f` gets you into rarer `! # * & % < >`.
+Symbols aren't duplicated between layers (shorter = hotter chord).
 
-## kitty-send (замена tmux prefix)
+## kitty-send (tmux prefix replacement)
 
-`deftemplate kitty-send` заменил старую tmux-prefix-схему (`C-s`). Теперь kanata
-**фокусит kitty** (`@aterm` → [`switchApp.sh`](../kanata/switchApp.sh) focus-or-launch),
-ждёт `aterm-settle 250` мс на осадку фокуса, затем шлёт `C-S-`-хоткей (kitty
-`kitty_mod = C-S-`), который драйвит нативные сессии. См. [[sessions]].
-⚠️ Gotcha: без задержки хоткей уходит до того, как kitty получил фокус, — сессия
-не переключается.
+`deftemplate kitty-send` replaced the old tmux-prefix scheme (`C-s`). Now kanata
+**focuses kitty** (`@aterm` → [`switchApp.sh`](../kanata/switchApp.sh)
+focus-or-launch), waits `aterm-settle 250` ms for the focus to settle, then
+sends a `C-S-` hotkey (kitty's `kitty_mod = C-S-`), which drives native
+sessions. See [[sessions]]. ⚠️ Gotcha: without the delay the hotkey goes out
+before kitty received focus, and the session doesn't switch.
 
-## apps-слой + force-English
+## apps layer + force-English
 
-Hold большого пальца (`lalt`/`ralt`, tap=bspc/switch-lang) даёт слой `apps` —
-лаунчер приложений/сессий/pickers. Сам `apps`-слой раскладку **не меняет**:
-`apps-enter` — это просто `layer-while-held apps`.
+Holding the thumb key (`lalt`/`ralt`, tap=bspc/switch-lang) gives the `apps`
+layer — the launcher for apps/sessions/pickers. The `apps` layer itself does
+**not** change the layout: `apps-enter` is just `layer-while-held apps`.
 
-Force-English делают **действия**, а не вход в слой: picker/session-экшены
-начинаются с `(on-press tap-vkey apps-us)` → `symlayout-watch.sh app` (жёстко
-xkb US index 0). Так fzf-pickers (bookmarks/youtube/apps/search) и rofimoji
-всегда стартуют на английской раскладке независимо от текущего языка. Плоский
-hold/release apps-клавиши без действия безвреден.
+Force-English is done by **actions**, not by entering the layer: picker/session
+actions start with `(on-press tap-vkey apps-us)` → `symlayout-watch.sh app`
+(hard-forcing xkb US index 0). This way fzf pickers
+(bookmarks/youtube/apps/search) and rofimoji always start on the English layout
+regardless of the current language. A plain hold/release of the apps key with no
+action is harmless.
 
 ## Shifted number layer (numplain2)
 
-`numplain` — плоские цифры на левой руке (home row 1-5, top row 6-0), вход через
-chord `k+l`. `numplain2` — те же позиции, но `S-...` (символы над цифрами:
-`! @ # $ % ...`), вход через более длинный chord `j+k+l`. Зачем отдельный слой:
-позволяет печатать shifted-символы цифрового ряда без ухода в символьные слои и
-без реального Shift, сохраняя мышечную память позиций цифр.
+`numplain` — plain digits on the left hand (home row 1-5, top row 6-0), entered
+via the `k+l` chord. `numplain2` — same positions, but `S-...` (symbols above
+the digits: `! @ # $ % ...`), entered via the longer `j+k+l` chord. Why a
+separate layer: it lets you type shifted symbols of the digit row without
+leaving for the symbol layers and without a real Shift, preserving muscle memory
+for digit positions.
 
-⚠️ Gotcha таймингов в целом: press-decided layer-holds на частых буквах (`n`, `e`,
-`r`, `w`) мгновенны, но `буква + биграмма` может misfire — это осознанный
-компромисс за скорость входа в слои.
+⚠️ Gotcha about timings in general: press-decided layer-holds on frequent
+letters (`n`, `e`, `r`, `w`) are instant, but "letter + bigram" can misfire —
+this is a deliberate trade-off for speed of entering layers.

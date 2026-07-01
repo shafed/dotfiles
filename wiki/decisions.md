@@ -4,51 +4,50 @@ type: topic
 updated: 2026-07-01
 ---
 
-# decisions — крупные решения и отвергнутые альтернативы
+# decisions — major decisions and rejected alternatives
 
-🚧 Ключевая страница «почему так сделано». Каждая запись:
-**решение → причина → отвергнутая альтернатива → дата**.
+🚧 Key "why it's done this way" page. Each entry:
+**decision → reason → rejected alternative → date**.
 
-## Зафиксированные
+## Recorded
 
 ### tmux → kitty native sessions (2026-06)
-- **Решение**: убрать tmux; мультиплексирование и сплиты делать нативным kitty
-  (окна/табы/layouts). Хоткеи навигации шлёт kanata как `C-S-*`.
-- **Причина**: tmux дублировал функции терминала — свой prefix (`C-s`), свой
-  рендер, лишний слой над GPU-рендером kitty. Нативный kitty даёт сплиты и
-  scrollback без прослойки; `<M-t>` в nvim и Alt-t в [[zsh]] зеркалят
-  старый tmux zoom через `kitten @`.
-- **Отвергнуто**: остаться на tmux (лишний слой, рассинхрон тем/навигации);
-  wezterm-мультиплексор (wezterm тоже выведен из использования).
-- Trade-off: сессии теперь привязаны к kitty; конфиг `~/.config/tmux` остался
-  как легаси-симлинк ([[bootstrap]]). См. [[sessions]],
+- **Decision**: remove tmux; do multiplexing and splits with native kitty
+  (windows/tabs/layouts). Navigation hotkeys are sent by kanata as `C-S-*`.
+- **Reason**: tmux duplicated terminal functionality — its own prefix (`C-s`), its
+  own rendering, an extra layer over kitty's GPU rendering. Native kitty gives
+  splits and scrollback with no intervening layer; `<M-t>` in nvim and Alt-t in
+  [[zsh]] mirror the old tmux zoom via `kitten @`.
+- **Rejected**: staying on tmux (extra layer, theme/navigation desync);
+  wezterm's multiplexer (wezterm is also out of use).
+- Trade-off: sessions are now tied to kitty; the `~/.config/tmux` config remains
+  as a legacy symlink ([[bootstrap]]). See [[sessions]],
   [[kitty]].
 
-### kanata как единый keymap-движок
-- **Решение**: home-row mods, chords, слои и force-layout — всё в kanata, а не
-  размазано по hypr `bind`, kitty `map`, zsh `bindkey`.
-- **Причина**: kanata работает на уровне устройства ввода, поэтому одна раскладка
-  действует во всех приложениях одинаково (терминал, браузер, IDE). Иначе
-  пришлось бы дублировать одни и те же аккорды в каждом конфиге и ловить
-  рассинхрон. Приложения получают уже готовые `C-S-*`/`Super`-события.
-- **Отвергнуто**: раздельные биндинги per-app (hypr/kitty/zsh) — дублирование и
-  расхождение поведения между приложениями.
-- См. [[kanata]], [[keymap]].
+### kanata as the single keymap engine
+- **Decision**: home-row mods, chords, layers, and force-layout — all in kanata,
+  rather than spread across hypr `bind`, kitty `map`, zsh `bindkey`.
+- **Reason**: kanata operates at the input-device level, so one layout works
+  identically across all apps (terminal, browser, IDE). Otherwise the same
+  chords would have to be duplicated in every config, risking desync.
+  Apps receive ready-made `C-S-*`/`Super` events.
+- **Rejected**: separate per-app bindings (hypr/kitty/zsh) — duplication and
+  behavior divergence between apps.
+- See [[kanata]], [[keymap]].
 
-### Удаление Windows/WSL-легаси (2026-07-01)
-- Удалены `autohotkey/`, `glazewm/`, `wezterm/`, `start.bat`; вычищены glazewm/WSL
-  алиасы и `winuser`/`explorer.exe`/`powershell.exe` из zshrc; `TERMCMD` → kitty.
-- Причина: машина теперь только Arch/Hyprland; Windows-часть больше не нужна.
-- `awesome/` оставлен как устаревший, но пока не удалён (осознанно).
+### Removal of Windows/WSL legacy (2026-07-01)
+- Removed `autohotkey/`, `glazewm/`, `wezterm/`, `start.bat`; cleaned up glazewm/WSL
+  aliases and `winuser`/`explorer.exe`/`powershell.exe` from zshrc; `TERMCMD` → kitty.
+- Reason: the machine is now Arch/Hyprland only; the Windows part is no longer needed.
+- `awesome/` left as legacy but not yet removed (deliberately).
 
-### Ручные симлинки вместо stow/install-скрипта
-- **Решение**: конфиги подключать вручную симлинками `~/.config/<tool> →
-  ~/dotfiles/<tool>` (список — [[bootstrap]]).
-- **Причина**: одна личная машина, симлинков мало и создаются один раз —
-  install-скрипт/`stow` были бы лишней инфраструктурой без выигрыша. Прозрачно
-  видно, что куда линкуется.
-- **Отвергнуто**: `stow` (лишняя зависимость и структура каталогов ради того же
-  результата); генеративный install-скрипт (нечего автоматизировать при разовой
-  настройке).
-- **Пересмотреть, когда**: симлинков станет заметно больше или появится вторая
-  машина — тогда `stow`/скрипт окупятся. См. [[bootstrap]].
+### Manual symlinks instead of stow/an install script
+- **Decision**: wire up configs manually via symlinks `~/.config/<tool> →
+  ~/dotfiles/<tool>` (list — [[bootstrap]]).
+- **Reason**: one personal machine, few symlinks created only once —
+  an install script/`stow` would be extra infrastructure with no payoff. It's
+  transparently visible what links where.
+- **Rejected**: `stow` (an extra dependency and directory structure for the same
+  result); a generative install script (nothing to automate for a one-off setup).
+- **Revisit when**: the number of symlinks grows noticeably or a second
+  machine appears — then `stow`/a script would pay off. See [[bootstrap]].

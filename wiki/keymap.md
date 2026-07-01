@@ -8,64 +8,64 @@ covers:
   - kitty/kitty.conf
 ---
 
-# keymap — сквозная карта клавиш
+# keymap — end-to-end key map
 
-🚧 Частично наполнено. Единая точка правды по хоткеям — чтобы слои не
-конфликтовали и не забывались. См. компонентные [[kanata]],
+🚧 Partially filled in. Single source of truth for hotkeys — so layers don't
+conflict or get forgotten. See component pages [[kanata]],
 [[hypr]], [[kitty]].
 
-## Три уровня и граница между ними
+## Three levels and the boundary between them
 
-1. **kanata** (`process-unmapped-keys (all-except lctl ralt)`) — перехватывает
-   почти всю физическую клавиатуру, делает HRM, chords, слои, символы. Модифицирует
-   потоки на уровне **до** оконного менеджера.
-2. **hypr** — ловит только `Super`-биндинги (`$mainMod`). kanata Super не трогает
-   (кроме `numws`/`movews`, где Super **вшит в keycode** и уходит в hypr как
-   Super+цифра).
-3. **kitty** — ловит `C-S-` (`kitty_mod = ctrl+shift`) для сессий/сплитов.
+1. **kanata** (`process-unmapped-keys (all-except lctl ralt)`) — intercepts
+   nearly the entire physical keyboard, does HRM, chords, layers, symbols. Modifies
+   streams at the level **before** the window manager.
+2. **hypr** — catches only `Super` bindings (`$mainMod`). kanata doesn't touch Super
+   (except `numws`/`movews`, where Super is **baked into the keycode** and goes
+   to hypr as Super+digit).
+3. **kitty** — catches `C-S-` (`kitty_mod = ctrl+shift`) for sessions/splits.
 
-Ключевая развязка: **kanata шлёт `C-S-`-хоткеи в kitty** (через `kitty-send`,
-после фокуса kitty), а **hypr слушает `Super`**. Пересечения нет, потому что
-kitty ловит C-S-комбо только когда сфокусирован, а hypr — Super глобально.
+Key separation: **kanata sends `C-S-` hotkeys to kitty** (via `kitty-send`,
+after focusing kitty), while **hypr listens for `Super`**. There's no overlap,
+because kitty only catches C-S combos when focused, while hypr catches Super globally.
 
-## Слои kanata (что где)
+## kanata layers (what's where)
 
-- **base** — буквы + HRM (AGCS) + функциональные thumb/letter-holds.
-- **normal** — «безопасный» слой (буквы как есть, `lsft`=switch-lang), вход через
-  hold Enter; возврат в base из base через Enter-hold / `lsft+rsft`.
-- **apps** (hold thumb) — лаунчер: приложения, kitty-сессии (`kitty-send C-S-*`),
-  fzf-pickers, killactive (`q`), браузер-подслой (`s` hold → `browser`).
-- **browser** (из apps, hold `s`) — прямые URL (gmail, perplexity, chatgpt, claude…).
-- **symbols / symbols2** (hold `e`/`r` или chords `s+d` / `s+d+f`) — программерские
-  символы на правой руке; xkb форсится в US (см. [[kanata]]).
-- **navi** (hold `w` или toggle через caps-hold) — стрелки/навигация на правой
-  руке, mods свободны на левой.
-- **numplain / numplain2** (chords `k+l` / `j+k+l`) — цифры и shifted-символы
-  цифрового ряда на левой руке.
-- **numws / movews** (из apps hold `l`, либо chord `j+l`) — `Super+цифра` /
-  `Super+Shift+цифра` на левой руке → hypr workspaces / move-to-workspace.
+- **base** — letters + HRM (AGCS) + functional thumb/letter-holds.
+- **normal** — a "safe" layer (letters as-is, `lsft`=switch-lang), entered via
+  hold Enter; return to base from base via Enter-hold / `lsft+rsft`.
+- **apps** (hold thumb) — launcher: apps, kitty sessions (`kitty-send C-S-*`),
+  fzf pickers, killactive (`q`), browser sub-layer (`s` hold → `browser`).
+- **browser** (from apps, hold `s`) — direct URLs (gmail, perplexity, chatgpt, claude…).
+- **symbols / symbols2** (hold `e`/`r` or chords `s+d` / `s+d+f`) — programmer
+  symbols on the right hand; xkb is forced to US (see [[kanata]]).
+- **navi** (hold `w` or toggle via caps-hold) — arrows/navigation on the right
+  hand, mods free on the left.
+- **numplain / numplain2** (chords `k+l` / `j+k+l`) — digits and shifted symbols
+  of the digit row on the left hand.
+- **numws / movews** (from apps hold `l`, or chord `j+l`) — `Super+digit` /
+  `Super+Shift+digit` on the left hand → hypr workspaces / move-to-workspace.
 
-## Потенциальные конфликты и как разведены
+## Potential conflicts and how they're resolved
 
-| Клавиши | Кто владеет | Развязка |
+| Keys | Who owns it | Resolution |
 |---|---|---|
-| `h j k l` | kanata HRM (base) / navi / hypr Super | HRM только на hold с opposite-hand; hypr `Super+hjkl`=movefocus, kanata Super не трогает |
-| цифры `1-0` | numplain (левая рука) / hypr `Super+N` | numplain даёт **плоские** цифры; workspace-переключение только через numws (Super вшит) |
-| `C-tab` / `C-S-tab` | navi (browser tabs) / kitty | в navi это `@j/k-navi` (fork на alt); kitty ловит `C-S-*` только сфокусированным |
-| Ctrl+Shift одноручный | HRM больше НЕ даёт (same-hand=tap) | вынесен в chords `d+f` / `j+k` (hold) |
-| `w+e` | ролл букв vs. chord Tab | `mod-chord-time 35` + `chords-v2-min-idle 80` разводят ролл и намеренный chord |
+| `h j k l` | kanata HRM (base) / navi / hypr Super | HRM only on hold with opposite-hand; hypr `Super+hjkl`=movefocus, kanata doesn't touch Super |
+| digits `1-0` | numplain (left hand) / hypr `Super+N` | numplain gives **plain** digits; workspace-switching only via numws (Super baked in) |
+| `C-tab` / `C-S-tab` | navi (browser tabs) / kitty | in navi this is `@j/k-navi` (fork on alt); kitty catches `C-S-*` only when focused |
+| one-handed Ctrl+Shift | HRM no longer gives this (same-hand=tap) | moved to chords `d+f` / `j+k` (hold) |
+| `w+e` | letter roll vs. Tab chord | `mod-chord-time 35` + `chords-v2-min-idle 80` separate rolling from an intentional chord |
 
-## RU/US и force-English
+## RU/US and force-English
 
-Две логики форсирования US-раскладки, обе через
-[`../scripts/symlayout-watch.sh`](../scripts/symlayout-watch.sh) на xkb-устройстве
+Two logics for forcing the US layout, both via
+[`../scripts/symlayout-watch.sh`](../scripts/symlayout-watch.sh) on the xkb device
 `kanata`:
 
-- **symbol-слои** (`enter`/`leave`): переключить на US на время удержания слоя и
-  восстановить прежний индекс — чтобы `S-...`-keycodes давали одинаковые символы
-  на RU и US.
-- **apps-действия** (`app`): жёстко US index 0 при запуске picker/session-экшена —
-  чтобы fzf/rofimoji стартовали на английском.
+- **symbol layers** (`enter`/`leave`): switch to US for the duration the layer is
+  held and restore the previous index — so `S-...` keycodes give the same
+  symbols on RU and US.
+- **apps actions** (`app`): hard-force US index 0 when launching a picker/session
+  action — so fzf/rofimoji start in English.
 
-Переключение языка в обычной работе: tap `ralt` (`@sw` → `hyprctl
-switchxkblayout kanata next`), либо `lsft` в слое `normal`.
+Switching language during normal work: tap `ralt` (`@sw` → `hyprctl
+switchxkblayout kanata next`), or `lsft` in the `normal` layer.

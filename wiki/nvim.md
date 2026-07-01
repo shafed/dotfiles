@@ -8,59 +8,59 @@ covers:
 
 # nvim
 
-🚧 Конфиг на базе **LazyVim**; кастомизация поверх в `../nvim/lua/`. Симлинк
+🚧 Config built on **LazyVim**; customization on top lives in `../nvim/lua/`. Symlink
 `~/.config/nvim → ~/dotfiles/nvim` ([[bootstrap]]).
 
-## Почему так устроено
+## Why it's built this way
 
-- **LazyVim как база** (`lazyvim.json`, `lazy-lock.json`): не собираем конфиг с
-  нуля, а берём готовый дистрибутив и переопределяем точечно в
-  `lua/plugins/*.lua`. Включённые extras: `luasnip`, `dap.core`, `mini-files`,
+- **LazyVim as the base** (`lazyvim.json`, `lazy-lock.json`): instead of assembling a config
+  from scratch, we take the ready-made distro and override it selectively in
+  `lua/plugins/*.lua`. Enabled extras: `luasnip`, `dap.core`, `mini-files`,
   `lang.python`.
-- Своё в `lua/plugins/` (auto-save, hardtime, render-markdown, bullets, vimtex,
-  img-clip, blink, snacks и др.) — переопределяют/добавляют плагины поверх LazyVim.
-- **`gruvbox-material`** как colorscheme — единый gruvbox во всех инструментах,
-  см. [[theming]]. В `colorscheme.lua` дополнительно перекрашены
-  markdown-хайлайты (bold=оранжевый, italic=зелёный).
-- Логика клавиш вынесена в `lua/utils/` (folding, kitty, tasks, obsidian, gcal),
-  чтобы `keymaps.lua` не разбухал.
+- Custom stuff in `lua/plugins/` (auto-save, hardtime, render-markdown, bullets, vimtex,
+  img-clip, blink, snacks, etc.) — overrides/adds plugins on top of LazyVim.
+- **`gruvbox-material`** as the colorscheme — one gruvbox across all tools,
+  see [[theming]]. In `colorscheme.lua`, markdown highlights are additionally
+  recolored (bold=orange, italic=green).
+- Key logic is factored out into `lua/utils/` (folding, kitty, tasks, obsidian, gcal)
+  so `keymaps.lua` doesn't bloat.
 
-## Интеграция с training logbook
+## Integration with the training logbook
 
-nvim — редакторская часть тренировочного логбука; генерация и просмотр — в
-[[scripts]], вызов из редактора — в [[sessions]].
+nvim is the editing side of the training logbook; generation and viewing are in
+[[scripts]], invocation from the editor is in [[sessions]].
 
-- `<leader>lp` (`obsidian.save_training_note`) — сохраняет буфер как
-  `~/obsidian/periodic/training/YYYY-MM-DD-<h1>.md` (H1 переписывается в slug,
-  чтобы имя файла = заголовок) и **сразу дёргает** `~/dotfiles/scripts/generate_logbook.py`
-  для регенерации `logbook.html`.
-- Отдельный keymap открывает `logbook.html` через `xdg-open`.
-- `obsidian.push_with_cooldown()` — авто commit+push vault `~/obsidian` (кулдаун
-  час), чтобы правки заметок бэкапились без ручных коммитов.
-- `nvim-edit-handler.sh` в [[scripts]] — обратная связка: логбук
-  открывает заметку на редактирование в nvim.
+- `<leader>lp` (`obsidian.save_training_note`) — saves the buffer as
+  `~/obsidian/periodic/training/YYYY-MM-DD-<h1>.md` (the H1 is rewritten into a slug
+  so the filename matches the heading) and **immediately triggers**
+  `~/dotfiles/scripts/generate_logbook.py` to regenerate `logbook.html`.
+- A separate keymap opens `logbook.html` via `xdg-open`.
+- `obsidian.push_with_cooldown()` — auto commit+push of the `~/obsidian` vault (an hour
+  cooldown) so note edits get backed up without manual commits.
+- `nvim-edit-handler.sh` in [[scripts]] — the reverse link: the logbook
+  opens a note for editing in nvim.
 
-⚠️ Gotcha: `harper_ls` (грамматика) **выключен на training-заметках** —
-`excludePatterns` содержит `~/obsidian/periodic/training/**/*.md` и `Day [123].md`.
-Причина: тренировочные заметки — таблицы/сокращения, harper захлёбывается ложными
-срабатываниями. Коммит `ef70575` («recursive disable harper in training»).
+⚠️ Gotcha: `harper_ls` (grammar checking) is **disabled on training notes** —
+`excludePatterns` contains `~/obsidian/periodic/training/**/*.md` and `Day [123].md`.
+Reason: training notes are tables/abbreviations, and harper chokes on false
+positives. Commit `ef70575` ("recursive disable harper in training").
 
-## LSP / прочие исключения
+## LSP / other exclusions
 
-- `marksman` выключен в пользу **`markdown_oxide`** (daily-notes, code lens,
-  `:Daily` для открытия заметок естественным языком).
-- `harper_ls` включён только для `markdown`/`typst`, `isolateEnglish=true`,
-  игнор ссылок и `[[wikilinks]]`.
+- `marksman` is disabled in favor of **`markdown_oxide`** (daily-notes, code lens,
+  `:Daily` for opening notes via natural language).
+- `harper_ls` is enabled only for `markdown`/`typst`, `isolateEnglish=true`,
+  ignoring links and `[[wikilinks]]`.
 
 ## neobean
 
-Алиасы `neobean`/`nb` в [[zsh]] запускают nvim с
-`NVIM_APPNAME=linkarzu/dotfiles-latest/neovim/neobean` — отдельный сторонний
-конфиг (linkarzu) параллельно основному, не мешая ему. TODO: подтвердить, что
-этот `NVIM_APPNAME`-каталог реально установлен на машине (в репо его нет).
+The `neobean`/`nb` aliases in [[zsh]] launch nvim with
+`NVIM_APPNAME=linkarzu/dotfiles-latest/neovim/neobean` — a separate third-party
+config (linkarzu) running alongside the main one, without interfering with it. TODO: confirm
+that this `NVIM_APPNAME` directory is actually installed on the machine (it's not in the repo).
 
-## Снипеты и spell
+## Snippets and spell
 
-- `snippets/` — luasnip-снипеты, много под LaTeX (`tex/*.lua`, `bib.lua`).
-- Есть `;date` snippet — вставка текущей даты в ISO-формате (коммит `2e4f335`).
-- `spell/` — пользовательские словари EN+RU.
+- `snippets/` — luasnip snippets, a lot of them for LaTeX (`tex/*.lua`, `bib.lua`).
+- There's a `;date` snippet — inserts the current date in ISO format (commit `2e4f335`).
+- `spell/` — custom EN+RU dictionaries.

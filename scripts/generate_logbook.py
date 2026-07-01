@@ -721,8 +721,8 @@ mark{background:var(--mark);color:inherit;border-radius:2px;padding:0 1px}
 JS = """
 const sessions=[...document.querySelectorAll('#feed .day, #feed .event')];
 const feedList=document.getElementById('feedlist');
-sessions.forEach((s,i)=>s.dataset.order=i);
 const exData=__EXDATA__;
+let highlightedRows=[];
 
 /* tab switching */
 const tabs=[...document.querySelectorAll('.tab')];
@@ -768,8 +768,15 @@ function normSearch(s){
 function normSearchWords(s){
   return normSearch(s).replace(/[^\\p{L}\\p{N}]+/gu,' ').trim().replace(/\\s+/g,' ');
 }
+const searchRows=sessions.map((el,order)=>{
+  const text=el.textContent;
+  const hay=normSearch(text);
+  const hayWords=normSearchWords(text);
+  const dateWords=normSearchWords(el.dataset.date||'');
+  return {el,order,hay,hayWords,dateWords,dateTokens:dateWords.split(' ').filter(Boolean)};
+});
 function restoreFeedOrder(){
-  sessions.sort((a,b)=>Number(a.dataset.order)-Number(b.dataset.order)).forEach(s=>feedList.appendChild(s));
+  searchRows.forEach(r=>feedList.appendChild(r.el));
 }
 function fuzzyToken(text, token){
   if(!token) return true;
@@ -780,30 +787,20 @@ function fuzzyToken(text, token){
   }
   return j===token.length;
 }
-function fuzzyMatch(text, query){
-  const queryWords=normSearchWords(query);
+function fuzzyMatch(row, queryWords, tokens){
   if(!queryWords) return false;
-  const hay=normSearch(text);
-  const hayWords=normSearchWords(text);
-  if(hayWords.includes(queryWords)) return true;
-  const tokens=queryWords.split(/\\s+/).filter(Boolean);
-  return tokens.length>0 && tokens.every(t=>fuzzyToken(hay,t));
+  if(row.hayWords.includes(queryWords)) return true;
+  return tokens.length>0 && tokens.every(t=>fuzzyToken(row.hay,t));
 }
-function searchScore(el, query){
-  const queryWords=normSearchWords(query);
-  const text=el.textContent;
-  const hay=normSearch(text);
-  const hayWords=normSearchWords(text);
-  const dateWords=normSearchWords(el.dataset.date||'');
-  const tokens=queryWords.split(/\\s+/).filter(Boolean);
+function searchScore(row, queryWords, tokens){
   let score=0;
-  if(dateWords===queryWords) score+=10000;
-  else if(dateWords.includes(queryWords)) score+=8000;
-  if(hayWords.includes(queryWords)) score+=1000;
+  if(row.dateWords===queryWords) score+=10000;
+  else if(row.dateWords.includes(queryWords)) score+=8000;
+  if(row.hayWords.includes(queryWords)) score+=1000;
   tokens.forEach(t=>{
-    if(dateWords.split(' ').includes(t)) score+=150;
-    else if(hay.includes(t)) score+=25;
-    else if(fuzzyToken(hay,t)) score+=5;
+    if(row.dateTokens.includes(t)) score+=150;
+    else if(row.hay.includes(t)) score+=25;
+    else if(fuzzyToken(row.hay,t)) score+=5;
   });
   return score;
 }
@@ -825,21 +822,25 @@ function highlight(root,q){
 }
 function runSearch(q){
   q=q.trim();
-  sessions.forEach(clearMarks);
+  highlightedRows.forEach(clearMarks);
+  highlightedRows=[];
   if(q){
     // search overrides the program filter
     curProgram='all'; setFilterSelected();
     showView('feed');
+    const queryWords=normSearchWords(q);
+    const tokens=queryWords.split(/\\s+/).filter(Boolean);
     const hits=[];
-    sessions.forEach(s=>{
-      const hit=fuzzyMatch(s.textContent,q);
-      s.classList.toggle('hidden',!hit);
+    searchRows.forEach(r=>{
+      const hit=fuzzyMatch(r,queryWords,tokens);
+      r.el.classList.toggle('hidden',!hit);
       if(hit){
-        highlight(s,q);
-        hits.push([searchScore(s,q), Number(s.dataset.order), s]);
+        hits.push([searchScore(r,queryWords,tokens), r.order, r.el]);
       }
     });
     hits.sort((a,b)=>b[0]-a[0] || a[1]-b[1]).forEach(([, , s])=>feedList.appendChild(s));
+    highlightedRows=hits.slice(0,50).map(([, , s])=>s);
+    highlightedRows.forEach(s=>highlight(s,q));
   } else {
     restoreFeedOrder();
     applyFilter();

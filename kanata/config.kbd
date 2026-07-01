@@ -134,7 +134,7 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
 (deflayermap (apps)
    
   e (t! kitty-send C-S-f)   ;; zoxide session picker
-  j (layer-while-held numws)  ;; hold: switch workspace (Super+digit, left-hand digits)
+  l (layer-while-held numws)  ;; hold: switch workspace (Super+digit, left-hand digits)
   q (cmd hyprctl dispatch killactive)
   t (t! kitty-send C-S-2)   ;; todos session
   r (t! kitty-send C-S-1)   ;; daily note
@@ -195,8 +195,8 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
   n S-5 m XX  , S-, . S-. / /          ;; %   < > /
 )
 
-;; left-hand workspace number layer, momentary. entered via chord:
-;; (j k l) -> numws (Super+N, Hyprland workspaces).
+;; left-hand workspace number layer, momentary. entered from apps layer:
+;; hold apps+l -> numws (Super+N, Hyprland workspaces).
 ;; digits on the left hand, Super baked into each key.
 ;; layout mirrors symbols: home row = 1-5, top row = 6-0.
 (deflayermap (numws)
@@ -215,7 +215,15 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
 (deflayermap (numplain)
   q 6 w 7 e 8 r 9 t 0
   a 1 s 2 d 3 f 4 g 5
-  m -
+  z S-= x = c - v S--
+  j = k S-=
+  n S-- m -
+)
+
+;; shifted symbols in the same positions as numplain digits
+(deflayermap (numplain2)
+  q S-6 w S-7 e S-8 r S-9 t S-0
+  a S-1 s S-2 d S-3 f S-4 g S-5
 )
 
 ;; entered via hold w (left hand). all motions live on the right hand so the
@@ -247,7 +255,7 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
 (j k) (tap-hold $tap-time $hold-time ret (multi lctl lsft)) $mod-chord-time all-released () ;; enter 
 (s f) (multi lmet lsft) $mod-chord-time all-released ()
 (k l) (layer-while-held numplain) $mod-chord-time all-released () ;; number layer
-(j k l) (layer-while-held numws) $mod-chord-time all-released ()    ;; Super+digit workspace
+(j k l) (layer-while-held numplain2) $mod-chord-time all-released () ;; shifted number symbols
 (s d) @sym-enter $mod-chord-time all-released () ;; symbol layer (s+d)
 (s d f) @sym-enter2 $mod-chord-time all-released () ;; symbol layer 2 (s+d+f: ! # * & ...)
 (j l) (layer-while-held movews) $mod-chord-time all-released () ;; Super+Shift+digit: move window to workspace (numws + pinky)

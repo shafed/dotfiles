@@ -3,6 +3,7 @@
 #
 #   symlayout-watch.sh enter
 #   symlayout-watch.sh leave
+#   symlayout-watch.sh app
 #
 # Called directly by kanata actions (no TCP server needed). POSIX-shell port of
 # the old Python version: same enter/leave/state-file semantics, but ~13ms
@@ -55,8 +56,14 @@ leave_symbol_layer() {
 	return 0
 }
 
+force_app_layout() {
+	hyprctl switchxkblayout "$DEV" 0 >/dev/null 2>&1 || true
+	return 0
+}
+
 case "$1" in
 	enter) enter_symbol_layer ;;
 	leave) leave_symbol_layer ;;
-	*) echo "usage: $0 enter|leave" >&2; exit 1 ;;
+	app) force_app_layout ;;
+	*) echo "usage: $0 enter|leave|app" >&2; exit 1 ;;
 esac

@@ -61,7 +61,7 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
 ;; kitty-send focuses kitty, then sends a kitty hotkey (kitty_mod = C-S-)
 ;; that drives native sessions. Replaces the old tmux prefix (C-s) scheme.
 (deftemplate kitty-send (key)
-  (macro @aterm $aterm-settle $key)
+  (multi (on-press tap-vkey apps-us) (macro @aterm $aterm-settle $key))
 )
 
 (defalias
@@ -76,19 +76,19 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
     () lsft break
   )
   ;; symbol-layer entry wrapped with the xkb US switch (so S-... keycodes emit
-  ;; the same symbols on RU/US). reused by the thumb hold and the chord/apps entries.
+  ;; the same symbols on RU/US). reused by the thumb hold and the symbol chords.
   sym-enter (multi (on-press tap-vkey sym-us) (on-release tap-vkey sym-restore) (layer-while-held symbols))
   ;; same xkb-US wrap but for symbols2 (used by the (s d f) chord and hold r).
   sym-enter2 (multi (on-press tap-vkey sym-us) (on-release tap-vkey sym-restore) (layer-while-held symbols2))
-  ;; apps-layer entry wrapped with the same xkb US switch as the symbol layers
-  ;; (apps and symbols are mutually exclusive, so they can share the state file),
-  ;; so holding apps forces English and restores the previous layout on release.
-  apps-enter (multi (on-press tap-vkey sym-us) (on-release tap-vkey sym-restore) (layer-while-held apps))
+  ;; apps-layer itself does not change layouts; picker/session actions force
+  ;; English when they run so a plain apps-key hold/release is harmless.
+  apps-enter (layer-while-held apps)
 )
 
 (defvirtualkeys
   sym-us (cmd /home/shafed/dotfiles/scripts/symlayout-watch.sh enter)
   sym-restore (cmd /home/shafed/dotfiles/scripts/symlayout-watch.sh leave)
+  apps-us (cmd /home/shafed/dotfiles/scripts/symlayout-watch.sh app)
 )
 
 (defsrc )
@@ -106,8 +106,8 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
  ; (t! hrm 400 ; ralt)
 
  ;; define functional keys
- lalt (t! th $tot 160 bspc @apps-enter) ;; tap=bspc hold=apps (forces English while held)
- ralt (t! th $tot 160 @sw @apps-enter)  ;; tap=switch lang hold=apps (forces English while held)
+ lalt (t! th $tot 160 bspc @apps-enter) ;; tap=bspc hold=apps
+ ralt (t! th $tot 160 @sw @apps-enter)  ;; tap=switch lang hold=apps
  c (t! th $tap-time $hold-time c C-c)
  v (t! th $tap-time $hold-time v C-v)
  b (t! th $tap-time $hold-time b (macro @aterm 100 A-tab)) ;; kitty last session (goto_session -1)
@@ -139,10 +139,10 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
   t (t! kitty-send C-S-2)   ;; todos session
   r (t! kitty-send C-S-1)   ;; daily note
   y (cmd firefox --new-window https://www.youtube.com/playlist?list=WL)
-  u (cmd zsh -lc "$HOME/dotfiles/scripts/youtube-qat.sh") ;; yoUtube channel search QAT
-  b (cmd zsh -lc "$HOME/dotfiles/scripts/bookmarks.sh") ;; Bookmarks fzf QAT
-  f (cmd zsh -lc "$HOME/dotfiles/scripts/search.sh") ;; web search (Find) fzf QAT
-  a (cmd zsh -lc "$HOME/dotfiles/scripts/apps.sh") ;; Applications fzf QAT
+  u (multi (on-press tap-vkey apps-us) (cmd zsh -lc "$HOME/dotfiles/scripts/youtube-qat.sh")) ;; yoUtube channel search QAT
+  b (multi (on-press tap-vkey apps-us) (cmd zsh -lc "$HOME/dotfiles/scripts/bookmarks.sh")) ;; Bookmarks fzf QAT
+  f (multi (on-press tap-vkey apps-us) (cmd zsh -lc "$HOME/dotfiles/scripts/search.sh")) ;; web search (Find) fzf QAT
+  a (multi (on-press tap-vkey apps-us) (cmd zsh -lc "$HOME/dotfiles/scripts/apps.sh")) ;; Applications fzf QAT
   o (t! kitty-send C-S-o)   ;; obsidian session
   w (t! kitty-send C-S-w)   ;; downloads session
   h (t! kitty-send C-S-a)   ;; home session
@@ -152,7 +152,7 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
   z (cmd zsh -lc "$HOME/.config/kanata/switchApp.sh sioyek 'LIBGL_ALWAYS_SOFTWARE=1 sioyek'")
   c (t! kitty-send C-S-s)   ;; list sessions picker
   p (t! kitty-send C-S-c)   ;; projects session
-  . (cmd rofimoji -a clipboard)
+  . (multi (on-press tap-vkey apps-us) (cmd rofimoji -a clipboard))
   caps caps
 )
 

@@ -43,9 +43,9 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
   (tap-hold-opposite-hand-release $timeout
     $keytap
     $keyhold
-    ;; digits aren't in defhands; treat them as neutral->hold so e.g. Super+2
-    ;; (workspace switch) fires from any HRM key, regardless of hand.
-    (neutral-keys 1 2 3 4 5 6 7 8 9 0)
+    ;; keys outside defhands that should preserve HRM holds, e.g. Super+2,
+    ;; Ctrl+Space, Shift+Tab, and Ctrl+Enter.
+    (neutral-keys 1 2 3 4 5 6 7 8 9 0 spc tab ret bspc esc)
     (neutral hold)
     ;; same-hand stays at the default 'tap': same-hand bigrams (fd, as, sd...)
     ;; resolve to letters, killing rolls like fd -> D. Trade-off: one-handed
@@ -195,21 +195,16 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
   n S-5 m XX  , S-, . S-. / /          ;; %   < > /
 )
 
-;; left-hand number layers, momentary. entered via chords: (k l) -> numws
-;; (Super+N, Hyprland workspaces); (k l ;) -> numtab (Alt+N, Firefox tabs).
-;; digits on the left hand, mod baked into each key. l/; stay plain rmet/ralt.
+;; left-hand workspace number layer, momentary. entered via chord:
+;; (j k l) -> numws (Super+N, Hyprland workspaces).
+;; digits on the left hand, Super baked into each key.
 ;; layout mirrors symbols: home row = 1-5, top row = 6-0.
 (deflayermap (numws)
   q M-6 w M-7 e M-8 r M-9 t M-0   ;; Super+6..0  (workspaces 6-10)
   a M-1 s M-2 d M-3 f M-4 g M-5   ;; Super+1..5  (workspaces 1-5)
 )
 
-(deflayermap (numtab)
-  q A-6 w A-7 e A-8 r A-9 t A-0   ;; Alt+6..0  (Firefox tabs; A-9 = last tab)
-  a A-1 s A-2 d A-3 f A-4 g A-5   ;; Alt+1..5
-)
-
-;; move focused window to workspace, momentary (apps layer: hold lalt/ralt + k).
+;; move focused window to workspace, momentary (entered via chord: j+l).
 ;; mirrors numws but with Super+Shift (Hyprland movetoworkspace).
 (deflayermap (movews)
   q M-S-6 w M-S-7 e M-S-8 r M-S-9 t M-S-0   ;; Super+Shift+6..0  (workspaces 6-10)

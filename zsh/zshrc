@@ -148,32 +148,6 @@ bindkey '\ee' _aichat_zsh
 alias ai="aichat"
 
 
-# Конфигурация im-select: укажите команду и идентификаторы раскладок
-IM_SELECT_CMD="/mnt/c/windows/im-select.exe"
-IM_EN="1033"  
-IM_RU="1049"
-
-set_im() { command "$IM_SELECT_CMD" "$1" >/dev/null 2>&1; }
-get_im() { command "$IM_SELECT_CMD" 2>/dev/null; }
-
-typeset -g IM_LAST=""
-
-zle-im-keymap-select() {
-  # Не трогаем keymap здесь, только переключаем раскладку
-  if [[ $KEYMAP == vicmd ]]; then
-    [[ -z $IM_LAST ]] && IM_LAST=$(get_im)
-    [[ -n $IM_EN ]] && set_im "$IM_EN"
-  else
-    [[ -n $IM_LAST ]] && set_im "$IM_LAST"
-  fi
-}
-zle -N zle-im-keymap-select
-
-# Автопереключение при смене keymap и на старте строки
-zle -N zle-keymap-select zle-im-keymap-select
-zle-line-init() { zle-im-keymap-select; }
-zle -N zle-line-init
-
 # Vim
 export vi=~/.config/nvim/init.lua
 bindkey -v
@@ -183,12 +157,8 @@ bindkey -M vicmd 'gl' end-of-line
 alias vif="nvim ~/.config/nvim"
 alias vip="nvim ~/.config/nvim/lua/plugins"
 alias vi="nvim"
-alias sync-vi="cp -r ~/.config/nvim/ ~/dotfiles/.config/"
-alias sv="cp -r ~/.config/nvim/ ~/dotfiles/.config/"
 
 export PATH=~/.npm-global/bin:$PATH
-export PATH="$HOME/.local/bin:$PATH"
-export OPENROUTER_API_KEY="sk-rGiKULn5W3H6Yf8TbzWi4Iu1wnFUTf7y"
 export PATH="$HOME/.local/bin:$PATH"
 export BROWSER=firefox
 export TERMCMD="kitty"
@@ -222,7 +192,6 @@ alias cdd="z -"
 alias pulldeez='echo "Pulling latest changes, please wait..."; (cd ~/dotfiles && git pull >/dev/null 2>&1) || echo "Failed to pull dotfiles"; source ~/.zshrc'
 alias sioyek="LIBGL_ALWAYS_SOFTWARE=1 sioyek"
 
-export TODOIST_API_TOKEN="f3736efb85c6f5c726090bb92df83fa9b07a6b19"
 alias copyq='QT_QPA_PLATFORM=xcb copyq'
 
 # Terminal colors: gruvbox-material dark medium, matching kitty/current-theme.conf.

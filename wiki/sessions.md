@@ -11,7 +11,7 @@ covers:
 
 # sessions — native kitty sessions
 
-🚧 Partially filled in. See [[kanata]] (how they're driven) and [[keymap]].
+🚧 Partially filled in. See [kanata](kanata.md) (how they're driven) and [keymap](keymap.md).
 
 ## Migration from tmux to kitty native sessions
 
@@ -33,7 +33,7 @@ had to be reproduced by hand. For example the daily-note session emulates the ol
 
 kanata from the `apps` layer sends `C-S-` hotkeys (`kitty_mod = ctrl+shift`) via
 `deftemplate kitty-send` (focus kitty → `aterm-settle` delay → hotkey). See
-[[kanata]]. Mapping (kitty.conf, "Session & navigation" section):
+[kanata](kanata.md). Mapping (kitty.conf, "Session & navigation" section):
 
 - `apps+h → C-S-a` = home, `apps+t → C-S-2` = todos, `apps+w → C-S-w` = downloads,
   `apps+o → C-S-o` = obsidian, `apps+p → C-S-c` = projects, `apps+d → C-S-d` = dotfiles.
@@ -55,7 +55,7 @@ persistence.
 
 The training logbook opens files via `nvim-edit://<path>` links, which are
 caught by [`../scripts/nvim-edit-handler.sh`](../scripts/nvim-edit-handler.sh) (see
-[[scripts]]). It:
+[scripts](scripts.md)). It:
 1. finds the main (non-floating) kitty socket,
 2. switches to/creates the `obsidian` session via `kitty-zoxide-session.sh --named obsidian`,
 3. opens the file as a new tab in the **already running** nvim of that session — first

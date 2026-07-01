@@ -9,7 +9,7 @@ covers:
 # nvim
 
 🚧 Config built on **LazyVim**; customization on top lives in `../nvim/lua/`. Symlink
-`~/.config/nvim → ~/dotfiles/nvim` ([[bootstrap]]).
+`~/.config/nvim → ~/dotfiles/nvim` ([bootstrap](bootstrap.md)).
 
 ## Why it's built this way
 
@@ -20,7 +20,7 @@ covers:
 - Custom stuff in `lua/plugins/` (auto-save, hardtime, render-markdown, bullets, vimtex,
   img-clip, blink, snacks, etc.) — overrides/adds plugins on top of LazyVim.
 - **`gruvbox-material`** as the colorscheme — one gruvbox across all tools,
-  see [[theming]]. In `colorscheme.lua`, markdown highlights are additionally
+  see [theming](theming.md). In `colorscheme.lua`, markdown highlights are additionally
   recolored (bold=orange, italic=green).
 - Key logic is factored out into `lua/utils/` (folding, kitty, tasks, obsidian, gcal)
   so `keymaps.lua` doesn't bloat.
@@ -28,7 +28,7 @@ covers:
 ## Integration with the training logbook
 
 nvim is the editing side of the training logbook; generation and viewing are in
-[[scripts]], invocation from the editor is in [[sessions]].
+[scripts](scripts.md), invocation from the editor is in [sessions](sessions.md).
 
 - `<leader>lp` (`obsidian.save_training_note`) — saves the buffer as
   `~/obsidian/periodic/training/YYYY-MM-DD-<h1>.md` (the H1 is rewritten into a slug
@@ -37,7 +37,7 @@ nvim is the editing side of the training logbook; generation and viewing are in
 - A separate keymap opens `logbook.html` via `xdg-open`.
 - `obsidian.push_with_cooldown()` — auto commit+push of the `~/obsidian` vault (an hour
   cooldown) so note edits get backed up without manual commits.
-- `nvim-edit-handler.sh` in [[scripts]] — the reverse link: the logbook
+- `nvim-edit-handler.sh` in [scripts](scripts.md) — the reverse link: the logbook
   opens a note for editing in nvim.
 
 ⚠️ Gotcha: `harper_ls` (grammar checking) is **disabled on training notes** —
@@ -54,7 +54,7 @@ positives. Commit `ef70575` ("recursive disable harper in training").
 
 ## neobean
 
-The `neobean`/`nb` aliases in [[zsh]] launch nvim with
+The `neobean`/`nb` aliases in [zsh](zsh.md) launch nvim with
 `NVIM_APPNAME=linkarzu/dotfiles-latest/neovim/neobean` — a separate third-party
 config (linkarzu) running alongside the main one, without interfering with it. TODO: confirm
 that this `NVIM_APPNAME` directory is actually installed on the machine (it's not in the repo).

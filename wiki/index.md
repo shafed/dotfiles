@@ -8,7 +8,7 @@ updated: 2026-07-01
 
 Knowledge base for these dotfiles. Answers the question **"why is it done this way"**
 and describes the design of non-trivial parts (primarily `scripts/`). Maintenance
-rules — in [[CONVENTIONS]]. Rules for the agent — in
+rules — in [CONVENTIONS](CONVENTIONS.md). Rules for the agent — in
 [../AGENTS.md](../AGENTS.md).
 
 Status: 🚧 all pages have brief content (first pass by agents on
@@ -19,31 +19,31 @@ Legend: ✅ filled in · 🚧 partial · 🌱 stub.
 
 | Page                     | What it covers                                                                                                                                     |
 | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| 🚧 [[bootstrap]] | Deploying on a new machine: packages, `~/.config → ~/dotfiles` symlinks, order. No install script — symlinks are set up manually. |
+| 🚧 [bootstrap](bootstrap.md) | Deploying on a new machine: packages, `~/.config → ~/dotfiles` symlinks, order. No install script — symlinks are set up manually. |
 
 ## Components
 
 | Page                 | Covers  | What it covers                                                                                                                                                                                                    |
 | ------------------------ | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 🚧 [[kanata]]   | `kanata/`  | Keyboard layers, opposite-hand HRM, chords, kitty-send instead of a tmux prefix, xkb US-wrap for symbols. The most thought-through and fragile part of the keymap.                                                           |
-| 🚧 [[scripts]] | `scripts/` | fzf pickers (apps/bookmarks/search/youtube) on a shared `lib.sh`; training logbook (`generate_logbook.py`, `import_training_log_xlsx.py`); daily-notes; nvim-edit-handler. The most active and complex part of the repo. |
-| 🚧 [[hypr]]       | `hypr/`    | Hyprland: bindings, monitors, exec-at-launch, hypridle/hyprlock/hyprsunset.                                                                                                                              |
-| 🚧 [[kitty]]     | `kitty/`   | Terminal: native sessions, quick-access-terminal, get_layout/pass_keys, themes (gruvbox). Large config — mostly commented-out defaults.                                                          |
-| 🚧 [[nvim]]       | `nvim/`    | LazyVim base, custom plugins/snippets, logbook integration, harper exceptions.                                                                                                                        |
-| 🚧 [[zsh]]         | `zsh/`     | oh-my-zsh, aliases, functions (yazi cd, im-select), aichat.                                                                                                                                                 |
-| 🚧 [[waybar]]   | `waybar/`  | Status bar for Hyprland.                                                                                                                                                                                 |
-| 🚧 [[yazi]]       | `yazi/`    | File manager: plugins, flavors, keymap.                                                                                                                                                             |
+| 🚧 [kanata](kanata.md)   | `kanata/`  | Keyboard layers, opposite-hand HRM, chords, kitty-send instead of a tmux prefix, xkb US-wrap for symbols. The most thought-through and fragile part of the keymap.                                                           |
+| 🚧 [scripts](scripts.md) | `scripts/` | fzf pickers (apps/bookmarks/search/youtube) on a shared `lib.sh`; training logbook (`generate_logbook.py`, `import_training_log_xlsx.py`); daily-notes; nvim-edit-handler. The most active and complex part of the repo. |
+| 🚧 [hypr](hypr.md)       | `hypr/`    | Hyprland: bindings, monitors, exec-at-launch, hypridle/hyprlock/hyprsunset.                                                                                                                              |
+| 🚧 [kitty](kitty.md)     | `kitty/`   | Terminal: native sessions, quick-access-terminal, get_layout/pass_keys, themes (gruvbox). Large config — mostly commented-out defaults.                                                          |
+| 🚧 [nvim](nvim.md)       | `nvim/`    | LazyVim base, custom plugins/snippets, logbook integration, harper exceptions.                                                                                                                        |
+| 🚧 [zsh](zsh.md)         | `zsh/`     | oh-my-zsh, aliases, functions (yazi cd, im-select), aichat.                                                                                                                                                 |
+| 🚧 [waybar](waybar.md)   | `waybar/`  | Status bar for Hyprland.                                                                                                                                                                                 |
+| 🚧 [yazi](yazi.md)       | `yazi/`    | File manager: plugins, flavors, keymap.                                                                                                                                                             |
 
 ## Cross-cutting
 
 | Page                   | What it covers                                                                                                                             |
 | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| 🚧 [[keymap]]     | End-to-end key map: how kanata layers, hypr bindings, and kitty hotkeys combine without conflicting. Single source of truth for hotkeys. |
-| 🚧 [[sessions]] | Native kitty sessions (migration from tmux): kanata sends C-S- hotkeys, kitty-zoxide-session, obsidian session for the logbook.               |
-| 🚧 [[theming]]   | Gruvbox dark everywhere (palette copied in each component); no dynamic light/dark (darkman scaffolding empty, hyprsunset is gamma only). |
+| 🚧 [keymap](keymap.md)     | End-to-end key map: how kanata layers, hypr bindings, and kitty hotkeys combine without conflicting. Single source of truth for hotkeys. |
+| 🚧 [sessions](sessions.md) | Native kitty sessions (migration from tmux): kanata sends C-S- hotkeys, kitty-zoxide-session, obsidian session for the logbook.               |
+| 🚧 [theming](theming.md)   | Gruvbox dark everywhere (palette copied in each component); no dynamic light/dark (darkman scaffolding empty, hyprsunset is gamma only). |
 
 ## Decisions
 
 | Page                     | What it covers                                                                                                                                                |
 | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 🚧 [[decisions]] | Major decisions and rejected alternatives: tmux → kitty native sessions; kanata as the single keymap engine; removal of Windows/WSL legacy; manual symlinks instead of stow. |
+| 🚧 [decisions](decisions.md) | Major decisions and rejected alternatives: tmux → kitty native sessions; kanata as the single keymap engine; removal of Windows/WSL legacy; manual symlinks instead of stow. |

@@ -10,8 +10,8 @@ covers:
 
 # theming — gruvbox (dark everywhere)
 
-🚧 End-to-end visual theme. Components: [[kitty]], [[waybar]],
-[[yazi]], [[hypr]], nvim ([[nvim]]).
+🚧 End-to-end visual theme. Components: [kitty](kitty.md), [waybar](waybar.md),
+[yazi](yazi.md), [hypr](hypr.md), nvim ([nvim](nvim.md)).
 
 ## One visual language: Gruvbox Material Dark
 
@@ -46,7 +46,7 @@ Change a shade — edit ALL of these places, there's no automatic sync.
 
 `hypr/hyprsunset.conf` controls display color temperature by time of day (day
 7:30 — `identity`; night 20:00 — `temperature 6000, gamma 0.7`), started from
-`exec-once` in [[hypr]]. ⚠️ Don't confuse with theme switching: hyprsunset does NOT
+`exec-once` in [hypr](hypr.md). ⚠️ Don't confuse with theme switching: hyprsunset does NOT
 touch app colors and is NOT linked to darkman — it's an independent night filter
 over the whole screen.
 

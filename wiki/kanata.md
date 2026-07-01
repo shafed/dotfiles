@@ -11,7 +11,7 @@ covers:
 # kanata
 
 🚧 Partially filled in. The most thought-out and fragile part of the keymap. See
-also the cross-cutting [[keymap]] and [[sessions]].
+also the cross-cutting [keymap](keymap.md) and [sessions](sessions.md).
 
 ## Opposite-hand HRM (home-row mods)
 
@@ -89,7 +89,7 @@ Symbols aren't duplicated between layers (shorter = hotter chord).
 **focuses kitty** (`@aterm` → [`switchApp.sh`](../kanata/switchApp.sh)
 focus-or-launch), waits `aterm-settle 250` ms for the focus to settle, then
 sends a `C-S-` hotkey (kitty's `kitty_mod = C-S-`), which drives native
-sessions. See [[sessions]]. ⚠️ Gotcha: without the delay the hotkey goes out
+sessions. See [sessions](sessions.md). ⚠️ Gotcha: without the delay the hotkey goes out
 before kitty received focus, and the session doesn't switch.
 
 ## apps layer + force-English

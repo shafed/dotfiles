@@ -160,8 +160,8 @@ direct `rgb` fills are resolved; theme/indexed colors are ignored.
 
 ### nvim-edit-handler.sh — the `nvim-edit://` handler
 
-Handles `nvim-edit://` links from the logbook (see [[nvim]],
-[[sessions]]). Opens the file in the kitty **obsidian** session as a new
+Handles `nvim-edit://` links from the logbook (see [nvim](nvim.md),
+[sessions](sessions.md)). Opens the file in the kitty **obsidian** session as a new
 nvim tab.
 
 Design (a two-level fallback, because the kitty session and nvim are asynchronous):
@@ -174,7 +174,7 @@ Design (a two-level fallback, because the kitty session and nvim are asynchronou
 
 ### Connections
 
-- `nvim-edit-handler.sh` ↔ the kitty obsidian session and its nvim (see [[sessions]]).
+- `nvim-edit-handler.sh` ↔ the kitty obsidian session and its nvim (see [sessions](sessions.md)).
 - `generate_logbook.py` (generates links) ↔ `nvim-edit-handler.sh` (opens them)
   ↔ `import_training_log_xlsx.py` (writes mood into frontmatter, which the
   generator reads).
@@ -190,13 +190,13 @@ first access. Layout: `~/obsidian/periodic/<YYYY>/<MM-Mon>/<...>.md`.
 ⚠️ Note (stale comment): the shebang and header still mention tmux, but
 the script has already migrated to **kitty native sessions** (`kitten @ action
 goto_session`); on first entry it does `git -C ~/obsidian pull` and
-`persistence.load()` instead of the old tmux "s". See [[sessions]].
+`persistence.load()` instead of the old tmux "s". See [sessions](sessions.md).
 
 ### symlayout-watch.sh
 
 Forces the `us` layout while kanata's symbol layers are active. Called
 **directly by kanata actions** (`enter`/`leave`/`app`), with no TCP server. See
-[[kanata]].
+[kanata](kanata.md).
 
 - A POSIX-sh port of the old Python version — about 13ms faster per call (no
   interpreter startup), which matters since it's invoked on every layer entry/exit.

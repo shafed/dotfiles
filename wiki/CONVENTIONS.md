@@ -23,8 +23,8 @@ connections between components.
   rejected, where the gotchas are, how components connect. Maintained entirely
   with the agent's involvement.
 - **`index.md`** — a catalog of all pages with links and one-line summaries.
-- **`log.md`** — an append-only log of ingest/update/lint operations (see
-  AGENTS.md).
+- **Git history** — the change history for the wiki. Use `git log -- wiki/`
+  instead of keeping a separate changelog file.
 
 ## Page naming
 
@@ -59,15 +59,15 @@ the page that needs updating when editing a file.
 - Keep pages small and self-contained — so they fit in context whole.
 - Record **decisions and their reasons**, not code behavior. Bad: "bind = SUPER,
   Q, killactive". Good: "killactive on Super+Q, because Q is under the thumb in
-  kanata's apps layer; see [[keymap]]".
+  kanata's apps layer; see [keymap](keymap.md)".
 - Mark **gotchas** with the explicit `⚠️ Gotcha:` marker.
-- Links between wiki pages are **`[[wikilinks]]`** by page name without an
-  extension: `[[keymap]]`, `[[scripts]]`. This is the primary and only style for
-  internal links (Obsidian resolves them natively). We don't use markdown links
-  `[text](page.md)` for internal connections.
-- Exception — links **outside** `wiki/` (e.g. the root `AGENTS.md`): keep as a
-  relative markdown link `[../AGENTS.md](../AGENTS.md)`, since `[[...]]` only
-  searches within the wiki vault folder.
+- Links between wiki pages are **relative markdown links** to the page file:
+  `[keymap](keymap.md)`, `[scripts](scripts.md)`. This is the primary and only
+  style for internal links — it renders everywhere the wiki is read (nvim,
+  GitHub, any markdown viewer), and Obsidian resolves it too. We don't use
+  `[[wikilinks]]`, because GitHub and most renderers show them as literal text.
+- Links outside `wiki/` (e.g. the root `AGENTS.md`) use the same relative
+  markdown style: `[../AGENTS.md](../AGENTS.md)`.
 - Links to code — relative from the repo root: `../kanata/config.kbd`.
 
 ## Categories for index.md

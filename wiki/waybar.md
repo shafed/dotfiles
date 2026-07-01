@@ -9,7 +9,7 @@ covers:
 
 # waybar
 
-🚧 Status bar for Hyprland. Colors — [[theming]].
+🚧 Status bar for Hyprland. Colors — [theming](theming.md).
 
 ## Layout and modules
 
@@ -34,11 +34,11 @@ but they aren't shown on the bar. Don't be surprised by "dead" config blocks.
 - **`custom/power`** — a `⏻` button with a click menu (`menu-file:
   power_menu.xml`, also outside the repo): shutdown/reboot/suspend/hibernate.
 - **`hyprland/language`** — shows the layout that kanata switches
-  (see [[keymap]]); waybar only displays the state.
+  (see [keymap](keymap.md)); waybar only displays the state.
 
 ## style.css — gruvbox
 
 Colors are set via `@define-color gb_*` (the full gruvbox palette: bg `#282828`,
 fg `#d4be98`, accents red/green/yellow/orange/blue/purple/aqua). The bar is semi-transparent
 (`rgba(40,40,40,0.88)`). This is a local copy of the palette (not a shared source) — the same
-approach as in kitty/nvim; the single color guide is [[theming]].
+approach as in kitty/nvim; the single color guide is [theming](theming.md).

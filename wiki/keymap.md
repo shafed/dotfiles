@@ -11,8 +11,8 @@ covers:
 # keymap — end-to-end key map
 
 🚧 Partially filled in. Single source of truth for hotkeys — so layers don't
-conflict or get forgotten. See component pages [[kanata]],
-[[hypr]], [[kitty]].
+conflict or get forgotten. See component pages [kanata](kanata.md),
+[hypr](hypr.md), [kitty](kitty.md).
 
 ## Three levels and the boundary between them
 
@@ -37,7 +37,7 @@ because kitty only catches C-S combos when focused, while hypr catches Super glo
   fzf pickers, killactive (`q`), browser sub-layer (`s` hold → `browser`).
 - **browser** (from apps, hold `s`) — direct URLs (gmail, perplexity, chatgpt, claude…).
 - **symbols / symbols2** (hold `e`/`r` or chords `s+d` / `s+d+f`) — programmer
-  symbols on the right hand; xkb is forced to US (see [[kanata]]).
+  symbols on the right hand; xkb is forced to US (see [kanata](kanata.md)).
 - **navi** (hold `w` or toggle via caps-hold) — arrows/navigation on the right
   hand, mods free on the left.
 - **numplain / numplain2** (chords `k+l` / `j+k+l`) — digits and shifted symbols

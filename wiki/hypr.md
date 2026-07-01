@@ -11,8 +11,8 @@ covers:
 
 # hypr
 
-🚧 The compositor (Wayland). The full keymap is in [[keymap]], colors/theme are in
-[[theming]], terminal/sessions are in [[kitty]] and [[sessions]].
+🚧 The compositor (Wayland). The full keymap is in [keymap](keymap.md), colors/theme are in
+[theming](theming.md), terminal/sessions are in [kitty](kitty.md) and [sessions](sessions.md).
 
 ## Key decisions
 
@@ -26,13 +26,13 @@ covers:
   jump on focus change.
 - **`kb_layout = us,ru`, but layout switching is driven by kanata, not Hyprland.**
   `hyprland-per-window-layout` is running (per-window layout). ⚠️ Gotcha:
-  kanata's symbol layers force US xkb — details in [[kanata]]/[[keymap]];
+  kanata's symbol layers force US xkb — details in [kanata](kanata.md)/[keymap](keymap.md);
   here only the two layouts are registered.
 
 ## Autostart (exec-once)
 
 The order and contents of `exec-once` define "what a working session is":
-`kitty` (native sessions, no tmux — see [[kitty]]/[[sessions]]),
+`kitty` (native sessions, no tmux — see [kitty](kitty.md)/[sessions](sessions.md)),
 `waybar & hyprpaper`, `kanata` (the keyboard engine — critical, no layers without it),
 `hyprland-per-window-layout`, `hypridle`, `hyprsunset`, `stretchly`
 (break reminders). ⚠️ Gotcha: the browser is NOT in autostart —
@@ -41,15 +41,15 @@ via `workspace = 2, on-created-empty:firefox` on first entering workspace 2.
 
 ## Non-trivial bindings (only the "why")
 
-The full map is in [[keymap]]. Here only the non-obvious bits:
+The full map is in [keymap](keymap.md). Here only the non-obvious bits:
 
 - `SUPER, Q` (killactive) is **commented out** in hyprland.conf — killactive is wired up
-  via the kanata apps layer (Q under the thumb), see [[keymap]].
+  via the kanata apps layer (Q under the thumb), see [keymap](keymap.md).
 - `SUPER, M` — smart exit: `hyprshutdown` if present, otherwise `hyprctl dispatch exit`.
 - `SUPER, home` — `systemctl suspend && hyprlock` (manual sleep+lock).
 - `SUPER, V` — `copyq toggle` (clipboard manager; the CopyQ window is caught by a windowrule into float).
 - `Ctrl-h/j/k/l` window navigation is NOT here — it lives in kitty via `pass_keys.py`
-  (contextual: nvim/fzf get them first), see [[kitty]].
+  (contextual: nvim/fzf get them first), see [kitty](kitty.md).
 
 ## Window rules
 
@@ -76,7 +76,7 @@ default permissions. Env variables are just cursor sizes (`XCURSOR_SIZE`,
 
 ## hyprsunset
 
-Night color temperature, see [[theming]]: day (7:30) — `identity`
+Night color temperature, see [theming](theming.md): day (7:30) — `identity`
 (no shift), night (20:00) — `temperature = 6000, gamma = 0.7`. ⚠️ Gotcha: this is
 NOT a light/dark app-theme switcher — it's only screen gamma/temperature;
 the app theme is set statically (gruvbox dark everywhere).

@@ -36,11 +36,13 @@ When you change a config's behavior (`kanata/config.kbd`, `hypr/`, `scripts/`,
 - Bump `updated:` in the frontmatter to today's date.
 - If the change shifts status (🌱→🚧→✅), fix the row in `index.md`.
 - If it touches several components (e.g. a hotkey), update the cross-cutting
-  page too ([[keymap]], [[sessions]], [[theming]]).
+  page too ([keymap](wiki/keymap.md), [sessions](wiki/sessions.md),
+  [theming](wiki/theming.md)).
 - A major/architectural decision or a rejected alternative → add an entry to
   [`wiki/decisions.md`](wiki/decisions.md).
-- Append a line to [`wiki/log.md`](wiki/log.md) with an `UPDATE` (or `DECISION`)
-  prefix.
+
+The change history lives in git (`git log -- wiki/ <config>`); don't keep a
+separate changelog file.
 
 ### INGEST — a new component/topic
 
@@ -49,8 +51,8 @@ When a new tool or major topic appears:
 - Create a page per [CONVENTIONS.md](wiki/CONVENTIONS.md) (frontmatter +
   `covers:`).
 - Add it to the right section of `index.md` with a status and one-line summary.
-- Add backlinks to/from related pages (`[[wikilinks]]`).
-- A line in `log.md` with an `INGEST` prefix.
+- Add backlinks to/from related pages (relative markdown links, e.g.
+  `[keymap](keymap.md)`).
 
 ### LINT — periodic health check
 
@@ -63,7 +65,7 @@ When asked to "lint the wiki" (or on your own initiative, if you notice):
 - **Orphaned** pages: no incoming links from index or other pages.
 - **Broken links** and `covers:` entries that don't match real paths.
 - **Unclosed stubs** (🌱) where the code is already stable — propose filling.
-- Result — a line in `log.md` with a `LINT` prefix (what you found / fixed).
+- Report what you found / fixed to the user.
 
 ## Division of responsibility
 
@@ -74,7 +76,8 @@ When asked to "lint the wiki" (or on your own initiative, if you notice):
 ## Misc
 
 - Don't add `Co-Authored-By` lines to git commits.
-- Links between wiki pages use `[[wikilinks]]` (see CONVENTIONS.md).
+- Links between wiki pages use relative markdown links, e.g.
+  `[keymap](keymap.md)` (see CONVENTIONS.md).
 - There are local `.claude/` dirs in `kanata/`, `scripts/`, `nvim/lua/config/` —
   these are scoped Claude Code permission settings, not to be confused with the
   wiki.

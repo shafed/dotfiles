@@ -9,7 +9,7 @@ covers:
 # kitty
 
 🚧 Terminal and multiplexer (native sessions instead of tmux). Sessions in detail —
-[[sessions]]; colors — [[theming]].
+[sessions](sessions.md); colors — [theming](theming.md).
 
 ## ⚠️ Gotcha: kitty.conf is ~3000 lines, but the customization is a handful of lines
 
@@ -32,7 +32,7 @@ Everything substantive boils down to:
   — enabled FOR the session pickers and QAT panels (they talk via `kitten @`).
 - **Sessions**: `startup_session .../home.kitty-session` (kitty starts WITHOUT tmux,
   commit `65d18e9`), `tab_bar_filter session:~ ...`, the tab title template
-  shows the session name. Everything about sessions is in [[sessions]].
+  shows the session name. Everything about sessions is in [sessions](sessions.md).
 - **`kitty_mod+i`** — open scrollback in the nvim pager (yank from the panel's history).
 
 ## `pass_keys.py` — contextual Ctrl-h/j/k/l navigation
@@ -53,7 +53,7 @@ layout from under `kitten @`. Not to be confused with the keyboard layout (that'
 
 ## QAT panels (quick-access-terminal)
 
-Drop-down overlay panels for fzf pickers ([[scripts]]: bookmarks/youtube):
+Drop-down overlay panels for fzf pickers ([scripts](scripts.md): bookmarks/youtube):
 
 - `quick-access-terminal-center.conf` — centered (`edge center-sized`,
   22×90, `background_opacity 0.85`), with a full duplication of the gruvbox palette via
@@ -65,4 +65,4 @@ Drop-down overlay panels for fzf pickers ([[scripts]]: bookmarks/youtube):
 ## current-theme.conf
 
 Gruvbox Material Dark Medium (`background #282828` matching nvim — commit `e5557fc`).
-Details and why this particular color source was chosen — [[theming]].
+Details and why this particular color source was chosen — [theming](theming.md).

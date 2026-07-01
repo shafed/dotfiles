@@ -8,7 +8,7 @@ covers:
 
 # yazi
 
-🚧 File manager (TUI). Theme — [[theming]]; launched from [[kitty]]/sessions.
+🚧 File manager (TUI). Theme — [theming](theming.md); launched from [kitty](kitty.md)/sessions.
 
 ## Plugins (which ones are actually wired in)
 
@@ -43,4 +43,4 @@ commit `ae6cf4b`), annotation — `xournalpp`.
 `theme.toml`: both `dark` and `light` → `gruvbox-dark` (flavor `bennyyip/gruvbox-dark`
 in `flavors/`). ⚠️ Gotcha: yazi does NOT switch to a light theme — both bindings
 point to the same dark flavor (deliberate, "always gruvbox dark"). See
-[[theming]].
+[theming](theming.md).

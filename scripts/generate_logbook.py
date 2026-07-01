@@ -763,6 +763,9 @@ function clearMarks(root){
 function normSearch(s){
   return (s||'').toLowerCase().normalize('NFKD').replace(/[\\u0300-\\u036f]/g,'');
 }
+function normSearchWords(s){
+  return normSearch(s).replace(/[^\\p{L}\\p{N}]+/gu,' ').trim().replace(/\\s+/g,' ');
+}
 function fuzzyToken(text, token){
   if(!token) return true;
   if(text.includes(token)) return true;
@@ -774,7 +777,11 @@ function fuzzyToken(text, token){
 }
 function fuzzyMatch(text, query){
   const hay=normSearch(text);
-  const tokens=normSearch(query).split(/\\s+/).filter(Boolean);
+  const hayWords=normSearchWords(text);
+  const queryWords=normSearchWords(query);
+  if(!queryWords) return false;
+  if(hayWords.includes(queryWords)) return true;
+  const tokens=queryWords.split(/\\s+/).filter(Boolean);
   return tokens.length>0 && tokens.every(t=>fuzzyToken(hay,t));
 }
 function highlight(root,q){

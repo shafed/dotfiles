@@ -480,10 +480,9 @@ def render_session(s: Session) -> str:
         f'<article class="day{mood_class}" data-date="{s.date.isoformat()}" '
         f'data-year="{s.date.year}" data-month="{s.date.month:02d}" '
         f'data-program="{html.escape(s.program, quote=True)}">'
-        f"<h3>{html.escape(s.label)}"
+        f'<h3><a class="srclink" href="{html.escape(edit_uri, quote=True)}" '
+        f'title="Open in obsidian nvim">{html.escape(s.label)}</a>'
         f"{mood_badge}"
-        f'<a class="srclink" href="{html.escape(edit_uri, quote=True)}" '
-        f'title="Open in obsidian nvim">{html.escape(s.path.name)}</a>'
         "</h3>"
         f'<div class="exlist">{ex_html}</div>'
         f"{gen_html}"
@@ -507,6 +506,7 @@ def build_exercise_index(sessions: list[Session]) -> dict:
     """exercise name -> list of appearances (newest first)."""
     index: dict[str, list[dict]] = {}
     for s in sessions:  # sessions already newest-first
+        edit_uri = "nvim-edit://" + quote(str(s.path.resolve()))
         for ex in s.exercises:
             index.setdefault(ex.name, []).append(
                 {
@@ -515,6 +515,7 @@ def build_exercise_index(sessions: list[Session]) -> dict:
                     "reps": ex.reps,
                     "weight": ex.weight,
                     "notes": [md_block(n) for n in ex.notes],
+                    "href": edit_uri,
                 }
             )
     return index
@@ -609,9 +610,8 @@ h2.eye{font:600 11px/1 inherit;text-transform:uppercase;letter-spacing:.18em;
 .day.hidden{display:none}
 .day h3{font:600 16px/1.2 'Georgia',serif;margin:0 0 12px;display:flex;
   align-items:baseline;gap:12px;flex-wrap:wrap}
-.srclink{font:400 11px/1 'Iosevka',ui-monospace,monospace;color:var(--soft);
-  text-decoration:none;word-break:break-all}
-.srclink:hover{color:var(--accent);text-decoration:underline}
+.srclink{color:inherit;text-decoration:none;border-bottom:1px dotted transparent}
+.srclink:hover{color:var(--accent);border-bottom-color:var(--accent)}
 
 .exlist{display:flex;flex-direction:column;gap:8px}
 .exblock{padding:2px 0}
@@ -670,7 +670,9 @@ details.extra summary{cursor:pointer;font-size:12px;color:var(--accent);
 .exitem h3{font:600 16px/1.2 'Georgia',serif;margin:0 0 10px}
 .exhist .exrow{padding:7px 0;border-bottom:1px dotted var(--line)}
 .exhist .exrow:last-child{border-bottom:0}
-.exhdate{display:inline-block;width:130px;color:var(--soft);font-size:12px}
+.exhdate{display:inline-block;width:130px;color:var(--soft);font-size:12px;
+  text-decoration:none;border-bottom:1px dotted transparent}
+.exhdate:hover{color:var(--accent);border-bottom-color:var(--accent)}
 .exhnums{font-size:13px}
 .exhnums b{font-weight:600}
 .exhnotes{margin:4px 0 1px 16px;display:flex;flex-direction:column;gap:3px}
@@ -805,7 +807,7 @@ function openExercise(name){
   let h='<div class="exfilter"><a id="exback">← all exercises</a></div>';
   h+='<div class="exitem exhist"><h3>'+esc(name)+'</h3>';
   rows.forEach(r=>{
-    h+='<div class="exrow"><span class="exhdate">'+esc(r.label)+'</span>'
+    h+='<div class="exrow"><a class="exhdate" href="'+esc(r.href)+'" title="Open in obsidian nvim">'+esc(r.label)+'</a>'
       +'<span class="exhnums">'+esc(r.reps)+' &nbsp;·&nbsp; <b>'+esc(r.weight)+'</b></span>';
     if(r.notes&&r.notes.length){
       h+='<div class="exhnotes">'+r.notes.map(n=>'<div class="exhnote">'+n+'</div>').join('')+'</div>';

@@ -720,6 +720,8 @@ mark{background:var(--mark);color:inherit;border-radius:2px;padding:0 1px}
 
 JS = """
 const sessions=[...document.querySelectorAll('#feed .day, #feed .event')];
+const feedList=document.getElementById('feedlist');
+sessions.forEach((s,i)=>s.dataset.order=i);
 const exData=__EXDATA__;
 
 /* tab switching */
@@ -766,6 +768,9 @@ function normSearch(s){
 function normSearchWords(s){
   return normSearch(s).replace(/[^\\p{L}\\p{N}]+/gu,' ').trim().replace(/\\s+/g,' ');
 }
+function restoreFeedOrder(){
+  sessions.sort((a,b)=>Number(a.dataset.order)-Number(b.dataset.order)).forEach(s=>feedList.appendChild(s));
+}
 function fuzzyToken(text, token){
   if(!token) return true;
   if(text.includes(token)) return true;
@@ -776,13 +781,31 @@ function fuzzyToken(text, token){
   return j===token.length;
 }
 function fuzzyMatch(text, query){
-  const hay=normSearch(text);
-  const hayWords=normSearchWords(text);
   const queryWords=normSearchWords(query);
   if(!queryWords) return false;
+  const hay=normSearch(text);
+  const hayWords=normSearchWords(text);
   if(hayWords.includes(queryWords)) return true;
   const tokens=queryWords.split(/\\s+/).filter(Boolean);
   return tokens.length>0 && tokens.every(t=>fuzzyToken(hay,t));
+}
+function searchScore(el, query){
+  const queryWords=normSearchWords(query);
+  const text=el.textContent;
+  const hay=normSearch(text);
+  const hayWords=normSearchWords(text);
+  const dateWords=normSearchWords(el.dataset.date||'');
+  const tokens=queryWords.split(/\\s+/).filter(Boolean);
+  let score=0;
+  if(dateWords===queryWords) score+=10000;
+  else if(dateWords.includes(queryWords)) score+=8000;
+  if(hayWords.includes(queryWords)) score+=1000;
+  tokens.forEach(t=>{
+    if(dateWords.split(' ').includes(t)) score+=150;
+    else if(hay.includes(t)) score+=25;
+    else if(fuzzyToken(hay,t)) score+=5;
+  });
+  return score;
 }
 function highlight(root,q){
   if(!q) return;
@@ -807,12 +830,18 @@ function runSearch(q){
     // search overrides the program filter
     curProgram='all'; setFilterSelected();
     showView('feed');
+    const hits=[];
     sessions.forEach(s=>{
       const hit=fuzzyMatch(s.textContent,q);
       s.classList.toggle('hidden',!hit);
-      if(hit) highlight(s,q);
+      if(hit){
+        highlight(s,q);
+        hits.push([searchScore(s,q), Number(s.dataset.order), s]);
+      }
     });
+    hits.sort((a,b)=>b[0]-a[0] || a[1]-b[1]).forEach(([, , s])=>feedList.appendChild(s));
   } else {
+    restoreFeedOrder();
     applyFilter();
   }
 }

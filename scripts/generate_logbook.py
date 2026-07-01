@@ -723,6 +723,8 @@ const sessions=[...document.querySelectorAll('#feed .day, #feed .event')];
 const feedList=document.getElementById('feedlist');
 const exData=__EXDATA__;
 let highlightedRows=[];
+let searchTimer=0;
+let highlightTimer=0;
 
 /* tab switching */
 const tabs=[...document.querySelectorAll('.tab')];
@@ -749,7 +751,7 @@ function setFilterSelected(){
   pfBtns.forEach(b=>b.setAttribute('aria-selected', b.dataset.program===curProgram));
 }
 pfBtns.forEach(b=>b.addEventListener('click',()=>{
-  if(searchBox.value){ searchBox.value=''; runSearch(''); }
+  if(searchBox.value){ searchBox.value=''; cancelDeferredWork(); runSearch(''); }
   curProgram = b.dataset.program;
   setFilterSelected(); applyFilter();
 }));
@@ -820,8 +822,21 @@ function highlight(root,q){
     n.replaceWith(span);
   });
 }
+function cancelDeferredWork(){
+  if(searchTimer){ clearTimeout(searchTimer); searchTimer=0; }
+  if(highlightTimer){ clearTimeout(highlightTimer); highlightTimer=0; }
+}
+function scheduleHighlight(rows,q){
+  if(highlightTimer) clearTimeout(highlightTimer);
+  highlightTimer=setTimeout(()=>{
+    highlightTimer=0;
+    highlightedRows=rows;
+    highlightedRows.forEach(s=>highlight(s,q));
+  },0);
+}
 function runSearch(q){
   q=q.trim();
+  if(highlightTimer){ clearTimeout(highlightTimer); highlightTimer=0; }
   highlightedRows.forEach(clearMarks);
   highlightedRows=[];
   if(q){
@@ -839,14 +854,20 @@ function runSearch(q){
       }
     });
     hits.sort((a,b)=>b[0]-a[0] || a[1]-b[1]).forEach(([, , s])=>feedList.appendChild(s));
-    highlightedRows=hits.slice(0,50).map(([, , s])=>s);
-    highlightedRows.forEach(s=>highlight(s,q));
+    scheduleHighlight(hits.slice(0,50).map(([, , s])=>s),q);
   } else {
     restoreFeedOrder();
     applyFilter();
   }
 }
-searchBox.addEventListener('input',()=>runSearch(searchBox.value));
+function scheduleSearch(){
+  if(searchTimer) clearTimeout(searchTimer);
+  searchTimer=setTimeout(()=>{
+    searchTimer=0;
+    runSearch(searchBox.value);
+  },220);
+}
+searchBox.addEventListener('input',scheduleSearch);
 
 /* ---- keyboard shortcuts ---- */
 document.addEventListener('keydown',(e)=>{
@@ -857,7 +878,7 @@ document.addEventListener('keydown',(e)=>{
     searchBox.focus();
     searchBox.select();
   } else if(e.key==='Escape' && e.target===searchBox){
-    if(searchBox.value){ searchBox.value=''; runSearch(''); }
+    if(searchBox.value){ searchBox.value=''; cancelDeferredWork(); runSearch(''); }
     searchBox.blur();
   }
 });

@@ -662,6 +662,14 @@ details.extra summary{cursor:pointer;font-size:12px;color:var(--accent);
 .extrabody a{color:var(--accent);word-break:break-all}
 
 /* exercise history view */
+.exhint{margin:0 0 10px;color:var(--soft);font-size:12.5px}
+.exsearch{width:100%;font:inherit;font-size:14px;padding:9px 12px;
+  border-radius:9px;border:1px solid var(--line);background:var(--panel);
+  color:var(--ink);margin-bottom:14px;transition:border-color .15s,box-shadow .15s}
+.exsearch::placeholder{color:var(--soft)}
+.exsearch:hover{border-color:var(--soft)}
+.exsearch:focus{outline:none;border-color:var(--accent);
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 22%,transparent)}
 .exfilter{margin-bottom:14px;color:var(--soft);font-size:13px}
 .exfilter a{color:var(--accent);cursor:pointer}
 .exitem{background:var(--panel);border:1px solid var(--line);border-radius:8px;
@@ -685,6 +693,7 @@ details.extra summary{cursor:pointer;font-size:12px;color:var(--accent);
 .exall a{display:block;color:var(--ink);text-decoration:none;padding:5px 0;
   border-bottom:1px dotted var(--line);cursor:pointer;break-inside:avoid}
 .exall a:hover{color:var(--accent)}
+.exall a.hidden{display:none}
 .exall .cnt{color:var(--soft);font-size:11px}
 
 /* timeline events */
@@ -834,6 +843,16 @@ document.querySelectorAll('.exname').forEach(b=>{
 document.querySelectorAll('#exall a').forEach(a=>{
   a.addEventListener('click',()=>openExercise(a.dataset.ex));
 });
+
+/* ---- exercise list filter ---- */
+const exSearchBox=document.getElementById('exsearch');
+const exLinks=[...document.querySelectorAll('#exall a')];
+exSearchBox.addEventListener('input',()=>{
+  const ql=exSearchBox.value.trim().toLowerCase();
+  exLinks.forEach(a=>{
+    a.classList.toggle('hidden', !!ql && !a.dataset.ex.toLowerCase().includes(ql));
+  });
+});
 """
 
 
@@ -927,6 +946,8 @@ def main() -> int:
 
 <div class="view" id="exercise">
   <h2 class="eye">Exercise history</h2>
+  <p class="exhint">Type to filter the list below by exercise name, then click one to see its history.</p>
+  <input id="exsearch" class="exsearch" type="search" placeholder="Filter exercises" autocomplete="off">
   <div id="exdetail" style="display:none"></div>
   <div id="exall" class="exall">{ex_links}</div>
 </div>

@@ -760,9 +760,28 @@ function clearMarks(root){
   });
   root.normalize();
 }
+function normSearch(s){
+  return (s||'').toLowerCase().normalize('NFKD').replace(/[\\u0300-\\u036f]/g,'');
+}
+function fuzzyToken(text, token){
+  if(!token) return true;
+  if(text.includes(token)) return true;
+  let j=0;
+  for(let i=0;i<text.length&&j<token.length;i++){
+    if(text[i]===token[j]) j++;
+  }
+  return j===token.length;
+}
+function fuzzyMatch(text, query){
+  const hay=normSearch(text);
+  const tokens=normSearch(query).split(/\\s+/).filter(Boolean);
+  return tokens.length>0 && tokens.every(t=>fuzzyToken(hay,t));
+}
 function highlight(root,q){
   if(!q) return;
-  const re=new RegExp(q.replace(/[.*+?^${}()|[\\]\\\\]/g,'\\\\$&'),'gi');
+  const tokens=q.trim().split(/\\s+/).filter(Boolean).map(t=>t.replace(/[.*+?^${}()|[\\]\\\\]/g,'\\\\$&'));
+  if(!tokens.length) return;
+  const re=new RegExp(tokens.join('|'),'gi');
   const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{
     acceptNode:n=>n.parentNode.closest('script,style')?NodeFilter.FILTER_REJECT
       :(re.test(n.nodeValue)?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT)
@@ -781,9 +800,8 @@ function runSearch(q){
     // search overrides the program filter
     curProgram='all'; setFilterSelected();
     showView('feed');
-    const ql=q.toLowerCase();
     sessions.forEach(s=>{
-      const hit=s.textContent.toLowerCase().includes(ql);
+      const hit=fuzzyMatch(s.textContent,q);
       s.classList.toggle('hidden',!hit);
       if(hit) highlight(s,q);
     });
@@ -848,9 +866,9 @@ document.querySelectorAll('#exall a').forEach(a=>{
 const exSearchBox=document.getElementById('exsearch');
 const exLinks=[...document.querySelectorAll('#exall a')];
 exSearchBox.addEventListener('input',()=>{
-  const ql=exSearchBox.value.trim().toLowerCase();
+  const q=exSearchBox.value.trim();
   exLinks.forEach(a=>{
-    a.classList.toggle('hidden', !!ql && !a.dataset.ex.toLowerCase().includes(ql));
+    a.classList.toggle('hidden', !!q && !fuzzyMatch(a.dataset.ex,q));
   });
 });
 """

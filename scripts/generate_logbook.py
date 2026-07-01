@@ -24,6 +24,17 @@ TRAINING_DIR = ROOT / "training"
 OUTPUT = TRAINING_DIR / "logbook.html"
 
 FILENAME_RE = re.compile(r"^(\d{4})-(\d{2})-(\d{2})-Day-\d+$")
+EVENT_LINE_RE = re.compile(
+    r"^(?:[-*]\s+)?(\d{4}-\d{2}-\d{2}):\s*#(bad|neutral)\b\s*(.*)$", re.I
+)
+EVENTS_FILE = "events.md"
+# Non-session markdown files that should be ignored by the session scan without
+# a warning (events + hand-kept aggregates).
+SKIP_FILES = {"events.md", "all.md"}
+SKIP_DIR_PARTS = {"_templates", "_import"}
+# Session mood lives in the file's YAML frontmatter: "mood: mid" / "mood: bad".
+FRONTMATTER_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n?", re.S)
+MOOD_FM_RE = re.compile(r"^mood:\s*(bad|mid|great)\s*$", re.I | re.M)
 WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 
@@ -54,6 +65,7 @@ class Session:
     extra_sections: list[tuple[str, str]] = field(
         default_factory=list
     )  # (title, raw md body)
+    mood: str | None = None  # "bad" | "mid" | "great" | None
 
     @property
     def weekday(self) -> str:
@@ -62,6 +74,26 @@ class Session:
     @property
     def label(self) -> str:
         return f"{self.date.isoformat()} ({self.weekday})"
+
+    @property
+    def program(self) -> str:
+        """Training program = the sheet folder the session lives in.
+
+        Files directly in training/ (not in a sheet subfolder) report "".
+        """
+        try:
+            rel = self.path.parent.relative_to(TRAINING_DIR)
+        except ValueError:
+            return ""
+        parts = rel.parts
+        return parts[0] if parts else ""
+
+
+@dataclass
+class Event:
+    date: dt.date
+    tag: str  # "bad" | "neutral"
+    text: str
 
 
 # --------------------------------------------------------------------------- #
@@ -195,6 +227,13 @@ def parse_session(path: Path) -> Session | None:
         return None
 
     text = path.read_text(encoding="utf-8")
+    mood = None
+    fm = FRONTMATTER_RE.match(text)
+    if fm:
+        mm = MOOD_FM_RE.search(fm.group(1))
+        if mm:
+            mood = mm.group(1).lower()
+        text = text[fm.end() :]
     lines = text.split("\n")
 
     exercises = parse_table(lines)
@@ -204,7 +243,7 @@ def parse_session(path: Path) -> Session | None:
         )
         return None
 
-    session = Session(date=date, path=path, exercises=exercises)
+    session = Session(date=date, path=path, exercises=exercises, mood=mood)
 
     # Carve the document into regions.
     # Everything after the table that is a top-level list before the first
@@ -258,6 +297,32 @@ def parse_session(path: Path) -> Session | None:
             session.general_notes.append(block)
 
     return session
+
+
+def parse_events(path: Path) -> list[Event]:
+    """Parse ``training/events.md`` into a list of timeline Events.
+
+    Only lines matching ``YYYY-MM-DD: #bad|#neutral text`` are kept; empty
+    lines, headings and other markdown are ignored. The order of events on the
+    same date follows the file order.
+    """
+    if not path.is_file():
+        return []
+    events: list[Event] = []
+    for raw in path.read_text(encoding="utf-8").split("\n"):
+        line = raw.strip()
+        if not line or line.startswith("#") and not EVENT_LINE_RE.match(line):
+            continue
+        m = EVENT_LINE_RE.match(line)
+        if not m:
+            continue
+        try:
+            date = dt.date.fromisoformat(m.group(1))
+        except ValueError:
+            print(f"WARNING: {path.name}: bad event date in {line!r}", file=sys.stderr)
+            continue
+        events.append(Event(date=date, tag=m.group(2).lower(), text=m.group(3).strip()))
+    return events
 
 
 # --------------------------------------------------------------------------- #
@@ -407,16 +472,33 @@ def render_session(s: Session) -> str:
     # nvim-edit:// link -> opens the source file in nvim inside the kitty
     # obsidian session via ~/dotfiles/scripts/nvim-edit-handler.sh. Path is percent-encoded.
     edit_uri = "nvim-edit://" + quote(str(s.path.resolve()))
+    mood_class = f" mood-{s.mood}" if s.mood else ""
+    mood_badge = (
+        f'<span class="mood-tag mood-tag-{s.mood}">{s.mood}</span>' if s.mood else ""
+    )
     return (
-        f'<article class="day" data-date="{s.date.isoformat()}" '
-        f'data-year="{s.date.year}" data-month="{s.date.month:02d}">'
+        f'<article class="day{mood_class}" data-date="{s.date.isoformat()}" '
+        f'data-year="{s.date.year}" data-month="{s.date.month:02d}" '
+        f'data-program="{html.escape(s.program, quote=True)}">'
         f"<h3>{html.escape(s.label)}"
+        f"{mood_badge}"
         f'<a class="srclink" href="{html.escape(edit_uri, quote=True)}" '
         f'title="Open in obsidian nvim">{html.escape(s.path.name)}</a>'
         "</h3>"
         f'<div class="exlist">{ex_html}</div>'
         f"{gen_html}"
         f"{extras_html}"
+        "</article>"
+    )
+
+
+def render_event(e: Event) -> str:
+    return (
+        f'<article class="event event-{e.tag}" data-date="{e.date.isoformat()}" '
+        f'data-year="{e.date.year}" data-month="{e.date.month:02d}">'
+        f"<time>{e.date.isoformat()}</time>"
+        f'<span class="event-tag">{html.escape(e.tag)}</span>'
+        f'<span class="event-body">{md_inline(e.text)}</span>'
         "</article>"
     )
 
@@ -438,26 +520,31 @@ def build_exercise_index(sessions: list[Session]) -> dict:
     return index
 
 
-def render_year_filter(sessions: list[Session]) -> str:
-    years: dict[int, set[int]] = {}
-    for s in sessions:
-        years.setdefault(s.date.year, set()).add(s.date.month)
+def render_program_filter(sessions: list[Session]) -> str:
+    """Buttons to filter the feed by training program (sheet folder).
 
+    Programs are ordered newest-first by their latest session date.
+    """
+    latest: dict[str, dt.date] = {}
+    for s in sessions:
+        prog = s.program
+        if not prog:
+            continue
+        if prog not in latest or s.date > latest[prog]:
+            latest[prog] = s.date
+    if not latest:
+        return ""
+    order = sorted(latest, key=lambda p: latest[p], reverse=True)
     parts = [
-        '<button class="yf yf-all" data-year="all" aria-selected="true">All</button>'
+        '<button class="pf pf-all" data-program="all" aria-selected="true">'
+        "All programs</button>"
     ]
-    for year in sorted(years, reverse=True):
-        months = sorted(years[year], reverse=True)
-        mbtns = "".join(
-            f'<button class="mf" data-year="{year}" data-month="{m:02d}">'
-            f"{dt.date(year, m, 1).strftime('%b')}</button>"
-            for m in months
-        )
+    for prog in order:
         parts.append(
-            f'<div class="yblock"><button class="yf" data-year="{year}">{year}</button>'
-            f'<div class="months">{mbtns}</div></div>'
+            f'<button class="pf" data-program="{html.escape(prog, quote=True)}">'
+            f"{html.escape(prog)}</button>"
         )
-    return '<div class="yearfilter">' + "".join(parts) + "</div>"
+    return '<div class="programfilter">' + "".join(parts) + "</div>"
 
 
 # --------------------------------------------------------------------------- #
@@ -509,15 +596,12 @@ h1{font:600 26px/1 'Georgia',serif;letter-spacing:-.01em;margin:0 0 6px}
 h2.eye{font:600 11px/1 inherit;text-transform:uppercase;letter-spacing:.18em;
   color:var(--accent);margin:14px 0 14px}
 
-/* year/month filter */
-.yearfilter{display:flex;flex-wrap:wrap;align-items:flex-start;gap:6px;margin:6px 0 16px}
-.yf,.mf,.yf-all{appearance:none;border:1px solid var(--line);background:var(--panel);
+/* program filter */
+.programfilter{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 16px}
+.pf,.pf-all{appearance:none;border:1px solid var(--line);background:var(--panel);
   font:inherit;font-size:12px;padding:5px 11px;border-radius:6px;cursor:pointer;color:var(--soft)}
-.yf[aria-selected=true],.yf-all[aria-selected=true],.mf[aria-selected=true]{
+.pf[aria-selected=true],.pf-all[aria-selected=true]{
   background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
-.yblock{display:flex;flex-direction:column;gap:4px}
-.months{display:flex;flex-wrap:wrap;gap:4px}
-.mf{font-size:11px;padding:3px 8px}
 
 /* session card */
 .day{background:var(--panel);border:1px solid var(--line);border-radius:8px;
@@ -553,6 +637,22 @@ h2.eye{font:600 11px/1 inherit;text-transform:uppercase;letter-spacing:.18em;
 .gennote{font-size:13px}
 .gennote ul{margin:2px 0;padding-left:18px} .gennote p{margin:0}
 .gennote a{color:var(--accent);word-break:break-all}
+/* session mood: tints the whole session card + a small text badge in the
+   heading (visible in the UI and matchable by search) */
+.day.mood-bad{background:#fbe6e3}
+.day.mood-mid{background:#fbf2df}
+.day.mood-great{background:#e6f3ec}
+@media (prefers-color-scheme:dark){
+  .day.mood-bad{background:#3a211e}
+  .day.mood-mid{background:#332b18}
+  .day.mood-great{background:#1d3126}
+}
+.mood-tag{display:inline-block;font-size:11px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.04em;padding:2px 7px;
+  border-radius:4px;color:#fff}
+.mood-tag-bad{background:#b84a4a}
+.mood-tag-mid{background:#b89a38}
+.mood-tag-great{background:#3f8f68}
 
 details.extra{margin-top:10px;border-top:1px dotted var(--line);padding-top:8px}
 details.extra summary{cursor:pointer;font-size:12px;color:var(--accent);
@@ -585,12 +685,30 @@ details.extra summary{cursor:pointer;font-size:12px;color:var(--accent);
 .exall a:hover{color:var(--accent)}
 .exall .cnt{color:var(--soft);font-size:11px}
 
+/* timeline events */
+.event{margin:8px 0 14px;padding:8px 12px;
+  color:var(--ink);background:var(--grid-alt);border-radius:5px;
+  display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 0}
+.event.hidden{display:none}
+.event time{color:var(--soft);font-size:12px;margin-right:8px}
+.event-tag{display:inline-block;margin-right:8px;font-size:11px;font-weight:600;
+  text-transform:uppercase;letter-spacing:.04em}
+.event-body{font-size:13px}
+.event-bad{background:#fbe6e3}
+.event-bad .event-tag{color:#9d3535}
+.event-neutral{background:#eceae4}
+.event-neutral .event-tag{color:var(--soft)}
+@media (prefers-color-scheme:dark){
+  .event-bad{background:#3a211e}
+  .event-neutral{background:#2a2922}
+}
+
 mark{background:var(--mark);color:inherit;border-radius:2px;padding:0 1px}
 .empty{color:var(--soft);text-align:center;padding:40px 0}
 """
 
 JS = """
-const sessions=[...document.querySelectorAll('#feed .day')];
+const sessions=[...document.querySelectorAll('#feed .day, #feed .event')];
 const exData=__EXDATA__;
 
 /* tab switching */
@@ -601,33 +719,25 @@ function showView(id){
 }
 tabs.forEach(t=>t.addEventListener('click',()=>showView(t.dataset.v)));
 
-/* ---- year / month filter (feed) ---- */
-let curYear='all', curMonth=null;
-const yfBtns=[...document.querySelectorAll('.yf,.yf-all,.mf')];
+/* ---- program filter (feed) ---- */
+let curProgram='all';
+const pfBtns=[...document.querySelectorAll('.pf,.pf-all')];
 function applyFilter(){
   sessions.forEach(s=>{
     let show=true;
-    if(curYear!=='all'){
-      show = s.dataset.year===String(curYear);
-      if(show && curMonth) show = s.dataset.month===curMonth;
+    if(curProgram!=='all'){
+      // events carry no program -> hidden while a specific program is selected
+      show = s.dataset.program===curProgram;
     }
     s.classList.toggle('hidden',!show);
   });
 }
 function setFilterSelected(){
-  yfBtns.forEach(b=>{
-    let sel=false;
-    if(b.classList.contains('yf-all')) sel = curYear==='all';
-    else if(b.classList.contains('mf')) sel = (b.dataset.year===String(curYear) && b.dataset.month===curMonth);
-    else sel = (b.dataset.year===String(curYear) && !curMonth);
-    b.setAttribute('aria-selected',sel);
-  });
+  pfBtns.forEach(b=>b.setAttribute('aria-selected', b.dataset.program===curProgram));
 }
-yfBtns.forEach(b=>b.addEventListener('click',()=>{
+pfBtns.forEach(b=>b.addEventListener('click',()=>{
   if(searchBox.value){ searchBox.value=''; runSearch(''); }
-  if(b.classList.contains('yf-all')){ curYear='all'; curMonth=null; }
-  else if(b.classList.contains('mf')){ curYear=+b.dataset.year; curMonth=b.dataset.month; }
-  else { curYear=+b.dataset.year; curMonth=null; }
+  curProgram = b.dataset.program;
   setFilterSelected(); applyFilter();
 }));
 
@@ -657,8 +767,8 @@ function runSearch(q){
   q=q.trim();
   sessions.forEach(clearMarks);
   if(q){
-    // search overrides the year/month filter
-    curYear='all'; curMonth=null; setFilterSelected();
+    // search overrides the program filter
+    curProgram='all'; setFilterSelected();
     showView('feed');
     const ql=q.toLowerCase();
     sessions.forEach(s=>{
@@ -731,7 +841,11 @@ def main() -> int:
         return 1
 
     sessions: list[Session] = []
-    for path in sorted(TRAINING_DIR.glob("*.md")):
+    for path in sorted(TRAINING_DIR.rglob("*.md")):
+        if SKIP_DIR_PARTS & set(path.parts):
+            continue
+        if path.name in SKIP_FILES:
+            continue
         s = parse_session(path)
         if s is not None:
             sessions.append(s)
@@ -740,12 +854,26 @@ def main() -> int:
         print("ERROR: no valid sessions parsed", file=sys.stderr)
         return 1
 
+    events = parse_events(TRAINING_DIR / EVENTS_FILE)
+
     sessions.sort(key=lambda s: s.date, reverse=True)  # newest first
 
     ex_index = build_exercise_index(sessions)
 
-    feed_html = "".join(render_session(s) for s in sessions)
-    year_filter_html = render_year_filter(sessions)
+    # Merge sessions and events into one descending timeline. On the same date a
+    # session is shown before its event(s); events keep their file order.
+    timeline: list = []
+    timeline.extend((s.date, 0, i, s) for i, s in enumerate(sessions))
+    timeline.extend((e.date, 1, i, e) for i, e in enumerate(events))
+    # newest date first; within a date sessions (kind 0) before events (kind 1);
+    # ties keep insertion order (sessions already newest-first, events file order)
+    timeline.sort(key=lambda t: (-t[0].toordinal(), t[1], t[2]))
+
+    feed_html = "".join(
+        render_session(item) if kind == 0 else render_event(item)
+        for _, kind, _, item in timeline
+    )
+    program_filter_html = render_program_filter(sessions)
 
     # exercise list (alphabetical), with appearance counts
     ex_links = "".join(
@@ -786,7 +914,7 @@ def main() -> int:
 
 <div class="view active" id="feed">
   <h2 class="eye">Sessions</h2>
-  {year_filter_html}
+  {program_filter_html}
   <div id="feedlist">{feed_html}</div>
 </div>
 

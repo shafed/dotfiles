@@ -877,11 +877,16 @@ def main() -> int:
     )
     program_filter_html = render_program_filter(sessions)
 
-    # exercise list (alphabetical), with appearance counts
+    # exercise list, most recently used first (ties broken alphabetically),
+    # with appearance counts
     ex_links = "".join(
         f'<a data-ex="{html.escape(name, quote=True)}">{html.escape(name)} '
         f'<span class="cnt">{len(ex_index[name])}</span></a>'
-        for name in sorted(ex_index, key=str.lower)
+        for name in sorted(
+            sorted(ex_index, key=str.lower),
+            key=lambda n: ex_index[n][0]["date"],
+            reverse=True,
+        )
     )
 
     generated = dt.datetime.now().strftime("%Y-%m-%d %H:%M")

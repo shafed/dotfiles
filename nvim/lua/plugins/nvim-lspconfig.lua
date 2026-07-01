@@ -64,6 +64,7 @@ return {
             },
             excludePatterns = {
               "/home/shafed/obsidian/notes/Day [123].md",
+              "/home/shafed/obsidian/periodic/training/**/*.md",
             },
           },
         },

@@ -253,7 +253,7 @@ end, { desc = "[P]Logbook View: open HTML" })
 
 -- Regenerate the training logbook HTML
 vim.keymap.set("n", "<leader>lr", function()
-  local script = vim.fn.expand("~/dotfiles/scripts/generate_logbook.py")
+  local script = vim.fn.expand("~/obsidian/periodic/training/generate_logbook.py")
   if vim.fn.filereadable(script) == 0 then
     vim.notify("Logbook generator not found: " .. script, vim.log.levels.ERROR)
     return

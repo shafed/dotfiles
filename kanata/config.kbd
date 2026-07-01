@@ -216,7 +216,6 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
   q 6 w 7 e 8 r 9 t 0
   a 1 s 2 d 3 f 4 g 5
   z S-= x = c - v S--
-  j = k S-=
   n S-- m -
 )
 

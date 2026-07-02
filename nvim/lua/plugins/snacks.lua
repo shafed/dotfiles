@@ -94,12 +94,10 @@ return {
             local files = vim.fn.systemlist({
               "rg",
               "--files",
-              "--glob",
-              "*.md",
               obsidian,
             })
             for _, file in ipairs(files) do
-              local aliases = read_aliases(file)
+              local aliases = file:match("%.md$") and read_aliases(file) or nil
               -- The matcher searches against `text`; append aliases so notes
               -- are findable by alias, while `format = "file"` still shows path.
               local text = vim.fn.fnamemodify(file, ":t")

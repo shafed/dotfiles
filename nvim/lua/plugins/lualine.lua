@@ -2,13 +2,30 @@ return {
   "nvim-lualine/lualine.nvim",
   dependencies = { "nvim-tree/nvim-web-devicons" },
   init = function()
-    -- Принудительно держим tabline видимым всегда (даже при одном буфере).
-    -- Что-то в LazyVim сбрасывает showtabline на 1 после загрузки lualine.
+    -- Force the tabline to stay visible at all times (even with a single buffer).
+    -- Something in LazyVim resets showtabline to 1 (e.g. on <leader>bo, when the
+    -- other buffers are closed). We also hook OptionSet to restore it to 2 right
+    -- after showtabline is changed elsewhere.
     vim.opt.showtabline = 2
-    vim.api.nvim_create_autocmd({ "BufAdd", "BufDelete", "BufEnter", "VimEnter" }, {
+    vim.api.nvim_create_autocmd(
+      { "BufAdd", "BufDelete", "BufEnter", "BufWinEnter", "VimEnter", "WinEnter", "TabEnter" },
+      {
+        callback = function()
+          if vim.o.showtabline ~= 2 then
+            vim.opt.showtabline = 2
+          end
+        end,
+      }
+    )
+    vim.api.nvim_create_autocmd("OptionSet", {
+      pattern = "showtabline",
       callback = function()
-        if vim.o.showtabline ~= 2 then
-          vim.opt.showtabline = 2
+        if vim.v.option_new ~= "2" then
+          -- Defer to the next tick, otherwise a repeated set inside
+          -- OptionSet may be swallowed by the same handler.
+          vim.schedule(function()
+            vim.opt.showtabline = 2
+          end)
         end
       end,
     })
@@ -27,7 +44,7 @@ return {
       lualine_a = {
         {
           function()
-            -- Считаем количество буферов
+            -- Count the number of buffers
             local buffers = vim.fn.getbufinfo({ buflisted = 1 })
             local buf_count = #buffers
             return "(" .. buf_count .. ")"
@@ -51,16 +68,16 @@ return {
         {
           function()
             local path = vim.fn.expand("%:p:h")
-            -- Если у буфера нет своего пути — показываем рабочую директорию
+            -- If the buffer has no path of its own, show the working directory
             if path == "" or path == "." then
               path = vim.fn.getcwd()
             end
-            -- Заменяем домашнюю директорию на ~
+            -- Replace the home directory with ~
             local home = os.getenv("HOME")
             if home then
               path = path:gsub("^" .. home, "~")
             end
-            -- Ограничиваем длину пути
+            -- Cap the path length
             local max_len = 40
             if #path > max_len then
               path = "..." .. path:sub(-max_len + 3)

@@ -1,7 +1,7 @@
 ---
 title: zsh
 type: component
-updated: 2026-07-01
+updated: 2026-07-02
 covers:
   - zsh/zshrc
   - zsh/zprofile
@@ -40,7 +40,7 @@ covers:
 
 - `EDITOR`/`VISUAL=nvim`, `BROWSER=firefox`, `TERMCMD=kitty` (after dropping
   Windows, see [decisions](decisions.md)).
-- nvim: `vi`=nvim, `vif`/`vip` — open config/plugins; `neobean`/`nb` —
+- nvim: `vi`/`v`=nvim; `neobean`/`nb` —
   alternate `NVIM_APPNAME` (see [nvim](nvim.md)).
 - misc: `y`=yazi, `ta`/`tl`=taskwarrior, `ai`=aichat, `pulldeez`=git pull
   dotfiles + resource, `cdd`=`z -`.
@@ -69,3 +69,7 @@ relying on it will stop working without an external source for the token.
 
 ✅ fixed 2026-07-01: **duplicate `export PATH="$HOME/.local/bin:$PATH"`** removed —
 one line remains.
+
+✅ fixed 2026-07-02: **`vif`/`vip` aliases replaced with `v`** — the dedicated
+"open config"/"open plugins" shortcuts were dropped in favor of a plain `v="nvim"`
+alias alongside the existing `vi`.

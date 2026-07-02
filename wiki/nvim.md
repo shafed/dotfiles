@@ -1,7 +1,7 @@
 ---
 title: nvim
 type: component
-updated: 2026-07-01
+updated: 2026-07-02
 covers:
   - nvim/
 ---
@@ -24,6 +24,13 @@ covers:
   recolored (bold=orange, italic=green).
 - Key logic is factored out into `lua/utils/` (folding, kitty, tasks, obsidian, gcal)
   so `keymaps.lua` doesn't bloat.
+- **Buffer count/filename/path indicator lives in `winbar`**, not lualine's tabline
+  (`config/options.lua`, mirrors linkarzu's approach). `bufferline.nvim` is disabled
+  since winbar covers its role. Reason: winbar is per-window and isn't tied to
+  `showtabline`, so it doesn't depend on bufferline's logic that used to hide the
+  line after `<leader>bo` — the old approach needed autocmd hacks
+  (`OptionSet`/`BufEnter`/etc.) to force `showtabline=2` back open; winbar needs none
+  of that. Commit `8bb690a`.
 
 ## Integration with the training logbook
 

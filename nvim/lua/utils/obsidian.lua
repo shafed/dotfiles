@@ -155,7 +155,7 @@ end
 
 -- Save the current buffer as a training note in periodic/training/
 function M.save_training_note()
-  local training_dir = vim.fn.expand("~/obsidian/periodic/training/")
+  local training_dir = vim.fn.expand("~/obsidian/periodic/training/Full Body 2026/")
 
   --------------------------------------------------------------------------
   -- Extract H1 from the current file to use as training note filename

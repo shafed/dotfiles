@@ -105,6 +105,11 @@ wk.add({
   },
 })
 
+-- LazyVim binds <leader>l directly to :Lazy, which shadows our [P]Log group
+-- (lc/lp/lv/lr below). Move it out of the way.
+vim.keymap.del("n", "<leader>l")
+vim.keymap.set("n", "<leader>L", "<cmd>Lazy<cr>", { desc = "Lazy" })
+
 -- LazyGit Keymap
 if vim.fn.executable("lazygit") == 1 then
   vim.keymap.set("n", "<M-g>", function()

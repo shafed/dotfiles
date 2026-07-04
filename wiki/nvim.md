@@ -1,7 +1,7 @@
 ---
 title: nvim
 type: component
-updated: 2026-07-02
+updated: 2026-07-04
 covers:
   - nvim/
 ---
@@ -30,7 +30,11 @@ covers:
   `showtabline`, so it doesn't depend on bufferline's logic that used to hide the
   line after `<leader>bo` — the old approach needed autocmd hacks
   (`OptionSet`/`BufEnter`/etc.) to force `showtabline=2` back open; winbar needs none
-  of that. Commit `8bb690a`.
+  of that. Commit `8bb690a`. The update autocmd skips floating windows
+  (`nvim_win_get_config(0).relative ~= ""`) — mini.files' explorer panes are
+  floats with their own border title, and setting winbar on them stacked a
+  garbled extra line (raw buffer name like `minifiles://2//home/shafed`) above
+  the content.
 
 ## Integration with the training logbook
 
@@ -38,14 +42,20 @@ nvim is the editing side of the training logbook; generation and viewing are in
 [scripts](scripts.md), invocation from the editor is in [sessions](sessions.md).
 
 - `<leader>lp` (`obsidian.save_training_note`) — saves the buffer as
-  `~/obsidian/periodic/training/YYYY-MM-DD-<h1>.md` (the H1 is rewritten into a slug
-  so the filename matches the heading) and **immediately triggers**
-  `~/dotfiles/scripts/generate_logbook.py` to regenerate `logbook.html`.
+  `~/obsidian/periodic/training/Full Body 2026/YYYY-MM-DD-<h1>.md` (the H1 is
+  rewritten into a slug so the filename matches the heading) and **immediately
+  triggers** `~/dotfiles/scripts/generate_logbook.py` to regenerate `logbook.html`.
 - A separate keymap opens `logbook.html` via `xdg-open`.
 - `obsidian.push_with_cooldown()` — auto commit+push of the `~/obsidian` vault (an hour
   cooldown) so note edits get backed up without manual commits.
 - `nvim-edit-handler.sh` in [scripts](scripts.md) — the reverse link: the logbook
   opens a note for editing in nvim.
+
+⚠️ Gotcha: LazyVim core binds `<leader>l` directly to `:Lazy` (exact match, not
+a which-key group), which silently swallowed the `[P]Log` keys (`lc`/`lp`/`lv`/`lr`)
+above — the which-key `group` registration alone doesn't override it. Fixed in
+`keymaps.lua` by `vim.keymap.del("n", "<leader>l")` and remapping `:Lazy` to
+`<leader>L`.
 
 ⚠️ Gotcha: `harper_ls` (grammar checking) is **disabled on training notes** —
 `excludePatterns` contains `~/obsidian/periodic/training/**/*.md` and `Day [123].md`.

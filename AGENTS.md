@@ -44,6 +44,11 @@ When you change a config's behavior (`kanata/config.kbd`, `hypr/`, `scripts/`,
 The change history lives in git (`git log -- wiki/ <config>`); don't keep a
 separate changelog file.
 
+Wiki-only changes may be committed automatically, without asking for
+confirmation first, as their **own separate commit** (don't bundle with code
+changes even if edited in the same task). Prefix the commit message with
+`wiki: `.
+
 ### INGEST — a new component/topic
 
 When a new tool or major topic appears:

@@ -156,6 +156,7 @@ bindkey -M vicmd 'gh' vi-first-non-blank
 bindkey -M vicmd 'gl' end-of-line
 alias vi="nvim"
 alias v="nvim"
+alias cl="claude"
 
 export PATH=~/.npm-global/bin:$PATH
 export PATH="$HOME/.local/bin:$PATH"
@@ -183,9 +184,6 @@ function y() {
 
 alias neobean='NVIM_APPNAME=linkarzu/dotfiles-latest/neovim/neobean nvim'
 alias nb='neobean'
-
-alias ta="task add"
-alias tl="task list"
 
 alias cdd="z -"
 alias pulldeez='echo "Pulling latest changes, please wait..."; (cd ~/dotfiles && git pull >/dev/null 2>&1) || echo "Failed to pull dotfiles"; source ~/.zshrc'

@@ -178,8 +178,8 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
 ;; top row = y u i o p (5 keys).
 (deflayermap (symbols)
   y grv u [   i ]   o S-=   p \        ;; ` [ ] + \
-  h S-2 j S-9 k S-0 l S-\ ; S-;   ' '  ;; @ ( ) | ; '
-  n S-- m - , S-6 . S-4   / S-/      ;; _ - ^ $ ?
+  h - j S-9 k S-0 l S-\ ; S-;   ' '  ;; - ( ) | ; '
+  n S-- m S-2 , S-6 . S-4   / S-/      ;; _ @ ^ $ ?
   f (layer-while-held symbols2)      ;; escalate: add f (index) -> symbols2
 )
 

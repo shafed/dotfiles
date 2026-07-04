@@ -65,6 +65,12 @@ local function get_winbar_path()
 end
 
 local function update_winbar()
+  -- Skip floating windows (e.g. mini.files' explorer panes): they draw their
+  -- own border title and setting winbar on them stacks a garbled extra line
+  -- (raw buffer name like "minifiles://2//home/shafed") above the content.
+  if vim.api.nvim_win_get_config(0).relative ~= "" then
+    return
+  end
   local buf_count = #vim.fn.getbufinfo({ buflisted = 1 })
   vim.opt_local.winbar = "%#WinBarCount#("
     .. buf_count

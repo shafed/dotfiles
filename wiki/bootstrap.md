@@ -3,6 +3,7 @@ title: bootstrap
 type: topic
 updated: 2026-07-04
 covers:
+  - bootstrap.sh
   - zsh/zshrc
   - zsh/zprofile
 ---
@@ -18,27 +19,20 @@ available to user services; see [hypr](hypr.md) for why this matters.
 
 ## Deployment mechanism
 
-There is **no** install script. Configs are wired up via **manual symlinks**
-`~/.config/<tool> → ~/dotfiles/<tool>` (plus `~/.zshrc`). Reason for the choice and
-the rejected `stow` — see [decisions](decisions.md).
+Run `./bootstrap.sh` from the repo root. It checks for required commands
+(report-only — see [decisions](decisions.md) for why not auto-install), then
+`ln -sfvn`s each top-level config dir as a whole into `~/.config/<name>`, plus
+`zsh/zshrc` → `~/.zshrc` and `zsh/zprofile` → `~/.zprofile`. Idempotent — safe
+to re-run.
 
-Symlinks confirmed on the current machine (`ls -la ~/.config/`):
+This automates the old manual-symlink process (same resulting layout) — see
+[decisions](decisions.md) for why plain symlinks were kept over GNU Stow
+(stow's per-file fan-out model doesn't fit this repo's flat layout; tested and
+rejected).
 
-| target (~/.config/) | source (~/dotfiles/) |
-| --- | --- |
-| `hypr` | `hypr` |
-| `kitty` | `kitty` |
-| `nvim` | `nvim` |
-| `kanata` | `kanata` |
-| `waybar` | `waybar` |
-| `yazi` | `yazi` |
-| `darkman` | `darkman` |
-| `lazygit` | `lazygit` |
-| `sioyek` | `sioyek` |
-| `zathura` | `zathura` |
-| `systemd` | `systemd` |
-| `xray` | `xray` |
-| `~/.zshrc` | `zsh/zshrc` |
+Linked dirs (`~/.config/<name>` ← `~/dotfiles/<name>`): `hypr`, `kitty`,
+`nvim`, `kanata`, `waybar`, `yazi`, `darkman`, `lazygit`, `sioyek`, `zathura`,
+`systemd`. Plus the direct zsh links above.
 
 ✅ fixed 2026-07-01: legacy symlinks `~/.config/tmux` and `~/.config/wezterm`
 (both pointed into dotfiles) were removed — the switch to kitty native sessions is
@@ -47,14 +41,14 @@ were left untouched.
 
 ## Packages
 
-Confirmed by the repo's configs (not guessed): `hyprland`, `kanata`,
-`kitty`, `waybar`, `yazi`, `neovim`, `zsh` + `oh-my-zsh` (auto-installed from
-zshrc), `zoxide`, `fzf`, `darkman`, `lazygit`, `sioyek`, `zathura`, `xray`.
-From [scripts](scripts.md)/[zsh](zsh.md) also visible: `yt-dlp`, `brotab`, `aichat`,
-`taskwarrior`, `todoist`, `copyq`, `python` (generate_logbook.py).
+Checked by `bootstrap.sh --check`: `hyprland`, `kanata` (AUR), `kitty`, `waybar`,
+`yazi`, `neovim`, `zsh`, `zoxide`, `fzf`, `darkman` (AUR), `lazygit`,
+`sioyek`, `zathura`, `yt-dlp`, `brotab`, `aichat` (AUR), `taskwarrior`, `copyq`,
+`python`. `oh-my-zsh` is auto-installed from zshrc on first run, not checked by
+the script.
 
-TODO: exact pacman vs AUR package names and versions — not recorded (check
-during deployment).
+TODO: exact pacman vs AUR package names and versions for a few entries — not
+fully recorded (check during deployment).
 
 ## Manual setup outside the repo (TODO clarify)
 

@@ -1,7 +1,7 @@
 ---
 title: index
 type: index
-updated: 2026-07-01
+updated: 2026-07-04
 ---
 
 # Dotfiles wiki — index
@@ -19,7 +19,7 @@ Legend: ✅ filled in · 🚧 partial · 🌱 stub.
 
 | Page                     | What it covers                                                                                                                                     |
 | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| 🚧 [bootstrap](bootstrap.md) | Deploying on a new machine: packages, `~/.config → ~/dotfiles` symlinks, order. No install script — symlinks are set up manually. |
+| 🚧 [bootstrap](bootstrap.md) | Deploying on a new machine: `bootstrap.sh` checks required packages and symlinks `~/.config/<tool> → ~/dotfiles/<tool>`. |
 
 ## Components
 
@@ -46,4 +46,4 @@ Legend: ✅ filled in · 🚧 partial · 🌱 stub.
 
 | Page                     | What it covers                                                                                                                                                |
 | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 🚧 [decisions](decisions.md) | Major decisions and rejected alternatives: tmux → kitty native sessions; kanata as the single keymap engine; removal of Windows/WSL legacy; manual symlinks instead of stow. |
+| 🚧 [decisions](decisions.md) | Major decisions and rejected alternatives: tmux → kitty native sessions; kanata as the single keymap engine; removal of Windows/WSL legacy; manual symlinks → bootstrap.sh (plain symlinks; GNU Stow tried and rejected). |

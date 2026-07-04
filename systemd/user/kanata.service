@@ -1,5 +1,6 @@
 [Unit]
 Description=kanata keyboard remapper
+After=graphical-session.target
 
 [Service]
 ExecStart=%h/.local/bin/kanata --cfg %h/.config/kanata/config.kbd

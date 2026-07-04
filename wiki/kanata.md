@@ -1,17 +1,31 @@
 ---
 title: kanata
 type: component
-updated: 2026-07-01
+updated: 2026-07-04
 covers:
   - kanata/config.kbd
   - kanata/switchApp.sh
   - scripts/symlayout-watch.sh
+  - systemd/user/kanata.service
 ---
 
 # kanata
 
 🚧 Partially filled in. The most thought-out and fragile part of the keymap. See
 also the cross-cutting [keymap](keymap.md) and [sessions](sessions.md).
+
+## Runs as a systemd user service
+
+kanata is launched by `../systemd/user/kanata.service`
+(`WantedBy=default.target`), not Hyprland's `exec-once` — it's not
+Wayland-specific, just a userspace process needing `/dev/uinput` (group
+`uinput`). This gives login-independent-of-compositor startup, automatic
+restart on crash (`Restart=on-failure`), and `journalctl --user -u kanata`
+for logs, matching the pattern used by `adrop.service` (see
+[hypr](hypr.md)/[bootstrap](bootstrap.md)). After editing
+`kanata/config.kbd`, reload with
+`systemctl --user restart kanata` (or `--check` first, per the comment
+that used to live next to the old `exec-once` line).
 
 ## Opposite-hand HRM (home-row mods)
 

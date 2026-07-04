@@ -1,7 +1,7 @@
 ---
 title: hypr
 type: component
-updated: 2026-07-01
+updated: 2026-07-04
 covers:
   - hypr/hyprland.conf
   - hypr/hypridle.conf
@@ -33,11 +33,29 @@ covers:
 
 The order and contents of `exec-once` define "what a working session is":
 `kitty` (native sessions, no tmux — see [kitty](kitty.md)/[sessions](sessions.md)),
-`waybar & hyprpaper`, `kanata` (the keyboard engine — critical, no layers without it),
-`hyprland-per-window-layout`, `hypridle`, `hyprsunset`, `stretchly`
-(break reminders). ⚠️ Gotcha: the browser is NOT in autostart —
+`waybar & hyprpaper`, `hyprland-per-window-layout`, `hypridle`, `hyprsunset`,
+`stretchly` (break reminders). ⚠️ Gotcha: the browser is NOT in autostart —
 `exec-once = browser` was removed (commit `75f46cf`); Firefox comes up lazily
 via `workspace = 2, on-created-empty:firefox` on first entering workspace 2.
+
+kanata is **not** started here anymore — it moved to a systemd user service
+(`../systemd/user/kanata.service`, `WantedBy=default.target`) so it starts at
+login independent of the compositor and restarts on crash. See
+[kanata](kanata.md).
+
+## Session launch: uwsm
+
+Hyprland is launched via `uwsm start hyprland-uwsm.desktop` from
+`../zsh/zprofile` (see [bootstrap](bootstrap.md)), not the raw `start-hyprland`
+binary. Reason: Hyprland itself never activates `graphical-session.target`, so
+without uwsm the systemd user manager never learns
+`WAYLAND_DISPLAY`/`DISPLAY`, and user services that need the Wayland session
+(e.g. `adrop.service`, see `../systemd/user/adrop.service`) start with a broken
+environment. uwsm imports the session environment and drives
+`graphical-session.target` itself, so the previous manual workaround in
+hyprland.conf
+(`exec-once = systemctl --user import-environment ... && systemctl --user restart adrop.service`)
+was removed — no longer needed.
 
 ## Non-trivial bindings (only the "why")
 

@@ -1,7 +1,7 @@
 ---
 title: bootstrap
 type: topic
-updated: 2026-07-01
+updated: 2026-07-04
 covers:
   - zsh/zshrc
   - zsh/zprofile
@@ -11,7 +11,10 @@ covers:
 
 🚧 Platform: Arch Linux + Hyprland. The Windows/WSL part is removed (see
 [decisions](decisions.md)). Session autostart — `../zsh/zprofile`: on tty1 with no
-`$DISPLAY`, runs `exec start-hyprland`.
+`$DISPLAY`, runs `exec uwsm start hyprland-uwsm.desktop` (not the raw
+`start-hyprland` binary) — uwsm wraps Hyprland in a proper systemd user
+session so `graphical-session.target` and the session environment are
+available to user services; see [hypr](hypr.md) for why this matters.
 
 ## Deployment mechanism
 

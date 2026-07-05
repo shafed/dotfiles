@@ -82,7 +82,14 @@ that this `NVIM_APPNAME` directory is actually installed on the machine (it's no
 - There's a `;date` snippet — inserts the current date in ISO format (commit `2e4f335`).
 - `spell/` — custom EN+RU dictionaries.
 - `blink-cmp-dictionary` source (in `lua/plugins/blink.lua`) suggests
-  completions from `dictionaries/american-english.txt` (EN) and
-  `dictionaries/russian-utf8.txt` (RU, ~1.5M inflected forms), filtered via
+  completions from `dictionaries/american-english.txt` (EN, 50k words) and
+  `dictionaries/russian-utf8.txt` (RU, 100k words), filtered via
   `fzf --filter` for speed. `min_keyword_length = 2` and `max_items = 8` so
   short RU words surface sooner and aren't crowded out by 3-item cap.
+  Both wordlists are **frequency-ordered** (most common word first: EN from
+  david47k/top-english-wordlists, RU from hingston/russian's Leeds Corpus
+  list) so common words rank first, not just alphabetically-first matches.
+  `get_command_args` overrides fzf's args to add `--tiebreak=index`, since
+  fzf's default tiebreak is match length — without this override, ties
+  between equal-quality matches would ignore frequency order and fall back
+  to shortest-string-wins.

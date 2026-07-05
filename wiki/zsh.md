@@ -26,15 +26,35 @@ covers:
   start/end of line to match nvim muscle memory.
 - **Alt-t (`kitty_other_window`)** mirrors nvim's `<M-t>`: jump to the neighboring kitty
   window + `goto_layout stack`. `KITTY_WINDOW_DIRECTION="right"` must match
-  `vim.g.tmux_pane_direction` in nvim. See [kitty](kitty.md), [sessions](sessions.md),
+  `vim.g.tmux_pane_direction` in nvim. Registered with `zvm_bindkey` in both `vicmd`
+  and `viins`, from the **`zvm_after_init`** hook (not `zvm_after_lazy_keybindings`,
+  see `ZVM_LAZY_KEYBINDINGS=false` below). See [kitty](kitty.md), [sessions](sessions.md),
   [nvim](nvim.md).
-- **`ZVM_ESCAPE_KEYTIMEOUT=0.2`** (default is `0.03`): needed because kanata's `lalt` is a
-  tap-hold key with a ~160ms hold-resolution delay (`kanata/config.kbd`, `th $tot 160`), so
-  the trailing `t` of Alt-t often arrived after zsh-vi-mode's default 30ms escape-sequence
-  window closed. This left a bare Esc + a literal `t` (vi's till-char motion) in `vicmd`
-  instead of firing `zvm_bindkey vicmd '^[t' kitty_other_window` — the binding only
-  misfired in vi **normal** mode, not insert mode, which is what made it look like "`<M-t>`
-  doesn't close in normal mode". See [keymap](keymap.md) for the kanata timing.
+- **`ZVM_LAZY_KEYBINDINGS=false`** (plain assignment **before** `plugins=()`/
+  `source oh-my-zsh.sh` — must not be set inside `zvm_config()`, see below) — fixes
+  "Alt-t doesn't fire after exiting Claude Code in a fresh pane". By default
+  zsh-vi-mode defers all `vicmd` keybindings into a lazy list that it only flushes
+  the *first time the shell enters normal mode*; open a pane, go straight into
+  `claude`, exit, and the `^[t` binding was never installed yet — so the first
+  post-`claude` Alt-t just drops a bare Esc into normal mode and the trailing `t`
+  gets swallowed as a motion (it only starts "working" once some prior mode-switch,
+  e.g. that very failed Alt-t, flushes the list — which is why it looked
+  intermittent/order-dependent while debugging). Disabling lazy loading installs
+  `vicmd` bindings eagerly at load instead, so the binding exists from the first
+  prompt onward — confirmed live by spawning a fresh kitty window and checking
+  `bindkey -M vicmd | grep '^[t'`. ⚠️ Must be a pre-source assignment, not set inside
+  `zvm_config()`: the plugin reads this var and initializes the lazy list near the
+  **top** of its file, long before it calls `zvm_config` at the very end — setting it
+  there is silently too late and (worse) disables the lazy-flush path without ever
+  installing the binding another way, which is a trap worth avoiding twice. Because
+  lazy loading is off, bindings are set from **`zvm_after_init`** (fires once at the
+  end of plugin init) rather than `zvm_after_lazy_keybindings` (never called when
+  `ZVM_LAZY_KEYBINDINGS=false`). See [keymap](keymap.md).
+- **`ZVM_ESCAPE_KEYTIMEOUT=0.2`** (default `0.03`): kanata's `lalt` tap-hold (~160ms,
+  `kanata/config.kbd` `th $tot 160`) means Alt-t's trailing `t` can arrive after
+  zsh-vi-mode's default 30ms escape window, leaving a bare Esc + literal `t` instead
+  of firing the binding. Unrelated to the lazy-keybindings issue above — both were
+  needed at different times for what looked like the same symptom.
 - **Alt-e (`_aichat_zsh`)** — runs the current buffer through `aichat -r %shell%`
   and substitutes in the resulting command.
 

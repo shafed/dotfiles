@@ -1,11 +1,12 @@
 ---
 title: keymap
 type: topic
-updated: 2026-07-01
+updated: 2026-07-05
 covers:
   - kanata/config.kbd
   - hypr/hyprland.conf
   - kitty/kitty.conf
+  - zsh/zshrc
 ---
 
 # keymap — end-to-end key map
@@ -52,6 +53,7 @@ because kitty only catches C-S combos when focused, while hypr catches Super glo
 | `h j k l` | kanata HRM (base) / navi / hypr Super | HRM only on hold with opposite-hand; hypr `Super+hjkl`=movefocus, kanata doesn't touch Super |
 | digits `1-0` | numplain (left hand) / hypr `Super+N` | numplain gives **plain** digits; workspace-switching only via numws (Super baked in) |
 | `C-tab` / `C-S-tab` | navi (browser tabs) / kitty | in navi this is `@j/k-navi` (fork on alt); kitty catches `C-S-*` only when focused |
+| `Alt-t` / `^[t` | kitty/zsh/nvim companion toggle | zsh binds `^[t` through zsh-vi-mode to `kitty_other_window` from `zvm_after_init` (with `ZVM_LAZY_KEYBINDINGS=false`, so the binding exists from the first prompt instead of only after a mode switch); `ZVM_ESCAPE_KEYTIMEOUT=0.2` keeps the ESC-prefixed sequence together despite kanata's tap-hold delay. See [zsh](zsh.md). |
 | one-handed Ctrl+Shift | HRM no longer gives this (same-hand=tap) | moved to chords `d+f` / `j+k` (hold) |
 | `w+e` | letter roll vs. Tab chord | `mod-chord-time 35` + `chords-v2-min-idle 80` separate rolling from an intentional chord |
 

@@ -109,15 +109,17 @@ but which-key has to wait out `timeoutlen` to disambiguate, so the cut fires
 late instead of failing outright. Current approach avoids a dedicated cut
 mapping entirely (see below).
 
-**Cross-session clipboard sync**: since ordinary deletes/yanks don't touch `+`,
-each Neovim session's unnamed register (`"`) is otherwise invisible to other
-sessions. An autocmd on `FocusLost`/`QuitPre`/`VimSuspend`/`VimLeavePre` copies
-`"` into `+` whenever a session loses focus or exits, so the last thing you
-yanked/deleted is available via `<leader>p`/system paste elsewhere — without
-making every `ciw`/`dd` hit the clipboard live. (A `FocusGained` counterpart
-that pulled `+` back into `"`, so plain `p` would pick up cross-session
-clipboard content automatically, was tried and reverted — sync stays one-way,
-outbound only.)
+⚠️ Gotcha (fixed 2026-07-05): a `FocusLost`/`QuitPre`/`VimSuspend`/`VimLeavePre`
+autocmd used to copy `"` into `+` whenever a session lost focus or exited, so
+the last yank/delete was available via `<leader>p`/system paste elsewhere
+without making every `ciw`/`dd` hit the clipboard live. Removed: `FocusLost` is
+a terminal-window focus event, not a "this kitty session became inactive"
+event, so switching between kitty sessions (`goto_session`) doesn't reliably
+fire it for the session being left — it can fire late, or fire for a
+background session instead, so the wrong (stale) session's register would
+silently land in `+`. Cross-session clipboard transfer now relies solely on
+the explicit mappings above (`<leader>y`, mouse-select) instead of a
+focus-event heuristic.
 
 `tasks.yank_text` (bound to `<leader>yc`) copies a task bullet's text without
 the `- [ ]`/`- [x]` prefix, straight to `+`. It reuses the same chunk-boundary

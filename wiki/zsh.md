@@ -1,7 +1,7 @@
 ---
 title: zsh
 type: component
-updated: 2026-07-02
+updated: 2026-07-05
 covers:
   - zsh/zshrc
   - zsh/zprofile
@@ -26,7 +26,15 @@ covers:
   start/end of line to match nvim muscle memory.
 - **Alt-t (`kitty_other_window`)** mirrors nvim's `<M-t>`: jump to the neighboring kitty
   window + `goto_layout stack`. `KITTY_WINDOW_DIRECTION="right"` must match
-  `vim.g.tmux_pane_direction` in nvim. See [kitty](kitty.md), [sessions](sessions.md).
+  `vim.g.tmux_pane_direction` in nvim. See [kitty](kitty.md), [sessions](sessions.md),
+  [nvim](nvim.md).
+- **`ZVM_ESCAPE_KEYTIMEOUT=0.2`** (default is `0.03`): needed because kanata's `lalt` is a
+  tap-hold key with a ~160ms hold-resolution delay (`kanata/config.kbd`, `th $tot 160`), so
+  the trailing `t` of Alt-t often arrived after zsh-vi-mode's default 30ms escape-sequence
+  window closed. This left a bare Esc + a literal `t` (vi's till-char motion) in `vicmd`
+  instead of firing `zvm_bindkey vicmd '^[t' kitty_other_window` — the binding only
+  misfired in vi **normal** mode, not insert mode, which is what made it look like "`<M-t>`
+  doesn't close in normal mode". See [keymap](keymap.md) for the kanata timing.
 - **Alt-e (`_aichat_zsh`)** — runs the current buffer through `aichat -r %shell%`
   and substitutes in the resulting command.
 

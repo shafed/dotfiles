@@ -45,6 +45,23 @@ local function has_companion(tab)
   return tab ~= nil and tab.windows and #tab.windows > 1
 end
 
+-- The non-active window in the tab (the companion terminal, since nvim's own
+-- window is always the active one when <M-t> is pressed from nvim). Matching
+-- by id is used instead of `--match='not state:focused'`: in a stack layout
+-- that negation is unreliable and can resolve to the active (nvim) window,
+-- sending the cd text into the nvim buffer instead of the terminal.
+local function companion_window_id(tab)
+  if not tab or not tab.windows then
+    return nil
+  end
+  for _, win in ipairs(tab.windows) do
+    if not win.is_active then
+      return win.id
+    end
+  end
+  return nil
+end
+
 M.open = function(dir)
   local auto_cd_to_new_dir = true
   local pane_direction = vim.g.tmux_pane_direction or "right"
@@ -59,9 +76,10 @@ M.open = function(dir)
   if has_companion(tab) then
     if is_zoomed(tab) then
       -- Zoomed -> unzoom, then jump to the other (companion) window.
-      if auto_cd_to_new_dir and vim.g.kitty_pane_dir ~= escaped_dir then
+      local companion_id = companion_window_id(tab)
+      if auto_cd_to_new_dir and companion_id and vim.g.kitty_pane_dir ~= escaped_dir then
         vim.fn.system(
-          "kitten @ send-text --match='not state:focused' 'cd \"" .. escaped_dir .. "\"\n'"
+          "kitten @ send-text --match=id:" .. companion_id .. " 'cd \"" .. escaped_dir .. "\"\n'"
         )
         vim.g.kitty_pane_dir = escaped_dir
       end

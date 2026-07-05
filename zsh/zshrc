@@ -74,6 +74,14 @@ ZSH_THEME="gruvbox-material"
 # Disable zsh-vi-mode cursor styling (avoids zvm_cursor_style regex error on some terminals/apps)
 ZVM_CURSOR_STYLE_ENABLED=true
 
+# Default 0.03s is shorter than kanata's lalt tap-hold resolution (~160ms, see
+# kanata/config.kbd), so Alt-t (bound to kitty_other_window in vicmd below)
+# often had its trailing "t" arrive after zsh-vi-mode gave up on the escape
+# sequence, leaving a bare Esc + a literal "t" (vi's till-char motion) instead
+# of firing the binding. Insert mode wasn't affected since it doesn't go
+# through this escape-sequence disambiguation the same way.
+ZVM_ESCAPE_KEYTIMEOUT=0.2
+
 plugins=(
   git
   zsh-autosuggestions

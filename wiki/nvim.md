@@ -1,7 +1,7 @@
 ---
 title: nvim
 type: component
-updated: 2026-07-04
+updated: 2026-07-05
 covers:
   - nvim/
 ---
@@ -61,6 +61,69 @@ above — the which-key `group` registration alone doesn't override it. Fixed in
 `excludePatterns` contains `~/obsidian/periodic/training/**/*.md` and `Day [123].md`.
 Reason: training notes are tables/abbreviations, and harper chokes on false
 positives. Commit `ef70575` ("recursive disable harper in training").
+
+## Companion kitty terminal (`<M-t>`, `utils/kitty.lua`)
+
+`<M-t>` (`keymaps.lua`) calls `require("utils.kitty").open()`, which toggles a
+companion kitty terminal window (split right/bottom per `vim.g.tmux_pane_direction`)
+via `kitten @` remote control, `cd`-ing it into the current file's directory. This
+is unrelated to the kitty.conf-level split toggle mentioned as removed in
+[sessions](sessions.md) — that one is `C-S--`/`C-S-\`; this is nvim-driven and
+zoom/unzoom like the old tmux `resize-pane -Z`.
+
+⚠️ Gotcha (fixed 2026-07-05, two rounds): when unzooming to cd the companion window
+into a new directory, the `cd` was sent with
+`kitten @ send-text --match='not state:focused'`, which has no tab scoping and
+broadcast the `cd` into the non-focused window of **every** tab/session, not just
+the current tab's companion. First fix attempt added `--match-tab=state:focused`
+alongside `--match` — but in a `stack` layout (zoomed), `not state:focused` is
+unreliable and can still resolve to the *active* (nvim) window instead of the
+hidden companion, sending the `cd "..."` text as literal keypresses into the nvim
+buffer instead of the terminal. Final fix: resolve the companion's window `id`
+directly from `kitten @ ls` (the window in the tab where `is_active == false` —
+nvim's own window is always the active one when `<M-t>` fires from nvim) and match
+`send-text --match=id:<id>` explicitly, removing the state-negation guesswork
+entirely. See `companion_window_id()` in `utils/kitty.lua`.
+
+## Clipboard vs. registers (`keymaps.lua`, `utils/tasks.lua`)
+
+`clipboard=""` (`options.lua`) is deliberate: plain `y`/`d`/`ciw`/`x` etc. stay in
+Neovim's own unnamed register and never touch the system clipboard, so ordinary
+edits don't spam `+` with unrelated text across other apps/sessions. Explicit
+`"+`-prefixed mappings are used wherever system-clipboard interop is actually
+wanted:
+
+- `<leader>y`/`<leader>Y` — yank (line/to-EOL) to `+`.
+- `<leader>p`/`<leader>P` — paste from `+`.
+- `<leader>d` — delete to the black hole register (`"_d`), i.e. real "no yank".
+- Visual `y` — in markdown, pipes the selection through
+  `prettier --prose-wrap never` before landing it in `+`, so hard-wrapped
+  paragraph text pastes as unwrapped lines elsewhere; non-markdown just does a
+  plain `"+y`.
+- Mouse selection (`<LeftRelease>`/`<2-LeftRelease>`) auto-yanks to `+`.
+
+⚠️ Gotcha: an earlier attempt bound a standalone `<leader>x` for "cut" (delete +
+copy to `+`), but LazyVim/Trouble already owns `<leader>x` as a which-key group
+(`xx`, `xl`, `xq`, `xt`, ...) — a bare `<leader>x` mapping doesn't break those,
+but which-key has to wait out `timeoutlen` to disambiguate, so the cut fires
+late instead of failing outright. Current approach avoids a dedicated cut
+mapping entirely (see below).
+
+**Cross-session clipboard sync**: since ordinary deletes/yanks don't touch `+`,
+each Neovim session's unnamed register (`"`) is otherwise invisible to other
+sessions. An autocmd on `FocusLost`/`QuitPre`/`VimSuspend`/`VimLeavePre` copies
+`"` into `+` whenever a session loses focus or exits, so the last thing you
+yanked/deleted is available via `<leader>p`/system paste elsewhere — without
+making every `ciw`/`dd` hit the clipboard live. (A `FocusGained` counterpart
+that pulled `+` back into `"`, so plain `p` would pick up cross-session
+clipboard content automatically, was tried and reverted — sync stays one-way,
+outbound only.)
+
+`tasks.yank_text` (bound to `<leader>yc`) copies a task bullet's text without
+the `- [ ]`/`- [x]` prefix, straight to `+`. It reuses the same chunk-boundary
+walk as `toggle_done` (a task's text can wrap onto following non-bullet,
+non-blank lines, e.g. a long todo in `todos.md`), so it selects and yanks the
+whole wrapped chunk, not just the cursor's physical line.
 
 ## LSP / other exclusions
 

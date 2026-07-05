@@ -12,7 +12,8 @@ end, { desc = "[P]Terminal on kitty window" })
 
 -- Copy to clipboard
 vim.keymap.set({ "n", "v" }, "<leader>y", '"+y')
-vim.keymap.set("n", "<leader>Y", '"+Y')
+vim.keymap.set("n", "<leader>Y", '"+y$')
+vim.keymap.set("n", "<leader>yc", tasks.yank_text, { desc = "[P]Yank Checkbox text (no '- [ ]')" })
 
 -- Paste from clipboard
 vim.keymap.set({ "n", "v" }, "<leader>p", '"+p')
@@ -285,6 +286,25 @@ vim.api.nvim_create_autocmd({
 }, {
   desc = "Autopush Obsidian Vault",
   callback = obsidian.push_with_cooldown,
+})
+
+-- Sync the unnamed register (last yank/delete) to the system clipboard when
+-- leaving Neovim/losing focus, so ciw/dd/x etc. don't spam "+ on every edit
+-- (clipboard="" in options.lua), but the last thing you deleted or yanked is
+-- still there to paste elsewhere when you actually switch away.
+vim.api.nvim_create_autocmd({
+  "FocusLost",
+  "QuitPre",
+  "VimSuspend",
+  "VimLeavePre",
+}, {
+  desc = "Sync unnamed register to system clipboard",
+  callback = function()
+    local reg = vim.fn.getreg('"')
+    if reg ~= "" then
+      vim.fn.setreg("+", reg, vim.fn.getregtype('"'))
+    end
+  end,
 })
 
 -- Ручной кеймап

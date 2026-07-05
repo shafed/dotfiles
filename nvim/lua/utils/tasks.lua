@@ -1,6 +1,7 @@
 -- Markdown task helpers:
 --   M.toggle_done — toggle a task and move it under "## Completed Tasks"
 --   M.create     — convert a line/bullet into a "- [ ]" task bullet
+--   M.yank_text  — copy a task bullet's text (without "- [ ]"/"- [x]") to clipboard
 
 local M = {}
 
@@ -297,6 +298,53 @@ function M.create()
   vim.api.nvim_set_current_line(final_line)
   -- "- [ ] " is 6 characters
   vim.api.nvim_win_set_cursor(0, { row, 6 })
+end
+
+-- Copy a task bullet's text (without the "- [ ]"/"- [x]" prefix) to the
+-- system clipboard, visually flashing the yanked range. Handles tasks whose
+-- text wraps onto following (non-bullet, non-blank) lines. Does nothing if
+-- the cursor isn't on a task bullet's chunk.
+function M.yank_text()
+  local buf = vim.api.nvim_get_current_buf()
+  local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+  local total_lines = #lines
+  local start_line = vim.api.nvim_win_get_cursor(0)[1] - 1
+
+  -- Move upwards to find the bullet line, same as toggle_done
+  while start_line > 0 do
+    local line_text = lines[start_line + 1]
+    if line_text == "" or line_text:match("^%s*%-") then
+      break
+    end
+    start_line = start_line - 1
+  end
+  if lines[start_line + 1] == "" and start_line < (total_lines - 1) then
+    start_line = start_line + 1
+  end
+
+  local bullet_line = lines[start_line + 1]
+  local prefix = bullet_line and bullet_line:match("^%s*%- %[[x ]%]%s*")
+  if not prefix then
+    print("Not a task bullet: no action taken.")
+    return
+  end
+
+  -- Find chunk end: following lines that aren't blank/bullets are wrapped text
+  local chunk_end = start_line
+  while chunk_end + 1 < total_lines do
+    local next_line = lines[chunk_end + 2]
+    if next_line == "" or next_line:match("^%s*%-") then
+      break
+    end
+    chunk_end = chunk_end + 1
+  end
+
+  vim.api.nvim_win_set_cursor(0, { start_line + 1, #prefix })
+  if chunk_end == start_line then
+    vim.cmd('normal! v$"+y')
+  else
+    vim.cmd(string.format('normal! v%dG$"+y', chunk_end + 1))
+  end
 end
 
 return M

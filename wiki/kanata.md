@@ -1,7 +1,7 @@
 ---
 title: kanata
 type: component
-updated: 2026-07-04
+updated: 2026-07-05
 covers:
   - kanata/config.kbd
   - kanata/switchApp.sh
@@ -27,14 +27,20 @@ for logs, matching the pattern used by `adrop.service` (see
 `systemctl --user restart kanata` (or `--check` first, per the comment
 that used to live next to the old `exec-once` line).
 
-⚠️ Gotcha: the unit also needs `After=graphical-session.target`. Several
-kanata bindings shell out to `hyprctl` (layout switch on `sw`, `x`/`z`
-window/workspace nav, `q` killactive — see config.kbd), which requires
-`HYPRLAND_INSTANCE_SIGNATURE` in the process environment. Without that
-ordering, `default.target` can be reached (and kanata started) before uwsm
-finalizes the session environment into systemd, so kanata starts with no
-Hyprland env vars at all and those bindings silently fail
-(`hyprctl` prints `HYPRLAND_INSTANCE_SIGNATURE not set!` to the journal).
+⚠️ Gotcha: the unit needs both `After=graphical-session.target` **and**
+`Requisite=graphical-session.target`. Several kanata bindings shell out to
+`hyprctl` (layout switch on `sw`, `x`/`z` window/workspace nav, `q`
+killactive — see config.kbd), which requires `HYPRLAND_INSTANCE_SIGNATURE` in
+the process environment. `After=` alone only orders the two units *if both
+are already going to start* — it doesn't make kanata wait on the target. Since
+kanata is also `WantedBy=default.target`, that path alone could pull it in
+before uwsm finalizes the session environment into systemd, so kanata started
+with no Hyprland env vars at all and those bindings silently failed
+(`hyprctl` prints `HYPRLAND_INSTANCE_SIGNATURE not set!` to the journal; the
+race was confirmed via `ActiveEnterTimestamp` — kanata was starting up to a
+couple seconds before `graphical-session.target` itself went active).
+`Requisite=` closes the race: it makes systemd verify the target is already
+active before starting kanata at all.
 
 ## Opposite-hand HRM (home-row mods)
 

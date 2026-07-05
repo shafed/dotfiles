@@ -119,6 +119,13 @@ apps layer).
 - Videos open on **ws4** (unlike bookmarks/search, which use ws2).
 - `-H`/`-L` (history/watch-later) read the logged-in session via
   `--cookies-from-browser firefox` (no OAuth).
+- `-s` live search: Enter with no results falls back to a plain
+  `youtube.com/results?search_query=…` page for whatever was typed, instead of
+  doing nothing (an `enter:transform` bind checks `{}` for emptiness). ⚠️
+  Gotcha: the fallback sentinel row must stay a plain 2-field
+  `search<TAB>query`, not the usual 6-column shape — `IFS=$'\t' read` collapses
+  *consecutive* tab delimiters (tab is IFS-whitespace), so extra empty columns
+  would swallow the query into nothing.
 
 ⚠️ Gotcha (cache/preview): the preview makes **no** network requests on hover —
 everything comes from the already-built TSV; the thumbnail is downloaded once

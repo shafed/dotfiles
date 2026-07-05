@@ -488,7 +488,13 @@ tab=$'\t'
 # cold-started Firefox would inherit that stdin too, tying it to the panel — so
 # force-closing the panel would then kill Firefox (and the just-opened tab).
 open_video() {
-  local url="https://www.youtube.com/watch?v=$1"
+  open_url "https://www.youtube.com/watch?v=$1"
+}
+
+# Same as open_video, but for an arbitrary URL (e.g. a YouTube search results
+# page) rather than a specific video's watch page.
+open_url() {
+  local url="$1"
 
   if ! command -v hyprctl >/dev/null 2>&1 || ! command -v jq >/dev/null 2>&1; then
     setsid -f xdg-open "$url" </dev/null >/dev/null 2>&1
@@ -620,6 +626,20 @@ search_live() {
       echo abort
     fi"
 
+  # Enter with no row highlighted (query matched nothing) falls back to a plain
+  # YouTube search-results page for whatever was typed, instead of doing
+  # nothing. {} is the current line — empty exactly when the list is empty.
+  # become() replaces fzf with this echo, so its stdout IS $sel below. IFS=tab
+  # read collapses repeated tab delimiters (tab is IFS-whitespace), so this
+  # sentinel row must stay a plain 2-field "search<TAB>query" — not the usual
+  # 6-column shape — or the query would vanish into a collapsed empty field.
+  local enter_action="transform:
+    if [[ -z {} && -n {q} ]]; then
+      echo \"become(printf 'search\\t%s\\n' {q})\"
+    else
+      echo accept
+    fi"
+
   local fzf_args=(
     --height=100%
     --reverse
@@ -645,6 +665,8 @@ search_live() {
     --bind "ctrl-l:execute-silent(printf later >'$source_file')+change-prompt(Search later > )+clear-query+reload($watchlater_cmd)+first"
     # esc: insert -> normal, normal -> quit (via the mode-aware transform).
     --bind "esc:$esc_action"
+    # Enter with no results falls back to a plain YouTube search page.
+    --bind "enter:$enter_action"
     # Navigation actions, unbound at start (insert types them), rebound in normal.
     --bind "j:down"
     --bind "k:up"
@@ -667,6 +689,15 @@ search_live() {
   case "$kind" in
   video)
     open_video "$id"
+    exit 0
+    ;;
+  search)
+    # No results matched the typed query: fall back to a plain YouTube
+    # search-results page instead of doing nothing. $id holds the query here
+    # (the sentinel row is "search<TAB>query", not a real video/channel row).
+    local enc
+    enc="$(python3 -c 'import urllib.parse,sys;print(urllib.parse.quote(sys.argv[1]))' "$id" 2>/dev/null)"
+    open_url "https://www.youtube.com/results?search_query=${enc}"
     exit 0
     ;;
   channel)

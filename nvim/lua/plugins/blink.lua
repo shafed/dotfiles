@@ -111,6 +111,16 @@ return {
             dictionary_files = {
               vim.fn.expand("~/dotfiles/nvim/spell/en.utf-8.add"),
             },
+            -- dictionaries/*.txt are frequency-ordered (most common word
+            -- first); fzf's default tiebreak is match length, which would
+            -- discard that order on equal-quality matches, so pin ties to
+            -- input order instead.
+            get_command_args = function(prefix, command)
+              if command == "fzf" then
+                return { "--filter=" .. prefix, "--sync", "-i", "--tiebreak=index" }
+              end
+              return require("blink-cmp-dictionary.default").get_command_args(prefix, command)
+            end,
           },
         },
       },

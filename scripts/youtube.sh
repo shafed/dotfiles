@@ -512,7 +512,11 @@ open_video() {
     fi
 
     # Firefox only on ws4, or cold start: open a tab and pull Firefox to ws4.
-    xdg-open "$url" >/dev/null 2>&1
+    # Backgrounded: on a cold start xdg-open execs firefox directly (no running
+    # instance to hand off to), so it blocks for the entire Firefox session
+    # instead of returning immediately -- without "&" move_firefox_when_up would
+    # never even start polling until Firefox quits.
+    xdg-open "$url" >/dev/null 2>&1 &
     move_firefox_when_up "$ws"
   ' _ "$script_dir/lib.sh" "$url" "$firefox_workspace" </dev/null >/dev/null 2>&1
   return 0

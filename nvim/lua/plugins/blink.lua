@@ -104,8 +104,8 @@ return {
           name = "Dict",
           score_offset = 20,
           enabled = true,
-          max_items = 3,
-          min_keyword_length = 3,
+          max_items = 8,
+          min_keyword_length = 2,
           opts = {
             dictionary_directories = { vim.fn.expand("~/dotfiles/dictionaries") },
             dictionary_files = {

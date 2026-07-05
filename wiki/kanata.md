@@ -17,7 +17,7 @@ also the cross-cutting [keymap](keymap.md) and [sessions](sessions.md).
 ## Runs as a systemd user service
 
 kanata is launched by `../systemd/user/kanata.service`
-(`WantedBy=default.target`), not Hyprland's `exec-once` — it's not
+(`WantedBy=graphical-session.target`), not Hyprland's `exec-once` — it's not
 Wayland-specific, just a userspace process needing `/dev/uinput` (group
 `uinput`). This gives login-independent-of-compositor startup, automatic
 restart on crash (`Restart=on-failure`), and `journalctl --user -u kanata`
@@ -27,20 +27,31 @@ for logs, matching the pattern used by `adrop.service` (see
 `systemctl --user restart kanata` (or `--check` first, per the comment
 that used to live next to the old `exec-once` line).
 
-⚠️ Gotcha: the unit needs both `After=graphical-session.target` **and**
-`Requisite=graphical-session.target`. Several kanata bindings shell out to
-`hyprctl` (layout switch on `sw`, `x`/`z` window/workspace nav, `q`
-killactive — see config.kbd), which requires `HYPRLAND_INSTANCE_SIGNATURE` in
-the process environment. `After=` alone only orders the two units *if both
-are already going to start* — it doesn't make kanata wait on the target. Since
-kanata is also `WantedBy=default.target`, that path alone could pull it in
-before uwsm finalizes the session environment into systemd, so kanata started
-with no Hyprland env vars at all and those bindings silently failed
-(`hyprctl` prints `HYPRLAND_INSTANCE_SIGNATURE not set!` to the journal; the
-race was confirmed via `ActiveEnterTimestamp` — kanata was starting up to a
-couple seconds before `graphical-session.target` itself went active).
-`Requisite=` closes the race: it makes systemd verify the target is already
-active before starting kanata at all.
+⚠️ Gotcha: the unit needs `After=graphical-session.target` **and**
+`BindsTo=graphical-session.target`, and must be `WantedBy=` that same target
+(not `default.target`). Several kanata bindings shell out to `hyprctl`
+(layout switch on `sw`, `x`/`z` window/workspace nav, `q` killactive — see
+config.kbd), which requires `HYPRLAND_INSTANCE_SIGNATURE` in the process
+environment. `After=` alone only orders the two units *if both are already
+going to start* — it doesn't make kanata wait on the target, and doesn't pull
+it in. With the old `WantedBy=default.target`, kanata could start via that
+unrelated pull-in path before uwsm finalized the session environment into
+systemd, so kanata started with no Hyprland env vars and those bindings
+silently failed (`hyprctl` prints `HYPRLAND_INSTANCE_SIGNATURE not set!` to
+the journal; confirmed via `ActiveEnterTimestamp` — kanata was starting up to
+a couple seconds before `graphical-session.target` itself went active).
+
+`Requisite=graphical-session.target` was tried first as a fix and made things
+**worse**: `Requisite=` doesn't wait, it checks at job-scheduling time and
+hard-fails the start ("Dependency failed") if the target isn't active *yet* —
+and since that's a dependency-job failure rather than a service crash,
+`Restart=on-failure` never kicks in, so kanata didn't start at all. The
+working fix is to make kanata an actual dependent of the target's own start
+job via `WantedBy=graphical-session.target` (instead of `default.target`), so
+systemd orders and starts it as part of reaching that target rather than
+racing it in from an unrelated path. `BindsTo=` additionally stops kanata
+when the graphical session goes away, which is correct since its `hyprctl`
+calls are meaningless without one.
 
 ## Opposite-hand HRM (home-row mods)
 

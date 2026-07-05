@@ -81,3 +81,8 @@ that this `NVIM_APPNAME` directory is actually installed on the machine (it's no
 - `snippets/` — luasnip snippets, a lot of them for LaTeX (`tex/*.lua`, `bib.lua`).
 - There's a `;date` snippet — inserts the current date in ISO format (commit `2e4f335`).
 - `spell/` — custom EN+RU dictionaries.
+- `blink-cmp-dictionary` source (in `lua/plugins/blink.lua`) suggests
+  completions from `dictionaries/american-english.txt` (EN) and
+  `dictionaries/russian-utf8.txt` (RU, ~1.5M inflected forms), filtered via
+  `fzf --filter` for speed. `min_keyword_length = 2` and `max_items = 8` so
+  short RU words surface sooner and aren't crowded out by 3-item cap.

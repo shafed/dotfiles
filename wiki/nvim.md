@@ -151,6 +151,15 @@ normal mode:
 - Why langmap alone wasn't enough: it doesn't apply in cmdline (`:ц` is not
   `:w`) and plugins that read input via `getchar()` (flash, which-key,
   mini.surround) bypass it — hence the auto-switch as the primary mechanism.
+- **flash.nvim is bilingual** (`plugins/flash.lua`): `search.mode` is a
+  function turning each typed char into a vim-regex collection of itself +
+  its ЙЦУКЕН counterpart on the same physical key (`ghb` →
+  `\V\c[gп][hр][bи]`, smartcase), so one `s` search matches both English and
+  Russian text — normal mode stays US and you just type the physical keys of
+  the Russian word. Works in both directions (Cyrillic input finds Latin
+  text). The old separate `ы`/`Ы` flash mappings with RU labels were removed:
+  langmap now translates `ы→s`/`Ы→S` before mapping lookup, so they could
+  never fire.
 
 ## LSP / other exclusions
 

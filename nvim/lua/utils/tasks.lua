@@ -214,9 +214,12 @@ function M.toggle_done(opts)
   else
     -- Save original window view before modifications
     local win = context.win
-    local view = win and api.nvim_win_is_valid(win) and api.nvim_win_call(win, function()
-      return vim.fn.winsaveview()
-    end) or nil
+    local view = win
+        and api.nvim_win_is_valid(win)
+        and api.nvim_win_call(win, function()
+          return vim.fn.winsaveview()
+        end)
+      or nil
     chunk[1] = bulletToX(chunk[1])
     chunk[1] = insertLabelAfterBracket(chunk[1], "`" .. label_done .. " " .. timestamp .. "`")
 

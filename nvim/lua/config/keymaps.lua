@@ -244,7 +244,7 @@ vim.keymap.set("n", "<leader>lc", obsidian.copy_workout_table, { desc = "[P]Log 
 vim.keymap.set("n", "<leader>lp", obsidian.save_training_note, { desc = "[P]Log Paste: save training note" })
 
 vim.keymap.set("n", "<leader>lv", function()
-  local logbook = vim.fn.expand("~/obsidian/periodic/training/logbook.html")
+  local logbook = vim.fn.expand("~/obsidian/training/logbook.html")
   if vim.fn.filereadable(logbook) == 0 then
     vim.notify("Logbook not found: " .. logbook, vim.log.levels.ERROR)
     return
@@ -259,7 +259,7 @@ end, { desc = "[P]Logbook View: open HTML" })
 
 -- Regenerate the training logbook HTML
 vim.keymap.set("n", "<leader>lr", function()
-  local script = vim.fn.expand("~/obsidian/periodic/training/generate_logbook.py")
+  local script = vim.fn.expand("~/obsidian/training/generate_logbook.py")
   if vim.fn.filereadable(script) == 0 then
     vim.notify("Logbook generator not found: " .. script, vim.log.levels.ERROR)
     return

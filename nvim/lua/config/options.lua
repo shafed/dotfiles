@@ -31,8 +31,30 @@ vim.g.snacks_animate = false
 
 vim.opt.conceallevel = 2
 
-vim.opt.langmap =
-  "ФИСВУАПРШОЛДЬТЩЗЙКЕГМЦЧНЯ;ABCDEFGHIJKLMNOPQRTUVWXYZ,фисвуапршолдьтщзйкегмцчня;abcdefghijklmnopqrtuvwxyz"
+-- ЙЦУКЕН → QWERTY in normal mode. Safety net for the RU-layout auto-switch in
+-- autocmds.lua: catches keys typed in the short window before the async
+-- hyprctl switch lands. Punctuation pairs keep the same physical keys as US
+-- (ж→; б→, ю→. etc.); `;` and `,` are langmap metachars, hence the escapes.
+vim.opt.langmap = {
+  "ФИСВУАПРШОЛДЬТЩЗЙКЫЕГМЦЧНЯ;ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+  "фисвуапршолдьтщзйкыегмцчня;abcdefghijklmnopqrstuvwxyz",
+  "ж\\;",
+  "Ж:",
+  "б\\,",
+  "Б<",
+  "ю.",
+  "Ю>",
+  "х[",
+  "Х{",
+  "ъ]",
+  "Ъ}",
+  "э'",
+  'Э"',
+  "ё`",
+  "Ё~",
+  "./",
+  "\\,?",
+}
 
 -- Winbar: shows "(buffer count) filename" on the left and the directory path
 -- on the right, per window. Using winbar (not lualine's tabline/showtabline)

@@ -153,9 +153,9 @@ function M.copy_workout_table()
   vim.notify("Copied: " .. #exercises .. " exercises", vim.log.levels.INFO)
 end
 
--- Save the current buffer as a training note in periodic/training/
+-- Save the current buffer as a training note in training/
 function M.save_training_note()
-  local training_dir = vim.fn.expand("~/obsidian/periodic/training/Full Body 2026/")
+  local training_dir = vim.fn.expand("~/obsidian/training/Full Body 2026/")
 
   --------------------------------------------------------------------------
   -- Extract H1 from the current file to use as training note filename
@@ -199,9 +199,9 @@ function M.save_training_note()
   --------------------------------------------------------------------------
   -- Regenerate the training logbook HTML from the training vault.
   --------------------------------------------------------------------------
-  local script = vim.fn.expand("~/obsidian/periodic/training/generate_logbook.py")
+  local script = vim.fn.expand("~/obsidian/training/generate_logbook.py")
   vim.fn.jobstart({ "python3", script }, {
-    cwd = vim.fn.expand("~/obsidian/periodic"),
+    cwd = vim.fn.expand("~/obsidian/training"),
     on_exit = function(_, code)
       vim.schedule(function()
         if code == 0 then

@@ -43,6 +43,62 @@ vim.api.nvim_create_autocmd("User", {
   callback = set_minifiles_numbers,
 })
 
+-- RU layout: normal mode is always US; entering insert restores whatever
+-- layout was active when insert was last left. Drives the same kanata virtual
+-- device as scripts/symlayout-watch.sh (per-device switching, so physical
+-- keyboards are untouched). The langmap in options.lua covers keys typed in
+-- the short window before the async hyprctl call lands.
+if vim.fn.executable("hyprctl") == 1 then
+  local layout_dev = "kanata"
+  local insert_layout = 0
+
+  -- overwrite_us: whether an active US layout may overwrite a remembered RU
+  -- one. True when leaving insert (restore what the user last typed in);
+  -- false for cmdline, where US is the norm (":w") and shouldn't clobber the
+  -- layout remembered from insert.
+  local function save_and_force_us(overwrite_us)
+    vim.system({ "hyprctl", "-j", "devices" }, { text = true }, function(out)
+      if out.code ~= 0 then
+        return
+      end
+      local ok, devices = pcall(vim.json.decode, out.stdout)
+      if not ok then
+        return
+      end
+      for _, kb in ipairs(devices.keyboards or {}) do
+        if kb.name == layout_dev then
+          local idx = kb.active_layout_index or 0
+          if idx ~= 0 then
+            insert_layout = idx
+            vim.system({ "hyprctl", "switchxkblayout", layout_dev, "0" })
+          elseif overwrite_us then
+            insert_layout = 0
+          end
+          return
+        end
+      end
+    end)
+  end
+
+  vim.api.nvim_create_autocmd({ "VimEnter", "InsertLeave" }, {
+    callback = function()
+      save_and_force_us(true)
+    end,
+  })
+  vim.api.nvim_create_autocmd("CmdlineLeave", {
+    callback = function()
+      save_and_force_us(false)
+    end,
+  })
+  vim.api.nvim_create_autocmd("InsertEnter", {
+    callback = function()
+      if insert_layout ~= 0 then
+        vim.system({ "hyprctl", "switchxkblayout", layout_dev, tostring(insert_layout) })
+      end
+    end,
+  })
+end
+
 -- Save markdown foldings on entry
 -- needed by mkview/loadview below: persist folds and cursor position
 vim.opt.viewoptions = "folds,cursor"

@@ -42,7 +42,7 @@ nvim is the editing side of the training logbook; generation and viewing are in
 [scripts](scripts.md), invocation from the editor is in [sessions](sessions.md).
 
 - `<leader>lp` (`obsidian.save_training_note`) — saves the buffer as
-  `~/obsidian/periodic/training/Full Body 2026/YYYY-MM-DD-<h1>.md` (the H1 is
+  `~/obsidian/training/Full Body 2026/YYYY-MM-DD-<h1>.md` (the H1 is
   rewritten into a slug so the filename matches the heading) and **immediately
   triggers** `~/dotfiles/scripts/generate_logbook.py` to regenerate `logbook.html`.
 - A separate keymap opens `logbook.html` via `xdg-open`.
@@ -58,7 +58,7 @@ above — the which-key `group` registration alone doesn't override it. Fixed in
 `<leader>L`.
 
 ⚠️ Gotcha: `harper_ls` (grammar checking) is **disabled on training notes** —
-`excludePatterns` contains `~/obsidian/periodic/training/**/*.md` and `Day [123].md`.
+`excludePatterns` contains `~/obsidian/training/**/*.md` and `Day [123].md`.
 Reason: training notes are tables/abbreviations, and harper chokes on false
 positives. Commit `ef70575` ("recursive disable harper in training").
 

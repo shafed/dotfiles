@@ -139,7 +139,7 @@ the script.
 ### generate_logbook.py
 
 Generates a **single self-contained** `logbook.html` from the markdown sessions
-in `~/obsidian/periodic/training/`. CSS+JS are inlined into the HTML, exercise
+in `~/obsidian/training/`. CSS+JS are inlined into the HTML, exercise
 data is injected as JSON (`__EXDATA__`). Structure: parse sessions/events →
 minimal markdown→HTML → render → assemble the page (`main`).
 

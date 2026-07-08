@@ -160,6 +160,15 @@ normal mode:
   text). The old separate `ы`/`Ы` flash mappings with RU labels were removed:
   langmap now translates `ы→s`/`Ы→S` before mapping lookup, so they could
   never fire.
+  - ⚠️ Gotcha (fixed same day): flash's built-in label-skip logic
+    (`Labeler:skip`) only drops a label if the **literal next buffer char**
+    continues the match — for Russian text that char is Cyrillic and never
+    equals a Latin label, so e.g. typing `н` (key `y`) then `е` (key `t`) to
+    narrow "не" instead jumped immediately, because label `t` never got
+    skipped. `patch_labeler()` monkey-patches `Labeler.skip` to run a second
+    pass with the same skip-pattern, checking each remaining label's
+    same-key Cyrillic partner too, so continuable searches keep narrowing
+    instead of mis-firing a jump.
 
 ## LSP / other exclusions
 

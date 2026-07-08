@@ -169,6 +169,12 @@ normal mode:
     pass with the same skip-pattern, checking each remaining label's
     same-key Cyrillic partner too, so continuable searches keep narrowing
     instead of mis-firing a jump.
+  - **f/t/F/T char motions are bilingual too** (`patch_char_mode()`):
+    monkey-patches `flash.plugins.char`'s `Char.mode` (the same
+    self-key-collection atom as `search.mode`, upstream pattern shape
+    otherwise untouched) so `fy` lands on either `y` or `н`, `dtt` deletes up
+    to either `t` or `е`, and `;`/`,` repeats inherit it since they reuse the
+    same builder.
 
 ## LSP / other exclusions
 

@@ -3,7 +3,7 @@
 
 Dependency-free: reads the ``.xlsx`` as a zip of XML parts (no openpyxl).
 
-Produces, under ``~/obsidian/periodic/training/``:
+Produces, under ``~/obsidian/training/``:
 
   - one ``YYYY-MM-DD-Day-N.md`` session file per workout, inside a folder named
     after the source Excel sheet;
@@ -29,7 +29,7 @@ from xml.etree import ElementTree as ET
 # --------------------------------------------------------------------------- #
 # Config
 # --------------------------------------------------------------------------- #
-TRAINING_DIR = Path("~/obsidian/periodic/training").expanduser()
+TRAINING_DIR = Path("~/obsidian/training").expanduser()
 EPOCH = dt.date(1899, 12, 30)  # Excel 1900 date system base
 COMMENT_AUTHOR_RE = re.compile(r"^(Федя Шапаренко|Шапаренко Федя)\s*:\s*", re.M)
 

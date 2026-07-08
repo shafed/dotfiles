@@ -1,7 +1,7 @@
 ---
 title: nvim
 type: component
-updated: 2026-07-05
+updated: 2026-07-08
 covers:
   - nvim/
 ---
@@ -126,6 +126,31 @@ the `- [ ]`/`- [x]` prefix, straight to `+`. It reuses the same chunk-boundary
 walk as `toggle_done` (a task's text can wrap onto following non-bullet,
 non-blank lines, e.g. a long todo in `todos.md`), so it selects and yanks the
 whole wrapped chunk, not just the cursor's physical line.
+
+## Russian layout in normal mode (`options.lua` + `autocmds.lua`)
+
+Two complementary mechanisms (added 2026-07-08) so the RU layout doesn't break
+normal mode:
+
+- **Layout auto-switch (primary)**: autocmds in `autocmds.lua` force the
+  `kanata` xkb device to US on `VimEnter`/`InsertLeave`, remembering the
+  previous layout index, and restore it on `InsertEnter` — insert stays RU,
+  normal mode is always US, so *every* command/plugin works. Same per-device
+  `hyprctl switchxkblayout kanata N` mechanism as `symlayout-watch.sh`
+  (see [keymap](keymap.md)); guarded by `executable("hyprctl")` so the config
+  still loads outside Hyprland. `CmdlineLeave` also forces US, but unlike
+  `InsertLeave` it doesn't overwrite a remembered RU with US — otherwise a
+  `:w` right after typing Russian would make the next insert start in US.
+- **langmap (safety net)**: the `hyprctl` calls are async (~10–20 ms), so a
+  key hit immediately after `Esc` can still arrive as Cyrillic; the
+  ЙЦУКЕН→QWERTY `langmap` in `options.lua` translates it. Covers all letters
+  plus punctuation on the same physical keys (`ж→;`, `б→,`, `ю→.`, `х→[`,
+  `ъ→]`, `э→'`, `ё→\``, `.→/`, `,→?`); `;` and `,` are langmap metachars and
+  need `\`-escaping. ⚠️ The pre-2026-07-08 langmap silently lacked the `ы→s`
+  pair and all punctuation.
+- Why langmap alone wasn't enough: it doesn't apply in cmdline (`:ц` is not
+  `:w`) and plugins that read input via `getchar()` (flash, which-key,
+  mini.surround) bypass it — hence the auto-switch as the primary mechanism.
 
 ## LSP / other exclusions
 

@@ -1,7 +1,7 @@
 ---
 title: keymap
 type: topic
-updated: 2026-07-05
+updated: 2026-07-08
 covers:
   - kanata/config.kbd
   - hypr/hyprland.conf
@@ -71,3 +71,8 @@ Two logics for forcing the US layout, both via
 
 Switching language during normal work: tap `ralt` (`@sw` → `hyprctl
 switchxkblayout kanata next`), or `lsft` in the `normal` layer.
+
+nvim drives the same `kanata` device for its modes: normal mode forces US
+(`InsertLeave`/`VimEnter`/`CmdlineLeave`), entering insert restores the layout
+last used there; a fixed `langmap` covers the async switch gap — see
+[nvim](nvim.md).

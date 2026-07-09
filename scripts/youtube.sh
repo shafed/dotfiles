@@ -626,15 +626,18 @@ search_live() {
       echo abort
     fi"
 
-  # Enter with no row highlighted (query matched nothing, including an empty
-  # query) falls back to a plain YouTube search-results page instead of doing
-  # nothing. {} is the current line — empty exactly when the list is empty.
+  # Enter with no row highlighted falls back to a plain YouTube URL instead of
+  # doing nothing. In live search that means search results for the typed query;
+  # in Watch Later mode it means the WL playlist itself. {} is the current line
+  # — empty exactly when the list is empty.
   # become() replaces fzf with this echo, so its stdout IS $sel below. IFS=tab
   # read collapses repeated tab delimiters (tab is IFS-whitespace), so this
   # sentinel row must stay a plain 2-field "search<TAB>query" — not the usual
   # 6-column shape — or the query would vanish into a collapsed empty field.
   local enter_action="transform:
-    if [[ -z {} ]]; then
+    if [[ -z {q} && \$(cat '$source_file') == later ]]; then
+      echo \"become(printf 'later\\tWL\\n')\"
+    elif [[ -z {} ]]; then
       echo \"become(printf 'search\\t%s\\n' {q})\"
     else
       echo accept
@@ -698,6 +701,10 @@ search_live() {
     local enc
     enc="$(python3 -c 'import urllib.parse,sys;print(urllib.parse.quote(sys.argv[1]))' "$id" 2>/dev/null)"
     open_url "https://www.youtube.com/results?search_query=${enc}"
+    exit 0
+    ;;
+  later)
+    open_url "https://www.youtube.com/playlist?list=WL"
     exit 0
     ;;
   channel)

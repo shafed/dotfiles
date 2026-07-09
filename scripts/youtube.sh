@@ -626,16 +626,17 @@ search_live() {
       echo abort
     fi"
 
-  # Enter with no row highlighted falls back to a plain YouTube URL instead of
-  # doing nothing. In live search that means search results for the typed query;
-  # in Watch Later mode it means the WL playlist itself. {} is the current line
-  # — empty exactly when the list is empty.
+  # Enter with an empty query jumps straight to Watch Later. Otherwise, if no
+  # row is highlighted, fall back to a plain YouTube search-results page for the
+  # typed query instead of doing nothing. {} is the current line — empty exactly
+  # when the list is empty.
   # become() replaces fzf with this echo, so its stdout IS $sel below. IFS=tab
   # read collapses repeated tab delimiters (tab is IFS-whitespace), so this
-  # sentinel row must stay a plain 2-field "search<TAB>query" — not the usual
-  # 6-column shape — or the query would vanish into a collapsed empty field.
+  # sentinel row must stay a plain 2-field "search<TAB>query" or
+  # "later<TAB>WL" — not the usual 6-column shape — or the payload would vanish
+  # into a collapsed empty field.
   local enter_action="transform:
-    if [[ -z {q} && \$(cat '$source_file') == later ]]; then
+    if [[ -z {q} ]]; then
       echo \"become(printf 'later\\tWL\\n')\"
     elif [[ -z {} ]]; then
       echo \"become(printf 'search\\t%s\\n' {q})\"
@@ -668,7 +669,7 @@ search_live() {
     --bind "ctrl-l:execute-silent(printf later >'$source_file')+change-prompt(Search later > )+clear-query+reload($watchlater_cmd)+first"
     # esc: insert -> normal, normal -> quit (via the mode-aware transform).
     --bind "esc:$esc_action"
-    # Enter with no results falls back to a plain YouTube search page.
+    # Empty query => Watch Later; otherwise, no results fall back to search.
     --bind "enter:$enter_action"
     # Navigation actions, unbound at start (insert types them), rebound in normal.
     --bind "j:down"

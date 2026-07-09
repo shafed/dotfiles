@@ -128,15 +128,15 @@ apps layer).
   `--cookies-from-browser chromium:~/.config/net.imput.helium/Default` (no
   OAuth). `yt-dlp` does not support `helium` as a browser name, so the
   Chromium extractor is pointed at Helium's profile path.
-- `-s` live search: Enter with no results falls back to a plain
-  `youtube.com/results?search_query=…` page for whatever was typed, including
-  an empty query, instead of doing nothing (an `enter:transform` bind checks
-  `{}` for emptiness). In Watch Later mode, an empty query now opens the WL
-  playlist itself so clearing the prompt is a direct shortcut to the queue.
-  ⚠️ Gotcha: the fallback sentinel row must stay a plain 2-field
-  `search<TAB>query`, not the usual 6-column shape — `IFS=$'\t' read` collapses
-  *consecutive* tab delimiters (tab is IFS-whitespace), so extra empty columns
-  would swallow the query into nothing.
+- `-s` live search: an empty query makes Enter jump straight to the Watch Later
+  playlist (`youtube.com/playlist?list=WL`) from any mode. Otherwise, Enter with
+  no results falls back to a plain `youtube.com/results?search_query=…` page
+  for whatever was typed instead of doing nothing (an `enter:transform` bind
+  checks `{}` for emptiness). ⚠️ Gotcha: the fallback sentinel row must stay a
+  plain 2-field `search<TAB>query` or `later<TAB>WL`, not the usual 6-column
+  shape — `IFS=$'\t' read` collapses *consecutive* tab delimiters (tab is
+  IFS-whitespace), so extra empty columns would swallow the payload into
+  nothing.
 
 ⚠️ Gotcha (cache/preview): the preview makes **no** network requests on hover —
 everything comes from the already-built TSV; the thumbnail is downloaded once

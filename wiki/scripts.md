@@ -129,10 +129,10 @@ apps layer).
   OAuth). `yt-dlp` does not support `helium` as a browser name, so the
   Chromium extractor is pointed at Helium's profile path.
 - `-s` live search: Enter with no results falls back to a plain
-  `youtube.com/results?search_query=…` page for whatever was typed, instead of
-  doing nothing (an `enter:transform` bind checks `{}` for emptiness). ⚠️
-  Gotcha: the fallback sentinel row must stay a plain 2-field
-  `search<TAB>query`, not the usual 6-column shape — `IFS=$'\t' read` collapses
+  `youtube.com/results?search_query=…` page for whatever was typed, including
+  an empty query, instead of doing nothing (an `enter:transform` bind checks
+  `{}` for emptiness). ⚠️ Gotcha: the fallback sentinel row must stay a plain
+  2-field `search<TAB>query`, not the usual 6-column shape — `IFS=$'\t' read` collapses
   *consecutive* tab delimiters (tab is IFS-whitespace), so extra empty columns
   would swallow the query into nothing.
 

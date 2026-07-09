@@ -626,15 +626,15 @@ search_live() {
       echo abort
     fi"
 
-  # Enter with no row highlighted (query matched nothing) falls back to a plain
-  # YouTube search-results page for whatever was typed, instead of doing
+  # Enter with no row highlighted (query matched nothing, including an empty
+  # query) falls back to a plain YouTube search-results page instead of doing
   # nothing. {} is the current line — empty exactly when the list is empty.
   # become() replaces fzf with this echo, so its stdout IS $sel below. IFS=tab
   # read collapses repeated tab delimiters (tab is IFS-whitespace), so this
   # sentinel row must stay a plain 2-field "search<TAB>query" — not the usual
   # 6-column shape — or the query would vanish into a collapsed empty field.
   local enter_action="transform:
-    if [[ -z {} && -n {q} ]]; then
+    if [[ -z {} ]]; then
       echo \"become(printf 'search\\t%s\\n' {q})\"
     else
       echo accept

@@ -136,7 +136,7 @@ build_cache() {
 
       # No StartupWMClass: guess from the id. Many apps set their WM class to the
       # last reverse-DNS segment of the id (org.telegram.desktop -> "telegram",
-      # firefox.desktop -> "firefox"). Lowercased to match the case-insensitive
+      # helium.desktop -> "helium"). Lowercased to match the case-insensitive
       # compare in focus_app. A rough heuristic, but the focus is best-effort —
       # a miss just falls through to launching a new instance.
       if [[ -z "$wmclass" ]]; then
@@ -375,7 +375,7 @@ run_picker() {
     record_launch "$id"
 
     # Hide the panel first, then launch the app detached (same reasoning as
-    # bookmarks.sh's xdg-open: it must outlive this panel hiding).
+    # bookmarks.sh's browser launch: it must outlive this panel hiding).
     toggle_qat "$apps_group"
     launch_app "$_path" "$id"
   done

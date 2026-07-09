@@ -8,7 +8,7 @@ script_path="$script_dir/$(basename "${BASH_SOURCE[0]}")"
 source "$script_dir/lib.sh"
 
 # Pure web-search launcher: type a query, pick a live Google suggestion (or just
-# hit Enter on your raw query), and the search opens in Firefox — preferring an
+# hit Enter on your raw query), and the search opens in Helium — preferring an
 # already-open tab over a duplicate, same as bookmarks.sh. No bookmark rows; this
 # is the address-bar "search the web" half split out from bookmarks.sh into its
 # own independent QAT.
@@ -24,14 +24,11 @@ source "$script_dir/lib.sh"
 
 search_group="search"
 
-# brotab CLI (installed via pipx). Used to focus an already-open browser tab
-# instead of opening a duplicate. Optional: if missing we fall back to xdg-open.
-brotab_bin="$(command -v bt || echo "$HOME/.local/bin/bt")"
-# Workspace a cold-started Firefox should land on, and the fallback workspace for
-# new tabs when Firefox only has windows on the YouTube workspace.
-firefox_workspace="2"
+# Workspace a cold-started browser should land on, and the fallback workspace for
+# new tabs when the browser only has windows on the YouTube workspace.
+browser_workspace="2"
 # Workspace reserved exclusively for YouTube. New tabs must never open here: if
-# the only Firefox window lives on it, we move that window to firefox_workspace
+# the only browser window lives on it, we open a new window on browser_workspace
 # first. (Already-open tabs found via brotab are still activated wherever.)
 youtube_workspace="4"
 
@@ -69,8 +66,8 @@ search_url_for() {
 # bar. The icon lives only in the display column (1); column 2 stays the raw
 # suggestion text so the picker loop can URL-encode it cleanly.
 suggest_icon="🔍"
-# Endpoint for live search suggestions. client=firefox returns simple JSON:
-# [query, [suggestion, ...], ...]. Tunable alongside search_url_template.
+# Endpoint for live search suggestions. client=firefox is a Google response
+# format selector, not a dependency on the local browser.
 suggest_url_template="https://suggestqueries.google.com/complete/search?client=firefox&q=%s"
 # Debounce before a suggestion fetch actually hits the network. fzf kills the
 # previous reload process on each keystroke, so this leading pause means only a
@@ -104,139 +101,10 @@ suggest_rows() {
   ' 2>/dev/null || return 0
 }
 
-# Normalise a URL for loose comparison: strip scheme, a trailing slash, and any
-# #fragment so "https://x.com/" and "http://x.com" match the same open tab.
-normalize_url() {
-  local u="$1"
-  u="${u#http://}"
-  u="${u#https://}"
-  u="${u%%#*}"
-  u="${u%/}"
-  printf '%s\n' "$u"
-}
-
-# Raise the Firefox window in Hyprland. The QAT panel hides asynchronously, so
-# settle briefly first to avoid Hyprland re-grabbing focus after us. When the
-# window is not up yet (Firefox starting cold), poll a few times for it. On a
-# cold start only we move the freshly-launched window to firefox_workspace.
-focus_firefox() {
-  local i cold_start=false
-  sleep 0.15
-
-  if ! firefox_running; then
-    cold_start=true
-  fi
-
-  for i in {1..10}; do
-    if firefox_running; then
-      if [[ "$cold_start" == true ]]; then
-        hyprctl dispatch movetoworkspace "${firefox_workspace},class:firefox" >/dev/null 2>&1 || true
-      fi
-      hyprctl dispatch focuswindow class:firefox >/dev/null 2>&1 || true
-      return 0
-    fi
-    sleep 0.25
-  done
-  return 0
-}
-
-# Raise the Firefox window whose active tab brotab just activated, identified by
-# that tab's title (which becomes the window title after activation, suffixed
-# with " — Mozilla Firefox"). Falls back to focus_firefox when no window matches.
-focus_firefox_for_title() {
-  local title="$1" i addr
-  [[ -n "$title" ]] || {
-    focus_firefox
-    return 0
-  }
-
-  for i in {1..5}; do
-    addr="$(
-      hyprctl clients -j 2>/dev/null | jq -r --arg t "$title" '
-        .[] | select(.class == "firefox" and (.title | startswith($t))) | .address
-      ' 2>/dev/null | head -n1
-    )"
-    if [[ -n "$addr" ]]; then
-      hyprctl dispatch focuswindow "address:$addr" >/dev/null 2>&1 || true
-      return 0
-    fi
-    sleep 0.15
-  done
-
-  focus_firefox
-  return 0
-}
-
-# Decide how to deliver a new tab without ever landing on the YouTube workspace,
-# and print the chosen mode for open_or_focus to act on:
-#   "tab"       - a Firefox window already lives off the YouTube ws; focus it
-#                 here and let xdg-open add a tab to it.
-#   "newwindow" - Firefox is running but only on the YouTube ws; open a fresh
-#                 window on firefox_workspace so the YouTube window is untouched.
-#   "cold"      - no Firefox window yet; launch it and move the new window over.
-prepare_firefox_for_new_tab() {
-  local addr
-  sleep 0.15
-
-  addr="$(firefox_window_off_workspace "$youtube_workspace")"
-  if [[ -n "$addr" ]]; then
-    hyprctl dispatch focuswindow "address:$addr" >/dev/null 2>&1 || true
-    printf 'tab\n'
-    return 0
-  fi
-
-  if firefox_running; then
-    printf 'newwindow\n'
-    return 0
-  fi
-
-  printf 'cold\n'
-  return 0
-}
-
-# Open a URL, preferring an already-open browser tab. Asks brotab for the list of
-# open tabs; if one matches, activates that tab and focuses Firefox. Otherwise
-# opens a new tab/window with xdg-open and still raises Firefox. Always returns 0
-# so the picker loop keeps running.
+# Open a URL, preferring an already-open browser tab. Always returns 0 so the
+# picker loop keeps running.
 open_or_focus() {
-  local url="$1" want match tab_id tab_title
-
-  if [[ -x "$brotab_bin" ]]; then
-    want="$(normalize_url "$url")"
-    match="$(
-      "$brotab_bin" list 2>/dev/null | awk -F'\t' -v want="$want" '
-        {
-          u = $3
-          sub(/^https?:\/\//, "", u)
-          sub(/#.*$/, "", u)
-          sub(/\/$/, "", u)
-          if (u == want) { print $1 "\t" $2; exit }
-        }
-      '
-    )"
-    if [[ -n "$match" ]]; then
-      IFS=$'\t' read -r tab_id tab_title <<<"$match"
-      "$brotab_bin" activate --focused "$tab_id" >/dev/null 2>&1 || true
-      focus_firefox_for_title "$tab_title"
-      return 0
-    fi
-  fi
-
-  case "$(prepare_firefox_for_new_tab)" in
-  newwindow)
-    open_in_new_firefox_window "$url" "$firefox_workspace"
-    ;;
-  cold)
-    xdg-open "$url" </dev/null >/dev/null 2>&1 &
-    disown
-    move_firefox_when_up "$firefox_workspace"
-    ;;
-  *)
-    xdg-open "$url" </dev/null >/dev/null 2>&1 &
-    disown
-    ;;
-  esac
-  return 0
+  open_or_focus_url "$1" "$browser_workspace" "$youtube_workspace"
 }
 
 # The picker loop. Runs inside the QAT panel (search.sh --pick). Keeps the

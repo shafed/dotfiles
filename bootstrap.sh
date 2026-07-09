@@ -23,6 +23,7 @@ REQUIRED_PKGS=(
   "hyprland:hyprland"
   "kanata:kanata (AUR)"
   "kitty:kitty"
+  "helium-browser:helium-browser-bin (AUR)"
   "waybar:waybar"
   "yazi:yazi"
   "nvim:neovim"

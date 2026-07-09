@@ -66,7 +66,7 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
 
 (defalias
   aterm (cmd zsh -lc "$HOME/.config/kanata/switchApp.sh kitty kitty")
-  azen (cmd firefox)
+  azen (cmd helium-browser)
   sshot (cmd flameshot gui --clipboard)
   sw (cmd hyprctl switchxkblayout kanata next)
   k-navi (fork up C-S-tab (lalt ralt))
@@ -138,7 +138,7 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
   q (cmd hyprctl dispatch killactive)
   t (t! kitty-send C-S-2)   ;; todos session
   r (t! kitty-send C-S-1)   ;; daily note
-  y (cmd firefox --new-window https://www.youtube.com/playlist?list=WL)
+  y (cmd helium-browser --new-window https://www.youtube.com/playlist?list=WL)
   u (multi (on-press tap-vkey apps-us) (cmd zsh -lc "$HOME/dotfiles/scripts/youtube-qat.sh")) ;; yoUtube channel search QAT
   b (multi (on-press tap-vkey apps-us) (cmd zsh -lc "$HOME/dotfiles/scripts/bookmarks.sh")) ;; Bookmarks fzf QAT
   f (multi (on-press tap-vkey apps-us) (cmd zsh -lc "$HOME/dotfiles/scripts/search.sh")) ;; web search (Find) fzf QAT
@@ -146,7 +146,7 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
   o (t! kitty-send C-S-o)   ;; obsidian session
   w (t! kitty-send C-S-w)   ;; downloads session
   h (t! kitty-send C-S-a)   ;; home session
-  s (tap-hold-press $subl-time $subl-time (cmd firefox) (layer-toggle browser))
+  s (tap-hold-press $subl-time $subl-time (cmd helium-browser) (layer-toggle browser))
   d (t! kitty-send C-S-d)   ;; dotfiles session
   g (cmd todoist)
   z (cmd zsh -lc "$HOME/.config/kanata/switchApp.sh sioyek 'LIBGL_ALWAYS_SOFTWARE=1 sioyek'")
@@ -157,11 +157,11 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
 )
 
 (deflayermap (browser)
-  e (cmd firefox https://mail.google.com/mail/u/0/#inbox)
-  f (cmd firefox  https://www.perplexity.ai)
-  g (cmd firefox  https://chatgpt.com)
-  d (cmd firefox  https://claude.ai/new)
-  r (cmd firefox https://www.reverso.net/text-translation)
+  e (cmd helium-browser https://mail.google.com/mail/u/0/#inbox)
+  f (cmd helium-browser  https://www.perplexity.ai)
+  g (cmd helium-browser  https://chatgpt.com)
+  d (cmd helium-browser  https://claude.ai/new)
+  r (cmd helium-browser https://www.reverso.net/text-translation)
 )
 
 ;; right-hand programmer symbols, momentary (entered via s+d chord held).

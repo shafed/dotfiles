@@ -8,6 +8,18 @@
 qat_config="$HOME/dotfiles/kitty/quick-access-terminal-center.conf"
 kitty_bin="$(command -v kitty || echo /usr/bin/kitty)"
 
+# Browser integration used by bookmarks/search/youtube. Environment overrides
+# are intentionally dotfiles-specific so generic variables like BROWSER can
+# still be used by other programs without changing the window-management logic.
+browser_name="${DOTFILES_BROWSER_NAME:-Helium}"
+browser_bin="${DOTFILES_BROWSER_BIN:-helium-browser}"
+browser_class="${DOTFILES_BROWSER_CLASS:-helium}"
+browser_desktop="${DOTFILES_BROWSER_DESKTOP:-helium.desktop}"
+browser_profile_dir="${DOTFILES_BROWSER_PROFILE_DIR:-$HOME/.config/net.imput.helium/Default}"
+browser_cookies_from_browser="${DOTFILES_BROWSER_COOKIES_FROM_BROWSER:-chromium:${browser_profile_dir}}"
+browser_brotab_names="${DOTFILES_BROWSER_BROTAB_NAMES:-helium chromium}"
+brotab_bin="${BROTAB_BIN:-$(command -v bt || echo "$HOME/.local/bin/bt")}"
+
 # QAT pickers run under bash, so they do not reliably inherit the interactive
 # zsh FZF_DEFAULT_OPTS. Keep their fzf palette pinned to kitty's Gruvbox
 # Material Dark Medium theme.
@@ -90,46 +102,58 @@ launch_qat() {
 }
 
 ###############################################################################
-#                    Firefox window helpers (Hyprland + jq)
+#                    Browser window helpers (Hyprland + jq)
 ###############################################################################
 
-# True when any Firefox window exists.
-firefox_running() {
-  hyprctl clients -j 2>/dev/null | grep -q '"class": *"firefox"'
+# True when any configured browser window exists.
+browser_running() {
+  hyprctl clients -j 2>/dev/null | jq -e --arg class "$browser_class" '
+    any(.[]; .class == $class)
+  ' >/dev/null 2>&1
 }
 
-# Print the Hyprland addresses of all current Firefox windows, one per line.
-firefox_window_addresses() {
-  hyprctl clients -j 2>/dev/null | jq -r '
-    .[] | select(.class == "firefox") | .address
+# Print the Hyprland addresses of all current browser windows, one per line.
+browser_window_addresses() {
+  hyprctl clients -j 2>/dev/null | jq -r --arg class "$browser_class" '
+    .[] | select(.class == $class) | .address
   ' 2>/dev/null
 }
 
-# Print the address of a Firefox window that is NOT on the given workspace, or
-# nothing if every Firefox window is on it (or none exist).
-firefox_window_off_workspace() {
-  hyprctl clients -j 2>/dev/null | jq -r --argjson ws "$1" '
-    .[] | select(.class == "firefox" and .workspace.id != $ws) | .address
+# Print the address of a browser window that is NOT on the given workspace, or
+# nothing if every browser window is on it (or none exist).
+browser_window_off_workspace() {
+  hyprctl clients -j 2>/dev/null | jq -r --arg class "$browser_class" --argjson ws "$1" '
+    .[] | select(.class == $class and .workspace.id != $ws) | .address
   ' 2>/dev/null | head -n1
 }
 
-# open_in_new_firefox_window <url> <workspace> — open the URL in a fresh
-# Firefox window, then move that window (and only that window) to <workspace>
-# and focus it. The window address set is diffed before/after the launch so the
-# move targets the newly created window rather than an existing one.
-open_in_new_firefox_window() {
+# open_browser_url <url> — open a URL in the configured browser without giving
+# the browser the caller's tty. Used for normal "new tab" delivery.
+open_browser_url() {
+  local url="$1"
+
+  "$browser_bin" "$url" </dev/null >/dev/null 2>&1 &
+  disown
+  return 0
+}
+
+# open_in_new_browser_window <url> <workspace> — open the URL in a fresh browser
+# window, then move that window (and only that window) to <workspace> and focus
+# it. The window address set is diffed before/after the launch so the move
+# targets the newly created window rather than an existing one.
+open_in_new_browser_window() {
   local url="$1" workspace="$2" before after i new_addr=""
 
-  before="$(firefox_window_addresses)"
-  # </dev/null: never hand Firefox the caller's tty. A QAT panel stays open
+  before="$(browser_window_addresses)"
+  # </dev/null: never hand the browser the caller's tty. A QAT panel stays open
   # while any process holds its tty (kitty close_on_child_death=no), and a
-  # Firefox tied to that tty gets killed when the panel is force-closed.
-  firefox --new-window "$url" </dev/null >/dev/null 2>&1 &
+  # browser tied to that tty gets killed when the panel is force-closed.
+  "$browser_bin" --new-window "$url" </dev/null >/dev/null 2>&1 &
   disown
 
   # Wait for a window address that was not present before the launch.
   for i in {1..10}; do
-    after="$(firefox_window_addresses)"
+    after="$(browser_window_addresses)"
     new_addr="$(comm -13 <(printf '%s\n' "$before" | sort) <(printf '%s\n' "$after" | sort) | head -n1)"
     [[ -n "$new_addr" ]] && break
     sleep 0.25
@@ -142,24 +166,198 @@ open_in_new_firefox_window() {
   return 0
 }
 
-# move_firefox_when_up <workspace> — poll for a Firefox window (e.g. right
-# after a cold-start xdg-open), then move it to <workspace> and focus it.
+# move_browser_when_up <workspace> — poll for a browser window (e.g. right
+# after a cold-start browser launch), then move it to <workspace> and focus it.
 #
 # The window can take several seconds to appear on a true cold start (process
 # launch + profile load + first paint), far longer than the warm case where a
-# running Firefox opens a tab almost instantly. So poll generously — ~12s — or
+# running browser opens a tab almost instantly. So poll generously — ~12s — or
 # the cold-start window never gets moved and the tab opens on whatever workspace
-# Firefox came up on instead of <workspace>.
-move_firefox_when_up() {
+# the browser came up on instead of <workspace>.
+move_browser_when_up() {
   local workspace="$1" i
 
   for i in {1..48}; do
-    if firefox_running; then
-      hyprctl dispatch movetoworkspace "${workspace},class:firefox" >/dev/null 2>&1 || true
-      hyprctl dispatch focuswindow class:firefox >/dev/null 2>&1 || true
+    if browser_running; then
+      hyprctl dispatch movetoworkspace "${workspace},class:${browser_class}" >/dev/null 2>&1 || true
+      hyprctl dispatch focuswindow "class:${browser_class}" >/dev/null 2>&1 || true
       return 0
     fi
     sleep 0.25
   done
+  return 0
+}
+
+# Raise the browser in Hyprland. On a cold start only, move the freshly-launched
+# window to <workspace>; an already-running browser is focused wherever it lives.
+focus_browser() {
+  local workspace="$1" i cold_start=false
+  sleep 0.15
+
+  if ! browser_running; then
+    cold_start=true
+  fi
+
+  for i in {1..10}; do
+    if browser_running; then
+      if [[ "$cold_start" == true ]]; then
+        hyprctl dispatch movetoworkspace "${workspace},class:${browser_class}" >/dev/null 2>&1 || true
+      fi
+      hyprctl dispatch focuswindow "class:${browser_class}" >/dev/null 2>&1 || true
+      return 0
+    fi
+    sleep 0.25
+  done
+  return 0
+}
+
+# Raise the browser window whose active tab brotab just activated, identified by
+# the tab title that becomes the window title after activation. Falls back to
+# focus_browser when no window matches.
+focus_browser_for_title() {
+  local title="$1" workspace="$2" i addr
+  [[ -n "$title" ]] || {
+    focus_browser "$workspace"
+    return 0
+  }
+
+  for i in {1..5}; do
+    addr="$(
+      hyprctl clients -j 2>/dev/null | jq -r --arg class "$browser_class" --arg t "$title" '
+        .[] | select(.class == $class and (.title | startswith($t))) | .address
+      ' 2>/dev/null | head -n1
+    )"
+    if [[ -n "$addr" ]]; then
+      hyprctl dispatch focuswindow "address:$addr" >/dev/null 2>&1 || true
+      return 0
+    fi
+    sleep 0.15
+  done
+
+  focus_browser "$workspace"
+  return 0
+}
+
+# Decide how to deliver a new tab without landing on the avoided workspace:
+#   "tab"       - a browser window already lives off the avoided ws; focus it.
+#   "newwindow" - browser is running but only on the avoided ws.
+#   "cold"      - no browser window yet.
+prepare_browser_for_new_tab() {
+  local avoid_workspace="$1" addr
+  sleep 0.15
+
+  addr="$(browser_window_off_workspace "$avoid_workspace")"
+  if [[ -n "$addr" ]]; then
+    hyprctl dispatch focuswindow "address:$addr" >/dev/null 2>&1 || true
+    printf 'tab\n'
+    return 0
+  fi
+
+  if browser_running; then
+    printf 'newwindow\n'
+    return 0
+  fi
+
+  printf 'cold\n'
+  return 0
+}
+
+# Normalise a URL for loose comparison: strip scheme, a trailing slash, and any
+# #fragment so "https://x.com/" and "http://x.com" match the same open tab.
+normalize_url() {
+  local u="$1"
+  u="${u#http://}"
+  u="${u#https://}"
+  u="${u%%#*}"
+  u="${u%/}"
+  printf '%s\n' "$u"
+}
+
+# Print brotab tab-id prefixes for the configured browser, one per line. This
+# prevents a leftover Firefox brotab client from stealing a Helium migration.
+brotab_browser_prefixes() {
+  [[ -x "$brotab_bin" ]] || return 0
+
+  "$brotab_bin" clients 2>/dev/null | awk -v names="$browser_brotab_names" '
+    BEGIN {
+      count = split(tolower(names), parts, /[[:space:],]+/)
+      for (i = 1; i <= count; i++) {
+        if (parts[i] != "") want[parts[i]] = 1
+      }
+    }
+    {
+      prefix = $1
+      sub(/\.$/, "", prefix)
+
+      browser = $0
+      sub("^[^\t]*\t[^\t]*\t[^\t]*\t", "", browser)
+      if (browser == $0) browser = $4
+      browser = tolower(browser)
+
+      for (name in want) {
+        if (prefix != "" && (browser == name || index(browser, name) > 0)) {
+          print prefix
+          next
+        }
+      }
+    }
+  '
+}
+
+# open_or_focus_url <url> <target-workspace> <avoid-workspace> — open a URL,
+# preferring an already-open brotab tab in the configured browser. New tabs are
+# kept away from <avoid-workspace>; when the browser only has windows there, a
+# fresh window is opened on <target-workspace>.
+open_or_focus_url() {
+  local url="$1" target_workspace="$2" avoid_workspace="$3"
+  local want prefixes match tab_id tab_title
+
+  if [[ -x "$brotab_bin" ]]; then
+    want="$(normalize_url "$url")"
+    prefixes="$(brotab_browser_prefixes)"
+    if [[ -n "$prefixes" ]]; then
+      match="$(
+        "$brotab_bin" list 2>/dev/null | awk -F'\t' -v want="$want" -v prefixes="$prefixes" '
+          BEGIN {
+            count = split(prefixes, parts, /\n/)
+            for (i = 1; i <= count; i++) {
+              if (parts[i] != "") ok[parts[i]] = 1
+            }
+          }
+          {
+            id = $1
+            prefix = id
+            sub(/\..*/, "", prefix)
+            if (!(prefix in ok)) next
+
+            u = $3
+            sub(/^https?:\/\//, "", u)
+            sub(/#.*$/, "", u)
+            sub(/\/$/, "", u)
+            if (u == want) { print $1 "\t" $2; exit }
+          }
+        '
+      )"
+      if [[ -n "$match" ]]; then
+        IFS=$'\t' read -r tab_id tab_title <<<"$match"
+        "$brotab_bin" activate --focused "$tab_id" >/dev/null 2>&1 || true
+        focus_browser_for_title "$tab_title" "$target_workspace"
+        return 0
+      fi
+    fi
+  fi
+
+  case "$(prepare_browser_for_new_tab "$avoid_workspace")" in
+  newwindow)
+    open_in_new_browser_window "$url" "$target_workspace"
+    ;;
+  cold)
+    open_browser_url "$url"
+    move_browser_when_up "$target_workspace"
+    ;;
+  *)
+    open_browser_url "$url"
+    ;;
+  esac
   return 0
 }

@@ -34,10 +34,10 @@ limit=40
 refresh=false
 mode="channel"
 # Browser whose cookies yt-dlp reads for logged-in data (watch history).
-cookies_browser="firefox"
+cookies_browser="$browser_cookies_from_browser"
 # Workspace the opened video should land on. Intentionally differs from
 # bookmarks.sh (which uses 2): videos go to workspace 4.
-firefox_workspace="4"
+browser_workspace="4"
 
 # Render the fzf preview for a single video: thumbnail (kitty graphics) on top,
 # then title + duration. Everything comes from the id and the already-built TSV
@@ -231,7 +231,7 @@ yt_rows_awk='
 if [[ "${1:-}" == "--ytenrich" ]]; then
   tab=$'\t'
   cache_file="${2:-}"
-  cookies_browser="${YOUTUBE_FZF_COOKIES_BROWSER:-firefox}"
+  cookies_browser="${YOUTUBE_FZF_COOKIES_BROWSER:-$browser_cookies_from_browser}"
   [[ -s "$cache_file" ]] || exit 0
   # A lock so two reloads can't launch overlapping enrichers for one cache.
   lock="$cache_file.enriching"
@@ -307,7 +307,7 @@ fi
 #                     makes typing search WITHIN history / later.
 if [[ "${1:-}" == "--ythistory" || "${1:-}" == "--ytwatchlater" ]]; then
   tab=$'\t'
-  cookies_browser="${YOUTUBE_FZF_COOKIES_BROWSER:-firefox}"
+  cookies_browser="${YOUTUBE_FZF_COOKIES_BROWSER:-$browser_cookies_from_browser}"
   cache_file="${2:-}"
   query="${3:-}"
   if [[ "$1" == "--ythistory" ]]; then
@@ -464,29 +464,29 @@ tab=$'\t'
 # Open a video in the browser on workspace 4, then focus it.
 #
 # A video search always wants a fresh watch, so this never reuses an existing
-# tab. How it lands the video depends on where Firefox already is:
-#   - Firefox running on another workspace -> open a brand-NEW window on ws4 and
-#     move only that window there, leaving the existing Firefox windows untouched.
-#   - Firefox only on ws4 (or cold start)  -> xdg-open a tab and pull Firefox to
+# tab. How it lands the video depends on where the browser already is:
+#   - browser running on another workspace -> open a brand-NEW window on ws4 and
+#     move only that window there, leaving the existing browser windows untouched.
+#   - browser only on ws4 (or cold start)  -> open a tab and pull the browser to
 #     ws4 if needed.
 #
-# setsid detaches the cold-start xdg-open so it survives this script exiting —
+# setsid detaches the cold-start browser launch so it survives this script exiting —
 # otherwise the QAT panel closing the instant we exit would kill it before the
 # browser picks up the URL. Best-effort: no-ops outside Hyprland.
 #
-# Everything past the initial xdg-open involves sleeps and polling loops (up to
+# Everything past the initial browser launch involves sleeps and polling loops (up to
 # ~2.6s of settle + window-appearance waits). Running that in the foreground
 # keeps THIS script alive, and since the kitty QAT panel only closes when the
 # script exits, the panel lingers showing the now-dead fzf frame ("empty fzf
-# terminal"). So we do all the slow Hyprland window-shuffling in a DETACHED
+# terminal"). So we do all the slow Hyprland window-shuffling in a detached
 # background subshell (setsid) and return immediately — the panel closes at once
-# while Firefox placement finishes on its own.
+# while browser placement finishes on its own.
 #
 # </dev/null matters as much as setsid: with kitty's default
 # close_on_child_death=no the panel window stays open while ANY process still
 # holds its tty, and an inherited stdin is exactly such a hold. Worse, a
-# cold-started Firefox would inherit that stdin too, tying it to the panel — so
-# force-closing the panel would then kill Firefox (and the just-opened tab).
+# cold-started browser would inherit that stdin too, tying it to the panel — so
+# force-closing the panel would then kill the browser (and the just-opened tab).
 open_video() {
   open_url "https://www.youtube.com/watch?v=$1"
 }
@@ -497,12 +497,12 @@ open_url() {
   local url="$1"
 
   if ! command -v hyprctl >/dev/null 2>&1 || ! command -v jq >/dev/null 2>&1; then
-    setsid -f xdg-open "$url" </dev/null >/dev/null 2>&1
+    setsid -f "$browser_bin" "$url" </dev/null >/dev/null 2>&1
     return 0
   fi
 
   setsid -f bash -c '
-    source "$1" # lib.sh: firefox window helpers
+    source "$1" # lib.sh: browser window helpers
     url="$2"
     ws="$3"
 
@@ -510,21 +510,21 @@ open_url() {
     # re-grab focus after us.
     sleep 0.15
 
-    # Firefox is up and has a window off ws4 -> open the video as its OWN new
-    # window on ws4 so the existing Firefox windows stay where they are.
-    if [[ -n "$(firefox_window_off_workspace "$ws")" ]]; then
-      open_in_new_firefox_window "$url" "$ws"
+    # Browser is up and has a window off ws4 -> open the video as its OWN new
+    # window on ws4 so the existing browser windows stay where they are.
+    if [[ -n "$(browser_window_off_workspace "$ws")" ]]; then
+      open_in_new_browser_window "$url" "$ws"
       exit 0
     fi
 
-    # Firefox only on ws4, or cold start: open a tab and pull Firefox to ws4.
-    # Backgrounded: on a cold start xdg-open execs firefox directly (no running
-    # instance to hand off to), so it blocks for the entire Firefox session
-    # instead of returning immediately -- without "&" move_firefox_when_up would
-    # never even start polling until Firefox quits.
-    xdg-open "$url" >/dev/null 2>&1 &
-    move_firefox_when_up "$ws"
-  ' _ "$script_dir/lib.sh" "$url" "$firefox_workspace" </dev/null >/dev/null 2>&1
+    # Browser only on ws4, or cold start: open a tab and pull the browser to ws4.
+    # Backgrounded: on a cold start the browser may keep the launcher alive (no running
+    # instance to hand off to), so it blocks for the entire browser session
+    # instead of returning immediately -- without "&" move_browser_when_up would
+    # never even start polling until the browser quits.
+    open_browser_url "$url"
+    move_browser_when_up "$ws"
+  ' _ "$script_dir/lib.sh" "$url" "$browser_workspace" </dev/null >/dev/null 2>&1
   return 0
 }
 

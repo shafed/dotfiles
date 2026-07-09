@@ -1,7 +1,7 @@
 ---
 title: nvim
 type: component
-updated: 2026-07-08
+updated: 2026-07-09
 covers:
   - nvim/
 ---
@@ -126,6 +126,13 @@ the `- [ ]`/`- [x]` prefix, straight to `+`. It reuses the same chunk-boundary
 walk as `toggle_done` (a task's text can wrap onto following non-bullet,
 non-blank lines, e.g. a long todo in `todos.md`), so it selects and yanks the
 whole wrapped chunk, not just the cursor's physical line.
+
+`mini.files` has its own file-clipboard interop. `<leader>y` copies selected
+paths as `text/plain` + `text/uri-list`; for a single image it additionally puts
+the actual `image/*` bytes on the clipboard so Claude/browser paste treats it as
+an image. `<leader>p` reads `text/uri-list` and copies those files into the
+current mini.files directory. This pairs with the Downloads watcher described in
+[scripts](scripts.md).
 
 ## Russian layout in normal mode (`options.lua` + `autocmds.lua`)
 

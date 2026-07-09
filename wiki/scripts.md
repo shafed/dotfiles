@@ -145,6 +145,21 @@ the script.
 
 ## Training logbook
 
+## Downloads clipboard watcher
+
+`watch-downloads.sh` is run by the user systemd unit
+`systemd/user/watch-downloads.service`. It watches `~/Downloads` with
+`inotifywait` and copies each completed download to the clipboard:
+
+- image files (`png`, `jpg`, `webp`, etc.) are copied as `image/*` via CopyQ,
+  with `text/plain` and `text/uri-list` alongside it, so browsers/Claude paste
+  the bitmap instead of literal `file://...` text;
+- non-image files are copied as `text/uri-list`, which `mini.files` can paste
+  into the current directory with `<leader>p`.
+
+The unit intentionally starts the script from `~/dotfiles/scripts/` rather than
+`~/.local/bin`, so the behavior is versioned with the rest of the dotfiles.
+
 ### generate_logbook.py
 
 Generates a **single self-contained** `logbook.html` from the markdown sessions

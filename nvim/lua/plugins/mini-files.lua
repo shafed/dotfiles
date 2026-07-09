@@ -8,6 +8,86 @@ local function path_to_uri(path)
   return "file://" .. encoded
 end
 
+local image_mime_by_ext = {
+  avif = "image/avif",
+  bmp = "image/bmp",
+  gif = "image/gif",
+  jpeg = "image/jpeg",
+  jpg = "image/jpeg",
+  png = "image/png",
+  tif = "image/tiff",
+  tiff = "image/tiff",
+  webp = "image/webp",
+}
+
+local function image_mime_type(path)
+  local stat = vim.uv.fs_stat(path)
+  if not stat or stat.type ~= "file" then
+    return nil
+  end
+
+  return image_mime_by_ext[vim.fn.fnamemodify(path, ":e"):lower()]
+end
+
+local function read_binary_file(path)
+  local fd, open_err = vim.uv.fs_open(path, "r", 438)
+  if not fd then
+    return nil, open_err
+  end
+
+  local stat, stat_err = vim.uv.fs_fstat(fd)
+  if not stat then
+    vim.uv.fs_close(fd)
+    return nil, stat_err
+  end
+
+  local data, read_err = vim.uv.fs_read(fd, stat.size, 0)
+  vim.uv.fs_close(fd)
+  if not data then
+    return nil, read_err
+  end
+
+  return data
+end
+
+local function copy_single_image_to_clipboard(path, mime)
+  local data, read_err = read_binary_file(path)
+  if not data then
+    return false, "Could not read image: " .. tostring(read_err)
+  end
+
+  local uri_blob = path_to_uri(path) .. "\r\n"
+  local copyq_cmd = {
+    "copyq",
+    "--start-server",
+    "copy",
+    mime,
+    "-",
+    "text/plain",
+    path,
+    "text/uri-list",
+    uri_blob,
+  }
+  local copyq_result = vim.system(copyq_cmd, { stdin = data, text = false }):wait()
+
+  if copyq_result.code == 0 then
+    return true
+  end
+
+  if vim.fn.executable("wl-copy") == 0 then
+    local err = copyq_result.stderr ~= "" and copyq_result.stderr or "copyq failed and wl-copy is unavailable"
+    return false, err
+  end
+
+  local wl_result = vim.system({ "wl-copy", "--type", mime }, { stdin = data, text = false }):wait()
+  if wl_result.code == 0 then
+    return true
+  end
+
+  local err = wl_result.stderr ~= "" and wl_result.stderr or copyq_result.stderr
+  return false, err
+end
+
 -- Parse a clipboard blob into a list of filesystem paths. Accepts both the plain
 -- paths we now copy (one per line) and the file:// URIs that other apps or older
 -- copies may put on the clipboard. Handles CRLF or LF line endings, skips blank
@@ -59,11 +139,13 @@ local function nonconflicting_dest(dir, name)
   end
 end
 
--- Copy the given absolute paths to the system clipboard with BOTH a text/plain
--- and a text/uri-list representation, using CopyQ. A single wl-copy process can
--- only serve identical content across its MIME types, so a uri-list copy leaks
--- "file://..." into text/plain (bad for Claude/terminal), while a plain copy
--- offers no uri-list (so Telegram/Dolphin paste text instead of the file/image).
+-- Copy the given absolute paths to the system clipboard. A single image is copied
+-- as image/* first, so browsers/Claude paste the bitmap instead of the file://
+-- URI. Everything else gets BOTH text/plain and text/uri-list representations.
+-- A single wl-copy process can only serve identical content across its MIME
+-- types, so a uri-list copy leaks "file://..." into text/plain (bad for
+-- Claude/terminal), while a plain copy offers no uri-list (so Telegram/Dolphin
+-- paste text instead of the file/image).
 -- CopyQ sets distinct content per MIME type in one command:
 --   text/plain    -> bare paths   (Claude, browser, terminal, our paste handler)
 --   text/uri-list -> file:// URIs (Telegram, Dolphin -> file/image paste)
@@ -72,6 +154,18 @@ local function copy_paths_to_clipboard(paths)
     vim.notify("No files selected", vim.log.levels.WARN)
     return
   end
+
+  local single_image_mime = #paths == 1 and image_mime_type(paths[1]) or nil
+  if single_image_mime then
+    local ok, err = copy_single_image_to_clipboard(paths[1], single_image_mime)
+    if ok then
+      vim.notify("Copied image:\n" .. vim.fn.fnamemodify(paths[1], ":t"), vim.log.levels.INFO)
+    else
+      vim.notify("Image copy failed: " .. tostring(err), vim.log.levels.ERROR)
+    end
+    return
+  end
+
   local uris, names = {}, {}
   for _, p in ipairs(paths) do
     table.insert(uris, path_to_uri(p))
@@ -81,6 +175,7 @@ local function copy_paths_to_clipboard(paths)
   local uri_blob = table.concat(uris, "\r\n") .. "\r\n"
   local result = vim.fn.system({
     "copyq",
+    "--start-server",
     "copy",
     "text/plain",
     table.concat(paths, "\n"),

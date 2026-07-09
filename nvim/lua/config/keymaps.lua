@@ -347,12 +347,19 @@ vim.api.nvim_create_autocmd("TermOpen", {
 vim.keymap.set("n", "<M-x>", tasks.toggle_done, { desc = "[P]Toggle task and move it to 'done'" })
 
 -- Create task (markdown only, checked inside the function)
-vim.keymap.set({ "n", "i" }, "<M-l>", function()
+local function create_markdown_task()
   if vim.bo.filetype ~= "markdown" then
     return
   end
+
   tasks.create()
-end, { desc = "Convert bullet to a task or insert new task bullet" })
+end
+
+for _, lhs in ipairs({ "<M-l>", "<M-д>" }) do
+  vim.keymap.set({ "n", "i" }, lhs, create_markdown_task, {
+    desc = "Convert bullet to a task or insert new task bullet",
+  })
+end
 
 -- Google Calendar (lua/utils/gcal.lua)
 vim.keymap.set("n", "<leader>gcc", gcal.create_from_line, { desc = "[P]gcalcli: create event from line" })

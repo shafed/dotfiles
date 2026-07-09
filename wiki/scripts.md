@@ -1,7 +1,7 @@
 ---
 title: scripts
 type: component
-updated: 2026-07-01
+updated: 2026-07-09
 covers:
   - scripts/
 ---
@@ -38,17 +38,19 @@ Key parts of `lib.sh`:
   doesn't fire.
 - `FZF_DEFAULT_OPTS` is hardcoded for gruvbox: QAT runs under bash and doesn't
   inherit the interactive zsh fzf config.
-- Firefox helpers (`firefox_window_off_workspace`, `open_in_new_firefox_window`,
-  `move_firefox_when_up`) — shared logic for delivering tabs away from the
-  YouTube workspace.
+- Browser helpers (`browser_window_off_workspace`, `open_in_new_browser_window`,
+  `move_browser_when_up`, `open_or_focus_url`) — shared Helium/Hyprland logic
+  for delivering tabs away from the YouTube workspace. The browser contract is
+  centralized in `lib.sh`: `helium-browser`, Hyprland class `helium`, desktop id
+  `helium.desktop`, profile `~/.config/net.imput.helium/Default`.
 
 ⚠️ Gotcha: all external process launches go with `</dev/null` and `disown`. QAT
 keeps the panel open as long as some process holds its tty
-(`close_on_child_death=no`), and Firefox, tied to that tty, would get killed on
+(`close_on_child_death=no`), and a browser tied to that tty would get killed on
 a force-close of the panel.
 
-⚠️ Gotcha (Firefox cold-start): on a true cold start the window takes several
-seconds to appear (process + profile + first frame), so `move_firefox_when_up`
+⚠️ Gotcha (browser cold-start): on a true cold start the window takes several
+seconds to appear (process + profile + first frame), so `move_browser_when_up`
 polls for ~12s — otherwise the tab would open on the wrong workspace.
 
 ### apps.sh — launching applications
@@ -74,24 +76,27 @@ Design decisions:
   case). `Telegram` is excluded from the empty-query recent list so it doesn't
   clutter it.
 
-### bookmarks.sh — bookmarks (focus an existing FF tab)
+### bookmarks.sh — bookmarks (focus an existing browser tab)
 
-Fuzzy search over bookmarks, opens in Firefox **preferring an already-open tab**
+Fuzzy search over bookmarks, opens in Helium **preferring an already-open tab**
 via **brotab** (`bt list` → `bt activate --focused`) rather than duplicating it.
 
-⚠️ Gotcha (brotab): `bt` is an optional dependency (pipx), requires the FF
-brotab extension to be installed. Without it — fallback to `xdg-open`.
+⚠️ Gotcha (brotab): `bt` is an optional dependency (pipx), requires the brotab
+extension and native-messaging manifest to be installed for Helium. Without it
+— fallback to launching the URL with `helium-browser`.
 `bt activate --focused` on Hyprland doesn't raise the window itself, so the
-window is raised manually — `focus_firefox_for_title` finds the window by tab
+window is raised manually — `focus_browser_for_title` finds the window by tab
 title (the tab title becomes the window title after activation), so that the tab
-on the YouTube ws wins, not some random other FF window.
+on the YouTube ws wins, not some random other browser window. `lib.sh` filters
+brotab prefixes to Helium/Chromium-like clients so a leftover Firefox brotab
+client cannot steal a migrated open.
 
 - Sources: its own `bookmarks.tsv`, the private dotfiles-private, and an
-  auto-export of FF bookmarks (`export_firefox_bookmarks`). `places.sqlite` is
-  locked while FF is running, so it's copied to a temp folder (+WAL/SHM) and
-  read from there.
+  auto-export of Helium bookmarks (`export_browser_bookmarks`) from
+  `~/.config/net.imput.helium/Default/Bookmarks`. This is Chromium JSON, not
+  Firefox `places.sqlite`, so `jq` is used and duplicate URLs are dropped.
 - New tabs are **never** opened on the YouTube workspace (ws4):
-  `prepare_firefox_for_new_tab` picks a `tab`/`newwindow`/`cold` strategy.
+  `prepare_browser_for_new_tab` picks a `tab`/`newwindow`/`cold` strategy.
 - Recents log same as in apps.sh: empty query → recently opened.
 
 ### search.sh — web search (split out of bookmarks.sh)
@@ -101,7 +106,9 @@ search.sh"): the "search the web" address-bar-like half was carved out into its
 own independent QAT with no bookmark rows — bookmarks.sh now only searches
 bookmarks. You type a query → live Google suggestions
 (`suggestqueries.google.com`) → Enter on a suggestion or on your raw query opens
-the search in FF (same brotab logic as bookmarks.sh).
+the search in Helium (same brotab logic as bookmarks.sh). The Google suggestions
+URL still uses `client=firefox`; that is only Google's response format selector,
+not a local Firefox dependency.
 
 ⚠️ Gotcha (debounce): `suggest_rows` does a **leading** `sleep 0.18` before the
 curl. fzf kills the previous reload process on every keystroke, so the pause
@@ -118,7 +125,9 @@ apps layer).
 
 - Videos open on **ws4** (unlike bookmarks/search, which use ws2).
 - `-H`/`-L` (history/watch-later) read the logged-in session via
-  `--cookies-from-browser firefox` (no OAuth).
+  `--cookies-from-browser chromium:~/.config/net.imput.helium/Default` (no
+  OAuth). `yt-dlp` does not support `helium` as a browser name, so the
+  Chromium extractor is pointed at Helium's profile path.
 - `-s` live search: Enter with no results falls back to a plain
   `youtube.com/results?search_query=…` page for whatever was typed, instead of
   doing nothing (an `enter:transform` bind checks `{}` for emptiness). ⚠️

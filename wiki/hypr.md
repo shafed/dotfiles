@@ -1,7 +1,7 @@
 ---
 title: hypr
 type: component
-updated: 2026-07-04
+updated: 2026-07-09
 covers:
   - hypr/hyprland.conf
   - hypr/hypridle.conf
@@ -35,8 +35,10 @@ The order and contents of `exec-once` define "what a working session is":
 `kitty` (native sessions, no tmux — see [kitty](kitty.md)/[sessions](sessions.md)),
 `waybar & hyprpaper`, `hyprland-per-window-layout`, `hypridle`, `hyprsunset`,
 `stretchly` (break reminders). ⚠️ Gotcha: the browser is NOT in autostart —
-`exec-once = browser` was removed (commit `75f46cf`); Firefox comes up lazily
-via `workspace = 2, on-created-empty:firefox` on first entering workspace 2.
+`exec-once = browser` was removed (commit `75f46cf`); Helium comes up lazily
+via `workspace = 2, on-created-empty:helium-browser` on first entering
+workspace 2. The measured Hyprland class is `helium`, which is what the
+browser helpers in [scripts](scripts.md) use for focus/move rules.
 
 kanata is **not** started here anymore — it moved to a systemd user service
 (`../systemd/user/kanata.service`, `WantedBy=default.target`) so it starts at

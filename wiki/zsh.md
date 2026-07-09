@@ -1,7 +1,7 @@
 ---
 title: zsh
 type: component
-updated: 2026-07-05
+updated: 2026-07-09
 covers:
   - zsh/zshrc
   - zsh/zprofile
@@ -66,7 +66,7 @@ covers:
 
 ## Env and aliases
 
-- `EDITOR`/`VISUAL=nvim`, `BROWSER=firefox`, `TERMCMD=kitty` (after dropping
+- `EDITOR`/`VISUAL=nvim`, `BROWSER=helium-browser`, `TERMCMD=kitty` (after dropping
   Windows, see [decisions](decisions.md)).
 - nvim: `vi`/`v`=nvim; `neobean`/`nb` —
   alternate `NVIM_APPNAME` (see [nvim](nvim.md)).

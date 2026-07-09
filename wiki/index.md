@@ -1,7 +1,7 @@
 ---
 title: index
 type: index
-updated: 2026-07-04
+updated: 2026-07-09
 ---
 
 # Dotfiles wiki — index
@@ -46,4 +46,4 @@ Legend: ✅ filled in · 🚧 partial · 🌱 stub.
 
 | Page                     | What it covers                                                                                                                                                |
 | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 🚧 [decisions](decisions.md) | Major decisions and rejected alternatives: tmux → kitty native sessions; kanata as the single keymap engine; removal of Windows/WSL legacy; manual symlinks → bootstrap.sh (plain symlinks; GNU Stow tried and rejected). |
+| 🚧 [decisions](decisions.md) | Major decisions and rejected alternatives: Firefox → Helium default browser; tmux → kitty native sessions; kanata as the single keymap engine; removal of Windows/WSL legacy; manual symlinks → bootstrap.sh (plain symlinks; GNU Stow tried and rejected). |

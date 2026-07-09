@@ -1,7 +1,7 @@
 ---
 title: keymap
 type: topic
-updated: 2026-07-08
+updated: 2026-07-09
 covers:
   - kanata/config.kbd
   - hypr/hyprland.conf
@@ -36,7 +36,8 @@ because kitty only catches C-S combos when focused, while hypr catches Super glo
   hold Enter; return to base from base via Enter-hold / `lsft+rsft`.
 - **apps** (hold thumb) — launcher: apps, kitty sessions (`kitty-send C-S-*`),
   fzf pickers, killactive (`q`), browser sub-layer (`s` hold → `browser`).
-- **browser** (from apps, hold `s`) — direct URLs (gmail, perplexity, chatgpt, claude…).
+- **browser** (from apps, hold `s`) — direct URLs in Helium (gmail,
+  perplexity, chatgpt, claude…); tapping `s` launches `helium-browser`.
 - **symbols / symbols2** (hold `e`/`r` or chords `s+d` / `s+d+f`) — programmer
   symbols on the right hand; xkb is forced to US (see [kanata](kanata.md)).
 - **navi** (hold `w` or toggle via caps-hold) — arrows/navigation on the right

@@ -1,7 +1,7 @@
 ---
 title: decisions
 type: topic
-updated: 2026-07-04
+updated: 2026-07-09
 ---
 
 # decisions — major decisions and rejected alternatives
@@ -10,6 +10,23 @@ updated: 2026-07-04
 **decision → reason → rejected alternative → date**.
 
 ## Recorded
+
+### Firefox → Helium as the default browser (2026-07-09)
+- **Decision**: use Helium as the default browser in Hyprland, kanata, zsh, and
+  the fzf picker scripts. Browser-specific script behavior is centralized in
+  `scripts/lib.sh` (`helium-browser`, class `helium`, profile
+  `~/.config/net.imput.helium/Default`) instead of scattered as raw Firefox
+  strings.
+- **Reason**: the migration crosses several contracts at once: Hyprland window
+  class, new-window launching, bookmarks export, brotab tab activation, and
+  `yt-dlp` cookies. A shared browser helper keeps bookmarks/search/youtube
+  aligned and makes future browser changes smaller.
+- **Rejected**: blind `firefox` → `helium-browser` replacement. That would leave
+  Firefox `places.sqlite` export, Firefox-only brotab clients, and
+  `yt-dlp --cookies-from-browser firefox` behind.
+- Trade-off: `yt-dlp` does not know a `helium` browser name, so the YouTube
+  picker uses the Chromium cookie extractor pointed at Helium's profile. See
+  [scripts](scripts.md), [hypr](hypr.md), [keymap](keymap.md).
 
 ### tmux → kitty native sessions (2026-06)
 - **Decision**: remove tmux; do multiplexing and splits with native kitty

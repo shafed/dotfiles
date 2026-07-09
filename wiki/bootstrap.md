@@ -1,7 +1,7 @@
 ---
 title: bootstrap
 type: topic
-updated: 2026-07-04
+updated: 2026-07-09
 covers:
   - bootstrap.sh
   - zsh/zshrc
@@ -41,19 +41,26 @@ were left untouched.
 
 ## Packages
 
-Checked by `bootstrap.sh --check`: `hyprland`, `kanata` (AUR), `kitty`, `waybar`,
-`yazi`, `neovim`, `zsh`, `zoxide`, `fzf`, `darkman` (AUR), `lazygit`,
-`sioyek`, `zathura`, `yt-dlp`, `brotab`, `aichat` (AUR), `taskwarrior`, `copyq`,
-`python`. `oh-my-zsh` is auto-installed from zshrc on first run, not checked by
-the script.
+Checked by `bootstrap.sh --check`: `hyprland`, `kanata` (AUR), `kitty`,
+`helium-browser` (`helium-browser-bin`, AUR), `waybar`, `yazi`, `neovim`,
+`zsh`, `zoxide`, `fzf`, `darkman` (AUR), `lazygit`, `sioyek`, `zathura`,
+`yt-dlp`, `brotab`, `aichat` (AUR), `taskwarrior`, `copyq`, `python`.
+`oh-my-zsh` is auto-installed from zshrc on first run, not checked by the
+script.
 
 TODO: exact pacman vs AUR package names and versions for a few entries — not
 fully recorded (check during deployment).
 
 ## Manual setup outside the repo (TODO clarify)
 
-- Firefox extension for `brotab` (bookmarks.sh focuses the tab), see
-  [scripts](scripts.md).
+- Helium extension/native-messaging setup for `brotab` (bookmarks.sh focuses
+  existing tabs), see [scripts](scripts.md). `bt install` only writes the
+  standard Chromium/Chrome/Brave paths, so Helium may also need the
+  `brotab_mediator.json` manifest copied or linked into
+  `~/.config/net.imput.helium/NativeMessagingHosts/`.
+- XDG default browser is not managed by bootstrap; set `helium.desktop` for
+  `http`, `https`, and `text/html` outside the repo if `xdg-open` users should
+  follow the migration.
 - systemd user services from `~/.config/systemd`.
 - Layouts: kanata (see [keymap](keymap.md)). The old `im-select` in [zsh](zsh.md)
   (Windows path) removed 2026-07-01.

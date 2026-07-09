@@ -1,7 +1,7 @@
 ---
 title: kanata
 type: component
-updated: 2026-07-05
+updated: 2026-07-09
 covers:
   - kanata/config.kbd
   - kanata/switchApp.sh
@@ -144,6 +144,11 @@ actions start with `(on-press tap-vkey apps-us)` → `symlayout-watch.sh app`
 (bookmarks/youtube/apps/search) and rofimoji always start on the English layout
 regardless of the current language. A plain hold/release of the apps key with no
 action is harmless.
+
+Browser actions in this layer use `helium-browser` directly: tap `s` launches
+Helium, hold `s` enters the URL sub-layer, and the YouTube watch-later shortcut
+opens a new Helium window. This keeps keyboard-launched browser actions aligned
+with Hyprland's lazy workspace browser and the fzf picker scripts.
 
 ## Shifted number layer (numplain2)
 

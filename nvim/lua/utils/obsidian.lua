@@ -199,7 +199,7 @@ function M.save_training_note()
   --------------------------------------------------------------------------
   -- Regenerate the training logbook HTML from the training vault.
   --------------------------------------------------------------------------
-  local script = vim.fn.expand("~/obsidian/training/generate_logbook.py")
+  local script = vim.fn.expand("~/dotfiles/scripts/generate_logbook.py")
   vim.fn.jobstart({ "python3", script }, {
     cwd = vim.fn.expand("~/obsidian/training"),
     on_exit = function(_, code)

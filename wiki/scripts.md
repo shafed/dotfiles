@@ -1,7 +1,7 @@
 ---
 title: scripts
 type: component
-updated: 2026-07-09
+updated: 2026-07-10
 covers:
   - scripts/
 ---
@@ -188,18 +188,6 @@ Key decisions (from git evolution):
   `nvim-edit://<percent-encoded absolute path>` that open the session's source
   md file. Handled by `nvim-edit-handler.sh` (see below).
 
-### import_training_log_xlsx.py
-
-A one-time import of history from `Training_Log.xlsx` into md sessions. **No
-dependencies**: reads the `.xlsx` as zip XML parts (not openpyxl).
-
-⚠️ Gotcha (cell colors → mood): mood is recovered from the **fill color** of the
-notes cell. Green is the base color and is NOT tagged (otherwise almost every
-workout would get a tag); only orange→`mid` and red→`bad` produce a mood, which
-is written into the session frontmatter (closing the loop with
-`generate_logbook.py`). Only direct `rgb` fills are resolved; theme/indexed
-colors are ignored.
-
 ### nvim-edit-handler.sh — the `nvim-edit://` handler
 
 Handles `nvim-edit://` links from the logbook (see [nvim](nvim.md),
@@ -221,9 +209,7 @@ asynchronous):
 
 - `nvim-edit-handler.sh` ↔ the kitty obsidian session and its nvim (see
   [sessions](sessions.md)).
-- `generate_logbook.py` (generates links) ↔ `nvim-edit-handler.sh` (opens them)
-  ↔ `import_training_log_xlsx.py` (writes mood into frontmatter, which the
-  generator reads).
+- `generate_logbook.py` (generates links) ↔ `nvim-edit-handler.sh` (opens them).
 
 ## Misc
 

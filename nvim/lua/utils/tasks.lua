@@ -270,7 +270,9 @@ function M.toggle_done(opts)
 end
 
 -- Convert the current line into a "- [ ]" task bullet (or insert a fresh one
--- on an empty line) and leave the cursor right after the brackets
+-- on an empty line) and leave the cursor right after the brackets. If the
+-- line is already a task bullet ("- [ ]"/"- [x]"), toggle it back into a
+-- plain bullet instead.
 function M.create()
   -- Get the current line/row/column
   local cursor_pos = vim.api.nvim_win_get_cursor(0)
@@ -284,7 +286,15 @@ function M.create()
     vim.api.nvim_win_set_cursor(0, { row, 6 })
     return
   end
-  -- 2) Check if line already has a bullet with possible indentation: e.g. "  - Something"
+  -- 2) If line is already a task bullet => strip "[ ]"/"[x]" back to a plain bullet
+  local plain_bullet, after_checkbox = line:match("^([%s]*[-*]%s+)%[[x ]%]%s*(.*)$")
+  if plain_bullet then
+    local final_line = plain_bullet .. after_checkbox
+    vim.api.nvim_set_current_line(final_line)
+    vim.api.nvim_win_set_cursor(0, { row, #plain_bullet })
+    return
+  end
+  -- 3) Check if line already has a bullet with possible indentation: e.g. "  - Something"
   --    We'll capture "  -" (including trailing spaces) as `bullet` plus the rest as `text`.
   local bullet, text = line:match("^([%s]*[-*]%s+)(.*)$")
   if bullet then
@@ -295,7 +305,7 @@ function M.create()
     vim.api.nvim_win_set_cursor(0, { row, #bullet + 4 })
     return
   end
-  -- 3) If there's text, but no bullet => prepend "- [ ] "
+  -- 4) If there's text, but no bullet => prepend "- [ ] "
   --    and place cursor after the brackets
   local final_line = "- [ ] " .. line
   vim.api.nvim_set_current_line(final_line)

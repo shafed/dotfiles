@@ -29,7 +29,7 @@ EVENT_LINE_RE = re.compile(
 EVENTS_FILE = "events.md"
 # Non-session markdown files that should be ignored by the session scan without
 # a warning (events + hand-kept aggregates).
-SKIP_FILES = {"events.md", "all.md"}
+SKIP_FILES = {"events.md", "training.md"}
 SKIP_DIR_PARTS = {"_templates", "_import"}
 # Session mood lives in the file's YAML frontmatter: "mood: mid" / "mood: bad".
 FRONTMATTER_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n?", re.S)

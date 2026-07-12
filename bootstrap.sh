@@ -21,6 +21,7 @@ esac
 # Required commands, and the pacman/AUR package that provides them.
 REQUIRED_PKGS=(
   "hyprland:hyprland"
+  "uwsm:uwsm"
   "kanata:kanata (AUR)"
   "kitty:kitty"
   "helium-browser:helium-browser-bin (AUR)"

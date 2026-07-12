@@ -34,6 +34,9 @@ Everything substantive boils down to:
   commit `65d18e9`), `tab_bar_filter session:~ ...`, the tab title template
   shows the session name. Everything about sessions is in [sessions](sessions.md).
 - **`kitty_mod+i`** — open scrollback in the nvim pager (yank from the panel's history).
+  Runs `scripts/kitty-scrollback-nvim.sh`, which trims trailing blank lines from
+  both sources of padding: kitty's `@screen_scrollback` (full screen grid) via sed,
+  and `nvim_open_term()`'s buffer padding via deferred lua.
 
 ## `pass_keys.py` — contextual Ctrl-h/j/k/l navigation
 

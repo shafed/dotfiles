@@ -158,6 +158,14 @@ normal mode:
 - Why langmap alone wasn't enough: it doesn't apply in cmdline (`:ц` is not
   `:w`) and plugins that read input via `getchar()` (flash, which-key,
   mini.surround) bypass it — hence the auto-switch as the primary mechanism.
+- ⚠️ Gotcha (fixed same day): pressing `<CR>` in insert mode in a bullet
+  list flipped RU→US mid-typing. bullets.vim handles `<CR>` via an
+  expression register, which is a transient `i:c:i` mode blip that fires
+  `CmdlineLeave` — the async "force US" landed after nvim was already back
+  in insert. Fix: the hyprctl callback re-checks `mode()` (scheduled on the
+  main loop) and, if a typing mode (`i/R/t/s`) is active again, keeps the
+  layout and only refreshes the remembered index. Same guard covers a fast
+  `Esc`+`i` racing the InsertLeave query.
 - **flash.nvim is bilingual** (`plugins/flash.lua`): `search.mode` is a
   function turning each typed char into a vim-regex collection of itself +
   its ЙЦУКЕН counterpart on the same physical key (`ghb` →

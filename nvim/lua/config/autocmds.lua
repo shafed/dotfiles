@@ -68,12 +68,25 @@ if vim.fn.executable("hyprctl") == 1 then
       for _, kb in ipairs(devices.keyboards or {}) do
         if kb.name == layout_dev then
           local idx = kb.active_layout_index or 0
-          if idx ~= 0 then
-            insert_layout = idx
-            vim.system({ "hyprctl", "switchxkblayout", layout_dev, "0" })
-          elseif overwrite_us then
-            insert_layout = 0
-          end
+          vim.schedule(function()
+            -- By the time the async query lands we may be back in a typing
+            -- mode: bullets.vim's <CR> runs an expression register (an i:c:i
+            -- blip that fires CmdlineLeave), and a fast Esc-i does the same
+            -- for InsertLeave. Forcing US then would flip the layout right
+            -- under the user's fingers — keep it, only refresh the memory.
+            if vim.fn.mode():match("^[iRtsS]") then
+              if idx ~= 0 then
+                insert_layout = idx
+              end
+              return
+            end
+            if idx ~= 0 then
+              insert_layout = idx
+              vim.system({ "hyprctl", "switchxkblayout", layout_dev, "0" })
+            elseif overwrite_us then
+              insert_layout = 0
+            end
+          end)
           return
         end
       end

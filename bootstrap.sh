@@ -31,6 +31,7 @@ REQUIRED_PKGS=(
   "zsh:zsh"
   "zoxide:zoxide"
   "fzf:fzf"
+  "jq:jq"
   "darkman:darkman (AUR)"
   "lazygit:lazygit"
   "sioyek:sioyek"

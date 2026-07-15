@@ -124,11 +124,6 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
  ;; tap=n, hold=numplain. th (press-decided) so the layer is instant like w;
  ;; note n is a frequent letter, so n+left-hand bigrams (na/nd/nt...) can misfire.
  n (t! th $tot 160 n (layer-while-held numplain))
- ;; tap=e/r, hold=symbols/symbols2 (left hand holds; symbols live on the right).
- ;; @sym-enter wraps the xkb US switch. instant like w/n; e/r are frequent so
- ;; e/r + right-hand bigrams can misfire (same trade-off as n).
- e (t! th $tot 160 e @sym-enter)
- r (t! th $tot 160 r @sym-enter2)
 )
 
 (deflayermap (apps)

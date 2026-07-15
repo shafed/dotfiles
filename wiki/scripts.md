@@ -1,7 +1,7 @@
 ---
 title: scripts
 type: component
-updated: 2026-07-10
+updated: 2026-07-15
 covers:
   - scripts/
 ---
@@ -31,6 +31,20 @@ Key parts of `lib.sh`:
 - `launch_qat` / `toggle_qat` — show/hide the panel via the remote-control
   socket of the **main** kitty (`main_kitty_socket` filters `/tmp/kitty-*` by
   process name so it doesn't accidentally target some other floating terminal).
+
+⚠️ Gotcha (`main_kitty_socket` must exclude QAT panels themselves): every QAT
+panel (apps/bookmarks/youtube) is *also* a `kitty` process (`kitty +kitten
+panel --instance-group=...`), so a naive "argv starts with the kitty binary"
+match is true for panels too, not just the real main terminal. The function
+used to return the first `/tmp/kitty-*` socket matching that prefix, in
+lexicographic order — which happens to be the real main kitty only if it was
+started before the panels got their PIDs. On a machine where a panel's PID
+sorts before the main kitty's, `toggle_qat`/`launch_qat` end up sending
+remote-control actions to a panel's own kitty process instead of the main one,
+which fights with that panel's own event loop/fzf for input — symptom:
+apps.sh's picker intermittently stops accepting keystrokes (only Ctrl-C, i.e.
+SIGINT via the tty, still works). Fixed by explicitly skipping any socket
+whose process argv contains `+kitten panel`.
 - `switch_to_english` — forces the `us` layout (index 0 in `us,ru`) via
   `hyprctl switchxkblayout`, so fzf queries get typed in Latin script even when
   Russian is active. Called inside `launch_qat` on **every** show, because on

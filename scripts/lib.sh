@@ -51,6 +51,14 @@ main_kitty_socket() {
     pid="${sock##*-}"
     args="$(ps -p "$pid" -o args= 2>/dev/null || true)"
 
+    # QAT panels (apps.sh/bookmarks.sh/youtube-qat.sh) are themselves launched as
+    # `kitty +kitten panel --instance-group=...`, so their argv also starts with
+    # the kitty binary and would otherwise false-match below. Skip them: which
+    # socket sorts first among /tmp/kitty-* depends only on PID/start order, so
+    # without this exclusion a panel process can outrank the real main kitty and
+    # every toggle_qat/launch_qat call ends up talking to the wrong instance.
+    [[ "$args" == *"+kitten panel"* ]] && continue
+
     # On Linux the launcher is usually the python entry point; match either the
     # resolved kitty binary or a bare "kitty" command in the process arguments.
     if [[ "$args" == "$kitty_bin"* || "$args" == kitty* || "$args" == *"/kitty "* ]]; then

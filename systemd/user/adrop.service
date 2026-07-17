@@ -9,8 +9,11 @@ ExecStart=%h/.local/bin/adrop daemon
 Restart=on-failure
 RestartSec=2
 # The daemon needs the user's Wayland session for wl-clipboard / notify-send.
-# Hyprland is launched via `uwsm start`, which imports the session environment
-# and activates graphical-session.target itself, so no manual import is needed.
+# Compositors that don't activate graphical-session.target (e.g. Hyprland) must
+# import their environment into the user manager and restart this unit
+# afterward, since it's already running by the time the import happens, e.g.
+# an exec-once of:
+#   systemctl --user import-environment WAYLAND_DISPLAY DISPLAY XDG_CURRENT_DESKTOP && systemctl --user restart adrop.service
 Environment=ADROP_PORT=53127
 # Relay base URL for FCM wake: when a direct dial to a phone fails, the daemon
 # POSTs /wake here so the phone opens its receive window, then retries.

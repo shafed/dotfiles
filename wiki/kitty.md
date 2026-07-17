@@ -1,7 +1,7 @@
 ---
 title: kitty
 type: component
-updated: 2026-07-01
+updated: 2026-07-17
 covers:
   - kitty/
 ---
@@ -53,6 +53,16 @@ Hyprland window navigation inside the terminal (commit `24b289d`).
 A tiny custom kitten (`handle_result` returns `active_tab.current_layout.name`,
 `no_ui`). Used by scripts/sessions to find out the current kitty panel
 layout from under `kitten @`. Not to be confused with the keyboard layout (that's kanata's job).
+
+## `toggle_tab_bar.py` — hide/show the tab bar at runtime
+
+Custom `no_ui` kitten (`hide`/`show`/`toggle` args) that pokes
+`tab.tab_manager_ref().tab_bar_hidden` directly and calls `tm.resize()`. Needed
+because kitty's remote-control protocol has no builtin command for this —
+`tab_bar_hidden` is normally set exactly once at startup, from
+`tab_bar_style == "hidden"` (`kitty/tabs.py`). Driven from nvim
+(`nvim/lua/utils/fullscreen.lua`) so `Snacks.zen` (`<leader>uz`) hides the tab
+bar and fullscreens the Hyprland window on open, restoring both on close.
 
 ## QAT panels (quick-access-terminal)
 

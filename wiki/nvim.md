@@ -1,7 +1,7 @@
 ---
 title: nvim
 type: component
-updated: 2026-07-09
+updated: 2026-07-17
 covers:
   - nvim/
 ---
@@ -25,7 +25,7 @@ covers:
 - Key logic is factored out into `lua/utils/` (folding, kitty, tasks, obsidian, gcal)
   so `keymaps.lua` doesn't bloat.
 - **Buffer count/filename/path indicator lives in `winbar`**, not lualine's tabline
-  (`config/options.lua`, mirrors linkarzu's approach). `bufferline.nvim` is disabled
+  (`lua/utils/winbar.lua`, mirrors linkarzu's approach). `bufferline.nvim` is disabled
   since winbar covers its role. Reason: winbar is per-window and isn't tied to
   `showtabline`, so it doesn't depend on bufferline's logic that used to hide the
   line after `<leader>bo` — the old approach needed autocmd hacks
@@ -34,7 +34,18 @@ covers:
   (`nvim_win_get_config(0).relative ~= ""`) — mini.files' explorer panes are
   floats with their own border title, and setting winbar on them stacked a
   garbled extra line (raw buffer name like `minifiles://2//home/shafed`) above
-  the content.
+  the content. The winbar logic was pulled out of `config/options.lua` into
+  `utils/winbar.lua` (exposing `set_zen(active)`) because `Snacks.zen`'s
+  floating window is centered and narrower than the screen — without an
+  explicit hide, the old winbar stayed visible in the margins on either side
+  during zen mode. `plugins/snacks.lua`'s `zen.on_open`/`on_close` call
+  `set_zen(true/false)` to hide/restore it across all windows.
+- **`utils/fullscreen.lua`** makes the OS chrome match zen mode too: on
+  `<leader>uz` it fullscreens the Hyprland window (`hyprctl dispatch
+  fullscreen 0`, only if not already fullscreen, and only restored on close if
+  this module is what turned it on) and hides kitty's tab bar via the
+  `toggle_tab_bar.py` kitten (see [kitty](kitty.md)). Wired into
+  `plugins/snacks.lua`'s `zen.on_open`/`on_close` alongside `utils/winbar.lua`.
 
 ## Integration with the training logbook
 

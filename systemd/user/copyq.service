@@ -1,5 +1,6 @@
 [Unit]
 Description=CopyQ clipboard manager
+After=graphical-session.target
 
 [Service]
 ExecStart=/usr/bin/copyq

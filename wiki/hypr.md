@@ -59,6 +59,15 @@ hyprland.conf
 (`exec-once = systemctl --user import-environment ... && systemctl --user restart adrop.service`)
 was removed — no longer needed.
 
+⚠️ Gotcha: this only protects services that actually order themselves after
+`graphical-session.target`. A `WantedBy=default.target` unit with no `After=`
+can still start in the same instant `default.target` is reached, racing
+uwsm's environment import — `copyq.service` did exactly this (crash-looped on
+"no Qt platform plugin" until it hit systemd's start-limit) until
+`After=graphical-session.target` was added, matching `flameshot.service`/
+`kanata.service`. Any user service that touches the Wayland/X11 session needs
+that `After=` line, not just `WantedBy=default.target`.
+
 ## Non-trivial bindings (only the "why")
 
 The full map is in [keymap](keymap.md). Here only the non-obvious bits:

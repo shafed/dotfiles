@@ -110,8 +110,11 @@ export_browser_bookmarks() {
   ' "$browser_bookmarks_source" 2>/dev/null || true)"
 
   # Only overwrite when we actually got rows, so a transient read failure does
-  # not wipe a previously good export.
-  [[ -n "$out" ]] && printf '%s\n' "$out" >"$browser_bookmarks_file"
+  # not wipe a previously good export. (Written as an if, not `[[ ]] &&`: under
+  # `set -e` a bare `&&` list whose left side is false exits the whole script.)
+  if [[ -n "$out" ]]; then
+    printf '%s\n' "$out" >"$browser_bookmarks_file"
+  fi
 }
 
 # The picker loop. Runs inside the QAT panel (bookmarks.sh --pick). Keeps the

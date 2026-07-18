@@ -1,7 +1,7 @@
 ---
 title: sessions
 type: topic
-updated: 2026-07-01
+updated: 2026-07-18
 covers:
   - kitty/sessions
   - kitty/scripts
@@ -85,3 +85,12 @@ in nvim/fzf, otherwise moves between kitty windows).
 `session_name`/`tab.active_wd`; session files set `layout` (usually `tall`) explicitly
 on the first line. The former `M-t` split toggle is absent in the current kitty.conf —
 splits now go through `C-S--` / `C-S-\`.
+
+⚠️ Gotcha (`kitty_mod+t` / new tab scope): `session_name` is only assigned to a tab
+when it's created *inside* a session (loaded from a `.kitty-session` file, or via
+`--add-to-session`). A plain `new_tab` gets no `session_name`, and
+`tab_bar_filter session:~ or session:^$` always shows session-less tabs (`^$`
+matches "no session") — so such a tab appears regardless of which session is
+active, i.e. it isn't scoped to "current session" at all. Fixed by mapping
+`kitty_mod+t` to `launch --type=tab --cwd=current --add-to-session .`, which tags
+the new tab with the source window's session.

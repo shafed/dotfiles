@@ -77,6 +77,10 @@ The full map is in [keymap](keymap.md). Here only the non-obvious bits:
 - `SUPER, M` — smart exit: `hyprshutdown` if present, otherwise `hyprctl dispatch exit`.
 - `SUPER, home` — `systemctl suspend && hyprlock` (manual sleep+lock).
 - `SUPER, V` — `copyq toggle` (clipboard manager; the CopyQ window is caught by a windowrule into float).
+- `SUPER, N` — `nvim-scratch-toggle.sh`: floating kitty+nvim scratch note (QAT
+  panel, not a special workspace/windowrule) that pastes itself into whatever
+  was focused before it opened once you quit nvim. Details in
+  [scripts](scripts.md).
 - `Ctrl-h/j/k/l` window navigation is NOT here — it lives in kitty via `pass_keys.py`
   (contextual: nvim/fzf get them first), see [kitty](kitty.md).
 

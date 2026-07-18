@@ -56,6 +56,11 @@ nvim is the editing side of the training logbook; generation and viewing are in
   `~/obsidian/training/Full Body 2026/YYYY-MM-DD-<h1>.md` (the H1 is
   rewritten into a slug so the filename matches the heading) and **immediately
   triggers** `~/dotfiles/scripts/generate_logbook.py` to regenerate `logbook.html`.
+  Prompts for the session date (`vim.ui.input`, defaults to today, validated
+  as `YYYY-MM-DD`) so a session logged late can be dated to when it actually
+  happened instead of the save date — the date drives both the filename and
+  the strict `^\d{4}-\d{2}-\d{2}-Day-\d+$` regex `generate_logbook.py` uses to
+  sort/parse sessions.
 - A separate keymap opens `logbook.html` via `xdg-open`.
 - `obsidian.push_with_cooldown()` — auto commit+push of the `~/obsidian` vault (an hour
   cooldown) so note edits get backed up without manual commits.

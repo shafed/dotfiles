@@ -178,40 +178,52 @@ function M.save_training_note()
   -- Write current buffer contents to training/YYYY-MM-DD-<h1_text>.md
   -- h1_text is the filename without extension, e.g. "Day 2"
   -- training note slug: YYYY-MM-DD-Day-2 (date + h1 with spaces→dashes)
+  -- Ask for the session date (defaults to today) so late log entries can
+  -- be dated to when the workout actually happened.
   --------------------------------------------------------------------------
-  local date_prefix = os.date("%Y-%m-%d")
-  local h1_slug = h1_text:gsub("%s+", "-")
-  local training_slug = date_prefix .. "-" .. h1_slug
-  local training_filename = training_slug .. ".md"
-  local training_path = training_dir .. training_filename
-  local buf_lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
-  -- Replace H1 with training_slug so file's H1 matches its filename
-  for i, line in ipairs(buf_lines) do
-    if line:match("^#%s+") then
-      buf_lines[i] = "# " .. training_slug
-      break
+  vim.ui.input({ prompt = "Session date: ", default = os.date("%Y-%m-%d") }, function(date_prefix)
+    if not date_prefix or date_prefix == "" then
+      vim.notify("Training note not saved: no date given", vim.log.levels.WARN)
+      return
     end
-  end
-  vim.fn.writefile(buf_lines, training_path)
+    if not date_prefix:match("^%d%d%d%d%-%d%d%-%d%d$") then
+      vim.notify("Training note not saved: date must be YYYY-MM-DD", vim.log.levels.ERROR)
+      return
+    end
 
-  vim.notify("Training note saved: " .. training_filename, vim.log.levels.INFO)
+    local h1_slug = h1_text:gsub("%s+", "-")
+    local training_slug = date_prefix .. "-" .. h1_slug
+    local training_filename = training_slug .. ".md"
+    local training_path = training_dir .. training_filename
+    local buf_lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+    -- Replace H1 with training_slug so file's H1 matches its filename
+    for i, line in ipairs(buf_lines) do
+      if line:match("^#%s+") then
+        buf_lines[i] = "# " .. training_slug
+        break
+      end
+    end
+    vim.fn.writefile(buf_lines, training_path)
 
-  --------------------------------------------------------------------------
-  -- Regenerate the training logbook HTML from the training vault.
-  --------------------------------------------------------------------------
-  local script = vim.fn.expand("~/dotfiles/scripts/generate_logbook.py")
-  vim.fn.jobstart({ "python3", script }, {
-    cwd = vim.fn.expand("~/obsidian/training"),
-    on_exit = function(_, code)
-      vim.schedule(function()
-        if code == 0 then
-          vim.notify("logbook.html regenerated", vim.log.levels.INFO)
-        else
-          vim.notify("generate_logbook.py failed (exit " .. code .. ")", vim.log.levels.ERROR)
-        end
-      end)
-    end,
-  })
+    vim.notify("Training note saved: " .. training_filename, vim.log.levels.INFO)
+
+    ------------------------------------------------------------------------
+    -- Regenerate the training logbook HTML from the training vault.
+    ------------------------------------------------------------------------
+    local script = vim.fn.expand("~/dotfiles/scripts/generate_logbook.py")
+    vim.fn.jobstart({ "python3", script }, {
+      cwd = vim.fn.expand("~/obsidian/training"),
+      on_exit = function(_, code)
+        vim.schedule(function()
+          if code == 0 then
+            vim.notify("logbook.html regenerated", vim.log.levels.INFO)
+          else
+            vim.notify("generate_logbook.py failed (exit " .. code .. ")", vim.log.levels.ERROR)
+          end
+        end)
+      end,
+    })
+  end)
 end
 
 return M

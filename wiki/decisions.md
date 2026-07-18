@@ -1,7 +1,7 @@
 ---
 title: decisions
 type: topic
-updated: 2026-07-09
+updated: 2026-07-18
 ---
 
 # decisions — major decisions and rejected alternatives
@@ -10,6 +10,20 @@ updated: 2026-07-09
 **decision → reason → rejected alternative → date**.
 
 ## Recorded
+
+### Removal of the yazi autosession plugin (2026-07-18)
+- **Decision**: drop `barbanevosa/autosession` from yazi entirely — `package.toml`
+  dep, `plugins/autosession.yazi/`, the `init.lua` `:setup()` call, and the `q`
+  → `save-and-quit` binding in `keymap.toml`.
+- **Reason**: its upstream GitHub repo is gone (404 on `barbanevosa/autosession`),
+  so `ya pkg` can no longer fetch/verify it — it was already a dead dependency,
+  just not yet cleaned out of the configs that referenced it.
+- **Rejected**: waiting for the repo to come back / pinning the last-known
+  rev+hash and vendoring it locally — not worth carrying a fork for a small
+  session-restore convenience with no upstream maintenance.
+- Same pass also fixed unrelated yazi v26.5.6 config breakage (`$schema` key →
+  `#:schema` comment, `title_format` → `ind-app-title` DDS event, `[tasks]`
+  worker fields, fetcher `id` → `group`) — see [yazi](yazi.md).
 
 ### Firefox → Helium as the default browser (2026-07-09)
 - **Decision**: use Helium as the default browser in Hyprland, kanata, zsh, and

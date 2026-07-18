@@ -1,6 +1,7 @@
 # A TOML linter such as https://taplo.tamasfe.dev/ can use this schema to validate your config.
 # If you encounter any issues, please make an issue at https://github.com/yazi-rs/schemas.
-"$schema" = "https://yazi-rs.github.io/schemas/keymap.json"
+
+#:schema https://yazi-rs.github.io/schemas/keymap.json
 
 [mgr]
 
@@ -147,11 +148,6 @@ desc = "sudo delete"
 on = ["R", "m"]
 run = "plugin sudo -- chmod"
 desc = "sudo chmod"
-
-[[mgr.prepend_keymap]]
-on = ["q"]
-run = "plugin autosession -- save-and-quit"
-desc = "Save session and quit"
 
 keymap = [
 	{ on = "<Esc>", run = "escape",             desc = "Exit visual mode, clear selection, or cancel search" },

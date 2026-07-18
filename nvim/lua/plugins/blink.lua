@@ -158,6 +158,10 @@ return {
       ["<S-j>"] = { "scroll_documentation_down", "fallback" },
       ["<C-space>"] = { "show", "show_documentation", "hide_documentation" },
       ["<C-e>"] = { "hide", "fallback" },
+      -- <C-y> on RU (ЙЦУКЕН) layout: same physical key sends Cyrillic н.
+      -- Insert mode keeps whatever layout was active (see autocmds.lua), so
+      -- this covers accept without forcing a layout switch to confirm.
+      ["<C-н>"] = { "select_and_accept", "fallback" },
     }
 
     return opts

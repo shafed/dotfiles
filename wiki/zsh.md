@@ -71,8 +71,13 @@ covers:
 - nvim: `vi`/`v`=nvim; `neobean`/`nb` —
   alternate `NVIM_APPNAME` (see [nvim](nvim.md)).
 - misc: `y`=yazi, `ta`/`tl`=taskwarrior, `ai`=aichat, `pulldeez`=git pull
-  dotfiles + resource, `cdd`=`z -`.
+  dotfiles + resource, `cdd`=`cd -`.
 - `cd` is overridden with **zoxide** (`zoxide init zsh --cmd cd`).
+
+⚠️ Gotcha: `--cmd cd` makes zoxide's query logic live under `cd` only — unlike
+the default `zoxide init zsh` (no `--cmd`), it does **not** also define a `z`
+command. `cdd` was aliased to `z -` and silently failed (`z: command not
+found`); fixed to `cd -`, since that's what zoxide's `cd` override maps `-` to.
 
 ⚠️ Gotcha: zoxide-init must come **last** in zshrc. OMZ installs its own
 chpwd hooks, which causes `zoxide doctor` to give a false "initialized too early" —

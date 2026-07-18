@@ -67,7 +67,8 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
 (defalias
   aterm (cmd zsh -lc "$HOME/.config/kanata/switchApp.sh kitty kitty")
   azen (cmd helium-browser)
-  sshot (cmd flameshot gui --clipboard)
+  sshot-region (cmd sh -c "hyprshot -m region --raw | satty --filename - --resize smart --copy-command wl-copy --actions-on-enter save-to-clipboard --early-exit copy")
+  sshot-full (cmd hyprshot -m output --clipboard-only --silent)
   sw (cmd hyprctl switchxkblayout kanata next)
   k-navi (fork up C-S-tab (lalt ralt))
   j-navi (fork down C-tab (lalt ralt))
@@ -237,7 +238,7 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
   ;; mods (left hand, free while w is held)
  f (t! th $tot 160 f lsft)
  d (t! th $tot 300 d lctl)
- s @sshot
+ s (t! th $tap-time $hold-time @sshot-full @sshot-region) ;; tap=full screen->clipboard, hold=region+satty annotate
 )
 
 (defchordsv2

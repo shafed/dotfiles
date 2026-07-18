@@ -1,7 +1,7 @@
 ---
 title: hypr
 type: component
-updated: 2026-07-09
+updated: 2026-07-18
 covers:
   - hypr/hyprland.conf
   - hypr/hypridle.conf
@@ -64,9 +64,9 @@ was removed — no longer needed.
 can still start in the same instant `default.target` is reached, racing
 uwsm's environment import — `copyq.service` did exactly this (crash-looped on
 "no Qt platform plugin" until it hit systemd's start-limit) until
-`After=graphical-session.target` was added, matching `flameshot.service`/
-`kanata.service`. Any user service that touches the Wayland/X11 session needs
-that `After=` line, not just `WantedBy=default.target`.
+`After=graphical-session.target` was added, matching `kanata.service`. Any
+user service that touches the Wayland/X11 session needs that `After=` line,
+not just `WantedBy=default.target`.
 
 ## Non-trivial bindings (only the "why")
 
@@ -85,6 +85,9 @@ The full map is in [keymap](keymap.md). Here only the non-obvious bits:
 - `suppress-maximize-events` for all classes — applications don't "maximize" themselves.
 - Telegram → workspace 5, kitty → workspace 1 (stable placement).
 - `hyprland-run`/CopyQ — floated with a fixed position.
+- `com.gabm.satty` (screenshot annotation, see [kanata](kanata.md)) — floated at
+  `95% 95%`, centered; without this it tiles into the dwindle layout at a small
+  size instead of taking most of the screen.
 
 ## idle / lock / suspend
 

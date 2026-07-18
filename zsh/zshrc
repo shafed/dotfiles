@@ -185,7 +185,6 @@ bindkey -v
 # gh/gl -> beginning/end of line in normal mode
 bindkey -M vicmd 'gh' vi-first-non-blank
 bindkey -M vicmd 'gl' end-of-line
-alias vi="nvim"
 alias v="nvim"
 alias cl="claude"
 

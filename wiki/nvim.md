@@ -1,7 +1,7 @@
 ---
 title: nvim
 type: component
-updated: 2026-07-17
+updated: 2026-07-25
 covers:
   - nvim/
 ---
@@ -168,9 +168,12 @@ normal mode:
   key hit immediately after `Esc` can still arrive as Cyrillic; the
   ЙЦУКЕН→QWERTY `langmap` in `options.lua` translates it. Covers all letters
   plus punctuation on the same physical keys (`ж→;`, `б→,`, `ю→.`, `х→[`,
-  `ъ→]`, `э→'`, `ё→\``, `.→/`, `,→?`); `;` and `,` are langmap metachars and
-  need `\`-escaping. ⚠️ The pre-2026-07-08 langmap silently lacked the `ы→s`
-  pair and all punctuation.
+  `ъ→]`, `э→'`, `ё→\``). The ambiguous `.→/` and `,→?` pairs are deliberately
+  omitted: once normal mode has switched to US, `langmap` cannot distinguish a
+  literal US `.` from the same character produced by the RU slash key, so that
+  mapping turns repeat (`.`) into search (`/`). `;` and `,` are langmap
+  metachars and need `\`-escaping. ⚠️ The pre-2026-07-08 langmap silently
+  lacked the `ы→s` pair and punctuation.
 - Why langmap alone wasn't enough: it doesn't apply in cmdline (`:ц` is not
   `:w`) and plugins that read input via `getchar()` (flash, which-key,
   mini.surround) bypass it — hence the auto-switch as the primary mechanism.

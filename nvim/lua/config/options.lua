@@ -35,6 +35,9 @@ vim.opt.conceallevel = 2
 -- autocmds.lua: catches keys typed in the short window before the async
 -- hyprctl switch lands. Punctuation pairs keep the same physical keys as US
 -- (ж→; б→, ю→. etc.); `;` and `,` are langmap metachars, hence the escapes.
+-- Do not map the literal US `.`/`,` to `/`/`?`: langmap cannot tell which
+-- keyboard layout produced them, so those pairs break `.` repeat in normal
+-- mode after the layout has already switched to US.
 vim.opt.langmap = {
   "ФИСВУАПРШОЛДЬТЩЗЙКЫЕГМЦЧНЯ;ABCDEFGHIJKLMNOPQRSTUVWXYZ",
   "фисвуапршолдьтщзйкыегмцчня;abcdefghijklmnopqrstuvwxyz",
@@ -52,8 +55,6 @@ vim.opt.langmap = {
   'Э"',
   "ё`",
   "Ё~",
-  "./",
-  "\\,?",
 }
 
 -- Winbar: see nvim/lua/utils/winbar.lua for the "(buffer count) filename" +

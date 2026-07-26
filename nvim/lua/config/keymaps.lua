@@ -2,6 +2,7 @@ local folding = require("utils.folding")
 local tasks = require("utils.tasks")
 local gcal = require("utils.gcal")
 local obsidian = require("utils.obsidian")
+local review = require("utils.review")
 
 vim.keymap.set("x", "p", '"_dP') -- Don't copy visual in clipboard
 
@@ -238,6 +239,23 @@ vim.keymap.set({ "n", "v" }, "gj", function()
   vim.cmd("silent! " .. pattern)
   vim.cmd("nohlsearch")
 end, { desc = "[P]Go to next markdown header" })
+
+-- Daily note review (lua/utils/review.lua). No yearly keymap on purpose: the
+-- yearly pass should read the 12 monthly notes, not 365 daily ones. Use
+-- :Review <n> for any other window.
+vim.keymap.set("n", "<leader>lw", function()
+  review.review(7)
+end, { desc = "[P]Log Week: review last 7 daily notes" })
+
+vim.keymap.set("n", "<leader>lm", function()
+  review.review(30)
+end, { desc = "[P]Log Month: review last 30 daily notes" })
+
+vim.keymap.set("n", "<leader>ld", review.on_this_day, { desc = "[P]Log Day: this day in previous years" })
+
+vim.api.nvim_create_user_command("Review", function(opts)
+  review.review(tonumber(opts.args))
+end, { nargs = "?", desc = "Review the last N daily notes (default 7)" })
 
 -- Workout log helpers (lua/utils/obsidian.lua)
 vim.keymap.set("n", "<leader>lc", obsidian.copy_workout_table, { desc = "[P]Log Copy: workout table to clipboard" })

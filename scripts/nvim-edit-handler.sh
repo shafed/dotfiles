@@ -19,7 +19,7 @@ log "uri=$uri"
 # Strip the scheme and decode percent-encoding -> absolute file path.
 path="${uri#nvim-edit://}"
 path="$(printf '%b' "${path//%/\\x}")"
-path="${path%$'\n'}"   # drop any stray trailing newline
+path="${path%$'\n'}" # drop any stray trailing newline
 
 if [[ -z "$path" || ! -e "$path" ]]; then
   notify-send "nvim-edit" "File not found: $path" 2>/dev/null || true

@@ -88,8 +88,8 @@ if [[ -n "$target" ]]; then
         wtype -M ctrl -k v -m ctrl
         log "pasted into $target (class=$target_class, ctrl+v)"
       fi
-    ' _ "$target" "$panel_pid" "$log_file" \
-    || log "systemd-run failed; content left on clipboard"
+    ' _ "$target" "$panel_pid" "$log_file" ||
+    log "systemd-run failed; content left on clipboard"
 else
   log "no target window recorded; content left on clipboard"
 fi

@@ -295,8 +295,9 @@ vim.keymap.set("n", "<leader>lr", function()
   end)
 end, { desc = "[P]Logbook Reload: rebuild HTML" })
 
--- Автопуш Obsidian Vault: best-effort (с кулдауном) при потере фокуса,
--- гарантированный (синхронный, без кулдауна) перед реальным выходом --
+-- Автопуш Obsidian Vault: с кулдауном при потере фокуса (не спамить commit/push
+-- на алт-табе), без кулдауна перед реальным выходом (не дать кулдауну "съесть"
+-- пуш, который на самом деле важен). Оба варианта не блокируют выход из nvim --
 -- см. комментарий в utils/obsidian.lua
 vim.api.nvim_create_autocmd("FocusLost", {
   desc = "Autopush Obsidian Vault (best-effort)",
@@ -306,13 +307,13 @@ vim.api.nvim_create_autocmd("FocusLost", {
 vim.api.nvim_create_autocmd({ "QuitPre", "VimSuspend", "VimLeavePre" }, {
   desc = "Autopush Obsidian Vault (guaranteed, on exit)",
   callback = function()
-    obsidian.push_sync(true)
+    obsidian.push_now(true)
   end,
 })
 
 -- Ручной кеймап
 vim.keymap.set("n", "<leader>go", function()
-  obsidian.push_sync(false)
+  obsidian.push_now(false)
 end, { desc = "[P]Autopush Obsidian Vault" })
 
 -- Grug

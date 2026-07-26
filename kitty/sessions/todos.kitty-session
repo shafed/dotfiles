@@ -2,6 +2,6 @@ layout tall
 
 cd ~/obsidian/notes
 
-launch --title "todos" /bin/zsh -i -c 'git pull && nvim todos.md; exec zsh'
+launch --title "todos" /bin/zsh -i -c '~/dotfiles/scripts/obsidian-sync.sh pull && nvim todos.md; exec zsh'
 focus
 focus_os_window

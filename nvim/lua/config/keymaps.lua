@@ -295,22 +295,24 @@ vim.keymap.set("n", "<leader>lr", function()
   end)
 end, { desc = "[P]Logbook Reload: rebuild HTML" })
 
--- Автопуш Obsidian Vault при разных событиях
-vim.api.nvim_create_autocmd({
-  "FocusLost", -- переключился на другое окно
-  "QuitPre", -- перед выходом из Neovim
-  "VimSuspend", -- Ctrl+Z (suspend)
-  "VimLeavePre", -- перед закрытием Neovim
-}, {
-  desc = "Autopush Obsidian Vault",
+-- Автопуш Obsidian Vault: best-effort (с кулдауном) при потере фокуса,
+-- гарантированный (синхронный, без кулдауна) перед реальным выходом --
+-- см. комментарий в utils/obsidian.lua
+vim.api.nvim_create_autocmd("FocusLost", {
+  desc = "Autopush Obsidian Vault (best-effort)",
   callback = obsidian.push_with_cooldown,
+})
+
+vim.api.nvim_create_autocmd({ "QuitPre", "VimSuspend", "VimLeavePre" }, {
+  desc = "Autopush Obsidian Vault (guaranteed, on exit)",
+  callback = function()
+    obsidian.push_sync(true)
+  end,
 })
 
 -- Ручной кеймап
 vim.keymap.set("n", "<leader>go", function()
-  if not obsidian.push(false) then
-    print("Not in Obsidian Vault")
-  end
+  obsidian.push_sync(false)
 end, { desc = "[P]Autopush Obsidian Vault" })
 
 -- Grug

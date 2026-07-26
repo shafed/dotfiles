@@ -1,53 +1,61 @@
 -- Obsidian vault helpers: auto commit+push of ~/obsidian, saving training
 -- notes and exporting workout tables (used by <leader>l* and <leader>go).
+--
+-- Two push paths, both delegating the actual git work to
+-- ../../../scripts/obsidian-sync.sh (also used by the kitty session files
+-- and daily-notes.sh for the pull side):
+--  - push_with_cooldown: fire-and-forget, for frequent non-terminal events
+--    (FocusLost). Gated by a cooldown so alt-tabbing doesn't spam commits.
+--  - push_sync: blocking, for events where nvim is about to actually exit
+--    (QuitPre/VimSuspend/VimLeavePre). Always runs, ignoring the cooldown --
+--    otherwise a push in the middle of its cooldown window can eat the one
+--    push that actually mattered, leaving edits unpushed across devices
+--    until the window expires.
 
 local M = {}
 
--- Commit and push the vault. Returns false when cwd is not inside it.
-function M.push(silent)
-  local vault_path = vim.fn.expand("~/obsidian")
-  local current_dir = vim.fn.getcwd()
+local SYNC_SCRIPT = vim.fn.expand("~/dotfiles/scripts/obsidian-sync.sh")
+local VAULT_PATH = vim.fn.expand("~/obsidian")
 
-  if current_dir:find(vault_path, 1, true) == nil then
-    return false
-  end
-
-  vim.cmd("silent! wa")
-
-  local commit_msg = "Vault backup: " .. os.date("%Y-%m-%d %H:%M:%S")
-  -- Commit only when there is something to commit, but always push, so
-  -- earlier unpushed commits don't get stuck until the next change
-  local cmd = string.format(
-    "cd %s && git add . && (git diff --cached --quiet || git commit -m '%s') && git push",
-    vault_path,
-    commit_msg
-  )
-
-  vim.fn.jobstart(cmd, {
-    on_exit = function(_, code)
-      if code == 0 and not silent then
-        vim.schedule(function()
-          print("Obsidian Vault pushed successfully")
-        end)
-      end
-    end,
-  })
-
-  return true
+local function in_vault()
+  return vim.fn.getcwd():find(VAULT_PATH, 1, true) ~= nil
 end
 
--- Cooldown защита
 local last_push_time = 0
 local PUSH_COOLDOWN = 3600
 
 function M.push_with_cooldown()
+  if not in_vault() then
+    return
+  end
   local now = os.time()
   if now - last_push_time < PUSH_COOLDOWN then
     return
   end
-  if M.push(true) then
-    last_push_time = now
+  last_push_time = now
+
+  vim.cmd("silent! wa")
+  vim.fn.jobstart({ SYNC_SCRIPT, "push", "silent" })
+end
+
+-- Returns false when cwd is not inside the vault.
+function M.push_sync(silent)
+  if not in_vault() then
+    if not silent then
+      print("Not in Obsidian Vault")
+    end
+    return false
   end
+
+  vim.cmd("silent! wa")
+  local out = vim.fn.system({ SYNC_SCRIPT, "push" })
+  if vim.v.shell_error ~= 0 then
+    vim.notify("Obsidian push failed:\n" .. out, vim.log.levels.ERROR)
+  elseif not silent then
+    print("Obsidian Vault pushed successfully")
+  end
+
+  return true
 end
 
 -- Copy workout data from last markdown table to clipboard lamw25wmal

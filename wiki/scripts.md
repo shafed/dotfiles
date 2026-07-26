@@ -319,17 +319,37 @@ asynchronous):
 
 ## Misc
 
+### obsidian-sync.sh
+
+Shared git sync for `~/obsidian`, single source of truth for pull-on-entry and
+push-on-exit so call sites stop inlining their own `git pull`/`git push`.
+`{pull|push} [silent]`:
+
+- `pull` — `git pull --rebase --autostash`, throttled to once per 30s via a
+  `~/.cache/obsidian-sync/last-pull` marker (multiple kitty sessions opened back
+  to back, e.g. todos → obsidian, would otherwise repull within seconds).
+- `push` — `git add -A`, commit as `Vault backup: <timestamp>` if there's
+  anything staged, then `git push`; `silent` suppresses the success message.
+
+Call sites: [`../kitty/sessions/obsidian.kitty-session`](../kitty/sessions/obsidian.kitty-session)
+and `daily-notes.sh` (pull side, see below and [sessions](sessions.md)),
+[`../nvim/lua/utils/obsidian.lua`](../nvim/lua/utils/obsidian.lua) (push side —
+`push_with_cooldown` fire-and-forget for frequent events, `push_sync` blocking
+for events where nvim is about to exit, so a mid-cooldown push doesn't eat the
+one that actually mattered).
+
 ### daily-notes.sh
 
 Opens today's daily note in nvim inside a **per-day kitty session**
 (`daily-<note>.kitty-session`), creating the note and its `year/month` directory
 on first access. Layout: `~/obsidian/periodic/<YYYY>/<MM-Mon>/<...>.md`.
 
-⚠️ Note (stale comment): the shebang and header still mention tmux, but the
-script has already migrated to **kitty native sessions**
-(`kitten @ action goto_session`); on first entry it does
-`git -C ~/obsidian pull` and `persistence.load()` instead of the old tmux "s".
-See [sessions](sessions.md).
+On first entry it does `obsidian-sync.sh pull`, then opens straight into the
+note (`nvim "+norm G" <full_path>`) — deliberately **no** `persistence.load()`.
+Earlier versions tried combining the two for a "reopen last layout"
+convenience, but `note_dir` is the monthly folder shared by every day's note
+that month, so persistence could restore a previous day's multi-tab layout
+instead of showing today's note. See [sessions](sessions.md) for the history.
 
 ### symlayout-watch.sh
 

@@ -7,11 +7,13 @@ covers:
   - kitty/scripts
   - scripts/nvim-edit-handler.sh
   - scripts/daily-notes.sh
+  - scripts/obsidian-sync.sh
+  - nvim/lua/utils/obsidian.lua
 ---
 
 # sessions — native kitty sessions
 
-🚧 Partially filled in. See [kanata](kanata.md) (how they're driven) and [keymap](keymap.md).
+See [kanata](kanata.md) (how they're driven) and [keymap](keymap.md).
 
 ## Migration from tmux to kitty native sessions
 
@@ -26,8 +28,11 @@ kitty sessions** (`goto_session`, session files in
 - the session file is declarative: `layout`, `cd`, `launch --title ...`, `focus`.
 
 Trade-off: some tmux conveniences (layout persistence, "reopen last session")
-had to be reproduced by hand. For example the daily-note session emulates the old
-"press s on the start screen" via `require("persistence").load()` in nvim.
+had to be reproduced by hand — see [`../kitty/sessions/dotfiles.kitty-session`](../kitty/sessions/dotfiles.kitty-session)
+and `projects.kitty-session`, which call `require("persistence").load()` to
+emulate the old "press s on the start screen". The daily-note session
+deliberately does **not** do this (see below) — it must always land on the
+note itself, not on whatever was last restored for that directory.
 
 ## How kanata drives sessions
 
@@ -50,7 +55,8 @@ Supports `--named <name>` for addressed invocation (used by nvim-edit-handler).
 ## obsidian session and training logbook
 
 The `obsidian` session ([`../kitty/sessions/obsidian.kitty-session`](../kitty/sessions/obsidian.kitty-session))
-launches a plain nvim in `~/obsidian` after `git pull`. It intentionally does
+launches a plain nvim in `~/obsidian` after `obsidian-sync.sh pull` (see
+[scripts](scripts.md)). It intentionally does
 not call `persistence.load()`: entering the vault should start from nvim's
 normal startup state instead of reopening the previous editing layout
 automatically.
@@ -67,15 +73,61 @@ caught by [`../scripts/nvim-edit-handler.sh`](../scripts/nvim-edit-handler.sh) (
 since the exact `nvim.<pid>.0` doesn't always match the foreground process's pid. Fragile
 spot — if nvim didn't bring up a `--listen` socket, the send-text fallback kicks in.
 
-## daily-notes.sh — status (tmux is no longer used)
+### obsidian-sync.sh — vault git sync
 
-⚠️ Fact as of 2026-07-01: the shebang **comment** in
-[`../scripts/daily-notes.sh`](../scripts/daily-notes.sh) still says "tmux
-session", but the code **doesn't use** tmux. The script generates a temporary
+The vault syncs across multiple devices, so both directions matter: pulling
+remote changes before editing, and getting local edits pushed out promptly.
+This used to be three copy-pasted `git pull` one-liners (`obsidian.kitty-session`,
+`todos.kitty-session`, `daily-notes.sh`) plus an inline commit/push shell
+string built in `nvim/lua/utils/obsidian.lua` — now consolidated into
+[`../scripts/obsidian-sync.sh`](../scripts/obsidian-sync.sh) (`pull` / `push`
+subcommands), called from all four sites.
+
+- `pull`: `git pull --rebase --autostash`, throttled — skipped if the last
+  pull happened less than 30s ago (marker file in `~/.cache/obsidian-sync/`),
+  so opening `todos` then `obsidian` back to back doesn't hit the remote
+  twice. On failure it prints to stderr and exits nonzero; since the session
+  files chain with `&&`, that stops nvim from launching silently on top of a
+  broken pull — you land in the shell with the error visible instead.
+- `push`: `git add -A`, commit only if there's something staged, always
+  `git push` (so an earlier unpushed commit doesn't get stuck waiting for a
+  new change).
+
+`nvim/lua/utils/obsidian.lua` calls `push` two ways, since a single
+async-fire-and-forget path used to be both killable mid-flight by nvim
+exiting and silently skippable by its own cooldown at the worst time:
+
+- `push_with_cooldown` (bound to `FocusLost`): async (`jobstart`), gated by a
+  1h cooldown — best-effort, so alt-tabbing doesn't spam commits/pushes.
+- `push_sync` (bound to `QuitPre`/`VimSuspend`/`VimLeavePre`, and `<leader>go`):
+  synchronous (`vim.fn.system`), **ignores the cooldown**. Exit events are the
+  last chance to push before the process disappears, so they must not be
+  skipped just because a recent `FocusLost` push already consumed the
+  cooldown window — that used to mean edits could sit unpushed across
+  devices for up to an hour.
+
+## daily-notes.sh
+
+[`../scripts/daily-notes.sh`](../scripts/daily-notes.sh) generates a temporary
 kitty session file at `~/.cache/kitty-sessions/daily-<note>.kitty-session` and
-calls `kitten @ action goto_session`. One kitty session per day, nvim with
-`persistence.load()`. The comment is stale — worth fixing at some point, the behavior
-is already native-kitty.
+calls `kitten @ action goto_session`. One kitty session per day: pulls via
+`obsidian-sync.sh pull` (see [scripts](scripts.md)), then `nvim "+norm G"
+<full_path>` — always opens straight into the note, no `persistence.load()`.
+
+⚠️ Gotcha (history, 2026-07-26): earlier versions tried to combine the daily
+note with `persistence.load()`, to get the "reopen last layout" convenience
+(same rationale discussed above for why the `obsidian` session avoids it, and
+why `dotfiles`/`projects` sessions do use it). This never landed the note
+reliably: `note_dir` is the *monthly* folder, shared by every day's note that
+month, and persistence overwrites that same cwd-keyed session on every exit —
+so `persistence.load()` restores whatever multi-tab/multi-window layout was
+open when a *previous* day's session exited. Reordering commands
+(`persistence.load()` before opening the note) and even opening the note with
+`+tabedit` instead of `+edit` (a fresh tab always wins focus) reduced how
+often the wrong thing showed up on screen, but the daily note is meant to be a
+hard guarantee, not "usually" — so `persistence.load()` was dropped
+entirely for this session, the same call the `obsidian` session already
+avoids for the same reason.
 
 ## Splits and layout
 

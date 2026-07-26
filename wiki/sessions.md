@@ -1,7 +1,7 @@
 ---
 title: sessions
 type: topic
-updated: 2026-07-18
+updated: 2026-07-26
 covers:
   - kitty/sessions
   - kitty/scripts
@@ -50,8 +50,10 @@ Supports `--named <name>` for addressed invocation (used by nvim-edit-handler).
 ## obsidian session and training logbook
 
 The `obsidian` session ([`../kitty/sessions/obsidian.kitty-session`](../kitty/sessions/obsidian.kitty-session))
-launches nvim in `~/obsidian` after `git pull`, restoring the layout via
-persistence.
+launches a plain nvim in `~/obsidian` after `git pull`. It intentionally does
+not call `persistence.load()`: entering the vault should start from nvim's
+normal startup state instead of reopening the previous editing layout
+automatically.
 
 The training logbook opens files via `nvim-edit://<path>` links, which are
 caught by [`../scripts/nvim-edit-handler.sh`](../scripts/nvim-edit-handler.sh) (see

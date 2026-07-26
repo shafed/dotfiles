@@ -1,7 +1,7 @@
 ---
 title: nvim
 type: component
-updated: 2026-07-25
+updated: 2026-07-26
 covers:
   - nvim/
 ---
@@ -66,6 +66,26 @@ nvim is the editing side of the training logbook; generation and viewing are in
   cooldown) so note edits get backed up without manual commits.
 - `nvim-edit-handler.sh` in [scripts](scripts.md) — the reverse link: the logbook
   opens a note for editing in nvim.
+
+## Periodic review of daily notes
+
+`lua/utils/review.lua` turns daily notes into temporary read-only markdown
+buffers so reviews happen inside the editor without creating another generated
+artifact in the vault:
+
+- `<leader>lw` reviews the previous 7 days and `<leader>lm` the previous 30;
+  `:Review [days]` provides an arbitrary window.
+- `<leader>ld` collects the same calendar day from earlier years.
+- Untouched template notes are omitted, and YAML/meta-bind boilerplate is
+  stripped so the combined buffer emphasizes what was actually written.
+- Month-sized reviews also summarize the most-edited markdown files from the
+  vault's git history. The vault is already auto-committed, so git provides a
+  useful attention signal without adding review metadata to notes.
+
+There is deliberately no yearly shortcut: a yearly review should build from
+the twelve monthly notes rather than flattening 365 daily notes into one
+buffer. Daily paths assume the vault's existing English `strftime` naming
+convention under `periodic/YYYY/MM-Mon/`.
 
 ⚠️ Gotcha: LazyVim core binds `<leader>l` directly to `:Lazy` (exact match, not
 a which-key group), which silently swallowed the `[P]Log` keys (`lc`/`lp`/`lv`/`lr`)

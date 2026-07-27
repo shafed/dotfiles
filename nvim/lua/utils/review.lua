@@ -52,15 +52,14 @@ local function meaningful(lines)
   return size >= 20
 end
 
--- periodic/2026/07-Jul/2026-07-25-Saturday.md
--- Month and weekday names come from strftime, so this assumes an English
--- locale (LANG=en_US.UTF-8 here), same as the names the vault already uses
+-- journal/2026/2026-07-25-Saturday.md
+-- Weekday names come from strftime, so this assumes an English locale
+-- (LANG=en_US.UTF-8 here), same as the names the vault already uses.
 local function daily_path(time)
   return string.format(
-    "%s/periodic/%s/%s/%s.md",
+    "%s/journal/%s/%s.md",
     vault,
     os.date("%Y", time),
-    os.date("%m-%b", time),
     os.date("%Y-%m-%d-%A", time)
   )
 end
@@ -146,12 +145,11 @@ function M.on_this_day()
 
   for year = 2021, today.year - 1 do
     -- The weekday differs from year to year, so glob the tail of the name
+    -- instead of constructing it.
     local pattern = string.format(
-      "%s/periodic/%d/%02d-%s/%d-%02d-%02d-*.md",
+      "%s/journal/%d/%d-%02d-%02d-*.md",
       vault,
       year,
-      today.month,
-      os.date("%b"),
       year,
       today.month,
       today.day

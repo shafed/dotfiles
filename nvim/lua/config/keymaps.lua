@@ -240,9 +240,8 @@ vim.keymap.set({ "n", "v" }, "gj", function()
   vim.cmd("nohlsearch")
 end, { desc = "[P]Go to next markdown header" })
 
--- Daily note review (lua/utils/review.lua). No yearly keymap on purpose: the
--- yearly pass should read the 12 monthly notes, not 365 daily ones. Use
--- :Review <n> for any other window.
+-- Daily note review (lua/utils/review.lua). Keep the built-in windows focused;
+-- use :Review <n> for an arbitrary span instead of adding more shortcuts.
 vim.keymap.set("n", "<leader>lw", function()
   review.review(7)
 end, { desc = "[P]Log Week: review last 7 daily notes" })

@@ -25,11 +25,11 @@ covers:
 - Key logic is factored out into `lua/utils/` (folding, kitty, tasks, obsidian, gcal)
   so `keymaps.lua` doesn't bloat.
 - On startup, nvim advances markdown-oxide's daily-notes folder in the Obsidian
-  vault to the current month and commits `.moxide.toml` as a path-only commit.
+  vault to the current year and commits `.moxide.toml` as a path-only commit.
   Keeping this automatic prevents the language server from searching an old
-  month's directory, while `git commit --only` avoids sweeping unrelated vault
+  year's directory, while `git commit --only` avoids sweeping unrelated vault
   edits or already-staged notes into this bookkeeping commit. No commit is made
-  when the configured month is already current.
+  when the configured year is already current.
 - **Buffer count/filename/path indicator lives in `winbar`**, not lualine's tabline
   (`lua/utils/winbar.lua`, mirrors linkarzu's approach). `bufferline.nvim` is disabled
   since winbar covers its role. Reason: winbar is per-window and isn't tied to
@@ -88,10 +88,10 @@ artifact in the vault:
   vault's git history. The vault is already auto-committed, so git provides a
   useful attention signal without adding review metadata to notes.
 
-There is deliberately no yearly shortcut: a yearly review should build from
-the twelve monthly notes rather than flattening 365 daily notes into one
-buffer. Daily paths assume the vault's existing English `strftime` naming
-convention under `periodic/YYYY/MM-Mon/`.
+There is deliberately no yearly shortcut: flattening 365 daily notes into one
+buffer is not a useful reading surface, while `:Review [days]` still permits
+deliberate longer windows. Daily paths follow the vault's English `strftime`
+naming convention under `journal/YYYY/YYYY-MM-DD-Weekday.md`.
 
 ⚠️ Gotcha: LazyVim core binds `<leader>l` directly to `:Lazy` (exact match, not
 a which-key group), which silently swallowed the `[P]Log` keys (`lc`/`lp`/`lv`/`lr`)

@@ -1,7 +1,7 @@
 ---
 title: scripts
 type: component
-updated: 2026-07-15
+updated: 2026-07-27
 covers:
   - scripts/
 ---
@@ -341,15 +341,15 @@ one that actually mattered).
 ### daily-notes.sh
 
 Opens today's daily note in nvim inside a **per-day kitty session**
-(`daily-<note>.kitty-session`), creating the note and its `year/month` directory
-on first access. Layout: `~/obsidian/periodic/<YYYY>/<MM-Mon>/<...>.md`.
+(`daily-<note>.kitty-session`), creating the note and its year directory on
+first access. Layout: `~/obsidian/journal/<YYYY>/<YYYY-MM-DD-Weekday>.md`.
 
 On first entry it does `obsidian-sync.sh pull`, then opens straight into the
 note (`nvim "+norm G" <full_path>`) — deliberately **no** `persistence.load()`.
 Earlier versions tried combining the two for a "reopen last layout"
-convenience, but `note_dir` is the monthly folder shared by every day's note
-that month, so persistence could restore a previous day's multi-tab layout
-instead of showing today's note. See [sessions](sessions.md) for the history.
+convenience, but the year directory is shared by every daily note, so
+persistence could restore an older multi-tab layout instead of showing today's
+note. See [sessions](sessions.md) for the history.
 
 ### symlayout-watch.sh
 

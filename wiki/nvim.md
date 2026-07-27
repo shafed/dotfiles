@@ -1,7 +1,7 @@
 ---
 title: nvim
 type: component
-updated: 2026-07-26
+updated: 2026-07-27
 covers:
   - nvim/
 ---
@@ -24,6 +24,12 @@ covers:
   recolored (bold=orange, italic=green).
 - Key logic is factored out into `lua/utils/` (folding, kitty, tasks, obsidian, gcal)
   so `keymaps.lua` doesn't bloat.
+- On startup, nvim advances markdown-oxide's daily-notes folder in the Obsidian
+  vault to the current month and commits `.moxide.toml` as a path-only commit.
+  Keeping this automatic prevents the language server from searching an old
+  month's directory, while `git commit --only` avoids sweeping unrelated vault
+  edits or already-staged notes into this bookkeeping commit. No commit is made
+  when the configured month is already current.
 - **Buffer count/filename/path indicator lives in `winbar`**, not lualine's tabline
   (`lua/utils/winbar.lua`, mirrors linkarzu's approach). `bufferline.nvim` is disabled
   since winbar covers its role. Reason: winbar is per-window and isn't tied to

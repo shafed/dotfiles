@@ -89,6 +89,14 @@ return {
           title = "Obsidian Notes",
           format = "file",
           show_empty = true,
+          -- Snacks' matcher uses Lua string.lower(), which only handles ASCII.
+          -- Normalize both sides with Vim's Unicode-aware tolower() so Russian
+          -- filenames and aliases are matched case-insensitively too.
+          filter = {
+            transform = function(_, filter)
+              filter.pattern = vim.fn.tolower(filter.pattern)
+            end,
+          },
           finder = function()
             local items = {}
             local files = vim.fn.systemlist({
@@ -105,7 +113,7 @@ return {
                 text = text .. " " .. table.concat(aliases, " ")
               end
               table.insert(items, {
-                text = text,
+                text = vim.fn.tolower(text),
                 file = file,
               })
             end

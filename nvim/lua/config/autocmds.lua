@@ -1,8 +1,12 @@
--- Update markdown-oxide daily_notes_folder to current month on startup
+-- Update markdown-oxide daily_notes_folder to the current year on startup.
+-- The vault stores journals as journal/<YYYY>/<YYYY-MM-DD-Weekday>.md -- the
+-- month used to be a directory level too, but it only repeated the date that
+-- is already in the filename. Keep this in sync with scripts/daily-notes.sh,
+-- which creates the notes.
 vim.api.nvim_create_autocmd("VimEnter", {
   once = true,
   callback = function()
-    local folder = "periodic/" .. os.date("%Y/%m-%b")
+    local folder = "journal/" .. os.date("%Y")
     local config = vim.fn.expand("~/obsidian/.moxide.toml")
     if not vim.uv.fs_stat(config) then
       return
@@ -33,7 +37,7 @@ vim.api.nvim_create_autocmd("VimEnter", {
       "commit",
       "--only",
       "-m",
-      "chore: update markdown-oxide daily notes month",
+      "chore: update markdown-oxide daily notes year",
       "--",
       ".moxide.toml",
     }, { text = true }, function(result)

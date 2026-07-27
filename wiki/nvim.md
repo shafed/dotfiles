@@ -24,12 +24,20 @@ covers:
   recolored (bold=orange, italic=green).
 - Key logic is factored out into `lua/utils/` (folding, kitty, tasks, obsidian, gcal)
   so `keymaps.lua` doesn't bloat.
-- On startup, nvim advances markdown-oxide's daily-notes folder in the Obsidian
-  vault to the current year and commits `.moxide.toml` as a path-only commit.
-  Keeping this automatic prevents the language server from searching an old
-  year's directory, while `git commit --only` avoids sweeping unrelated vault
-  edits or already-staged notes into this bookkeeping commit. No commit is made
-  when the configured year is already current.
+- Nothing in the config rewrites `.moxide.toml` any more. The vault's journal is
+  a flat `journal/` — the date lives only in the filename — so
+  `daily_notes_folder = "journal"` never goes stale. An earlier `VimEnter`
+  autocmd advanced that setting (first to the current month, later the current
+  year) and committed the file on every rollover; flattening the folder removed
+  the reason for it.
+
+  markdown-oxide also accepts a date in `dailynote` itself (a `/` in the format
+  nests, since it builds the path with `Path::join`), which would have kept the
+  year directories without the autocmd. That option was rejected: `daily.rs`
+  decides where an unresolved `[[2026-07-28-Tuesday]]` link should be created by
+  parsing the *link text* with the same format, and a format containing `/` no
+  longer matches a plain filename — such notes would land in
+  `new_file_folder_path` instead of the journal.
 - **Buffer count/filename/path indicator lives in `winbar`**, not lualine's tabline
   (`lua/utils/winbar.lua`, mirrors linkarzu's approach). `bufferline.nvim` is disabled
   since winbar covers its role. Reason: winbar is per-window and isn't tied to

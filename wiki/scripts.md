@@ -341,13 +341,14 @@ one that actually mattered).
 ### daily-notes.sh
 
 Opens today's daily note in nvim inside a **per-day kitty session**
-(`daily-<note>.kitty-session`), creating the note and its year directory on
-first access. Layout: `~/obsidian/journal/<YYYY>/<YYYY-MM-DD-Weekday>.md`.
+(`daily-<note>.kitty-session`), creating the note on first access. Layout:
+`~/obsidian/journal/<YYYY-MM-DD-Weekday>.md` — the folder is flat, so the path
+must stay in sync with `daily_notes_folder` in the vault's `.moxide.toml`.
 
 On first entry it does `obsidian-sync.sh pull`, then opens straight into the
 note (`nvim "+norm G" <full_path>`) — deliberately **no** `persistence.load()`.
 Earlier versions tried combining the two for a "reopen last layout"
-convenience, but the year directory is shared by every daily note, so
+convenience, but the journal directory is shared by every daily note, so
 persistence could restore an older multi-tab layout instead of showing today's
 note. See [sessions](sessions.md) for the history.
 

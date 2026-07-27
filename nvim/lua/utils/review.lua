@@ -52,16 +52,12 @@ local function meaningful(lines)
   return size >= 20
 end
 
--- journal/2026/2026-07-25-Saturday.md
+-- journal/2026-07-25-Saturday.md -- the folder is flat; the date lives only in
+-- the filename.
 -- Weekday names come from strftime, so this assumes an English locale
 -- (LANG=en_US.UTF-8 here), same as the names the vault already uses.
 local function daily_path(time)
-  return string.format(
-    "%s/journal/%s/%s.md",
-    vault,
-    os.date("%Y", time),
-    os.date("%Y-%m-%d-%A", time)
-  )
+  return string.format("%s/journal/%s.md", vault, os.date("%Y-%m-%d-%A", time))
 end
 
 -- Read a daily note, return its cleaned body only when it was actually used
@@ -147,9 +143,8 @@ function M.on_this_day()
     -- The weekday differs from year to year, so glob the tail of the name
     -- instead of constructing it.
     local pattern = string.format(
-      "%s/journal/%d/%d-%02d-%02d-*.md",
+      "%s/journal/%d-%02d-%02d-*.md",
       vault,
-      year,
       year,
       today.month,
       today.day

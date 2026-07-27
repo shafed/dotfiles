@@ -7,7 +7,42 @@ vim.api.nvim_create_autocmd("VimEnter", {
     if not vim.uv.fs_stat(config) then
       return
     end
-    vim.fn.system(string.format("sed -i 's|^daily_notes_folder = .*|daily_notes_folder = \"%s\"|' %s", folder, config))
+
+    local lines = vim.fn.readfile(config)
+    local changed = false
+    for i, line in ipairs(lines) do
+      if line:match("^daily_notes_folder = ") then
+        local replacement = string.format('daily_notes_folder = "%s"', folder)
+        if line ~= replacement then
+          lines[i] = replacement
+          changed = true
+        end
+        break
+      end
+    end
+    if not changed then
+      return
+    end
+
+    vim.fn.writefile(lines, config)
+    local vault = vim.fn.fnamemodify(config, ":h")
+    vim.system({
+      "git",
+      "-C",
+      vault,
+      "commit",
+      "--only",
+      "-m",
+      "chore: update markdown-oxide daily notes month",
+      "--",
+      ".moxide.toml",
+    }, { text = true }, function(result)
+      if result.code ~= 0 then
+        vim.schedule(function()
+          vim.notify("Failed to commit .moxide.toml: " .. vim.trim(result.stderr), vim.log.levels.WARN)
+        end)
+      end
+    end)
   end,
 })
 

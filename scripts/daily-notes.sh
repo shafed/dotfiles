@@ -1,21 +1,20 @@
 #!/usr/bin/env bash
 
 # Open today's daily note in neovim inside a per-day kitty session, creating the
-# note (and its year/month directory) on first use.
+# note (and its year directory) on first use.
 #
-# Layout: ~/obsidian/periodic/<YYYY>/<MM-Mon>/<YYYY-MM-DD-Weekday>.md
+# Layout: ~/obsidian/journal/<YYYY>/<YYYY-MM-DD-Weekday>.md
 
 set -euo pipefail
 
-main_note_dir="$HOME/obsidian/periodic"
+main_note_dir="$HOME/obsidian/journal"
 
 current_year=$(date +"%Y")
 current_month_num=$(date +"%m")
-current_month_abbr=$(date +"%b")
 current_day=$(date +"%d")
 current_weekday=$(date +"%A")
 
-note_dir="${main_note_dir}/${current_year}/${current_month_num}-${current_month_abbr}"
+note_dir="${main_note_dir}/${current_year}"
 note_name="${current_year}-${current_month_num}-${current_day}-${current_weekday}"
 full_path="${note_dir}/${note_name}.md"
 
@@ -32,7 +31,7 @@ fi
 # One kitty session per day, named after the note. On first use: pull the vault,
 # then always open straight into the note (cursor on the last line, +norm G) --
 # deliberately no persistence.load(), so a stale restored layout from a
-# previous day in this same monthly folder never gets in the way.
+# previous day in this same yearly folder never gets in the way.
 
 kitty_session_dir="${XDG_CACHE_HOME:-$HOME/.cache}/kitty-sessions"
 mkdir -p "$kitty_session_dir"

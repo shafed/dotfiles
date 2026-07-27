@@ -39,15 +39,17 @@ end
 -- A note counts as written only if it has something besides its headings,
 -- otherwise it's just the untouched template
 local function meaningful(lines)
-  local count = 0
+  local size = 0
 
   for _, line in ipairs(lines) do
     if not line:match("^%s*$") and not line:match("^#") then
-      count = count + 1
+      size = size + #vim.trim(line)
     end
   end
 
-  return count >= 2
+  -- Count characters, not lines: the older notes hold a whole day in a single
+  -- unwrapped paragraph, and a line count would discard them as empty
+  return size >= 20
 end
 
 -- periodic/2026/07-Jul/2026-07-25-Saturday.md

@@ -142,14 +142,20 @@ apps layer).
   `--cookies-from-browser chromium:~/.config/net.imput.helium/Default` (no
   OAuth). `yt-dlp` does not support `helium` as a browser name, so the
   Chromium extractor is pointed at Helium's profile path.
-- `-s` live search: an empty query makes Enter jump straight to the Watch Later
-  playlist (`youtube.com/playlist?list=WL`) from any mode. Otherwise, Enter with
-  no results falls back to a plain `youtube.com/results?search_query=…` page
-  for whatever was typed instead of doing nothing (an `enter:transform` bind
-  checks `{}` for emptiness). ⚠️ Gotcha: the fallback sentinel row must stay a
-  plain 2-field `search<TAB>query` or `later<TAB>WL`, not the usual 6-column
-  shape — `IFS=$'\t' read` collapses *consecutive* tab delimiters (tab is
-  IFS-whitespace), so extra empty columns would swallow the payload into
+- `-s` live search: Enter on an empty query opens the page matching the active
+  mode — Watch Later for Videos, `youtube.com/feed/channels` for Channels,
+  History for History, and the WL playlist in Watch Later mode. This keeps the
+  picker useful as a quick route to the corresponding full YouTube view when no
+  item is selected.
+  Otherwise, Enter with no results opens the corresponding full YouTube view
+  with the typed query: regular results for Videos or channel-filtered results
+  for Channels (an `enter:transform` bind checks `{}` for emptiness). History
+  and Watch Later have no reliable URL-addressable video filter, so filtering
+  those feeds remains local to the picker; their no-result fallbacks open the
+  corresponding unfiltered feed pages.
+  ⚠️ Gotcha: the fallback sentinel must stay a plain two-field row, not the
+  usual 6-column shape — `IFS=$'\t' read` collapses *consecutive* tab delimiters
+  (tab is IFS-whitespace), so extra empty columns would swallow the payload into
   nothing.
 
 ⚠️ Gotcha (cache/preview): the preview makes **no** network requests on hover —

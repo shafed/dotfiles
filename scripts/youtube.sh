@@ -626,20 +626,40 @@ search_live() {
       echo abort
     fi"
 
-  # Enter with an empty query jumps straight to Watch Later. Otherwise, if no
-  # row is highlighted, fall back to a plain YouTube search-results page for the
-  # typed query instead of doing nothing. {} is the current line — empty exactly
-  # when the list is empty.
+  # Enter with an empty query opens the full page matching the active mode:
+  # Watch Later for Videos, the channels feed for Channels, History for History,
+  # and the WL playlist for Later. Otherwise, if no row is highlighted, fall
+  # back to a plain YouTube search-results page for the typed query instead of
+  # doing nothing. {} is the current line — empty exactly when the list is empty.
   # become() replaces fzf with this echo, so its stdout IS $sel below. IFS=tab
   # read collapses repeated tab delimiters (tab is IFS-whitespace), so this
-  # sentinel row must stay a plain 2-field "search<TAB>query" or
-  # "later<TAB>WL" — not the usual 6-column shape — or the payload would vanish
-  # into a collapsed empty field.
+  # sentinel row must stay a plain 2-field row — not the usual 6-column shape —
+  # or the payload would vanish into a collapsed empty field.
   local enter_action="transform:
     if [[ -z {q} ]]; then
-      echo \"become(printf 'later\\tWL\\n')\"
+      case \"\$(cat '$source_file')\" in
+        history) echo \"become(printf 'history\\thistory\\n')\" ;;
+        later)   echo \"become(printf 'later\\tWL\\n')\" ;;
+        *)
+          if [[ \"\$(cat '$mode_file')\" == channels ]]; then
+            echo \"become(printf 'channels-feed\\tchannels\\n')\"
+          else
+            echo \"become(printf 'later\\tWL\\n')\"
+          fi
+          ;;
+      esac
     elif [[ -z {} ]]; then
-      echo \"become(printf 'search\\t%s\\n' {q})\"
+      case \"\$(cat '$source_file')\" in
+        history) echo \"become(printf 'history-search\\t%s\\n' {q})\" ;;
+        later)   echo \"become(printf 'later-search\\t%s\\n' {q})\" ;;
+        *)
+          if [[ \"\$(cat '$mode_file')\" == channels ]]; then
+            echo \"become(printf 'channel-search\\t%s\\n' {q})\"
+          else
+            echo \"become(printf 'search\\t%s\\n' {q})\"
+          fi
+          ;;
+      esac
     else
       echo accept
     fi"
@@ -669,7 +689,7 @@ search_live() {
     --bind "ctrl-l:execute-silent(printf later >'$source_file')+change-prompt(Search later > )+clear-query+reload($watchlater_cmd)+first"
     # esc: insert -> normal, normal -> quit (via the mode-aware transform).
     --bind "esc:$esc_action"
-    # Empty query => Watch Later; otherwise, no results fall back to search.
+    # Empty query => page for the active mode; no results fall back to search.
     --bind "enter:$enter_action"
     # Navigation actions, unbound at start (insert types them), rebound in normal.
     --bind "j:down"
@@ -695,17 +715,38 @@ search_live() {
     open_video "$id"
     exit 0
     ;;
-  search)
-    # No results matched the typed query: fall back to a plain YouTube
-    # search-results page instead of doing nothing. $id holds the query here
-    # (the sentinel row is "search<TAB>query", not a real video/channel row).
+  search | channel-search | history-search | later-search)
+    # No results matched the typed query: open the corresponding full YouTube
+    # view, carrying the query where that view supports it. $id holds the query
+    # in these two-field sentinel rows.
     local enc
     enc="$(python3 -c 'import urllib.parse,sys;print(urllib.parse.quote(sys.argv[1]))' "$id" 2>/dev/null)"
-    open_url "https://www.youtube.com/results?search_query=${enc}"
+    case "$kind" in
+    channel-search)
+      open_url "https://www.youtube.com/results?search_query=${enc}&sp=EgIQAg%3D%3D"
+      ;;
+    history-search)
+      open_url "https://www.youtube.com/feed/history"
+      ;;
+    later-search)
+      open_url "https://www.youtube.com/playlist?list=WL"
+      ;;
+    *)
+      open_url "https://www.youtube.com/results?search_query=${enc}"
+      ;;
+    esac
     exit 0
     ;;
   later)
     open_url "https://www.youtube.com/playlist?list=WL"
+    exit 0
+    ;;
+  history)
+    open_url "https://www.youtube.com/feed/history"
+    exit 0
+    ;;
+  channels-feed)
+    open_url "https://www.youtube.com/feed/channels"
     exit 0
     ;;
   channel)

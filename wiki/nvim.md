@@ -19,6 +19,10 @@ covers:
   `lang.python`.
 - Custom stuff in `lua/plugins/` (auto-save, hardtime, render-markdown, bullets, vimtex,
   img-clip, blink, snacks, etc.) — overrides/adds plugins on top of LazyVim.
+- The Obsidian notes picker normalizes both its query and filename/alias search
+  text with Neovim's Unicode-aware lowercase conversion. Snacks' built-in
+  matcher lowercases with Lua's ASCII-only `string.lower()`, which otherwise
+  makes apparently case-insensitive Russian searches case-sensitive.
 - **`gruvbox-material`** as the colorscheme — one gruvbox across all tools,
   see [theming](theming.md). In `colorscheme.lua`, markdown highlights are additionally
   recolored (bold=orange, italic=green).

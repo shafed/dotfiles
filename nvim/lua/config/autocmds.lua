@@ -39,6 +39,27 @@ if vim.fn.executable("hyprctl") == 1 then
   local layout_dev = "kanata"
   local insert_layout = 0
 
+  local function switch_layout(layout)
+    vim.system({ "hyprctl", "switchxkblayout", layout_dev, tostring(layout) })
+  end
+
+  local function is_layout_typing_mode()
+    local mode = vim.fn.mode()
+    if mode:match("^[iRtsS]") then
+      return true
+    end
+
+    -- Search should use the layout remembered from insert mode. Treat its
+    -- command line as a typing mode so a late InsertLeave query cannot force
+    -- US after CmdlineEnter has restored RU.
+    if mode == "c" then
+      local cmdtype = vim.fn.getcmdtype()
+      return cmdtype == "/" or cmdtype == "?"
+    end
+
+    return false
+  end
+
   -- overwrite_us: whether an active US layout may overwrite a remembered RU
   -- one. True when leaving insert (restore what the user last typed in);
   -- false for cmdline, where US is the norm (":w") and shouldn't clobber the
@@ -61,7 +82,7 @@ if vim.fn.executable("hyprctl") == 1 then
             -- blip that fires CmdlineLeave), and a fast Esc-i does the same
             -- for InsertLeave. Forcing US then would flip the layout right
             -- under the user's fingers — keep it, only refresh the memory.
-            if vim.fn.mode():match("^[iRtsS]") then
+            if is_layout_typing_mode() then
               if idx ~= 0 then
                 insert_layout = idx
               end
@@ -69,7 +90,7 @@ if vim.fn.executable("hyprctl") == 1 then
             end
             if idx ~= 0 then
               insert_layout = idx
-              vim.system({ "hyprctl", "switchxkblayout", layout_dev, "0" })
+              switch_layout(0)
             elseif overwrite_us then
               insert_layout = 0
             end
@@ -90,10 +111,20 @@ if vim.fn.executable("hyprctl") == 1 then
       save_and_force_us(false)
     end,
   })
+  vim.api.nvim_create_autocmd("CmdlineEnter", {
+    callback = function()
+      local cmdtype = vim.fn.getcmdtype()
+      if cmdtype == ":" then
+        switch_layout(0)
+      elseif cmdtype == "/" or cmdtype == "?" then
+        switch_layout(insert_layout)
+      end
+    end,
+  })
   vim.api.nvim_create_autocmd("InsertEnter", {
     callback = function()
       if insert_layout ~= 0 then
-        vim.system({ "hyprctl", "switchxkblayout", layout_dev, tostring(insert_layout) })
+        switch_layout(insert_layout)
       end
     end,
   })

@@ -267,7 +267,11 @@ that this `NVIM_APPNAME` directory is actually installed on the machine (it's no
 
 ## Snippets and spell
 
-- `snippets/` — luasnip snippets, a lot of them for LaTeX (`tex/*.lua`, `bib.lua`).
+- `snippets/` — LuaSnip snippets. Markdown vault templates live in
+  `markdown.lua`; LaTeX snippets live in `tex/*.lua` and `bib.lua`.
+- Vault note triggers are `;source`, `;project`, `;category`, `;meta`,
+  `;creator`, `;quote`, and `;daily`. The daily snippet derives its heading
+  from the filename and adds no metadata.
 - There's a `;date` snippet — inserts the current date in ISO format (commit `2e4f335`).
 - `spell/` — custom EN+RU dictionaries.
 - `blink-cmp-dictionary` source (in `lua/plugins/blink.lua`) suggests

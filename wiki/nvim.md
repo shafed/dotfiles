@@ -1,7 +1,7 @@
 ---
 title: nvim
 type: component
-updated: 2026-07-27
+updated: 2026-07-28
 covers:
   - nvim/
 ---
@@ -199,9 +199,12 @@ normal mode:
   normal mode is always US, so *every* command/plugin works. Same per-device
   `hyprctl switchxkblayout kanata N` mechanism as `symlayout-watch.sh`
   (see [keymap](keymap.md)); guarded by `executable("hyprctl")` so the config
-  still loads outside Hyprland. `CmdlineLeave` also forces US, but unlike
-  `InsertLeave` it doesn't overwrite a remembered RU with US — otherwise a
-  `:w` right after typing Russian would make the next insert start in US.
+  still loads outside Hyprland. Command lines deliberately split by purpose:
+  `:` forces US because Ex commands are English, while `/` and `?` restore the
+  layout remembered from insert mode because search text is usually in the
+  document's language. `CmdlineLeave` forces US again for normal mode, but
+  unlike `InsertLeave` it doesn't overwrite a remembered RU with US — otherwise
+  a `:w` right after typing Russian would make the next insert start in US.
 - **langmap (safety net)**: the `hyprctl` calls are async (~10–20 ms), so a
   key hit immediately after `Esc` can still arrive as Cyrillic; the
   ЙЦУКЕН→QWERTY `langmap` in `options.lua` translates it. Covers all letters
@@ -220,9 +223,9 @@ normal mode:
   expression register, which is a transient `i:c:i` mode blip that fires
   `CmdlineLeave` — the async "force US" landed after nvim was already back
   in insert. Fix: the hyprctl callback re-checks `mode()` (scheduled on the
-  main loop) and, if a typing mode (`i/R/t/s`) is active again, keeps the
-  layout and only refreshes the remembered index. Same guard covers a fast
-  `Esc`+`i` racing the InsertLeave query.
+  main loop) and, if a typing mode (`i/R/t/s`, or a `/`/`?` command line) is
+  active again, keeps the layout and only refreshes the remembered index. Same
+  guard covers a fast `Esc`+`i` or `Esc`+`/` racing the InsertLeave query.
 - **flash.nvim is bilingual** (`plugins/flash.lua`): `search.mode` is a
   function turning each typed char into a vim-regex collection of itself +
   its ЙЦУКЕН counterpart on the same physical key (`ghb` →

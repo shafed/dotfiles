@@ -1,7 +1,7 @@
 ---
 title: scripts
 type: component
-updated: 2026-07-27
+updated: 2026-07-30
 covers:
   - scripts/
 ---
@@ -324,6 +324,29 @@ asynchronous):
 - `generate_logbook.py` (generates links) ↔ `nvim-edit-handler.sh` (opens them).
 
 ## Misc
+
+### sudo-notify.sh — sudo password-prompt notifier
+
+`~/.local/bin/sudo` is a thin wrapper (`exec "$HOME/dotfiles/scripts/sudo-notify.sh" "$@"`,
+same shape as `nvim-edit-handler`) that shadows `/usr/bin/sudo` earlier in
+`$PATH` (`zsh/zshrc` puts `~/.local/bin` first). The real logic lives here so
+it's versioned with the rest of the dotfiles instead of only existing as an
+unversioned file in `~/.local/bin`.
+
+Sends a `notify-send` if a sudo call is about to block on a password **and**
+the terminal window it's running in isn't currently focused (Hyprland-only,
+via `hyprctl activewindow`) — otherwise a password prompt sitting in a
+background terminal goes unnoticed. Design:
+
+- First does `sudo -n true` (non-interactive credential check): if a valid
+  sudo timestamp already exists, no prompt will occur, so it skips the
+  notification path entirely.
+- Otherwise walks up the process tree from its own PID (capped at 12 hops) to
+  find the enclosing terminal emulator (`TERMINAL_COMMS` — kitty, alacritty,
+  foot, etc.), and compares that PID against Hyprland's active window PID.
+- Always `exec`s the real `/usr/bin/sudo` at the end regardless of the notify
+  path, so behavior/exit code/stdio are byte-identical to calling sudo
+  directly — this wrapper is meant to be fully transparent.
 
 ### obsidian-sync.sh
 

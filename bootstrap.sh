@@ -85,6 +85,16 @@ link_configs() {
   echo "== Linking zsh files into \$HOME =="
   ln -sfv "$DOTFILES_DIR/zsh/zshrc" "$HOME/.zshrc"
   ln -sfv "$DOTFILES_DIR/zsh/zprofile" "$HOME/.zprofile"
+
+  echo
+  echo "== Installing ~/.local/bin wrappers =="
+  mkdir -p "$HOME/.local/bin"
+  cat >"$HOME/.local/bin/sudo" <<EOF
+#!/usr/bin/env bash
+exec "$DOTFILES_DIR/scripts/sudo-notify.sh" "\$@"
+EOF
+  chmod +x "$HOME/.local/bin/sudo"
+  echo "  wrote $HOME/.local/bin/sudo"
 }
 
 [ "$DO_CHECK" -eq 1 ] && check_requirements

@@ -327,11 +327,14 @@ asynchronous):
 
 ### sudo-notify.sh — sudo password-prompt notifier
 
-`~/.local/bin/sudo` is a thin wrapper (`exec "$HOME/dotfiles/scripts/sudo-notify.sh" "$@"`,
+`~/.local/bin/sudo` is a thin wrapper (`exec ".../scripts/sudo-notify.sh" "$@"`,
 same shape as `nvim-edit-handler`) that shadows `/usr/bin/sudo` earlier in
 `$PATH` (`zsh/zshrc` puts `~/.local/bin` first). The real logic lives here so
 it's versioned with the rest of the dotfiles instead of only existing as an
-unversioned file in `~/.local/bin`.
+unversioned file in `~/.local/bin`. `bootstrap.sh` writes this wrapper (see
+`link_configs`'s "Installing ~/.local/bin wrappers" step), so a fresh
+`git clone` + `./bootstrap.sh` gets the notification working with no manual
+step.
 
 Sends a `notify-send` if a sudo call is about to block on a password **and**
 the terminal window it's running in isn't currently focused (Hyprland-only,

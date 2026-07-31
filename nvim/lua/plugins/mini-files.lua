@@ -334,7 +334,7 @@ return {
       desc = "Toggle multi-select on entry",
     },
     {
-      "<leader>y",
+      "<leader>yy",
       function()
         -- Prefer the ad-hoc multi-selection; fall back to the entry under cursor.
         local marked = Selection.paths()

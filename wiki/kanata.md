@@ -1,7 +1,7 @@
 ---
 title: kanata
 type: component
-updated: 2026-07-18
+updated: 2026-07-31
 covers:
   - kanata/config.kbd
   - kanata/switchApp.sh
@@ -119,9 +119,21 @@ call). The script stores the previous index in
 `/tmp/symlayout-watch-$UID-kanata.layout` and guards against a double enter.
 
 The symbol layout is **frequency-ordered**: hot symbols sit on the strong home
-row — `()` on `j k`, `@` on `h`, `|` on `l`, `` ` `` on `y`. `symbols2` is an
-escalation: adding the index finger `f` gets you into rarer `! # * & % < >`.
-Symbols aren't duplicated between layers (shorter = hotter chord).
+row — `()` on `j k`, `@` on `l`, `` ` `` on `y`, `: "` on `; '`, `=` on `m`.
+`symbols2` is an escalation: adding the index finger `f` gets you into rarer
+`~ { } ! # * & ^ $ |` (`|` moved here from `symbols/l` to make room for `@`).
+Symbols aren't duplicated between layers (shorter = hotter chord). `\` sits on
+`symbols2/m` — moved from `symbols/p` (2026-07-31): `\` is rare, so it gave up
+its pinky top-row slot on `symbols` (now `p` is `XX` there) for the
+index-finger bottom row of the deeper layer. Only `symbols2/p` stays free
+(`XX`).
+
+⚠️ Don't trust layout comments blindly — verify against the actual
+`S-...`/key codes in `deflayermap`, not the inline `;;` annotations. They've
+drifted from the real mapping before (e.g. claiming `: "` lived on `symbols2`
+when they were actually on `symbols`, and that `symbols2 ; '` did something
+when those keys were no-ops). Re-derive the mapping from the code when
+auditing frequency placement.
 
 ## kitty-send (tmux prefix replacement)
 

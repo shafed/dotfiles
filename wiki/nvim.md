@@ -54,16 +54,22 @@ covers:
   garbled extra line (raw buffer name like `minifiles://2//home/shafed`) above
   the content. The winbar logic was pulled out of `config/options.lua` into
   `utils/winbar.lua` (exposing `set_zen(active)`) because `Snacks.zen`'s
-  floating window is centered and narrower than the screen — without an
-  explicit hide, the old winbar stayed visible in the margins on either side
-  during zen mode. `plugins/snacks.lua`'s `zen.on_open`/`on_close` call
-  `set_zen(true/false)` to hide/restore it across all windows.
-- **`utils/fullscreen.lua`** makes the OS chrome match zen mode too: on
-  `<leader>uz` it fullscreens the Hyprland window (`hyprctl dispatch
-  fullscreen 0`, only if not already fullscreen, and only restored on close if
-  this module is what turned it on) and hides kitty's tab bar via the
-  `toggle_tab_bar.py` kitten (see [kitty](kitty.md)). Wired into
-  `plugins/snacks.lua`'s `zen.on_open`/`on_close` alongside `utils/winbar.lua`.
+  floating window still needs the winbar hidden — it inherits winbar from the
+  window it was opened from (Neovim copies local-window options on window
+  creation) and `utils/winbar`'s update() skips floats, so without an explicit
+  hide a stale winbar would linger. `plugins/snacks.lua`'s `zen.on_open`/
+  `on_close` call `set_zen(true/false)` to hide/restore it across all windows.
+- **Zen = "twilight without zoom"** (2026-07-31): `<leader>uz` (LazyVim's
+  `Snacks.toggle.zen()`) dims everything outside the current scope — the
+  "twilight" effect — but no longer opens a centered 120-col float. The zen
+  window fills the whole editor (`center = false`, `win.width = vim.o.columns`)
+  so the buffer is only dimmed, never narrowed or recentered. The OS chrome is
+  still matched by **`utils/fullscreen.lua`**: on open it fullscreens the
+  Hyprland window (`hyprctl dispatch fullscreen 0`, only if not already
+  fullscreen, and only restored on close if this module is what turned it on)
+  and hides kitty's tab bar via the `toggle_tab_bar.py` kitten
+  (see [kitty](kitty.md)); wired into `zen.on_open`/`on_close` alongside
+  `utils/winbar.lua`.
 
 ## Integration with the training logbook
 

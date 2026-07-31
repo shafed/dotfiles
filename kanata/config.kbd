@@ -144,7 +144,6 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
   h (t! kitty-send C-S-a)   ;; home session
   s (tap-hold-press $subl-time $subl-time (cmd helium-browser) (layer-toggle browser))
   d (t! kitty-send C-S-d)   ;; dotfiles session
-  g (cmd todoist)
   z (cmd zsh -lc "$HOME/.config/kanata/switchApp.sh sioyek 'LIBGL_ALWAYS_SOFTWARE=1 sioyek'")
   c (t! kitty-send C-S-s)   ;; list sessions picker
   g (t! kitty-send C-S-c)   ;; github session
@@ -168,27 +167,27 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
 ;; symbols2 (s+d+f) is the same key with the f (index) added.
 ;; top row = y u i o p (5 keys). brackets () on the strong home-row j k.
 ;; FREQUENCY-ORDERED: the hot symbols sit on the strong home row. () on j k
-;; (function calls), @ on h (claude-code @file, email), | on l (cli pipes),
-;; ` on y (code spans). bottom row keeps the frequent _ - pair plus ^ $ for
-;; nvim/shell. the rarer ! # * % & < > live on symbols2 below.
-;; top row = y u i o p (5 keys).
+;; (function calls), @ on l, ` on y (code spans), : " on ; ' (very common in
+;; code/text). bottom row keeps the frequent _ - pair plus < > (comparisons)
+;; and = (m) for equality/assignment. the rarer ^ $ ! # * & | live on symbols2
+;; below.
 (deflayermap (symbols)
-  y grv u [   i ]   o S-=   p \        ;; ` [ ] + \
-  h - j S-9 k S-0 l S-\ ; S-;   ' S-'  ;; - ( ) | ; '
-  n S-- m S-2 , S-6 . S-4   / S-/      ;; _ @ ^ $ ?
+  y grv u [   i ]   o S-=   p XX       ;; ` [ ] +   
+  h - j S-9 k S-0 l S-2 ; S-;   ' S-'  ;; - ( ) @ : "
+  n S-- m S-= , S-, . S-.   / S-/      ;; _ = < > ?
   f (layer-while-held symbols2)      ;; escalate: add f (index) -> symbols2
 )
 
 ;; second symbol set, momentary (entered via s+d+f chord held). longer chord
 ;; wins over (s d), so adding the `f` index shifts into this layer.
-;; holds the symbols that don't fit on symbols: the shifted brackets ~ { } +,
-;; then ! # * & on the home row, % < > on the bottom row. : " on ; ' keys.
-;; @ ( ) | _ - ^ $ ` deliberately live on symbols (the shorter, hotter chord)
-;; and are NOT duplicated here.
+;; holds the symbols that don't fit on symbols: the shifted brackets ~ { },
+;; then ! # * on the home row, | (moved here from symbols/l to make room for
+;; @), ^ $ on the bottom row. \ sits on m (moved from symbols/p — rare symbol,
+;; so it gave up its pinky top-row slot on symbols); p is free (XX).
 (deflayermap (symbols2)
-  y S-grv u S-[ i S-] o = p XX       ;; ~ { } =     (| is on symbols, l)
-  h S-1 j S-3 k S-8 l S-7  ; ; ' ' ;; ! # * & : "
-  n S-5 m XX  , S-, . S-. / /          ;; %   < > /
+  y S-grv u S-[ i S-] o S-7  p XX      ;; ~ { } &
+  h S-1 j S-3 k S-8 l S-\  ; ; ' ' ;; ! # * |
+  n S-5 m XX  , S-6 . S-4 / /          ;; ^ $
 )
 
 ;; left-hand workspace number layer, momentary. entered from apps layer:

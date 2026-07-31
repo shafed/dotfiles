@@ -35,7 +35,19 @@ config.kbd), which requires `HYPRLAND_INSTANCE_SIGNATURE` in the process
 environment. Since Hyprland 0.55 the dispatches use the Lua syntax
 (`hyprctl dispatch 'hl.dsp.window.kill()'`, `'hl.dsp.window.cycle_next()'`,
 `'hl.dsp.focus({ workspace = "previous" })'`) — the old `hyprctl dispatch
-killactive` form is rejected and silently does nothing (see [hypr](hypr.md)). `After=` alone only orders the two units *if both are already
+killactive` form is rejected and silently does nothing (see [hypr](hypr.md)).
+
+⚠️ Kanata-specific gotcha: `(cmd ...)` runs the program **directly, without a
+shell**, and its config lexer has **no escaping** — `(`/`)` are always list
+structure and single quotes `'` are not string delimiters. So an inline Lua
+expression gets split/mangled (flattened lists, quotes dropped). The fix is to
+pass the whole dispatch string as **one quoted token**: `(cmd hyprctl dispatch
+"hl.dsp.window.kill()")` works for expressions without nested quotes; if the
+Lua needs a quoted string inside (e.g. `workspace = "previous"`) a normal
+`"..."` can't hold a `"`, so use a **raw string** instead:
+`(cmd hyprctl dispatch r#"hl.dsp.focus({ workspace = "previous" })"#)`. Don't
+shell out via `bash -c` just to fix this — the direct single-token form is
+simpler. `After=` alone only orders the two units *if both are already
 going to start* — it doesn't make kanata wait on the target, and doesn't pull
 it in. With the old `WantedBy=default.target`, kanata could start via that
 unrelated pull-in path before uwsm finalized the session environment into

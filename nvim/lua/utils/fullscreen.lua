@@ -20,21 +20,22 @@ local function get_active_window()
   return data
 end
 
--- `hyprctl dispatch fullscreen 0` is a toggle, so this only calls it on open
--- when the window isn't already fullscreen, and only calls it again on close
--- if this module is the one that turned it on (avoids un-fullscreening a
--- window the user had already fullscreened themselves before entering zen).
+-- `hl.dsp.window.fullscreen({ action = "unset" })` un-fullscreens the active
+-- window, so this only calls it on open when the window isn't already
+-- fullscreen, and only calls it again on close if this module is the one that
+-- turned it on (avoids un-fullscreening a window the user had already
+-- fullscreened themselves before entering zen).
 local function set_hyprland_fullscreen(active)
   if active then
     local win = get_active_window()
     if win and win.fullscreen == 0 then
-      vim.fn.system({ "hyprctl", "dispatch", "fullscreen", "0" })
+      vim.fn.system({ "hyprctl", "dispatch", 'hl.dsp.window.fullscreen({ action = "unset" })' })
       M.zen_fullscreened = true
     else
       M.zen_fullscreened = false
     end
   elseif M.zen_fullscreened then
-    vim.fn.system({ "hyprctl", "dispatch", "fullscreen", "0" })
+    vim.fn.system({ "hyprctl", "dispatch", 'hl.dsp.window.fullscreen({ action = "unset" })' })
     M.zen_fullscreened = false
   end
 end

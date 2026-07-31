@@ -112,8 +112,8 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
  c (t! th $tap-time $hold-time c C-c)
  v (t! th $tap-time $hold-time v C-v)
  b (t! th $tap-time $hold-time b (macro @aterm 100 A-tab)) ;; kitty last session (goto_session -1)
- x (t! th $tap-time $hold-time x (cmd hyprctl dispatch cyclenext)) ;; focus last window in current workspace
- z (t! th $tap-time $hold-time z (cmd hyprctl dispatch workspace previous)) ;; focus last workspace
+x (t! th $tap-time $hold-time x (cmd hyprctl dispatch 'hl.dsp.window.cycle_next()')) ;; focus last window in current workspace
+z (t! th $tap-time $hold-time z (cmd hyprctl dispatch 'hl.dsp.focus({ workspace = "previous" })')) ;; focus last workspace
 
  ;; other
  caps (t! th $tap-time $hold-time XX (layer-toggle navi)) ;; test esc on df
@@ -131,7 +131,7 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
    
   e (t! kitty-send C-S-f)   ;; zoxide session picker
   l (layer-while-held numws)  ;; hold: switch workspace (Super+digit, left-hand digits)
-  q (cmd hyprctl dispatch killactive)
+  q (cmd hyprctl dispatch 'hl.dsp.window.kill()')
   t (t! kitty-send C-S-2)   ;; todos session
   r (t! kitty-send C-S-1)   ;; daily note
   y (cmd helium-browser --new-window https://www.youtube.com/playlist?list=WL)

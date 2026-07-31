@@ -168,8 +168,8 @@ open_in_new_browser_window() {
   done
 
   if [[ -n "$new_addr" ]]; then
-    hyprctl dispatch movetoworkspace "${workspace},address:$new_addr" >/dev/null 2>&1 || true
-    hyprctl dispatch focuswindow "address:$new_addr" >/dev/null 2>&1 || true
+    hyprctl dispatch "hl.dsp.window.move({ workspace = \"${workspace}\", window = \"address:${new_addr}\" })" >/dev/null 2>&1 || true
+    hyprctl dispatch "hl.dsp.focus({ window = \"address:${new_addr}\" })" >/dev/null 2>&1 || true
   fi
   return 0
 }
@@ -187,8 +187,8 @@ move_browser_when_up() {
 
   for i in {1..48}; do
     if browser_running; then
-      hyprctl dispatch movetoworkspace "${workspace},class:${browser_class}" >/dev/null 2>&1 || true
-      hyprctl dispatch focuswindow "class:${browser_class}" >/dev/null 2>&1 || true
+      hyprctl dispatch "hl.dsp.window.move({ workspace = \"${workspace}\", window = \"class:${browser_class}\" })" >/dev/null 2>&1 || true
+      hyprctl dispatch "hl.dsp.focus({ window = \"class:${browser_class}\" })" >/dev/null 2>&1 || true
       return 0
     fi
     sleep 0.25
@@ -209,9 +209,9 @@ focus_browser() {
   for i in {1..10}; do
     if browser_running; then
       if [[ "$cold_start" == true ]]; then
-        hyprctl dispatch movetoworkspace "${workspace},class:${browser_class}" >/dev/null 2>&1 || true
+        hyprctl dispatch "hl.dsp.window.move({ workspace = \"${workspace}\", window = \"class:${browser_class}\" })" >/dev/null 2>&1 || true
       fi
-      hyprctl dispatch focuswindow "class:${browser_class}" >/dev/null 2>&1 || true
+      hyprctl dispatch "hl.dsp.focus({ window = \"class:${browser_class}\" })" >/dev/null 2>&1 || true
       return 0
     fi
     sleep 0.25
@@ -236,7 +236,7 @@ focus_browser_for_title() {
       ' 2>/dev/null | head -n1
     )"
     if [[ -n "$addr" ]]; then
-      hyprctl dispatch focuswindow "address:$addr" >/dev/null 2>&1 || true
+      hyprctl dispatch "hl.dsp.focus({ window = \"address:${addr}\" })" >/dev/null 2>&1 || true
       return 0
     fi
     sleep 0.15
@@ -256,7 +256,7 @@ prepare_browser_for_new_tab() {
 
   addr="$(browser_window_off_workspace "$avoid_workspace")"
   if [[ -n "$addr" ]]; then
-    hyprctl dispatch focuswindow "address:$addr" >/dev/null 2>&1 || true
+    hyprctl dispatch "hl.dsp.focus({ window = \"address:${addr}\" })" >/dev/null 2>&1 || true
     printf 'tab\n'
     return 0
   fi

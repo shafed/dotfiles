@@ -144,7 +144,7 @@ focus_os_window_for_socket() {
   [[ -n "$address" && "$address" != "null" ]] || return 1
 
   log "hypr-focus socket=$ksock address=$address"
-  hyprctl dispatch focuswindow "address:${address}"
+  hyprctl dispatch "hl.dsp.focus({ window = \"address:${address}\" })"
 }
 
 vim_single_quote() {

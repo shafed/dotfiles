@@ -269,7 +269,7 @@ focus_app() {
   )"
 
   [[ -n "$addr" ]] || return 1
-  hyprctl dispatch focuswindow "address:$addr" >/dev/null 2>&1 || true
+  hyprctl dispatch "hl.dsp.focus({ window = \"address:${addr}\" })" >/dev/null 2>&1 || true
   return 0
 }
 

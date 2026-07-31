@@ -63,7 +63,7 @@ if [[ -n "$target" ]]; then
       done
       sleep 0.2
 
-      if ! hyprctl dispatch focuswindow "address:$target" >/dev/null 2>&1; then
+      if ! hyprctl dispatch "hl.dsp.focus({ window = \"address:${target}\" })" >/dev/null 2>&1; then
         log "target window $target no longer exists; content left on clipboard"
         exit 0
       fi

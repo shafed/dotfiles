@@ -251,17 +251,25 @@ return {
     },
   },
   opts = {
-    -- Zen mode's floating window is centered and narrower than the screen,
-    -- so the custom winbar (utils/winbar.lua) stays visible in the margins
-    -- on either side unless explicitly hidden here.
+    -- Twilight without zoom: the zen window fills the whole editor instead of
+    -- a centered 120-col float, so zen dims everything outside the current
+    -- scope (the "twilight" effect) without narrowing or recentering the
+    -- window. The custom winbar (utils/winbar.lua) is still hidden on open:
+    -- the zen float inherits winbar from the window it was opened from
+    -- (Neovim copies local-window options on window creation), and
+    -- utils.winbar's update() deliberately skips floating windows (to
+    -- avoid breaking mini.files' border title), so it's never overwritten
+    -- on its own. Clear it explicitly here.
     zen = {
+      center = false,
+      win = {
+        style = "zen",
+        width = function()
+          return vim.o.columns
+        end,
+      },
       on_open = function(win)
         require("utils.winbar").set_zen(true)
-        -- The zen float inherits winbar from the window it was opened from
-        -- (Neovim copies local-window options on window creation), and
-        -- utils.winbar's update() deliberately skips floating windows (to
-        -- avoid breaking mini.files' border title), so it's never
-        -- overwritten on its own. Clear it explicitly here.
         vim.wo[win.win].winbar = ""
         require("utils.fullscreen").set_zen(true)
       end,

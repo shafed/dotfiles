@@ -313,51 +313,286 @@ function M.create()
   vim.api.nvim_win_set_cursor(0, { row, 6 })
 end
 
--- Copy a task bullet's text (without the "- [ ]"/"- [x]" prefix) to the
--- system clipboard, visually flashing the yanked range. Handles tasks whose
--- text wraps onto following (non-bullet, non-blank) lines. Does nothing if
--- the cursor isn't on a task bullet's chunk.
-function M.yank_text()
-  local buf = vim.api.nvim_get_current_buf()
-  local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
-  local total_lines = #lines
-  local start_line = vim.api.nvim_win_get_cursor(0)[1] - 1
+local yank_namespace = vim.api.nvim_create_namespace("markdown_yank_item")
 
-  -- Move upwards to find the bullet line, same as toggle_done
-  while start_line > 0 do
-    local line_text = lines[start_line + 1]
-    if line_text == "" or line_text:match("^%s*%-") then
+local flash_generation = 0
+
+---Parse a Markdown structural prefix.
+---@param line string
+---@return table|nil
+local function parse_prefix(line)
+  local rest = line
+  local col = 0
+
+  -- Initial indentation
+  local indent = rest:match("^%s*") or ""
+  col = col + #indent
+  rest = rest:sub(#indent + 1)
+
+  -- One or more blockquote markers:
+  -- > text
+  -- >> text
+  -- > > text
+  local quote_level = 0
+
+  while true do
+    local quote = rest:match("^>%s*")
+
+    if not quote then
       break
     end
-    start_line = start_line - 1
-  end
-  if lines[start_line + 1] == "" and start_line < (total_lines - 1) then
-    start_line = start_line + 1
+
+    quote_level = quote_level + 1
+    col = col + #quote
+    rest = rest:sub(#quote + 1)
   end
 
-  local bullet_line = lines[start_line + 1]
-  local prefix = bullet_line and bullet_line:match("^%s*%- %[[x ]%]%s*")
-  if not prefix then
-    print("Not a task bullet: no action taken.")
+  -- Unordered or ordered list marker:
+  -- - text
+  -- * text
+  -- + text
+  -- 1. text
+  -- 1) text
+  local list = rest:match("^[-*+]%s+") or rest:match("^%d+[.)]%s+")
+
+  if list then
+    col = col + #list
+    rest = rest:sub(#list + 1)
+
+    -- Task checkbox, including Obsidian custom states:
+    -- [ ], [x], [-], [/], [!], etc.
+    local task = rest:match("^%[[^%]]%]%s*")
+
+    if task then
+      col = col + #task
+    end
+
+    return {
+      kind = "list",
+      col = col,
+      quote_level = quote_level,
+    }
+  end
+
+  -- Markdown heading
+  local heading = rest:match("^#+%s+")
+
+  if heading then
+    col = col + #heading
+
+    return {
+      kind = "heading",
+      col = col,
+      quote_level = quote_level,
+    }
+  end
+
+  -- Plain blockquote
+  if quote_level > 0 then
+    return {
+      kind = "quote",
+      col = col,
+      quote_level = quote_level,
+    }
+  end
+
+  return nil
+end
+
+---@param line string
+---@return boolean
+local function is_blank(line)
+  return line:match("^%s*$") ~= nil
+end
+
+---Find the complete Markdown item under the cursor.
+---Wrapped continuation lines are included.
+---@param lines string[]
+---@param cursor_line integer 0-based
+---@return integer|nil start_line
+---@return integer|nil end_line
+local function find_item_range(lines, cursor_line)
+  local start_line = cursor_line
+  local item = parse_prefix(lines[start_line + 1] or "")
+
+  -- Cursor can be on a wrapped continuation line.
+  while not item do
+    local current = lines[start_line + 1] or ""
+
+    if is_blank(current) or start_line == 0 then
+      return nil, nil
+    end
+
+    start_line = start_line - 1
+    item = parse_prefix(lines[start_line + 1] or "")
+  end
+
+  -- A quote consists of consecutive quote lines.
+  if item.kind == "quote" then
+    while start_line > 0 do
+      local previous = parse_prefix(lines[start_line] or "")
+
+      if not previous or previous.kind ~= "quote" then
+        break
+      end
+
+      start_line = start_line - 1
+    end
+
+    local end_line = start_line
+
+    while end_line + 1 < #lines do
+      local following = parse_prefix(lines[end_line + 2] or "")
+
+      if not following or following.kind ~= "quote" then
+        break
+      end
+
+      end_line = end_line + 1
+    end
+
+    return start_line, end_line
+  end
+
+  -- Headings are always a single line.
+  if item.kind == "heading" then
+    return start_line, start_line
+  end
+
+  -- List/task item: include wrapped lines until the next item or blank.
+  local end_line = start_line
+
+  while end_line + 1 < #lines do
+    local next_line = lines[end_line + 2] or ""
+
+    if is_blank(next_line) then
+      break
+    end
+
+    local following = parse_prefix(next_line)
+
+    if following then
+      -- A new list item or heading starts another chunk.
+      if following.kind == "list" or following.kind == "heading" then
+        break
+      end
+
+      -- A quote following an ordinary list is a new block.
+      if following.kind == "quote" and item.quote_level == 0 then
+        break
+      end
+
+      -- Inside a blockquote, a quote-only line can be a wrapped
+      -- continuation of "> - item".
+      if following.kind == "quote" and following.quote_level < item.quote_level then
+        break
+      end
+    end
+
+    end_line = end_line + 1
+  end
+
+  return start_line, end_line
+end
+
+---Flash the original copied range.
+---@param buf integer
+---@param lines string[]
+---@param start_line integer 0-based
+---@param end_line integer 0-based
+local function flash_range(buf, lines, start_line, end_line)
+  flash_generation = flash_generation + 1
+  local current_generation = flash_generation
+
+  vim.api.nvim_buf_clear_namespace(buf, yank_namespace, 0, -1)
+
+  for line_number = start_line, end_line do
+    local line = lines[line_number + 1] or ""
+    local prefix = parse_prefix(line)
+    local start_col = prefix and prefix.col or 0
+
+    if #line > start_col then
+      vim.api.nvim_buf_set_extmark(buf, yank_namespace, line_number, start_col, {
+        end_row = line_number,
+        end_col = #line,
+        hl_group = "IncSearch",
+        priority = 200,
+      })
+    end
+  end
+
+  vim.defer_fn(function()
+    if current_generation ~= flash_generation then
+      return
+    end
+
+    if vim.api.nvim_buf_is_valid(buf) then
+      vim.api.nvim_buf_clear_namespace(buf, yank_namespace, 0, -1)
+    end
+  end, 180)
+end
+
+---Copy Markdown item text without structural prefixes.
+---
+---Normal mode:
+---  Copies the item under the cursor, including wrapped lines.
+---
+---Visual mode:
+---  Copies all selected lines and strips the Markdown prefix
+---  independently from every selected item.
+---
+---@param visual boolean|nil
+function M.yank_text(visual)
+  local buf = vim.api.nvim_get_current_buf()
+  local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+
+  local start_line
+  local end_line
+
+  if visual then
+    local visual_line = vim.fn.getpos("v")[2] - 1
+    local cursor_line = vim.fn.getpos(".")[2] - 1
+
+    start_line = math.min(visual_line, cursor_line)
+    end_line = math.max(visual_line, cursor_line)
+  else
+    local cursor_line = vim.api.nvim_win_get_cursor(0)[1] - 1
+
+    start_line, end_line = find_item_range(lines, cursor_line)
+
+    if not start_line then
+      vim.notify("Cursor is not on a Markdown item", vim.log.levels.INFO)
+      return
+    end
+  end
+
+  local result = {}
+  local found_prefix = false
+
+  for line_number = start_line, end_line do
+    local line = lines[line_number + 1] or ""
+    local prefix = parse_prefix(line)
+
+    if prefix then
+      found_prefix = true
+      line = line:sub(prefix.col + 1)
+    end
+
+    result[#result + 1] = line
+  end
+
+  if visual and not found_prefix then
+    vim.notify("Selection contains no Markdown items", vim.log.levels.INFO)
     return
   end
 
-  -- Find chunk end: following lines that aren't blank/bullets are wrapped text
-  local chunk_end = start_line
-  while chunk_end + 1 < total_lines do
-    local next_line = lines[chunk_end + 2]
-    if next_line == "" or next_line:match("^%s*%-") then
-      break
-    end
-    chunk_end = chunk_end + 1
-  end
+  local text = table.concat(result, "\n")
 
-  vim.api.nvim_win_set_cursor(0, { start_line + 1, #prefix })
-  if chunk_end == start_line then
-    vim.cmd('normal! v$"+y')
-  else
-    vim.cmd(string.format('normal! v%dG$"+y', chunk_end + 1))
-  end
+  -- System clipboard and unnamed register.
+  vim.fn.setreg("+", text, "v")
+  vim.fn.setreg('"', text, "v")
+
+  flash_range(buf, lines, start_line, end_line)
 end
 
 return M

@@ -14,7 +14,15 @@ end, { desc = "[P]Terminal on kitty window" })
 -- Copy to clipboard
 vim.keymap.set({ "n", "v" }, "<leader>y", '"+y')
 vim.keymap.set("n", "<leader>Y", '"+y$')
-vim.keymap.set("n", "<leader>yc", tasks.yank_text, { desc = "[P]Yank Checkbox text (no '- [ ]')" })
+vim.keymap.set("n", "<leader>yi", tasks.yank_text, {
+  desc = "[P]Yank Markdown item without prefix",
+})
+
+vim.keymap.set("x", "<leader>yi", function()
+  tasks.yank_text(true)
+end, {
+  desc = "[P]Yank selected Markdown items without prefixes",
+})
 
 -- Paste from clipboard
 vim.keymap.set({ "n", "v" }, "<leader>p", '"+p')

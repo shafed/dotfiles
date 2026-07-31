@@ -1,7 +1,7 @@
 ---
 title: nvim
 type: component
-updated: 2026-07-28
+updated: 2026-07-31
 covers:
   - nvim/
 ---
@@ -273,6 +273,15 @@ that this `NVIM_APPNAME` directory is actually installed on the machine (it's no
   `;creator`, `;quote`, and `;daily`. The daily snippet derives its heading
   from the filename and adds no metadata.
 - There's a `;date` snippet — inserts the current date in ISO format (commit `2e4f335`).
+- LuaSnip **choice nodes** (`lua/plugins/luasnip.lua`): the picker
+  (`select_choice`) opens **automatically** whenever a choice node becomes the
+  active node — a `User LuasnipChoiceNodeEnter` autocmd (scheduled, guarded by
+  `choice_active()` so a fast Tab-past doesn't open it stale). `<C-u>`
+  (insert/select) reopens it manually; when no choice is active it falls back
+  to the built-in `<C-u>` (delete to start of line) via a noremap feedkeys.
+  The manual mapping deliberately is **not** an `expr` mapping: the picker is a
+  Snacks window, and `nvim_open_win` is forbidden during expr evaluation
+  (E565).
 - `spell/` — custom EN+RU dictionaries.
 - `blink-cmp-dictionary` source (in `lua/plugins/blink.lua`) suggests
   completions from `dictionaries/american-english.txt` (EN, 50k words) and

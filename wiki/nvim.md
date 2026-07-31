@@ -65,7 +65,7 @@ covers:
   window fills the whole editor (`center = false`, `win.width = vim.o.columns`)
   so the buffer is only dimmed, never narrowed or recentered. The OS chrome is
   still matched by **`utils/fullscreen.lua`**: on open it fullscreens the
-  Hyprland window (`hyprctl dispatch fullscreen 0`, only if not already
+  Hyprland window (`hyprctl dispatch 'hl.dsp.window.fullscreen({ action = "unset" })'`, only if not already
   fullscreen, and only restored on close if this module is what turned it on)
   and hides kitty's tab bar via the `toggle_tab_bar.py` kitten
   (see [kitty](kitty.md)); wired into `zen.on_open`/`on_close` alongside

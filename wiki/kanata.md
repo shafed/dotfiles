@@ -32,7 +32,10 @@ that used to live next to the old `exec-once` line).
 (not `default.target`). Several kanata bindings shell out to `hyprctl`
 (layout switch on `sw`, `x`/`z` window/workspace nav, `q` killactive — see
 config.kbd), which requires `HYPRLAND_INSTANCE_SIGNATURE` in the process
-environment. `After=` alone only orders the two units *if both are already
+environment. Since Hyprland 0.55 the dispatches use the Lua syntax
+(`hyprctl dispatch 'hl.dsp.window.kill()'`, `'hl.dsp.window.cycle_next()'`,
+`'hl.dsp.focus({ workspace = "previous" })'`) — the old `hyprctl dispatch
+killactive` form is rejected and silently does nothing (see [hypr](hypr.md)). `After=` alone only orders the two units *if both are already
 going to start* — it doesn't make kanata wait on the target, and doesn't pull
 it in. With the old `WantedBy=default.target`, kanata could start via that
 unrelated pull-in path before uwsm finalized the session environment into

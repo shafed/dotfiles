@@ -1,10 +1,10 @@
 ---
 title: keymap
 type: topic
-updated: 2026-07-09
+updated: 2026-07-31
 covers:
   - kanata/config.kbd
-  - hypr/hyprland.conf
+  - hypr/hyprland.lua
   - kitty/kitty.conf
   - zsh/zshrc
 ---

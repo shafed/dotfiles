@@ -1,7 +1,7 @@
 ---
 title: scripts
 type: component
-updated: 2026-07-30
+updated: 2026-07-31
 covers:
   - scripts/
 ---
@@ -167,7 +167,7 @@ the script.
 
 ### nvim-scratch-toggle.sh / nvim-scratch-run.sh / nvim-scratch-quit.sh — scratch note that pastes itself
 
-`SUPER, N` (hypr/hyprland.conf) toggles a floating kitty+nvim scratchpad for
+`SUPER, N` (hypr/hyprland.lua) toggles a floating kitty+nvim scratchpad for
 jotting a quick note and pasting it into whatever text box was focused before
 the scratchpad opened — no manual copy/paste. Reuses the QAT mechanism above
 (`launch_qat`/`lib.sh`) rather than a Hyprland special workspace, so it gets
@@ -198,8 +198,9 @@ apps.sh/bookmarks.sh for free, in its own `scratch` instance-group.
   final one; it would land as an extra Enter in the target text box) —
   clears it for next time, then
   spawns a paste helper via **`systemd-run --user`** and kills the panel;
-  the helper waits for the panel process to die, `hyprctl dispatch
-  focuswindow`s back to the recorded address, and simulates a paste via
+  the helper waits for the panel process to die, runs
+  `hyprctl dispatch 'hl.dsp.focus({ window = "address:..." })'` to refocus the
+  recorded address, and simulates a paste via
   wtype — no ydotool/ydotoold on this machine, and wtype needs no daemon on
   wlroots compositors. The chord depends on the target's Hyprland class:
   plain `ctrl+v` everywhere except a `kitty` target, which gets

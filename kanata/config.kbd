@@ -147,7 +147,7 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
   g (cmd todoist)
   z (cmd zsh -lc "$HOME/.config/kanata/switchApp.sh sioyek 'LIBGL_ALWAYS_SOFTWARE=1 sioyek'")
   c (t! kitty-send C-S-s)   ;; list sessions picker
-  p (t! kitty-send C-S-c)   ;; projects session
+  g (t! kitty-send C-S-c)   ;; github session
   . (multi (on-press tap-vkey apps-us) (cmd rofimoji -a clipboard))
   caps caps
 )

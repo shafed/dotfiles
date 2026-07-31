@@ -100,7 +100,7 @@ M.open = function(dir)
     end
     -- --bias sets the new window's size: ~35% width for a vsplit (right edge),
     -- ~30% height for an hsplit (bottom edge).
-    local bias = (pane_direction == "right") and 50 or 30
+    local bias = (pane_direction == "right") and 49 or 30
     vim.fn.system(
       "kitten @ launch --location="
         .. split_location

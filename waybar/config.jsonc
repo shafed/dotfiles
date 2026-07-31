@@ -8,8 +8,7 @@
     // Choose the order of the modules
     "modules-left": [
         "hyprland/workspaces",
-        "hyprland/mode",
-        "hyprland/scratchpad",
+        "hyprland/submap",
         "custom/media"
     ],
     "modules-center": [
@@ -24,7 +23,9 @@
         //"cpu",
         //"memory",
        // "temperature",
-        "backlight",
+        // backlight: no /sys/class/backlight device on this desktop (DP-2);
+        // re-enable on a laptop that exposes one.
+        // "backlight",
         // "keyboard-state",
         "hyprland/language",
         "battery",
@@ -53,15 +54,8 @@
             "unlocked": ""
         }
     },
-    "hyprland/mode": {
+    "hyprland/submap": {
         "format": "<span style=\"italic\">{}</span>"
-    },
-    "hyprland/scratchpad": {
-        "format": "{icon} {count}",
-        "show-empty": false,
-        "format-icons": ["", ""],
-        "tooltip": true,
-        "tooltip-format": "{app}: {title}"
     },
     "mpd": {
         "format": "{stateIcon} {consumeIcon}{randomIcon}{repeatIcon}{singleIcon}{artist} - {album} - {title} ({elapsedTime:%M:%S}/{totalTime:%M:%S}) ⸨{songPosition}|{queueLength}⸩ {volume}% ",
@@ -125,6 +119,8 @@
         "format-icons": ["", "", ""]
     },
     "backlight": {
+        // Laptop-only: needs /sys/class/backlight/<device>. Unused on the
+        // desktop (see modules-right comment).
         // "device": "acpi_video1",
         "format": "{percent}% {icon}",
         "format-icons": ["", "", "", "", "", "", "", "", ""]

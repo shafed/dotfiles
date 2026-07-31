@@ -83,7 +83,7 @@ button:hover {
 }
 
 
-#mode {
+#submap {
     background-color: @gb_bg_soft;
     box-shadow: inset 0 -3px @gb_yellow;
 }
@@ -100,9 +100,8 @@ button:hover {
 #wireplumber,
 #custom-media,
 #tray,
-#mode,
+#submap,
 #idle_inhibitor,
-#scratchpad,
 #power-profiles-daemon,
 #mpd {
     padding: 0 10px;
@@ -312,14 +311,6 @@ label:focus {
 
 #keyboard-state > label.locked {
     background: rgba(40, 40, 40, 0.35);
-}
-
-#scratchpad {
-    background: rgba(60, 56, 54, 0.6);
-}
-
-#scratchpad.empty {
-	background-color: transparent;
 }
 
 #privacy {

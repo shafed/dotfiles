@@ -124,7 +124,6 @@ z (t! th $tap-time $hold-time z (cmd hyprctl dispatch r#"hl.dsp.focus({ workspac
  w (fork (t! th $tot 160 w (layer-while-held navi)) bspc (lctl rctl))
  ;; tap=n, hold=numplain. th (press-decided) so the layer is instant like w;
  ;; note n is a frequent letter, so n+left-hand bigrams (na/nd/nt...) can misfire.
- n (t! th $tot 160 n (layer-while-held numplain))
 )
 
 (deflayermap (apps)

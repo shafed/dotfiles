@@ -127,6 +127,32 @@ return {
 
     ls.add_snippets("all", snippets)
 
+    -- Auto-open the choice picker whenever a choice node becomes the active
+    -- node (snippet expand or jump into it). The scheduled + choice_active()
+    -- guard avoids a stale open if the user already Tabbed past the node.
+    vim.api.nvim_create_autocmd("User", {
+      pattern = "LuasnipChoiceNodeEnter",
+      callback = function()
+        vim.schedule(function()
+          if require("luasnip").choice_active() then
+            require("luasnip.extras.select_choice")()
+          end
+        end)
+      end,
+    })
+
+    -- Manual reopen of the picker. When no choice is active, fall back to the
+    -- built-in <C-u> (delete to start of line). Must NOT be an expr mapping:
+    -- select_choice opens the Snacks picker window, which is forbidden during
+    -- expr evaluation (E565).
+    vim.keymap.set({ "i", "s" }, "<C-u>", function()
+      if require("luasnip").choice_active() then
+        require("luasnip.extras.select_choice")()
+      else
+        vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<C-u>", true, false, true), "n", false)
+      end
+    end, { silent = true, desc = "LuaSnip: select choice" })
+
     return opts
   end,
 }

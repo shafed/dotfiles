@@ -78,9 +78,7 @@ M.open = function(dir)
       -- Zoomed -> unzoom, then jump to the other (companion) window.
       local companion_id = companion_window_id(tab)
       if auto_cd_to_new_dir and companion_id and vim.g.kitty_pane_dir ~= escaped_dir then
-        vim.fn.system(
-          "kitten @ send-text --match=id:" .. companion_id .. " 'cd \"" .. escaped_dir .. "\"\n'"
-        )
+        vim.fn.system("kitten @ send-text --match=id:" .. companion_id .. " 'cd \"" .. escaped_dir .. "\"\n'")
         vim.g.kitty_pane_dir = escaped_dir
       end
       vim.fn.system("kitten @ action goto_layout tall")
@@ -102,7 +100,7 @@ M.open = function(dir)
     end
     -- --bias sets the new window's size: ~35% width for a vsplit (right edge),
     -- ~30% height for an hsplit (bottom edge).
-    local bias = (pane_direction == "right") and 35 or 30
+    local bias = (pane_direction == "right") and 50 or 30
     vim.fn.system(
       "kitten @ launch --location="
         .. split_location

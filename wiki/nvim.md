@@ -147,6 +147,19 @@ nvim's own window is always the active one when `<M-t>` fires from nvim) and mat
 `send-text --match=id:<id>` explicitly, removing the state-negation guesswork
 entirely. See `companion_window_id()` in `utils/kitty.lua`.
 
+⚠️ Gotcha (fixed 2026-08-01): the companion was launched with
+`kitten @ launch --location=vsplit --cwd <dir> …` — an explicit `--cwd <path>`
+sets `kw.cwd` but **not** `cwd_from`, so the new window was **session-less**
+(`created_in_session_name = ""`). Two consequences: (1) pressing `kitty_mod+t`
+while the companion was focused inherited the empty session, so the new tab
+appeared in *every* session's tab bar (`tab_bar_filter session:^$` matches
+empty session); (2) `goto_session` couldn't find that window by session name
+and re-created the session, opening a fresh tab that re-ran the session file
+(e.g. `obsidian-sync.sh pull …` — which is why it looked like the sync script
+caused the new tab). Fixed by adding `--add-to-session .` to the `launch`,
+which tags the window with the source window's session. Same class of fix as
+`kitty_mod+t` in [sessions](sessions.md).
+
 ## Clipboard vs. registers (`keymaps.lua`, `utils/tasks.lua`)
 
 `clipboard=""` (`options.lua`) is deliberate: plain `y`/`d`/`ciw`/`x` etc. stay in

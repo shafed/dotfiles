@@ -1,7 +1,7 @@
 ---
 title: hypr
 type: component
-updated: 2026-07-31
+updated: 2026-08-01
 covers:
   - hypr/hyprland.lua
   - hypr/hyprland.conf
@@ -14,6 +14,16 @@ covers:
 
 🚧 The compositor (Wayland). The full keymap is in [keymap](keymap.md), colors/theme are in
 [theming](theming.md), terminal/sessions are in [kitty](kitty.md) and [sessions](sessions.md).
+
+> ⚠️ Gotcha (LLM meta-note): **Google everything Hyprland-related until a model
+> trained on the 0.55+ Lua syntax ships.** Since 0.55, hyprlang is deprecated and
+> the config API is Lua (`hl.dsp.*`, `hl.bind`, `hyprctl dispatch 'hl.dsp...'`),
+> which postdates current LLM training data. Models trained on pre-0.55 configs
+> will confidently rewrite things into old hyprlang (`bind =`, `killactive`,
+> `dispatch workspace 3`), which is now a silent no-op. Treat generated
+> Hyprland code with suspicion; verify every call against the installed stubs
+> `/usr/share/hypr/stubs/hl.meta.lua` and the current [wiki](https://wiki.hypr.land/)
+> before applying.
 
 ## Key decisions
 
@@ -60,12 +70,38 @@ covers:
 
 The order and contents of `exec-once` define "what a working session is":
 `kitty` (native sessions, no tmux — see [kitty](kitty.md)/[sessions](sessions.md)),
-`waybar & hyprpaper`, `hyprland-per-window-layout`, `hypridle`, `hyprsunset`,
-`stretchly` (break reminders). ⚠️ Gotcha: the browser is NOT in autostart —
+`waybar & hyprpaper`, `hyprland-per-window-layout`, `openwhispr`, `hypridle`,
+`hyprsunset`, `stretchly` (break reminders). ⚠️ Gotcha: the browser is NOT in autostart —
 `exec-once = browser` was removed (commit `75f46cf`); Helium comes up lazily
 via `workspace = 2, on-created-empty:helium-browser` on first entering
 workspace 2. The measured Hyprland class is `helium`, which is what the
 browser helpers in [scripts](scripts.md) use for focus/move rules.
+
+⚠️ **`openwhispr` is prefixed with a `busctl` call that activates `ksecretd`.**
+OpenWhispr keeps its session token in `~/.config/open-whispr/auth-token.bin`,
+encrypted with a master key stored in the OS keyring (service `OpenWhispr`,
+account `secrets-master-key`) via `@napi-rs/keyring` → Secret Service. On this
+system Secret Service is KWallet, and `org.freedesktop.secrets` is **not** a
+D-Bus-activatable name — only `org.kde.secretservicecompat` is. `ksecretd`
+registers `org.freedesktop.secrets` only after it has started under that KDE
+name, so on a cold boot nothing brings it up: the keyring lookup fails,
+`secretCrypto` falls back to `safeStorage` (also unavailable without Secret
+Service), `decrypt()` throws `decryption failed: no backend available`, and the
+app shows the login screen on every boot. Hence:
+
+```lua
+hl.exec_cmd(
+  "busctl --user call org.freedesktop.DBus /org/freedesktop/DBus "
+    .. "org.freedesktop.DBus StartServiceByName su org.kde.secretservicecompat 0 "
+    .. "&& openwhispr"
+)
+```
+
+The `&&` matters — `exec_cmd` gives no ordering between separate calls, so the
+activation and the launch must be one command. `busctl` (unlike `dbus-send`)
+waits for the service to be up before returning. Check with
+`busctl --user list | grep org.freedesktop.secrets`; a bare
+`secret-tool` call from a cold session answers `The name is not activatable`.
 
 kanata is **not** started here anymore — it moved to a systemd user service
 (`../systemd/user/kanata.service`, `WantedBy=default.target`) so it starts at

@@ -1,7 +1,7 @@
 ---
 title: keymap
 type: topic
-updated: 2026-07-31
+updated: 2026-08-01
 covers:
   - kanata/config.kbd
   - hypr/hyprland.lua
@@ -35,7 +35,9 @@ because kitty only catches C-S combos when focused, while hypr catches Super glo
 - **normal** — a "safe" layer (letters as-is, `lsft`=switch-lang), entered via
   hold Enter; return to base from base via Enter-hold / `lsft+rsft`.
 - **apps** (hold thumb) — launcher: apps, kitty sessions (`kitty-send C-S-*`),
-  fzf pickers, killactive (`q`), browser sub-layer (`s` hold → `browser`).
+  fzf pickers, graceful close to tray (`q` — `hl.dsp.window.close()`, not
+  `kill()`, so tray apps minimize instead of being SIGKILL'd), browser
+  sub-layer (`s` hold → `browser`).
 - **browser** (from apps, hold `s`) — direct URLs in Helium (gmail,
   perplexity, chatgpt, claude…); tapping `s` launches `helium-browser`.
 - **symbols / symbols2** (hold `e`/`r` or chords `s+d` / `s+d+f`) — programmer

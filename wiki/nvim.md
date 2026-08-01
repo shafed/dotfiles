@@ -55,7 +55,11 @@ covers:
   the content. The winbar logic was pulled out of `config/options.lua` into
   `utils/winbar.lua` (exposing `set_zen(active)`) so the zen toggle in
   `plugins/snacks.lua` can blank the winbar on every normal window while zen
-  mode is active and restore it on close.
+  mode is active and restore it on close. `winbar.zen_active` is the single
+  source of truth for zen state — the toggle derives `active` from it rather
+  than keeping its own flag, because a local in the plugin spec would reset on
+  `:Lazy reload snacks.nvim` and strand the toggle in zen while the modules
+  stay active.
 - **Zen = Hyprland fullscreen, no nvim float** (2026-08-01): `<leader>uz` no
   longer runs LazyVim's `Snacks.toggle.zen()` (which opens a floating window).
   Instead a custom keymap in `plugins/snacks.lua` toggles a plain

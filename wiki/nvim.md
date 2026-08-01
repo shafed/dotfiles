@@ -179,12 +179,16 @@ silently land in `+`. Cross-session clipboard transfer now relies solely on
 the explicit mappings above (`<leader>y`, mouse-select) instead of a
 focus-event heuristic.
 
-`tasks.yank_text` (bound to `<leader>yI` — capital `I` for "Item") copies a task
-bullet's text without
-the `- [ ]`/`- [x]` prefix, straight to `+`. It reuses the same chunk-boundary
-walk as `toggle_done` (a task's text can wrap onto following non-bullet,
-non-blank lines, e.g. a long todo in `todos.md`), so it selects and yanks the
-whole wrapped chunk, not just the cursor's physical line.
+`tasks.yank_text` (bound to `<leader>yI` — capital `I` for "Item") copies **any
+Markdown item** — task bullet, plain bullet, heading, blockquote — without its
+structural prefix, straight to `+`. `parse_prefix` strips indentation, `>`
+quote markers, `-`/`*`/`+`/`1.` list markers, `[ ]`/`[x]`/`[-]`/`[!]` etc.
+checkboxes, and `#` heading markers. It shares the chunk-boundary walk with
+`toggle_done`: an item's text can wrap onto following non-bullet, non-blank
+lines (e.g. a long todo in `todos.md`), so it selects and yanks the whole
+wrapped chunk, not just the cursor's physical line. Visual `<leader>yI` yanks
+every selected line, stripping the prefix independently from each. The yanked
+range is flashed briefly (see `flash_range` in `utils/tasks.lua`).
 
 `mini.files` has its own file-clipboard interop. `<leader>y` copies selected
 paths as `text/plain` + `text/uri-list`; for a single image it additionally puts

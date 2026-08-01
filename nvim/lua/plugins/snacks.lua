@@ -1,5 +1,3 @@
-local zen_active = false
-
 return {
   "folke/snacks.nvim",
   keys = {
@@ -14,7 +12,11 @@ return {
       function()
         local winbar = require("utils.winbar")
         local fullscreen = require("utils.fullscreen")
-        zen_active = not zen_active
+        -- winbar.zen_active is the single source of truth for zen state.
+        -- Keeping a copy in this spec file would desync it (the spec is
+        -- re-evaluated on `:Lazy reload snacks.nvim`, resetting the local
+        -- while zen is still active) and strand the toggle in zen.
+        local zen_active = not winbar.zen_active
         winbar.set_zen(zen_active)
         fullscreen.set_zen(zen_active)
       end,

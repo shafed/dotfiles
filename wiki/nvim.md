@@ -179,7 +179,8 @@ silently land in `+`. Cross-session clipboard transfer now relies solely on
 the explicit mappings above (`<leader>y`, mouse-select) instead of a
 focus-event heuristic.
 
-`tasks.yank_text` (bound to `<leader>yc`) copies a task bullet's text without
+`tasks.yank_text` (bound to `<leader>yI` — capital `I` for "Item") copies a task
+bullet's text without
 the `- [ ]`/`- [x]` prefix, straight to `+`. It reuses the same chunk-boundary
 walk as `toggle_done` (a task's text can wrap onto following non-bullet,
 non-blank lines, e.g. a long todo in `todos.md`), so it selects and yanks the

@@ -106,7 +106,7 @@ M.open = function(dir)
         .. split_location
         .. " --bias "
         .. bias
-        .. " --cwd '"
+        .. " --add-to-session . --cwd '"
         .. escaped_dir
         .. "' --env DISABLE_PULL=1 zsh"
     )

@@ -26,14 +26,13 @@ hl.on("hyprland.start", function()
   hl.exec_cmd(terminal)
   hl.exec_cmd("waybar & hyprpaper")
   hl.exec_cmd("hyprland-per-window-layout")
-  -- ksecretd registers org.freedesktop.secrets only once started under its own
-  -- KDE name; that name is not activatable, so OpenWhispr's keyring lookup fails
-  -- on a cold boot and it falls back to the login screen. Activate it first.
-  hl.exec_cmd(
-    "busctl --user call org.freedesktop.DBus /org/freedesktop/DBus "
-      .. "org.freedesktop.DBus StartServiceByName su org.kde.secretservicecompat 0 "
-      .. "&& openwhispr"
-  )
+  -- OpenWhispr keeps its session token encrypted with a master key in the OS
+  -- keyring (KWallet here), so the wallet must be unlocked before it starts, or
+  -- it falls back to the login screen on every boot. pam_kwallet5 in
+  -- /etc/pam.d/system-local-login captures the login password and passes it over
+  -- $PAM_KWALLET5_LOGIN; pam_kwallet_init is what hands it to kwalletd. Its XDG
+  -- autostart entry is X-systemd-skip=true, so uwsm never runs it — do it here.
+  hl.exec_cmd("/usr/lib/pam_kwallet_init && openwhispr")
   hl.exec_cmd("hypridle")
   hl.exec_cmd("hyprsunset")
 end)

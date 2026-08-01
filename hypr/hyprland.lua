@@ -27,12 +27,18 @@ hl.on("hyprland.start", function()
   hl.exec_cmd("waybar & hyprpaper")
   hl.exec_cmd("hyprland-per-window-layout")
   -- OpenWhispr keeps its session token encrypted with a master key in the OS
-  -- keyring (KWallet here), so the wallet must be unlocked before it starts, or
-  -- it falls back to the login screen on every boot. pam_kwallet5 in
-  -- /etc/pam.d/system-local-login captures the login password and passes it over
-  -- $PAM_KWALLET5_LOGIN; pam_kwallet_init is what hands it to kwalletd. Its XDG
-  -- autostart entry is X-systemd-skip=true, so uwsm never runs it — do it here.
-  hl.exec_cmd("/usr/lib/pam_kwallet_init && openwhispr")
+  -- keyring (KWallet here), so Secret Service must be up before it starts, or
+  -- it falls back to the login screen on every boot. org.freedesktop.secrets
+  -- is not itself D-Bus-activatable — only org.kde.secretservicecompat is, and
+  -- ksecretd registers the former only once started under that name. pam_kwallet5
+  -- can't help here: tty1 autologins via agetty --autologin, so PAM never sees a
+  -- password to hand to kwalletd. The wallet password is empty instead, so no
+  -- unlock prompt is needed once ksecretd is up.
+  hl.exec_cmd(
+    "busctl --user call org.freedesktop.DBus /org/freedesktop/DBus "
+      .. "org.freedesktop.DBus StartServiceByName su org.kde.secretservicecompat 0 "
+      .. "&& openwhispr"
+  )
   hl.exec_cmd("hypridle")
   hl.exec_cmd("hyprsunset")
 end)

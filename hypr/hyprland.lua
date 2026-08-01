@@ -26,6 +26,14 @@ hl.on("hyprland.start", function()
   hl.exec_cmd(terminal)
   hl.exec_cmd("waybar & hyprpaper")
   hl.exec_cmd("hyprland-per-window-layout")
+  -- ksecretd registers org.freedesktop.secrets only once started under its own
+  -- KDE name; that name is not activatable, so OpenWhispr's keyring lookup fails
+  -- on a cold boot and it falls back to the login screen. Activate it first.
+  hl.exec_cmd(
+    "busctl --user call org.freedesktop.DBus /org/freedesktop/DBus "
+      .. "org.freedesktop.DBus StartServiceByName su org.kde.secretservicecompat 0 "
+      .. "&& openwhispr"
+  )
   hl.exec_cmd("hypridle")
   hl.exec_cmd("hyprsunset")
 end)

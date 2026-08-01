@@ -189,6 +189,30 @@ local function copy_paths_to_clipboard(paths)
   end
 end
 
+-- mini.files' LSP file-operation hook (mini.nvim >= 0.18.0) assumes every
+-- `workspace.fileOperations` filter scheme is a string. Some servers advertise
+-- `"scheme": null` (or `"matches": null`), which Neovim decodes to `vim.NIL`
+-- (a userdata sentinel), so the hook's `scheme .. ':'` crashes with E5108.
+-- Normalize such filters to plain `nil` so they are treated as "no filter".
+local function normalize_file_ops_schemes(client)
+  local file_ops = client.server_capabilities
+    and client.server_capabilities.workspace
+    and client.server_capabilities.workspace.fileOperations
+  if type(file_ops) ~= "table" then
+    return
+  end
+  local function replace_nil(t)
+    for k, v in pairs(t) do
+      if v == vim.NIL then
+        t[k] = nil
+      elseif type(v) == "table" then
+        replace_nil(v)
+      end
+    end
+  end
+  replace_nil(file_ops)
+end
+
 -- Ad-hoc multi-selection: toggle individual entries (e.g. rows 1, 3, 5) with
 -- <Tab>, then copy them all. State is keyed by absolute path (not line number),
 -- since mini.files redraws and renumbers rows on navigation.
@@ -286,6 +310,23 @@ return {
   },
   init = function()
     local group = vim.api.nvim_create_augroup("MiniFilesMultiSelect", { clear = true })
+    -- Normalize null `scheme`/`matches` file-operation filters on LSP attach
+    -- (see normalize_file_ops_schemes), and on already-attached clients.
+    vim.api.nvim_create_autocmd("LspAttach", {
+      group = group,
+      callback = function(args)
+        -- `vim.lsp.get_client({ id })` is the modern API but missing on this
+        -- nvim build, so fall back to the (deprecated) `get_client_by_id`.
+        local client = vim.lsp.get_client and vim.lsp.get_client({ id = args.data.client_id })
+          or vim.lsp.get_client_by_id(args.data.client_id)
+        if client then
+          normalize_file_ops_schemes(client)
+        end
+      end,
+    })
+    for _, client in ipairs(vim.lsp.get_clients()) do
+      normalize_file_ops_schemes(client)
+    end
     -- Redraw selection markers whenever a directory buffer is (re)rendered, so
     -- highlights survive navigation and stay attached to the right entries.
     vim.api.nvim_create_autocmd("User", {

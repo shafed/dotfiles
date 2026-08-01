@@ -214,6 +214,15 @@ an image. `<leader>p` reads `text/uri-list` and copies those files into the
 current mini.files directory. This pairs with the Downloads watcher described in
 [scripts](scripts.md).
 
+⚠️ Gotcha (fixed 2026-08-01): mini.files ≥ 0.18.0 notifies LSP servers about file
+actions via `workspace/*Files`, and its hook assumes every advertised filter has
+a string `scheme`. Some servers send `"scheme": null` (also `"matches": null`),
+which Neovim decodes to the `vim.NIL` sentinel (userdata), so the hook's
+`scheme .. ':'` threw E5108 on every file operation in the explorer. `init` in
+`plugins/mini-files.lua` now normalizes `vim.NIL` → `nil` in each client's
+`server_capabilities.workspace.fileOperations` on `LspAttach` (and existing
+clients), so null filters behave as "no filter". Upstream unfixed as of 0.18.0.
+
 ## Russian layout in normal mode (`options.lua` + `autocmds.lua`)
 
 Two complementary mechanisms (added 2026-07-08) so the RU layout doesn't break

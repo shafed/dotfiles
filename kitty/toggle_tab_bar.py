@@ -5,7 +5,7 @@
 # internal (undocumented) TabManager API directly, which is the sanctioned
 # escape hatch custom kittens have for anything not exposed over `kitten @`.
 #
-# Driven from nvim (nvim/lua/utils/fullscreen.lua) so Snacks.zen can hide the
+# Driven from nvim (nvim/lua/utils/fullscreen.lua) so zen mode can hide the
 # tab bar on <leader>uz and restore it on exit:
 #   kitten @ kitten toggle_tab_bar.py hide
 #   kitten @ kitten toggle_tab_bar.py show

@@ -58,7 +58,7 @@ vim.opt.langmap = {
 }
 
 -- Winbar: see nvim/lua/utils/winbar.lua for the "(buffer count) filename" +
--- dir path bar. Split out into its own module so Snacks.zen (config in
+-- dir path bar. Split out into its own module so the zen toggle (config in
 -- plugins/snacks.lua) can force it off across all windows while zen mode is
 -- open.
 require("utils.winbar").setup()

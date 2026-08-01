@@ -1,8 +1,25 @@
+local zen_active = false
+
 return {
   "folke/snacks.nvim",
   keys = {
     -- Use mini.files
     { "<leader>e", false },
+    -- Zen mode = Hyprland fullscreen, not Snacks.zen's floating window:
+    -- fullscreen the OS window and hide kitty's tab bar (utils/fullscreen.lua),
+    -- plus blank the winbar across all windows (utils/winbar.lua). Overrides
+    -- LazyVim's Snacks.toggle.zen() which would open an nvim float.
+    {
+      "<leader>uz",
+      function()
+        local winbar = require("utils.winbar")
+        local fullscreen = require("utils.fullscreen")
+        zen_active = not zen_active
+        winbar.set_zen(zen_active)
+        fullscreen.set_zen(zen_active)
+      end,
+      desc = "Zen Mode (Hyprland fullscreen)",
+    },
     -- Keymaps picker
     {
       "<leader>sk",
@@ -251,33 +268,6 @@ return {
     },
   },
   opts = {
-    -- Twilight without zoom: the zen window fills the whole editor instead of
-    -- a centered 120-col float, so zen dims everything outside the current
-    -- scope (the "twilight" effect) without narrowing or recentering the
-    -- window. The custom winbar (utils/winbar.lua) is still hidden on open:
-    -- the zen float inherits winbar from the window it was opened from
-    -- (Neovim copies local-window options on window creation), and
-    -- utils.winbar's update() deliberately skips floating windows (to
-    -- avoid breaking mini.files' border title), so it's never overwritten
-    -- on its own. Clear it explicitly here.
-    zen = {
-      center = false,
-      win = {
-        style = "zen",
-        width = function()
-          return vim.o.columns
-        end,
-      },
-      on_open = function(win)
-        require("utils.winbar").set_zen(true)
-        vim.wo[win.win].winbar = ""
-        require("utils.fullscreen").set_zen(true)
-      end,
-      on_close = function()
-        require("utils.winbar").set_zen(false)
-        require("utils.fullscreen").set_zen(false)
-      end,
-    },
     image = {
       enabled = true,
       doc = {

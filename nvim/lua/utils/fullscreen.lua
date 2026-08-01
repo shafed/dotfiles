@@ -1,6 +1,7 @@
--- Make the OS chrome around nvim match Snacks.zen: fullscreen the Hyprland
--- window and hide kitty's tab bar while zen mode is open, restoring both on
--- close.
+-- Make the OS chrome around nvim match zen mode: fullscreen the Hyprland
+-- window and hide kitty's tab bar while zen is open, restoring both on close.
+-- Driven from the zen toggle in plugins/snacks.lua (zen = Hyprland fullscreen,
+-- not a Snacks.zen float window).
 local M = {}
 
 M.zen_fullscreened = false
@@ -20,16 +21,17 @@ local function get_active_window()
   return data
 end
 
--- `hl.dsp.window.fullscreen({ action = "unset" })` un-fullscreens the active
--- window, so this only calls it on open when the window isn't already
--- fullscreen, and only calls it again on close if this module is the one that
--- turned it on (avoids un-fullscreening a window the user had already
--- fullscreened themselves before entering zen).
+-- `hl.dsp.window.fullscreen({ action = "set" })` fullscreens the active
+-- window, `"unset"` un-fullscreens it (Hyprland 0.56 Lua dispatchers). Only
+-- call on open when the window isn't already fullscreen, and only call it
+-- again on close if this module is the one that turned it on (avoids
+-- un-fullscreening a window the user had already fullscreened themselves
+-- before entering zen).
 local function set_hyprland_fullscreen(active)
   if active then
     local win = get_active_window()
     if win and win.fullscreen == 0 then
-      vim.fn.system({ "hyprctl", "dispatch", 'hl.dsp.window.fullscreen({ action = "unset" })' })
+      vim.fn.system({ "hyprctl", "dispatch", 'hl.dsp.window.fullscreen({ action = "set" })' })
       M.zen_fullscreened = true
     else
       M.zen_fullscreened = false

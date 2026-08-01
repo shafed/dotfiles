@@ -3,10 +3,9 @@
 -- this never depends on bufferline's own showtabline logic, which used to
 -- hide the line after <leader>bo.
 --
--- Exposed as a module (rather than living inline in options.lua) so
--- Snacks.zen can force it off on every window while zen mode is open: zen's
--- floating window is centered and narrower than the screen, so without this
--- the old winbar stays visible in the margins on either side.
+-- Exposed as a module (rather than living inline in options.lua) so the zen
+-- toggle (plugins/snacks.lua) can force it off on every window while zen mode
+-- is open.
 local M = {}
 
 M.zen_active = false
@@ -36,10 +35,9 @@ local function get_path()
 end
 
 function M.update()
-  -- Skip floating windows (e.g. mini.files' explorer panes, Snacks.zen's own
-  -- window): they draw their own border title and setting winbar on them
-  -- stacks a garbled extra line (raw buffer name like
-  -- "minifiles://2//home/shafed") above the content.
+  -- Skip floating windows (e.g. mini.files' explorer panes): they draw their
+  -- own border title and setting winbar on them stacks a garbled extra line
+  -- (raw buffer name like "minifiles://2//home/shafed") above the content.
   if vim.api.nvim_win_get_config(0).relative ~= "" then
     return
   end
@@ -56,8 +54,9 @@ function M.update()
     .. get_path()
 end
 
--- Called from Snacks.zen's on_open/on_close: hide winbar on every normal
--- window while zen mode is active, restore it everywhere when it closes.
+-- Called from the zen toggle in plugins/snacks.lua: hide winbar on every
+-- normal window while zen mode is active, restore it everywhere when it
+-- closes.
 function M.set_zen(active)
   M.zen_active = active
   for _, win in ipairs(vim.api.nvim_list_wins()) do

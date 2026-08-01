@@ -130,7 +130,7 @@ z (t! th $tap-time $hold-time z (cmd hyprctl dispatch r#"hl.dsp.focus({ workspac
    
   e (t! kitty-send C-S-f)   ;; zoxide session picker
   l (layer-while-held numws)  ;; hold: switch workspace (Super+digit, left-hand digits)
-  q (cmd hyprctl dispatch "hl.dsp.window.kill()")
+  q (cmd hyprctl dispatch "hl.dsp.window.close()") ;; graceful close -> apps with tray icons minimize instead of quitting
   t (t! kitty-send C-S-2)   ;; todos session
   r (t! kitty-send C-S-1)   ;; daily note
   y (cmd helium-browser --new-window https://www.youtube.com/playlist?list=WL)

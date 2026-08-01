@@ -77,31 +77,50 @@ via `workspace = 2, on-created-empty:helium-browser` on first entering
 workspace 2. The measured Hyprland class is `helium`, which is what the
 browser helpers in [scripts](scripts.md) use for focus/move rules.
 
-⚠️ **`openwhispr` is prefixed with a `busctl` call that activates `ksecretd`.**
-OpenWhispr keeps its session token in `~/.config/open-whispr/auth-token.bin`,
-encrypted with a master key stored in the OS keyring (service `OpenWhispr`,
-account `secrets-master-key`) via `@napi-rs/keyring` → Secret Service. On this
-system Secret Service is KWallet, and `org.freedesktop.secrets` is **not** a
-D-Bus-activatable name — only `org.kde.secretservicecompat` is. `ksecretd`
-registers `org.freedesktop.secrets` only after it has started under that KDE
-name, so on a cold boot nothing brings it up: the keyring lookup fails,
-`secretCrypto` falls back to `safeStorage` (also unavailable without Secret
-Service), `decrypt()` throws `decryption failed: no backend available`, and the
-app shows the login screen on every boot. Hence:
+⚠️ **`openwhispr` is prefixed with `/usr/lib/pam_kwallet_init` — it unlocks
+KWallet.** OpenWhispr keeps its session token in
+`~/.config/open-whispr/auth-token.bin`, encrypted with a master key held in the
+OS keyring (service `OpenWhispr`, account `secrets-master-key`) via
+`@napi-rs/keyring` → Secret Service. Without the key `secretCrypto` falls back
+to `safeStorage` (also unavailable without Secret Service), `decrypt()` throws
+`decryption failed: no backend available`, and the app shows its login screen on
+every boot.
 
-```lua
-hl.exec_cmd(
-  "busctl --user call org.freedesktop.DBus /org/freedesktop/DBus "
-    .. "org.freedesktop.DBus StartServiceByName su org.kde.secretservicecompat 0 "
-    .. "&& openwhispr"
-)
-```
+Secret Service here is KWallet, and the `Default keyring` wallet is
+password-protected (note the `~/.local/share/kwalletd/Default keyring.salt`).
+Nothing was unlocking it: login happens via `login` on tty1 (`Service=login`,
+Hyprland comes up from `~/.zprofile` → `exec uwsm start hyprland-uwsm.desktop`),
+there is no display manager, and `pam_kwallet5` was only listed in
+`/etc/pam.d/lightdm` — a dead entry, since the module itself wasn't even
+installed. So the app either hit a locked wallet or got a password prompt.
 
-The `&&` matters — `exec_cmd` gives no ordering between separate calls, so the
-activation and the launch must be one command. `busctl` (unlike `dbus-send`)
-waits for the service to be up before returning. Check with
-`busctl --user list | grep org.freedesktop.secrets`; a bare
-`secret-tool` call from a cold session answers `The name is not activatable`.
+The fix has two halves, and **both are required**:
+
+1. `kwallet-pam` installed, and `pam_kwallet5` added to
+   `/etc/pam.d/system-local-login` (backup: `system-local-login.bak`):
+
+   ```
+   -auth     optional  pam_kwallet5.so
+   -password optional  pam_kwallet5.so
+   -session  optional  pam_kwallet5.so auto_start
+   ```
+
+   `auth` captures the login password, `password` keeps the wallet password in
+   sync when the account password changes, `session auto_start` opens the socket.
+   The leading `-` keeps logins working if the module ever goes away.
+
+2. `/usr/lib/pam_kwallet_init` run inside the session — it pipes the environment
+   to kwalletd over `$PAM_KWALLET5_LOGIN` (needs `socat`). Its XDG autostart
+   entry is `X-systemd-skip=true`, and `plasma-kwallet-pam.service` is `static`
+   and ordered against plasma units that don't exist here, so **uwsm never runs
+   it** — hence the explicit call in `exec-once`.
+
+`&&` is safe: the script exits 0 even when `PAM_KWALLET5_LOGIN` is unset, so
+OpenWhispr starts either way. ⚠️ This only works if the wallet password equals
+the login password; otherwise the prompt comes back and the wallet password has
+to be changed once (`kwalletmanager`). Verify with `ls
+/run/user/1000/kwallet*.socket` after login and `busctl --user list | grep
+org.freedesktop.secrets`.
 
 kanata is **not** started here anymore — it moved to a systemd user service
 (`../systemd/user/kanata.service`, `WantedBy=default.target`) so it starts at

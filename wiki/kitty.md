@@ -61,7 +61,7 @@ Custom `no_ui` kitten (`hide`/`show`/`toggle` args) that pokes
 because kitty's remote-control protocol has no builtin command for this —
 `tab_bar_hidden` is normally set exactly once at startup, from
 `tab_bar_style == "hidden"` (`kitty/tabs.py`). Driven from nvim
-(`nvim/lua/utils/fullscreen.lua`) so `Snacks.zen` (`<leader>uz`) hides the tab
+(`nvim/lua/utils/fullscreen.lua`) so zen mode (`<leader>uz`) hides the tab
 bar and fullscreens the Hyprland window on open, restoring both on close.
 
 ## QAT panels (quick-access-terminal)

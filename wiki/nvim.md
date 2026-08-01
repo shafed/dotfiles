@@ -1,7 +1,7 @@
 ---
 title: nvim
 type: component
-updated: 2026-07-31
+updated: 2026-08-01
 covers:
   - nvim/
 ---
@@ -53,22 +53,20 @@ covers:
   floats with their own border title, and setting winbar on them stacked a
   garbled extra line (raw buffer name like `minifiles://2//home/shafed`) above
   the content. The winbar logic was pulled out of `config/options.lua` into
-  `utils/winbar.lua` (exposing `set_zen(active)`) because `Snacks.zen`'s
-  floating window still needs the winbar hidden — it inherits winbar from the
-  window it was opened from (Neovim copies local-window options on window
-  creation) and `utils/winbar`'s update() skips floats, so without an explicit
-  hide a stale winbar would linger. `plugins/snacks.lua`'s `zen.on_open`/
-  `on_close` call `set_zen(true/false)` to hide/restore it across all windows.
-- **Zen = "twilight without zoom"** (2026-07-31): `<leader>uz` (LazyVim's
-  `Snacks.toggle.zen()`) dims everything outside the current scope — the
-  "twilight" effect — but no longer opens a centered 120-col float. The zen
-  window fills the whole editor (`center = false`, `win.width = vim.o.columns`)
-  so the buffer is only dimmed, never narrowed or recentered. The OS chrome is
+  `utils/winbar.lua` (exposing `set_zen(active)`) so the zen toggle in
+  `plugins/snacks.lua` can blank the winbar on every normal window while zen
+  mode is active and restore it on close.
+- **Zen = Hyprland fullscreen, no nvim float** (2026-08-01): `<leader>uz` no
+  longer runs LazyVim's `Snacks.toggle.zen()` (which opens a floating window).
+  Instead a custom keymap in `plugins/snacks.lua` toggles a plain
+  `zen_active` flag that calls `utils/fullscreen.lua` + `utils/winbar.lua`:
+  the OS window is fullscreened, so there's no centered float and nothing is
+  dimmed or narrowed inside nvim. The OS chrome is
   still matched by **`utils/fullscreen.lua`**: on open it fullscreens the
-  Hyprland window (`hyprctl dispatch 'hl.dsp.window.fullscreen({ action = "unset" })'`, only if not already
+  Hyprland window (`hyprctl dispatch 'hl.dsp.window.fullscreen({ action = "set" })'`, only if not already
   fullscreen, and only restored on close if this module is what turned it on)
   and hides kitty's tab bar via the `toggle_tab_bar.py` kitten
-  (see [kitty](kitty.md)); wired into `zen.on_open`/`on_close` alongside
+  (see [kitty](kitty.md)); wired into the same `<leader>uz` toggle as
   `utils/winbar.lua`.
 
 ## Integration with the training logbook

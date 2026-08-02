@@ -125,6 +125,18 @@ return {
       })
     )
 
+    table.insert(
+      snippets,
+      s({
+        trig = "family mail",
+        name = "Family Gmail",
+        desc = "Family Gmail",
+      }, {
+        t("shaparenkofamily@gmail.com"),
+        i(1),
+      })
+    )
+
     ls.add_snippets("all", snippets)
 
     -- Auto-open the choice picker whenever a choice node becomes the active

@@ -80,7 +80,6 @@ When asked to "lint the wiki" (or on your own initiative, if you notice):
 
 ## Misc
 
-- Don't add `Co-Authored-By` lines to git commits.
 - Links between wiki pages use relative markdown links, e.g.
   `[keymap](keymap.md)` (see CONVENTIONS.md).
 - There are local `.claude/` dirs in `kanata/`, `scripts/`, `nvim/lua/config/` —

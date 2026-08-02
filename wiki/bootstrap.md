@@ -1,7 +1,7 @@
 ---
 title: bootstrap
 type: topic
-updated: 2026-07-09
+updated: 2026-08-02
 covers:
   - bootstrap.sh
   - zsh/zshrc
@@ -32,7 +32,9 @@ rejected).
 
 Linked dirs (`~/.config/<name>` ← `~/dotfiles/<name>`): `hypr`, `kitty`,
 `nvim`, `kanata`, `waybar`, `yazi`, `darkman`, `lazygit`, `sioyek`, `zathura`,
-`systemd`. Plus the direct zsh links above.
+`systemd`. Plus the direct zsh links above. Plus the shared CLI agent
+instructions: `instructions.md` → `~/.claude/CLAUDE.md`,
+`~/.config/opencode/AGENTS.md`, `~/.codex/AGENTS.md` (see [global](global.md)).
 
 ✅ fixed 2026-07-01: legacy symlinks `~/.config/tmux` and `~/.config/wezterm`
 (both pointed into dotfiles) were removed — the switch to kitty native sessions is

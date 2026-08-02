@@ -42,6 +42,18 @@ REQUIRED_PKGS=(
   "python3:python"
 )
 
+# Sources this script links, relative to DOTFILES_DIR. CONFIG_DIRS become
+# whole-directory symlinks into ~/.config; LINK_FILES are individual symlinks.
+CONFIG_DIRS=(
+  hypr kitty nvim kanata waybar yazi darkman lazygit sioyek zathura systemd
+)
+LINK_FILES=(
+  zsh/zshrc
+  zsh/zprofile
+  instructions.md
+  scripts/sudo-notify.sh
+)
+
 check_requirements() {
   echo "== Checking required commands =="
   local missing=()
@@ -66,25 +78,53 @@ check_requirements() {
   fi
 }
 
+check_sources() {
+  echo "== Checking link sources exist in the repo =="
+  local missing=0
+  local name src
+  for name in "${CONFIG_DIRS[@]}"; do
+    if [ ! -d "$name" ]; then
+      echo "  MISSING dir  $name/  (would link ~/.config/$name)"
+      missing=1
+    fi
+  done
+  for src in "${LINK_FILES[@]}"; do
+    if [ ! -e "$src" ]; then
+      echo "  MISSING file $src  (linked by bootstrap)"
+      missing=1
+    fi
+  done
+  if [ "$missing" -eq 1 ]; then
+    echo "  Fix or remove the missing sources, then re-run."
+    return 1
+  fi
+  echo "  all sources present."
+}
+
 link_configs() {
+  echo
+  check_sources
+
   echo
   echo "== Linking configs into ~/.config =="
   mkdir -p "$HOME/.config"
 
   # Whole-directory symlinks: ~/.config/<name> -> ~/dotfiles/<name>
-  local config_dirs=(
-    hypr kitty nvim kanata waybar yazi darkman lazygit sioyek zathura systemd
-  )
-  for name in "${config_dirs[@]}"; do
-    if [ -d "$name" ]; then
-      ln -sfvn "$DOTFILES_DIR/$name" "$HOME/.config/$name"
-    fi
+  for name in "${CONFIG_DIRS[@]}"; do
+    ln -sfvn "$DOTFILES_DIR/$name" "$HOME/.config/$name"
   done
 
   echo
   echo "== Linking zsh files into \$HOME =="
   ln -sfv "$DOTFILES_DIR/zsh/zshrc" "$HOME/.zshrc"
   ln -sfv "$DOTFILES_DIR/zsh/zprofile" "$HOME/.zprofile"
+
+  echo
+  echo "== Linking CLI agent instruction files =="
+  mkdir -p "$HOME/.claude" "$HOME/.config/opencode" "$HOME/.codex"
+  ln -sfv "$DOTFILES_DIR/instructions.md" "$HOME/.claude/CLAUDE.md"
+  ln -sfv "$DOTFILES_DIR/instructions.md" "$HOME/.config/opencode/AGENTS.md"
+  ln -sfv "$DOTFILES_DIR/instructions.md" "$HOME/.codex/AGENTS.md"
 
   echo
   echo "== Installing ~/.local/bin wrappers =="
@@ -98,6 +138,7 @@ EOF
 }
 
 [ "$DO_CHECK" -eq 1 ] && check_requirements
+[ "$DO_CHECK" -eq 1 ] && check_sources
 [ "$DO_LINK" -eq 1 ] && link_configs
 
 echo

@@ -75,4 +75,6 @@ the page that needs updating when editing a file.
 - **Setup** — how to deploy/maintain (bootstrap, deploy symlinks).
 - **Components** — one page per tool.
 - **Cross-cutting** — cross-cutting topics (keymap, theming, sessions).
+- **Global** — system-level decisions outside config components (global agent
+  instructions, home layout) — see `global.md`.
 - **Decisions** — major architectural decisions and rejected alternatives.

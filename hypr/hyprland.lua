@@ -313,8 +313,11 @@ hl.bind("XF86AudioPause", hl.dsp.exec_cmd("playerctl play-pause"), { locked = tr
 hl.bind("XF86AudioPlay", hl.dsp.exec_cmd("playerctl play-pause"), { locked = true })
 hl.bind("XF86AudioPrev", hl.dsp.exec_cmd("playerctl previous"), { locked = true })
 
--- OpenWhispr toggle. Upstream of ./openwhispr-binds.conf, which is managed by the
--- OpenWhispr app in hyprlang syntax and so cannot be require()d from lua.
+-- OpenWhispr toggle. This is the single source of truth: the app also writes
+-- ./openwhispr-binds.conf (hyprlang syntax), but that file is never loaded —
+-- hyprland.conf (which source()s it) is not read when hyprland.lua exists — so
+-- the app's rewrites have no effect. If OpenWhispr changes its bind, copy it
+-- here by hand. (The stray file may reappear in the dir; ignore it.)
 hl.bind(
 	"CTRL + Super_L",
 	hl.dsp.exec_cmd(

@@ -42,9 +42,9 @@ return {
         conceal = false,
       },
     },
-    -- Add custom icons lamw26wmal
+    -- Add custom icons
     link = {
-      image = vim.g.neovim_mode == "skitty" and "" or "󰥶 ",
+      image = "󰥶 ",
       custom = {
         youtu = { pattern = "youtu%.be", icon = "󰗃 " },
       },
@@ -83,8 +83,6 @@ return {
       },
     },
     code = {
-      -- if I'm not using yabai, I cannot make the color of the codeblocks
-      -- transparent, so just disabling all rendering 😢
       style = "none",
     },
   },

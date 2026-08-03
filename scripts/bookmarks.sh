@@ -202,10 +202,6 @@ case "${1:-}" in
   export_browser_bookmarks
   echo "Synced browser bookmarks to $browser_bookmarks_file"
   ;;
---sync-firefox)
-  export_browser_bookmarks
-  echo "Synced browser bookmarks to $browser_bookmarks_file"
-  ;;
 --pick)
   run_picker
   ;;

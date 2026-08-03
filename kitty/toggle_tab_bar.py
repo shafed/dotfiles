@@ -28,7 +28,7 @@ def handle_result(args: list[str], answer: str, target_window_id: int, boss: Bos
     tm = tab.tab_manager_ref()
     if tm is None:
         return
-    action = args[0] if args else "toggle"
+    action = args[1] if len(args) > 1 else "toggle"
     if action == "hide":
         tm.tab_bar_hidden = True
     elif action == "show":

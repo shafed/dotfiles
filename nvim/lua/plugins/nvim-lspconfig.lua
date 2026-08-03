@@ -63,8 +63,8 @@ return {
               IgnoreLinkTitle = true,
             },
             excludePatterns = {
-              "/home/shafed/obsidian/notes/Day [123].md",
-              "/home/shafed/obsidian/training/**/*.md",
+              vim.fn.expand("~/obsidian/notes/Day [123].md"),
+              vim.fn.expand("~/obsidian/training/**/*.md"),
             },
           },
         },

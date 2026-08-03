@@ -17,7 +17,7 @@ notify_if_unfocused() {
 
   local active_json active_pid
   active_json=$(hyprctl activewindow -j 2>/dev/null) || return 0
-  active_pid=$(echo "$active_json" | grep -o '"pid": *[0-9]*' | head -1 | grep -o '[0-9]*$')
+  active_pid=$(printf '%s' "$active_json" | jq -r '.pid' 2>/dev/null)
   [ -z "$active_pid" ] && return 0
 
   # Walk up from this process to find the enclosing terminal emulator pid.

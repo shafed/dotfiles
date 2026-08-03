@@ -66,7 +66,7 @@ function M.push_now(silent)
   return true
 end
 
--- Copy workout data from last markdown table to clipboard lamw25wmal
+-- Copy workout data from last markdown table to clipboard
 function M.copy_workout_table()
   -- Get all lines from current buffer
   local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)

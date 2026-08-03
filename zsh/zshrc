@@ -163,7 +163,6 @@ alias ai="aichat"
 
 
 # Vim
-export vi=~/.config/nvim/init.lua
 bindkey -v
 # gh/gl -> beginning/end of line in normal mode
 bindkey -M vicmd 'gh' vi-first-non-blank
@@ -179,14 +178,7 @@ export PATH="$HOME/.local/bin:$PATH"
 export BROWSER=helium-browser
 export TERMCMD="kitty"
 
-export zsh=~/.zshrc
-export dots=~/dotfiles
-export df=~/dotfiles
-export downloads="/home/shafed/Downloads"
-export ds="/home/shafed/Downloads"
-
 # Yazi cd
-alias y="yazi"
 export EDITOR=nvim
 export VISUAL=nvim
 function y() {
@@ -198,11 +190,7 @@ function y() {
 	rm -f -- "$tmp"
 }
 
-alias neobean='NVIM_APPNAME=linkarzu/dotfiles-latest/neovim/neobean nvim'
-alias nb='neobean'
-
 alias cdd="cd -"
-alias pulldeez='echo "Pulling latest changes, please wait..."; (cd ~/dotfiles && git pull >/dev/null 2>&1) || echo "Failed to pull dotfiles"; source ~/.zshrc'
 alias sioyek="LIBGL_ALWAYS_SOFTWARE=1 sioyek"
 
 alias copyq='QT_QPA_PLATFORM=xcb copyq'

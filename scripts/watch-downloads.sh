@@ -25,7 +25,7 @@ image_mime_type() {
 }
 
 path_to_uri() {
-  python -c 'import pathlib, sys; print(pathlib.Path(sys.argv[1]).absolute().as_uri())' "$1"
+  python3 -c 'import pathlib, sys; print(pathlib.Path(sys.argv[1]).absolute().as_uri())' "$1"
 }
 
 wait_for_stable_file() {

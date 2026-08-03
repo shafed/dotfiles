@@ -20,7 +20,9 @@ from pathlib import Path
 from urllib.parse import quote
 
 TRAINING_DIR = Path(os.environ.get("LOGBOOK_ROOT", "~/obsidian/training")).expanduser()
-OUTPUT = TRAINING_DIR / "logbook.html"
+# Written outside the vault so the generated artifact never pollutes/gets
+# pushed by the vault's `git add -A` sync (see scripts/obsidian-sync.sh).
+OUTPUT = Path(os.environ.get("LOGBOOK_CACHE", "~/.cache/logbook")).expanduser() / "logbook.html"
 
 FILENAME_RE = re.compile(r"^(\d{4})-(\d{2})-(\d{2})-Day-\d+$")
 EVENT_LINE_RE = re.compile(
@@ -1074,6 +1076,7 @@ def main() -> int:
 <script>{js}</script>
 </div></body></html>"""
 
+    OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(page, encoding="utf-8")
     print(f"Wrote {OUTPUT} ({len(sessions)} sessions, {len(ex_index)} exercises)")
     return 0

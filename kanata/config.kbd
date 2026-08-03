@@ -53,7 +53,6 @@
 
 (defalias
   aterm (cmd zsh -lc "$HOME/.config/kanata/switchApp.sh kitty kitty")
-  azen (cmd helium-browser)
   sshot-region (cmd hyprshot -m region --clipboard-only --silent)
   sshot-full (cmd hyprshot -m output --clipboard-only --silent)
   sw (cmd hyprctl switchxkblayout kanata next)

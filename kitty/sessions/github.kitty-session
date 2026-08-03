@@ -2,6 +2,6 @@ layout tall
 
 cd ~/github
 
-launch --title "github" /bin/zsh -i -c 'nvim; exec zsh'
+launch --title "github" /bin/zsh -i -c 'exec zsh'
 focus
 focus_os_window

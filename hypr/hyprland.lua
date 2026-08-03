@@ -49,6 +49,12 @@ end)
 
 hl.env("XCURSOR_SIZE", "24")
 hl.env("HYPRCURSOR_SIZE", "24")
+-- Force Qt apps onto native Wayland: under XWayland fractional scale (1.6)
+-- just upscales the 1x buffer, so Qt apps render pixelated.
+hl.env("QT_QPA_PLATFORM", "wayland")
+-- fyne/GLFW apps (adrop) have no Wayland backend, so they stay on XWayland;
+-- with force_zero_scaling they scale themselves via FYNE_SCALE.
+hl.env("FYNE_SCALE", "1.6")
 
 -----------------------
 ----- PERMISSIONS -----
@@ -129,6 +135,14 @@ hl.config({
 	misc = {
 		force_default_wallpaper = -1, -- Set to 0 or 1 to disable the anime mascot wallpapers
 		disable_hyprland_logo = false, -- If true disables the random hyprland logo / anime girl background. :(
+	},
+
+	-- XWayland can't do fractional scaling (laptop monitor is 1.6): by default
+	-- Hyprland upscales the 1x XWayland buffer, so X11 apps look pixelated.
+	-- force_zero_scaling keeps the buffer at 1x; the app scales itself via
+	-- toolkit vars (FYNE_SCALE for fyne/GLFW like adrop).
+	xwayland = {
+		force_zero_scaling = true,
 	},
 })
 

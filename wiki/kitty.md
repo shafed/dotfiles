@@ -1,7 +1,7 @@
 ---
 title: kitty
 type: component
-updated: 2026-07-17
+updated: 2026-08-03
 covers:
   - kitty/
 ---
@@ -22,7 +22,10 @@ grep -vE '^\s*#' kitty/kitty.conf | grep -vE '^\s*$'
 
 Everything substantive boils down to:
 
-- **Font/cursor**: JetBrains Mono 14, `cursor_blink_interval 0`, `cursor_trail 1`
+- **Font/cursor**: JetBrains Mono Nerd Font (Mono) 14 — the plain `JetBrains Mono`
+  family is no longer installed, only the Nerd Font-patched variant; the plain
+  `ttf-jetbrains-mono` was removed from the system so kitty would otherwise fall
+  back to PT Mono (and lose ligatures). `cursor_blink_interval 0`, `cursor_trail 1`
   (cursor trail).
 - **Scroll/mouse**: `wheel_scroll_multiplier 3.0`, `copy_on_select yes`,
   `mouse_hide_wait -1` (cursor doesn't hide).

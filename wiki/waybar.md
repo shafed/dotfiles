@@ -1,7 +1,7 @@
 ---
 title: waybar
 type: component
-updated: 2026-08-03
+updated: 2026-07-31
 covers:
   - waybar/config.jsonc
   - waybar/style.css
@@ -18,14 +18,9 @@ Bar at the top, height 30. Layout:
 - **left**: `hyprland/workspaces` (icons, `all-outputs`), `hyprland/submap`,
   `custom/media`.
 - **center**: `hyprland/window` (active window title).
-- **right**: `pulseaudio`, `network`,
-  `hyprland/language` (layout indicator), `battery`, `clock`,
+- **right**: `mpd`, `pulseaudio`, `network`, `power-profiles-daemon`,
+  `hyprland/language` (layout indicator), `battery` + `battery#bat2`, `clock`,
   `tray`, `custom/power`.
-
-  `mpd`, `power-profiles-daemon` and `battery#bat2` were removed (2026-08-03):
-  the `mpd` and `power-profiles-daemon` packages are not installed on this
-  machine, and there's no `BAT2` battery (only `BAT1`, auto-detected by the
-  plain `battery` module).
 
 ⚠️ Gotcha: some modules are commented out in `modules-right` (`idle_inhibitor`,
 `cpu`, `memory`, `temperature`, `keyboard-state`, `backlight`) — their configs

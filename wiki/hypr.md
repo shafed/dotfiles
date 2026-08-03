@@ -49,10 +49,13 @@ covers:
   ⚠️ waybar 0.15.0 still sends legacy dispatches from its workspace buttons
   (clicking a workspace does nothing) — the Lua-aware rewrite is only in git
   master (`waybar-git`).
-- **`openwhispr-binds.conf` is not `require`d.** `require()` only loads lua, and
-  that file is rewritten by the OpenWhispr app in hyprlang syntax. Its single
-  bind (`CTRL, Super_L` → dbus toggle) is inlined in `hyprland.lua`.
-  ⚠️ If OpenWhispr rewrites its file, the change must be copied over by hand.
+- **OpenWhispr toggle lives only in `hyprland.lua`.** Its file
+  `openwhispr-binds.conf` (hyprlang) was deleted in 2026-08-03: it is never
+  loaded, because `hyprland.conf` (which `source`d it) isn't read when
+  `hyprland.lua` exists. The app may recreate the file in the dir, but its
+  rewrites have no effect — the inline bind (`CTRL, Super_L` → dbus toggle) is
+  the single source of truth. If OpenWhispr's bind changes, copy it into
+  `hyprland.lua` by hand.
 - **Dwindle layout, gaps and rounding = 0, almost no animations.** A deliberately minimalist
   tiling setup with no visual extras: `gaps_in/out = 0`, `rounding = 0`,
   `animations = { enabled = false }` (except utility curves left at default).

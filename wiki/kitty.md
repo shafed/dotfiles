@@ -51,12 +51,6 @@ otherwise `boss.active_tab.neighboring_window(direction)` moves focus between ki
 windows. The regex is overridable via the 4th argument of the binding. This replaces
 Hyprland window navigation inside the terminal (commit `24b289d`).
 
-## `get_layout.py` — the name of the current layout
-
-A tiny custom kitten (`handle_result` returns `active_tab.current_layout.name`,
-`no_ui`). Used by scripts/sessions to find out the current kitty panel
-layout from under `kitten @`. Not to be confused with the keyboard layout (that's kanata's job).
-
 ## `toggle_tab_bar.py` — hide/show the tab bar at runtime
 
 Custom `no_ui` kitten (`hide`/`show`/`toggle` args) that pokes
@@ -67,6 +61,10 @@ because kitty's remote-control protocol has no builtin command for this —
 (`nvim/lua/utils/fullscreen.lua`) so zen mode (`<leader>uz`) hides the tab
 bar and fullscreens the Hyprland window on open, restoring both on close.
 
+⚠️ The action arg is `args[1]` — kitty places the script path in `args[0]` — so
+`hide`/`show` dispatch deterministically (fixed 2026-08-03; previously they
+were dead branches and the kitten always toggled).
+
 ## QAT panels (quick-access-terminal)
 
 Drop-down overlay panels for fzf pickers ([scripts](scripts.md): bookmarks/youtube):
@@ -74,9 +72,6 @@ Drop-down overlay panels for fzf pickers ([scripts](scripts.md): bookmarks/youtu
 - `quick-access-terminal-center.conf` — centered (`edge center-sized`,
   22×90, `background_opacity 0.85`), with a full duplication of the gruvbox palette via
   `kitty_override` and `tab_bar_style=hidden`.
-- `quick-access-terminal-right.conf` — anchored to the right edge, no transparency,
-  tab bar hidden. ⚠️ Gotcha: `<M-t>` inside toggles the geometry/hides the tab bar
-  of the floating panel (commits `4c315a0`/`b0cad6e`).
 
 ## current-theme.conf
 

@@ -78,8 +78,7 @@ covers:
 
 - `EDITOR`/`VISUAL=nvim`, `BROWSER=helium-browser`, `TERMCMD=kitty` (after dropping
   Windows, see [decisions](decisions.md)).
-- nvim: `vi`/`v`=nvim; `neobean`/`nb` —
-  alternate `NVIM_APPNAME` (see [nvim](nvim.md)).
+- nvim: `v`=nvim.
 - misc: `y`=yazi, `ta`/`tl`=taskwarrior, `ai`=aichat, `pulldeez`=git pull
   dotfiles + resource, `cdd`=`cd -`.
 - `cd` is overridden with **zoxide** (`zoxide init zsh --cmd cd`).

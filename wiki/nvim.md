@@ -344,11 +344,11 @@ normal mode:
 
 ## neobean
 
-The `neobean`/`nb` aliases in [zsh](zsh.md) launch nvim with
-`NVIM_APPNAME=linkarzu/dotfiles-latest/neovim/neobean` — a separate third-party
-config (linkarzu) running alongside the main one, without interfering with it.
-TODO: confirm that this `NVIM_APPNAME` directory is actually installed on the
-machine (it's not in the repo).
+The `neobean`/`nb` aliases were removed from [zsh](zsh.md) in 2026-08-03: they
+set `NVIM_APPNAME=linkarzu/dotfiles-latest/neovim/neobean` — a separate
+third-party (linkarzu) nvim config — but that directory was never installed on
+this machine, so the aliases silently fell back to the default nvim. Don't
+resurrect them unless that config is actually set up.
 
 ## Snippets and spell
 

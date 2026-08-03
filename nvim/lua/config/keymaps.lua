@@ -165,7 +165,7 @@ vim.api.nvim_create_autocmd("FileType", {
 -- https://youtu.be/EYczZLNEnIY
 --
 -- zj folds headings level 1+, zk level 2+ (I know, it reads like "madafaka"
--- but "k" for me means "2"), zl level 3+, z; level 4+ lamw25wmal
+-- but "k" for me means "2"), zl level 3+, z; level 4+
 for key, level in pairs({ j = 1, k = 2, l = 3, [";"] = 4 }) do
   vim.keymap.set("n", "z" .. key, function()
     reload_and_refold(function()
@@ -203,7 +203,7 @@ vim.keymap.set("n", "zu", function()
 end, { desc = "[P]Unfold all headings level 2 or above" })
 
 -- gk jumps to the markdown heading above and then folds it
--- zi by default toggles folding, but I don't need it lamw25wmal
+-- zi by default toggles folding, but I don't need it
 vim.keymap.set("n", "zi", function()
   reload_and_refold(function()
     -- `normal` (not `normal!`) so the gk mapping below is respected
@@ -270,7 +270,7 @@ vim.keymap.set("n", "<leader>lc", obsidian.copy_workout_table, { desc = "[P]Log 
 vim.keymap.set("n", "<leader>lp", obsidian.save_training_note, { desc = "[P]Log Paste: save training note" })
 
 vim.keymap.set("n", "<leader>lv", function()
-  local logbook = vim.fn.expand("~/obsidian/training/logbook.html")
+  local logbook = vim.fn.expand("~/.cache/logbook/logbook.html")
   if vim.fn.filereadable(logbook) == 0 then
     vim.notify("Logbook not found: " .. logbook, vim.log.levels.ERROR)
     return
@@ -380,16 +380,5 @@ vim.keymap.set("n", "<leader>gca", gcal.agenda, { desc = "[P]gcalcli: show agend
 -- Restart nvim: save everything, spawn a fresh nvim in the current directory,
 -- then quit this instance. Uses a detached kitty window so it survives this
 -- nvim closing (a plain jobstart child would be killed on exit).
-vim.api.nvim_create_user_command("Restart", function()
-  vim.cmd("silent! wa")
-  local cwd = vim.fn.getcwd()
-  vim.fn.jobstart({
-    "sh",
-    "-c",
-    "kitty @ launch --type=window --cwd=" .. vim.fn.shellescape(cwd) .. " nvim",
-  }, { detach = true })
-  vim.cmd("qa!")
-end, { desc = "Restart nvim" })
-
-vim.keymap.set("n", "<leader>R", "<cmd>Restart<cr>", { desc = "[P]Restart nvim" })
-vim.keymap.set("n", "<leader>r", "<cmd>Restart<cr>", { desc = "[P]Restart nvim" })
+vim.keymap.set("n", "<leader>R", "<cmd>restart<cr>", { desc = "[P]Restart nvim" })
+vim.keymap.set("n", "<leader>r", "<cmd>restart<cr>", { desc = "[P]Restart nvim" })

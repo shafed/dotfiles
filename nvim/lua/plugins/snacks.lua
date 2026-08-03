@@ -165,8 +165,6 @@ return {
             },
             list = { keys = { ["d"] = "bufdelete" } },
           },
-          -- In case you want to override the layout for this keymap
-          -- layout = "ivy",
         })
       end,
       desc = "[P]Snacks picker buffers",
@@ -296,10 +294,6 @@ return {
         if item.file:match("kanata/configs/macos%.kbd") then
           item.score_add = (item.score_add or 0) - 30
         end
-        -- Boost the "neobean" keymaps file:
-        -- if item.file:match("neobean/lua/config/keymaps%.lua") then
-        --   item.score_add = (item.score_add or 0) + 100
-        -- end
         return item
       end,
       -- In case you want to make sure that the score manipulation above works

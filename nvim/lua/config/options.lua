@@ -12,7 +12,6 @@ vim.opt.shiftwidth = 2
 vim.opt.tabstop = 2
 vim.opt.softtabstop = 2
 vim.opt.textwidth = 80
-vim.opt.colorcolumn = "80"
 vim.g.markdown_recommended_style = 0
 vim.opt.termguicolors = true
 vim.opt.smartindent = true

@@ -6,6 +6,9 @@ return {
       "prettier",
       "markdown-oxide",
       "harper-ls",
+      "ruff",
+      "tex-fmt",
+      "clang-format",
     },
   },
 }

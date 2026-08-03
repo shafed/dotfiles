@@ -377,4 +377,8 @@ end
 vim.keymap.set("n", "<leader>gcc", gcal.create_from_line, { desc = "[P]gcalcli: create event from line" })
 vim.keymap.set("n", "<leader>gca", gcal.agenda, { desc = "[P]gcalcli: show agenda" })
 
+-- Restart nvim: save everything, spawn a fresh nvim in the current directory,
+-- then quit this instance. Uses a detached kitty window so it survives this
+-- nvim closing (a plain jobstart child would be killed on exit).
 vim.keymap.set("n", "<leader>R", "<cmd>restart<cr>", { desc = "[P]Restart nvim" })
+vim.keymap.set("n", "<leader>r", "<cmd>restart<cr>", { desc = "[P]Restart nvim" })

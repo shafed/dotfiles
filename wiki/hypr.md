@@ -1,7 +1,7 @@
 ---
 title: hypr
 type: component
-updated: 2026-08-01
+updated: 2026-08-03
 covers:
   - hypr/hyprland.lua
   - hypr/hyprland.conf
@@ -180,9 +180,6 @@ The full map is in [keymap](keymap.md). Here only the non-obvious bits:
 - `suppress-maximize-events` for all classes — applications don't "maximize" themselves.
 - Telegram → workspace 5, kitty → workspace 1 (stable placement).
 - `hyprland-run`/CopyQ — floated with a fixed position.
-- `com.gabm.satty` (screenshot annotation, see [kanata](kanata.md)) — floated at
-  `95% 95%`, centered; without this it tiles into the dwindle layout at a small
-  size instead of taking most of the screen.
 
 ## idle / lock / suspend
 

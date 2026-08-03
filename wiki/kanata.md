@@ -1,7 +1,7 @@
 ---
 title: kanata
 type: component
-updated: 2026-07-31
+updated: 2026-08-03
 covers:
   - kanata/config.kbd
   - kanata/switchApp.sh
@@ -180,23 +180,19 @@ with Hyprland's lazy workspace browser and the fzf picker scripts.
 ## Screenshot pipeline (`sshot-full` / `sshot-region`)
 
 The `s` key in the **navi** layer (hold `w`, see [keymap](keymap.md)) is a
-tap-hold between two hyprshot invocations, so satty isn't forced on every
-capture:
+tap-hold between two `hyprshot` invocations, both straight to the clipboard:
 
 - **tap** → `sshot-full`: `hyprshot -m output --clipboard-only --silent` —
-  whole active monitor straight to the clipboard, no satty, no region select.
+  whole active monitor straight to the clipboard, no region select.
 - **hold** ($tap-time/$hold-time = 200ms) → `sshot-region`: `hyprshot -m
-  region --raw` (grim under the hood, no save/clipboard of its own) piped into
-  `satty` for annotation, which on copy (Enter, or the copy button) shells out
-  to `wl-copy` and exits (`--early-exit copy`). `--resize smart` fits the image
-  to the satty window on open — without it satty opens at native pixel size,
-  which on a HiDPI capture is far bigger than the window and unusable for
-  annotating (still zoomable/pannable after).
+  region --clipboard-only --silent` — interactive region select, then straight
+  to the clipboard.
 
 Replaced `flameshot gui --clipboard` + `flameshot.service` (2026-07-18) — no
-long-lived daemon needed since hyprshot is invoked on demand, and the
-tap/hold split keeps the fast full-screen path from paying the
-region-select-then-annotate cost every time.
+long-lived daemon needed since hyprshot is invoked on demand. Region
+annotation (satty) was dropped (2026-08-03) so the hold path is also a
+plain clipboard capture; the tap/hold split keeps the fast full-screen path
+from paying the region-select cost every time.
 
 ## Shifted number layer (numplain2)
 

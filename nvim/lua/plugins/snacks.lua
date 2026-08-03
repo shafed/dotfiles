@@ -380,6 +380,9 @@ return {
       },
     },
     lazygit = {
+      -- The default ~90% lazygit float is too narrow for its fixed-column
+      -- layout with the wide Mono Nerd Font, so make it fill the whole window.
+      win = { height = 0, width = 0 },
       theme = {
         selectedLineBgColor = { bg = "CursorLine" },
       },

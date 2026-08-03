@@ -63,6 +63,15 @@ Symlink `~/.config/nvim → ~/dotfiles/nvim` ([bootstrap](bootstrap.md)).
   than keeping its own flag, because a local in the plugin spec would reset on
   `:Lazy reload snacks.nvim` and strand the toggle in zen while the modules stay
   active.
+- **`snacks.lazygit` opens full-window, not the default float** (2026-08-03):
+  Snacks' default lazygit float is ~90% of the nvim window, so lazygit's fixed-
+  column layout cut itself off there. `win = { height = 0, width = 0 }` in
+  `plugins/snacks.lua` makes it fill the whole nvim window, so it lays out like
+  a standalone lazygit. ⚠️ Gotcha: the value is `0`, not `1.0` — in `snacks.win`
+  `0` means "full size" while `1.0` means one _absolute cell_ (a 1×1 window).
+  Reason it matters: the kitty font switched to the wider Mono Nerd Font
+  variant, which squeezes fewer columns into the same width — the float got too
+  narrow, standalone terminal still had enough.
 - **Zen = Hyprland fullscreen, no nvim float** (2026-08-01): `<leader>uz` no
   longer runs LazyVim's `Snacks.toggle.zen()` (which opens a floating window).
   Instead a custom keymap in `plugins/snacks.lua` toggles a plain `zen_active`
@@ -81,15 +90,23 @@ Symlink `~/.config/nvim → ~/dotfiles/nvim` ([bootstrap](bootstrap.md)).
 nvim is the editing side of the training logbook; generation and viewing are in
 [scripts](scripts.md), invocation from the editor is in [sessions](sessions.md).
 
-- `<leader>lp` (`obsidian.save_training_note`) — saves the buffer as
-  `~/obsidian/training/Full Body 2026/YYYY-MM-DD-<h1>.md` (the H1 is rewritten
-  into a slug so the filename matches the heading) and **immediately triggers**
-  `~/dotfiles/scripts/generate_logbook.py` to regenerate `logbook.html`. Prompts
-  for the session date (`vim.ui.input`, defaults to today, validated as
-  `YYYY-MM-DD`) so a session logged late can be dated to when it actually
-  happened instead of the save date — the date drives both the filename and the
-  strict `^\d{4}-\d{2}-\d{2}-Day-\d+$` regex `generate_logbook.py` uses to
-  sort/parse sessions.
+- `<leader>lr` regenerates `logbook.html` and `<leader>lp`
+  (`obsidian.save_training_note`) regenerates it automatically after saving a
+  note. Both funnel through one shared helper — `obsidian.regenerate_logbook()`.
+  (They used to be two separate copies of the script invocation with divergent
+  error handling: `<leader>lr` checked the script existed and reported output,
+  while `save_training_note` ran it silently with no existence guard. Merged
+  into a single guarded runner that takes `{ silent = true }` for the
+  auto-trigger.)
+- `<leader>lp` saves the buffer as
+  `~/obsidian/training/Full Body <текущий год>/YYYY-MM-DD-<h1>.md` (the H1 is
+  rewritten into a slug so the filename matches the heading) and **immediately
+  triggers** `~/dotfiles/scripts/generate_logbook.py` to regenerate
+  `logbook.html`. Prompts for the session date (`vim.ui.input`, defaults to
+  today, validated as `YYYY-MM-DD`) so a session logged late can be dated to
+  when it actually happened instead of the save date — the date drives both the
+  filename and the strict `^\d{4}-\d{2}-\d{2}-Day-\d+$` regex
+  `generate_logbook.py` uses to sort/parse sessions.
 - A separate keymap opens `logbook.html` via `xdg-open`.
 - `obsidian.push_with_cooldown()` — auto commit+push of the `~/obsidian` vault
   (an hour cooldown) so note edits get backed up without manual commits.
@@ -128,6 +145,15 @@ Reason: training notes are tables/abbreviations, and harper chokes on false
 positives. Commit `ef70575` ("recursive disable harper in training").
 
 ## Companion kitty terminal (`<M-t>`, `utils/kitty.lua`)
+
+## Restarting nvim (`:Restart`, `<leader>R`)
+
+`:Restart` (bound to `<leader>R`, `keymaps.lua`) saves all buffers, spawns a
+fresh nvim in the current directory as a **detached kitty window** via
+`kitten @ launch --type=window --cwd=<dir> nvim`, then quits the current
+instance. Detached so the new process survives this nvim exiting (a plain
+`jobstart` child would be killed on `:qa`). The new window opens in the same
+kitty tab/session — handy after `:Lazy` config edits when a reload isn't enough.
 
 `<M-t>` (`keymaps.lua`) calls `require("utils.kitty").open()`, which toggles a
 companion kitty terminal window (split right/bottom per
@@ -221,24 +247,25 @@ current mini.files directory. This pairs with the Downloads watcher described in
 pane can't render binary images, so the keymap opens the image under the cursor
 in a centered float rendered by the Snacks image module
 (`Snacks.image.placement.new`, kitty graphics protocol — kitty-only, since the
-terminal is kitty). The window opens at a max area and is then shrunk to hug
-the image once its size is known (the placement's `on_update`, the same resize
-trick as Snacks' own doc hover), with a footer listing filename, pixel
-resolution (ImageMagick `identify`) and size in MB. Non-image files are
-rejected with a notify. `q`/`<Esc>` closes the float. Port of linkarzu's
-`image.nvim`-based popup to Snacks.
+terminal is kitty). The window opens at a max area and is then shrunk to hug the
+image once its size is known (the placement's `on_update`, the same resize trick
+as Snacks' own doc hover), with a footer listing filename, pixel resolution
+(ImageMagick `identify`) and size in MB. Non-image files are rejected with a
+notify. `q`/`<Esc>` closes the float. Port of linkarzu's `image.nvim`-based
+popup to Snacks.
+
 - ⚠️ Gotcha: mini.files tracks "lost focus" with a 1 s timer
-  (`H.explorer_track_lost_focus` in `mini/files.lua`) and closes the explorer
-  if the *current* buffer's filetype is not `minifiles` — so a focused preview
-  float would kill the explorer ~1 s after opening. There's no public option
-  to disable that. Workaround: the preview buffer is deliberately given
+  (`H.explorer_track_lost_focus` in `mini/files.lua`) and closes the explorer if
+  the _current_ buffer's filetype is not `minifiles` — so a focused preview
+  float would kill the explorer ~1 s after opening. There's no public option to
+  disable that. Workaround: the preview buffer is deliberately given
   `filetype = "minifiles"` (not `"image"`) — the timer sees a minifiles buffer
   and skips, while the Snacks placement renders the image regardless of
-  filetype. Side effect: LazyVim injects its `ft = "minifiles"` keymaps into
-  the float; `<leader>ip` there is handled as a close-toggle. The float takes
-  focus (`enter = true`), `q`/`<Esc>` close it, focus then returns to the
-  explorer. `<leader>ip` is a toggle from the explorer too — the same entry
-  closes the preview, a different entry replaces it.
+  filetype. Side effect: LazyVim injects its `ft = "minifiles"` keymaps into the
+  float; `<leader>ip` there is handled as a close-toggle. The float takes focus
+  (`enter = true`), `q`/`<Esc>` close it, focus then returns to the explorer.
+  `<leader>ip` is a toggle from the explorer too — the same entry closes the
+  preview, a different entry replaces it.
 
 ⚠️ Gotcha (fixed 2026-08-01): mini.files ≥ 0.18.0 notifies LSP servers about
 file actions via `workspace/*Files`, and its hook assumes every advertised

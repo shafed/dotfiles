@@ -376,3 +376,18 @@ end
 -- Google Calendar (lua/utils/gcal.lua)
 vim.keymap.set("n", "<leader>gcc", gcal.create_from_line, { desc = "[P]gcalcli: create event from line" })
 vim.keymap.set("n", "<leader>gca", gcal.agenda, { desc = "[P]gcalcli: show agenda" })
+
+-- Restart nvim: save everything, spawn a fresh nvim in the current directory,
+-- then quit this instance. Uses a detached kitty window so it survives this
+-- nvim closing (a plain jobstart child would be killed on exit).
+vim.api.nvim_create_user_command("Restart", function()
+  vim.cmd("silent! wa")
+  local cwd = vim.fn.getcwd()
+  vim.fn.jobstart({
+    "sh", "-c",
+    "kitty @ launch --type=window --cwd=" .. vim.fn.shellescape(cwd) .. " nvim",
+  }, { detach = true })
+  vim.cmd("qa!")
+end, { desc = "Restart nvim" })
+
+vim.keymap.set("n", "<leader>R", "<cmd>Restart<cr>", { desc = "[P]Restart nvim" })

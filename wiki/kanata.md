@@ -159,6 +159,11 @@ sends a `C-S-` hotkey (kitty's `kitty_mod = C-S-`), which drives native
 sessions. See [sessions](sessions.md). ⚠️ Gotcha: without the delay the hotkey goes out
 before kitty received focus, and the session doesn't switch.
 
+The last-session shortcut (`apps+b` / held `b` → `A-tab` = `goto_session -1`)
+goes through the same `@aterm` macro and uses `$aterm-settle` too (it used to
+be a hardcoded 100 ms, which was too short for the focus switch — fixed
+2026-08-03).
+
 ## apps layer + force-English
 
 Holding the thumb key (`lalt`/`ralt`, tap=bspc/switch-lang) gives the `apps`

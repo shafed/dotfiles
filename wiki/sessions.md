@@ -1,7 +1,7 @@
 ---
 title: sessions
 type: topic
-updated: 2026-07-26
+updated: 2026-08-03
 covers:
   - kitty/sessions
   - kitty/scripts
@@ -28,8 +28,8 @@ kitty sessions** (`goto_session`, session files in
 - the session file is declarative: `layout`, `cd`, `launch --title ...`, `focus`.
 
 Trade-off: some tmux conveniences (layout persistence, "reopen last session")
-had to be reproduced by hand — see [`../kitty/sessions/dotfiles.kitty-session`](../kitty/sessions/dotfiles.kitty-session)
-and `projects.kitty-session`, which call `require("persistence").load()` to
+had to be reproduced by hand — see [`../kitty/sessions/dotfiles.kitty-session`](../kitty/sessions/dotfiles.kitty-session),
+which calls `require("persistence").load()` to
 emulate the old "press s on the start screen". The daily-note session
 deliberately does **not** do this (see below) — it must always land on the
 note itself, not on whatever was last restored for that directory.
@@ -41,7 +41,7 @@ kanata from the `apps` layer sends `C-S-` hotkeys (`kitty_mod = ctrl+shift`) via
 [kanata](kanata.md). Mapping (kitty.conf, "Session & navigation" section):
 
 - `apps+h → C-S-a` = home, `apps+t → C-S-2` = todos, `apps+w → C-S-w` = downloads,
-  `apps+o → C-S-o` = obsidian, `apps+p → C-S-c` = projects, `apps+d → C-S-d` = dotfiles.
+  `apps+o → C-S-o` = obsidian, `apps+g → C-S-c` = github, `apps+d → C-S-d` = dotfiles.
 - `apps+b → A-tab` = last session (`goto_session -1`).
 - `apps+e → C-S-f` = zoxide picker, `apps+c → C-S-s` = list-sessions picker,
   `apps+r → C-S-1` = daily note.
@@ -117,7 +117,7 @@ calls `kitten @ action goto_session`. One kitty session per day: pulls via
 ⚠️ Gotcha (history, 2026-07-26): earlier versions tried to combine the daily
 note with `persistence.load()`, to get the "reopen last layout" convenience
 (same rationale discussed above for why the `obsidian` session avoids it, and
-why `dotfiles`/`projects` sessions do use it). This never landed the note
+why the `dotfiles` session does use it). This never landed the note
 reliably: `note_dir` is the *monthly* folder, shared by every day's note that
 month, and persistence overwrites that same cwd-keyed session on every exit —
 so `persistence.load()` restores whatever multi-tab/multi-window layout was

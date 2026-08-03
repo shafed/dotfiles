@@ -1,10 +1,8 @@
 (defcfg
-process-unmapped-keys (all-except lctl ralt)
-danger-enable-cmd yes
-concurrent-tap-hold yes
-chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
-                        ;; so one-handed mod chords (d+f, j+k) fire near-instantly
-                        ;; after a brief pause, but not mid fast typing.
+  process-unmapped-keys (all-except lctl ralt)
+  danger-enable-cmd yes
+  concurrent-tap-hold yes
+  chords-v2-min-idle 80
 )
 
 ;; opposite-hand HRM (kanata PR #1955): hold only fires when the next key is on
@@ -15,7 +13,7 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
 )
 
 (defvar
-  tot 220  ;; tot=time out tap
+  tot 220  ;; tap timeout
   tap-time 200
   hold-time 200
   chord-time 60
@@ -23,43 +21,32 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
                      ;; keys must land near-simultaneously, so sequential rolls
                      ;; like "fd" don't trigger Ctrl+Shift.
   subl-time 200
-  aterm-settle 250  ;; kitty-focus settle time before sending the session hotkey
+  aterm-settle 250  ;; kitty-focus settle before sending the session hotkey
 )
 
 (deftemplate th (timeouttap timeouthold keytap keyhold)
-	(tap-hold $timeouttap $timeouthold
-		$keytap
-		$keyhold
-	)
+  (tap-hold $timeouttap $timeouthold
+    $keytap
+    $keyhold
+  )
 )
 
-;; opposite-hand HRM: hold only when the next key is on the opposite hand
-;; (per defhands). Same-hand keys tap immediately. defhands + the -release
-;; variant below replace the old typing-layer misfire guard entirely.
+;; opposite-hand HRM: hold only when the next key is on the opposite hand.
+;; -release variant decides on the interrupting key's RELEASE, so fast
+;; overlapping rolls resolve to letters.
 (deftemplate hrm (timeout keytap keyhold)
-  ;; -release variant: decides on the interrupting key's RELEASE, so fast
-  ;; overlapping rolls/bigrams (the 2nd key lifts before the HRM key) resolve
-  ;; to letters. This alone kills cross-hand misfires like "sh" -> Super+h.
   (tap-hold-opposite-hand-release $timeout
     $keytap
     $keyhold
-    ;; keys outside defhands that should preserve HRM holds, e.g. Super+2,
-    ;; Ctrl+Space, Shift+Tab, and Ctrl+Enter.
+    ;; keys outside defhands that preserve HRM holds (Super+2, Ctrl+Space, ...)
     (neutral-keys 1 2 3 4 5 6 7 8 9 0 spc tab ret bspc esc)
     (neutral hold)
-    ;; same-hand stays at the default 'tap': same-hand bigrams (fd, as, sd...)
-    ;; resolve to letters, killing rolls like fd -> D. Trade-off: one-handed
-    ;; mod combos (e.g. d+f = Ctrl+Shift on the left hand alone) no longer work;
-    ;; take Ctrl/Shift combos across hands instead.
-    ;; when the interrupting key is HELD past the timeout (not released, so the
-    ;; -release rule never fires), force the hold. lets you hold j(Shift) and
-    ;; hold v(C-v) to get C-S-v, etc.
+    ;; interrupting key HELD past the timeout forces the hold (e.g. j+v = C-S-v)
     (timeout hold)
   )
 )
 
-;; kitty-send focuses kitty, then sends a kitty hotkey (kitty_mod = C-S-)
-;; that drives native sessions. Replaces the old tmux prefix (C-s) scheme.
+;; focuses kitty, then sends a kitty hotkey (kitty_mod = C-S-)
 (deftemplate kitty-send (key)
   (multi (on-press tap-vkey apps-us) (macro @aterm $aterm-settle $key))
 )
@@ -67,7 +54,7 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
 (defalias
   aterm (cmd zsh -lc "$HOME/.config/kanata/switchApp.sh kitty kitty")
   azen (cmd helium-browser)
-  sshot-region (cmd sh -c "hyprshot -m region --raw | satty --filename - --resize smart --copy-command wl-copy --actions-on-enter save-to-clipboard --early-exit copy")
+  sshot-region (cmd hyprshot -m region --clipboard-only --silent)
   sshot-full (cmd hyprshot -m output --clipboard-only --silent)
   sw (cmd hyprctl switchxkblayout kanata next)
   k-navi (fork up C-S-tab (lalt ralt))
@@ -76,13 +63,9 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
     ((input real lalt)) @sw break
     () lsft break
   )
-  ;; symbol-layer entry wrapped with the xkb US switch (so S-... keycodes emit
-  ;; the same symbols on RU/US). reused by the thumb hold and the symbol chords.
+  ;; symbol-layer entry wrapped with the xkb US switch (same symbols on RU/US)
   sym-enter (multi (on-press tap-vkey sym-us) (on-release tap-vkey sym-restore) (layer-while-held symbols))
-  ;; same xkb-US wrap but for symbols2 (used by the (s d f) chord and hold r).
   sym-enter2 (multi (on-press tap-vkey sym-us) (on-release tap-vkey sym-restore) (layer-while-held symbols2))
-  ;; apps-layer itself does not change layouts; picker/session actions force
-  ;; English when they run so a plain apps-key hold/release is harmless.
   apps-enter (layer-while-held apps)
 )
 
@@ -92,52 +75,45 @@ chords-v2-min-idle 80   ;; after any non-chord keypress, skip chords for 80ms
   apps-us (cmd /home/shafed/dotfiles/scripts/symlayout-watch.sh app)
 )
 
-(defsrc )
+(defsrc)
 
 (deflayermap (base)
- ;; define home row mods (opposite-hand)
- ;; AGCS layout: Alt-GUI-Ctrl-Shift (pinky->index), mirrored.
- a (t! hrm 400 a lalt)
- s (t! hrm 400 s lmet)
- d (t! hrm 400 d lctl)
- f (t! hrm 300 f lsft)
- j (t! hrm 300 j rsft)
- k (t! hrm 400 k rctl)
- l (t! hrm 400 l rmet)
- ; (t! hrm 400 ; ralt)
+  ;; home row mods (opposite-hand), AGCS: Alt-GUI-Ctrl-Shift (pinky->index), mirrored.
+  a (t! hrm 400 a lalt)
+  s (t! hrm 400 s lmet)
+  d (t! hrm 400 d lctl)
+  f (t! hrm 300 f lsft)
+  j (t! hrm 300 j rsft)
+  k (t! hrm 400 k rctl)
+  l (t! hrm 400 l rmet)
+  ; (t! hrm 400 ; ralt)
 
- ;; define functional keys
- lalt (t! th $tot 160 bspc @apps-enter) ;; tap=bspc hold=apps
- ralt (t! th $tot 160 @sw @apps-enter)  ;; tap=switch lang hold=apps
- c (t! th $tap-time $hold-time c C-c)
- v (t! th $tap-time $hold-time v C-v)
- b (t! th $tap-time $hold-time b (macro @aterm 100 A-tab)) ;; kitty last session (goto_session -1)
-x (t! th $tap-time $hold-time x (cmd hyprctl dispatch "hl.dsp.window.cycle_next()")) ;; focus last window in current workspace
-z (t! th $tap-time $hold-time z (cmd hyprctl dispatch r#"hl.dsp.focus({ workspace = "previous" })"#)) ;; focus last workspace
+  ;; functional keys
+  lalt (t! th $tot 160 bspc @apps-enter) ;; tap=bspc hold=apps
+  ralt (t! th $tot 160 @sw @apps-enter)  ;; tap=switch lang hold=apps
+  c (t! th $tap-time $hold-time c C-c)
+  v (t! th $tap-time $hold-time v C-v)
+  b (t! th $tap-time $hold-time b (macro @aterm 100 A-tab)) ;; kitty last session (goto_session -1)
+  x (t! th $tap-time $hold-time x (cmd hyprctl dispatch "hl.dsp.window.cycle_next()")) ;; focus last window
+  z (t! th $tap-time $hold-time z (cmd hyprctl dispatch r#"hl.dsp.focus({ workspace = "previous" })"#)) ;; focus last workspace
 
- ;; other
- caps (t! th $tap-time $hold-time XX (layer-toggle navi)) ;; test esc on df
- bspc XX 
- ret (tap-hold $tap-time 600 XX (multi (layer-switch normal) (cmd notify-send -t 1000 "⌨ normal layer"))) ;; go to normal layer
- ;; lsft @sw ;; physical LShift taps to switch keyboard layout
- ;; tap=w, hold=navi; Ctrl+w still -> bspc (fork checks Ctrl first).
- w (fork (t! th $tot 160 w (layer-while-held navi)) bspc (lctl rctl))
- ;; tap=n, hold=numplain. th (press-decided) so the layer is instant like w;
- ;; note n is a frequent letter, so n+left-hand bigrams (na/nd/nt...) can misfire.
+  caps (t! th $tap-time $hold-time XX (layer-toggle navi))
+  bspc XX
+  ret (tap-hold $tap-time 600 XX (multi (layer-switch normal) (cmd notify-send -t 1000 "⌨ normal layer"))) ;; go to normal layer
+  w (fork (t! th $tot 160 w (layer-while-held navi)) bspc (lctl rctl)) ;; tap=w hold=navi; Ctrl+w -> bspc
 )
 
 (deflayermap (apps)
-   
   e (t! kitty-send C-S-f)   ;; zoxide session picker
-  l (layer-while-held numws)  ;; hold: switch workspace (Super+digit, left-hand digits)
+  l (layer-while-held numws)  ;; hold: switch workspace (Super+digit)
   q (cmd hyprctl dispatch "hl.dsp.window.close()") ;; graceful close -> apps with tray icons minimize instead of quitting
   t (t! kitty-send C-S-2)   ;; todos session
   r (t! kitty-send C-S-1)   ;; daily note
   y (cmd helium-browser --new-window https://www.youtube.com/playlist?list=WL)
-  u (multi (on-press tap-vkey apps-us) (cmd zsh -lc "$HOME/dotfiles/scripts/youtube-qat.sh")) ;; yoUtube channel search QAT
-  b (multi (on-press tap-vkey apps-us) (cmd zsh -lc "$HOME/dotfiles/scripts/bookmarks.sh")) ;; Bookmarks fzf QAT
-  f (multi (on-press tap-vkey apps-us) (cmd zsh -lc "$HOME/dotfiles/scripts/search.sh")) ;; web search (Find) fzf QAT
-  a (multi (on-press tap-vkey apps-us) (cmd zsh -lc "$HOME/dotfiles/scripts/apps.sh")) ;; Applications fzf QAT
+  u (multi (on-press tap-vkey apps-us) (cmd zsh -lc "$HOME/dotfiles/scripts/youtube-qat.sh")) ;; youtube channel search QAT
+  b (multi (on-press tap-vkey apps-us) (cmd zsh -lc "$HOME/dotfiles/scripts/bookmarks.sh")) ;; bookmarks fzf QAT
+  f (multi (on-press tap-vkey apps-us) (cmd zsh -lc "$HOME/dotfiles/scripts/search.sh")) ;; web search fzf QAT
+  a (multi (on-press tap-vkey apps-us) (cmd zsh -lc "$HOME/dotfiles/scripts/apps.sh")) ;; applications fzf QAT
   o (t! kitty-send C-S-o)   ;; obsidian session
   w (t! kitty-send C-S-w)   ;; downloads session
   h (t! kitty-send C-S-a)   ;; home session
@@ -152,54 +128,35 @@ z (t! th $tap-time $hold-time z (cmd hyprctl dispatch r#"hl.dsp.focus({ workspac
 
 (deflayermap (browser)
   e (cmd helium-browser https://mail.google.com/mail/u/0/#inbox)
-  f (cmd helium-browser  https://www.perplexity.ai)
-  g (cmd helium-browser  https://chatgpt.com)
-  d (cmd helium-browser  https://claude.ai/new)
+  f (cmd helium-browser https://www.perplexity.ai)
+  g (cmd helium-browser https://chatgpt.com)
+  d (cmd helium-browser https://claude.ai/new)
   r (cmd helium-browser https://www.reverso.net/text-translation)
 )
 
-;; right-hand programmer symbols, momentary (entered via s+d chord held).
-;; left hand holds s/d, so all symbols live on the right hand.
-;; Kanata switches the kanata xkb device to US while this layer is held, so the
-;; plain S-... keycodes output identical symbols on both US and RU layouts.
-;; KEY-ALIGNED: every key holds a symbol/Shift PAIR across both layers, so
-;; symbols2 (s+d+f) is the same key with the f (index) added.
-;; top row = y u i o p (5 keys). brackets () on the strong home-row j k.
-;; FREQUENCY-ORDERED: the hot symbols sit on the strong home row. () on j k
-;; (function calls), @ on l, ` on y (code spans), : " on ; ' (very common in
-;; code/text). bottom row keeps the frequent _ - pair plus < > (comparisons)
-;; and = (m) for equality/assignment. the rarer ^ $ ! # * & | live on symbols2
-;; below.
+;; right-hand symbols, momentary (s+d held). S-... keycodes output the same
+;; symbols on US and RU (kanata switches to US while held).
 (deflayermap (symbols)
-  y grv u [   i ]   o S-=   p XX       ;; ` [ ] +   
+  y grv u [   i ]   o S-=   p XX       ;; ` [ ] +
   h - j S-9 k S-0 l S-2 ; S-;   ' S-'  ;; - ( ) @ : "
   n S-- m = , S-, . S-.   / S-/      ;; _ = < > ?
-  f (layer-while-held symbols2)      ;; escalate: add f (index) -> symbols2
+  f (layer-while-held symbols2)      ;; escalate: add f -> symbols2
 )
 
-;; second symbol set, momentary (entered via s+d+f chord held). longer chord
-;; wins over (s d), so adding the `f` index shifts into this layer.
-;; holds the symbols that don't fit on symbols: the shifted brackets ~ { },
-;; then ! # * on the home row, | (moved here from symbols/l to make room for
-;; @), ^ $ on the bottom row. \ sits on m (moved from symbols/p — rare symbol,
-;; so it gave up its pinky top-row slot on symbols); p is free (XX).
+;; second symbol set, momentary (s+d+f held); longer chord beats (s d).
 (deflayermap (symbols2)
   y S-grv u S-[ i S-] o S-7  p XX      ;; ~ { } &
   h S-1 j S-3 k S-8 l S-\  ; ; ' ' ;; ! # * |
-  n S-5 m XX  , S-6 . S-4 / /          ;; ^ $
+  n S-5 m XX  , S-6 . S-4 / /          ;; % ^ $
 )
 
-;; left-hand workspace number layer, momentary. entered from apps layer:
-;; hold apps+l -> numws (Super+N, Hyprland workspaces).
-;; digits on the left hand, Super baked into each key.
-;; layout mirrors symbols: home row = 1-5, top row = 6-0.
+;; workspace numbers, momentary (apps+l held): Super+digit.
 (deflayermap (numws)
   q M-6 w M-7 e M-8 r M-9 t M-0   ;; Super+6..0  (workspaces 6-10)
   a M-1 s M-2 d M-3 f M-4 g M-5   ;; Super+1..5  (workspaces 1-5)
 )
 
-;; move focused window to workspace, momentary (entered via chord: j+l).
-;; mirrors numws but with Super+Shift (Hyprland movetoworkspace).
+;; move window to workspace, momentary (j+l chord): Super+Shift+digit.
 (deflayermap (movews)
   q M-S-6 w M-S-7 e M-S-8 r M-S-9 t M-S-0   ;; Super+Shift+6..0  (workspaces 6-10)
   a M-S-1 s M-S-2 d M-S-3 f M-S-4 g M-S-5   ;; Super+Shift+1..5  (workspaces 1-5)
@@ -213,18 +170,18 @@ z (t! th $tap-time $hold-time z (cmd hyprctl dispatch r#"hl.dsp.focus({ workspac
   n S-- h -
 )
 
-;; shifted symbols in the same positions as numplain digits
+;; shifted digits, same positions as numplain
 (deflayermap (numplain2)
   q S-6 w S-7 e S-8 r S-9 t S-0
   a S-1 s S-2 d S-3 f S-4 g S-5
 )
 
 ;; entered via hold w (left hand). all motions live on the right hand so the
-;; left stays on the w hold. word-nav moved off w/b onto n/. (w now holds).
+;; left stays on the w hold.
 (deflayermap (navi)
   ;; arrow keys
   h lft j @j-navi k @k-navi l right
-  ;; word navigation (was w/b; moved right-hand: n=C-left . =C-right)
+  ;; word navigation: n=C-left . =C-right
   n C-lft m C-right
   ;; browser tabs: y=prev u=next; home/end on i/o
   y C-S-tab u C-tab
@@ -234,25 +191,25 @@ z (t! th $tap-time $hold-time z (cmd hyprctl dispatch r#"hl.dsp.focus({ workspac
   ; C-w ' C-S-t
 
   ;; mods (left hand, free while w is held)
- f (t! th $tot 160 f lsft)
- d (t! th $tot 300 d lctl)
- s (t! th $tap-time $hold-time @sshot-full @sshot-region) ;; tap=full screen->clipboard, hold=region+satty annotate
+  f (t! th $tot 160 f lsft)
+  d (t! th $tot 300 d lctl)
+  s (t! th $tap-time $hold-time @sshot-full @sshot-region) ;; tap=full screen->clipboard, hold=region->clipboard
 )
 
 (defchordsv2
-;; one-handed Ctrl+Shift: press both keys together (after a >=150ms idle, per
-;; chords-v2-min-idle) to get a held Ctrl+Shift. all-released keeps the mods
-;; down until both keys lift, so you can add a third key (e.g. C-S-tab).
-(lsft rsft) (multi (layer-switch base) (cmd notify-send -t 1000 "⌨ base layer")) $chord-time first-release()
-(d f) (tap-hold $tap-time $hold-time esc (multi lctl lsft)) $mod-chord-time all-released () ;; tap=esc hold=C-S
-(j k) (tap-hold $tap-time $hold-time ret (multi lctl lsft)) $mod-chord-time all-released () ;; enter 
-(s f) (multi lmet lsft) $mod-chord-time all-released ()
-(k l) (layer-while-held numplain) $mod-chord-time all-released () ;; number layer
-(j k l) (layer-while-held numplain2) $mod-chord-time all-released () ;; shifted number symbols
-(s d) @sym-enter $mod-chord-time all-released () ;; symbol layer (s+d)
-(s d f) @sym-enter2 $mod-chord-time all-released () ;; symbol layer 2 (s+d+f: ! # * & ...)
-(j l) (layer-while-held movews) $mod-chord-time all-released () ;; Super+Shift+digit: move window to workspace (numws + pinky)
-(w e) tab $mod-chord-time all-released () ;; tab
+  ;; one-handed Ctrl+Shift (d+f, j+k): press both together after a >=80ms idle
+  ;; (chords-v2-min-idle) for a held Ctrl+Shift; all-released keeps the mods
+  ;; down until both keys lift, so you can add a third key (e.g. C-S-tab).
+  (lsft rsft) (multi (layer-switch base) (cmd notify-send -t 1000 "⌨ base layer")) $chord-time first-release ()
+  (d f) (tap-hold $tap-time $hold-time esc (multi lctl lsft)) $mod-chord-time all-released () ;; tap=esc hold=C-S
+  (j k) (tap-hold $tap-time $hold-time ret (multi lctl lsft)) $mod-chord-time all-released () ;; enter
+  (s f) (multi lmet lsft) $mod-chord-time all-released () ;; Super+Shift
+  (k l) (layer-while-held numplain) $mod-chord-time all-released () ;; number layer
+  (j k l) (layer-while-held numplain2) $mod-chord-time all-released () ;; shifted numbers
+  (s d) @sym-enter $mod-chord-time all-released () ;; symbol layer
+  (s d f) @sym-enter2 $mod-chord-time all-released () ;; symbol layer 2
+  (j l) (layer-while-held movews) $mod-chord-time all-released () ;; move window to workspace
+  (w e) tab $mod-chord-time all-released () ;; tab
 )
 
 (deflayermap (normal)

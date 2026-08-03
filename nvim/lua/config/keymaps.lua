@@ -384,10 +384,12 @@ vim.api.nvim_create_user_command("Restart", function()
   vim.cmd("silent! wa")
   local cwd = vim.fn.getcwd()
   vim.fn.jobstart({
-    "sh", "-c",
+    "sh",
+    "-c",
     "kitty @ launch --type=window --cwd=" .. vim.fn.shellescape(cwd) .. " nvim",
   }, { detach = true })
   vim.cmd("qa!")
 end, { desc = "Restart nvim" })
 
 vim.keymap.set("n", "<leader>R", "<cmd>Restart<cr>", { desc = "[P]Restart nvim" })
+vim.keymap.set("n", "<leader>r", "<cmd>Restart<cr>", { desc = "[P]Restart nvim" })

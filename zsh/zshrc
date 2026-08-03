@@ -71,33 +71,16 @@ ZSH_THEME="gruvbox-material"
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
 
-# Disable zsh-vi-mode cursor styling (avoids zvm_cursor_style regex error on some terminals/apps)
-ZVM_CURSOR_STYLE_ENABLED=true
-
-# Apply vicmd keybindings eagerly at plugin load instead of lazily on the first
-# switch to normal mode. THE fix for "Alt-t doesn't fire after exiting claude in
-# a fresh pane": zsh-vi-mode defers vicmd bindings (incl. ^[t -> kitty_other_window)
-# into a lazy list that's only flushed the first time the shell enters normal
-# mode. Open a pane, go straight into `claude`, exit, and the binding was never
-# installed — so the first Alt-t does nothing (it only "works" once a prior
-# mode-switch, e.g. that failed Alt-t itself, flushed the list). MUST be a plain
-# pre-source assignment, NOT set in zvm_config(): the plugin reads it and inits
-# the lazy list near the top of the file, long before zvm_config runs at the end.
+# Eagerly install vicmd bindings at load; MUST be a pre-source assignment, not set
+# in zvm_config() — full story in wiki/zsh.md ("Alt-t dead after claude").
 ZVM_LAZY_KEYBINDINGS=false
 
-# zsh-vi-mode options that reference ZVM_* constants (only defined once the
-# plugin is sourced) go in zvm_config, which the plugin calls after loading.
+# Options referencing ZVM_* constants (defined once the plugin is sourced) go here.
 function zvm_config() {
-  # Always start each new prompt line in INSERT mode (zsh-vi-mode otherwise
-  # restores whatever mode the previous program left; a TUI like Claude Code
-  # exits in NORMAL mode, so ^[t would be read as bare Esc + vi "t" motion).
   ZVM_LINE_INIT_MODE=$ZVM_MODE_INSERT
 }
 
-# Default 0.03s is shorter than kanata's lalt tap-hold resolution (~160ms, see
-# kanata/config.kbd), so Alt-t's trailing "t" can arrive after zsh-vi-mode gives
-# up on the escape sequence, leaving a bare Esc + literal "t" instead of firing
-# the binding.
+# Longer than kanata's lalt tap-hold so Alt-t's trailing "t" isn't eaten (wiki/zsh.md).
 ZVM_ESCAPE_KEYTIMEOUT=0.2
 
 plugins=(
@@ -287,10 +270,7 @@ export FZF_DEFAULT_OPTS="
   --color=scrollbar:${GRUVBOX_GRAY_DIM},preview-scrollbar:${GRUVBOX_GRAY_DIM},label:${GRUVBOX_FG}
   --pointer='▌' --marker='┃' --scrollbar='▐▌'"
 
-# Kitty companion-pane toggle (mirrors nvim's <M-t> in utils/kitty.lua).
-# From this terminal, Alt-t jumps to the nvim window and zooms it (stack),
-# like the old tmux `select-pane -L \; resize-pane -Z`.
-# Direction must match vim.g.tmux_pane_direction in nvim (default: right).
+# Kitty companion-pane toggle (mirrors nvim's <M-t>), see wiki/zsh.md.
 export KITTY_WINDOW_DIRECTION="right"
 
 function kitty_other_window() {
@@ -301,13 +281,8 @@ function kitty_other_window() {
 }
 zvm_define_widget kitty_other_window
 
-# zvm_after_init, NOT zvm_after_lazy_keybindings: with ZVM_LAZY_KEYBINDINGS=false
-# (see top of file) the lazy-flush path never runs, so the after_lazy_keybindings
-# hook is never called and bindings registered there silently don't exist.
-# after_init fires at the end of plugin init (first prompt), and with lazy
-# loading off, zvm_bindkey applies the vicmd binding immediately.
+# after_init, not after_lazy_keybindings (the latter never fires with lazy off; wiki/zsh.md).
 function zvm_after_init() {
-  # ^[t == Alt-t (verify with `cat -v` then press Alt-t)
   zvm_bindkey vicmd '^[t' kitty_other_window
   zvm_bindkey viins '^[t' kitty_other_window
 }

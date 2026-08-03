@@ -251,6 +251,129 @@ function Selection.paths()
   return out
 end
 
+-- Open the image file under the cursor in a centered floating window, rendered
+-- via the Snacks image module (kitty graphics protocol). Falls back to a plain
+-- text buffer if the format isn't a supported image.
+local preview_buf = nil
+local preview_path = nil
+
+local function close_preview()
+  if preview_buf and vim.api.nvim_buf_is_valid(preview_buf) then
+    for _, w in ipairs(vim.fn.win_findbuf(preview_buf)) do
+      if vim.api.nvim_win_is_valid(w) then
+        vim.api.nvim_win_close(w, true)
+      end
+    end
+  end
+  preview_buf, preview_path = nil, nil
+end
+
+local function preview_image()
+  -- <leader>ip injected into the float buffer (filetype = "minifiles") — treat
+  -- it as a toggle: close the preview from inside.
+  if preview_buf and vim.api.nvim_get_current_buf() == preview_buf then
+    close_preview()
+    return
+  end
+
+  local curr_entry = require("mini.files").get_fs_entry()
+  if not curr_entry or curr_entry.fs_type ~= "file" then
+    vim.notify("No file selected", vim.log.levels.WARN)
+    return
+  end
+  local path = curr_entry.path
+  if not Snacks.image.supports_file(path) then
+    vim.notify("Not a supported image: " .. vim.fn.fnamemodify(path, ":t"), vim.log.levels.WARN)
+    return
+  end
+
+  -- Toggle: same entry closes it, a different one replaces it.
+  if preview_buf and vim.api.nvim_buf_is_valid(preview_buf) then
+    close_preview()
+    if preview_path == path then
+      return
+    end
+  end
+
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.bo[buf].bufhidden = "wipe"
+  -- Open initially at a max area; the window is then resized to hug the image
+  -- once its size is known (see on_update below). The float takes focus.
+  local area_w = math.floor(vim.o.columns * 0.6)
+  local area_h = math.floor(vim.o.lines * 0.6)
+  local win = vim.api.nvim_open_win(buf, true, {
+    relative = "editor",
+    style = "minimal",
+    border = "rounded",
+    title = vim.fn.fnamemodify(path, ":t"),
+    width = area_w,
+    height = area_h,
+    row = math.floor((vim.o.lines - area_h) / 2),
+    col = math.floor((vim.o.columns - area_w) / 2),
+  })
+  preview_buf, preview_path = buf, path
+  for _, lhs in ipairs({ "q", "<Esc>" }) do
+    vim.keymap.set("n", lhs, "<cmd>close<cr>", { buffer = buf })
+  end
+
+  local function recenter(w, h)
+    vim.api.nvim_win_set_config(win, {
+      relative = "editor",
+      row = math.max(0, math.floor((vim.o.lines - h) / 2)),
+      col = math.max(0, math.floor((vim.o.columns - w) / 2)),
+      width = w,
+      height = h,
+    })
+  end
+
+  -- Render the image into the float and shrink the window to fit it, appending
+  -- a footer with filename, resolution and size (mirrors linkarzu's popup).
+  --
+  -- NOTE: the buffer gets `filetype = "minifiles"` (not "image") on purpose:
+  -- mini.files tracks lost focus with a 1 s timer that closes the explorer
+  -- when the *current* buffer's filetype isn't minifiles. The float takes
+  -- focus, so its filetype must look like the explorer or the timer would
+  -- close mini.files right after the preview opens. The image still renders —
+  -- the Snacks placement doesn't depend on the filetype. Side effect: LazyVim
+  -- injects the ft = "minifiles" keymaps into the float; preview_image()
+  -- handles <leader>ip there as a toggle (see top of the function).
+  local Terminal = require("snacks.image.terminal")
+  Terminal.detect(function()
+    if not vim.api.nvim_buf_is_valid(buf) then
+      return
+    end
+    Snacks.util.bo(buf, { filetype = "minifiles", modifiable = false, modified = false, swapfile = false })
+    local sized = false
+    local placement
+    placement = Snacks.image.placement.new(buf, path, {
+      inline = false,
+      conceal = true,
+      on_update = function()
+        if sized or not placement:ready() then
+          return
+        end
+        sized = true
+        local loc = placement:state().loc
+        local bs = setmetatable({ opts = vim.api.nvim_win_get_config(win) }, { __index = Snacks.win }):border_size()
+        local meta = { vim.fn.fnamemodify(path, ":t") }
+        -- Resolution via ImageMagick (already a dependency of the Snacks image
+        -- module); Snacks only carries `img.info` for converted formats.
+        local res = vim.fn.systemlist({ "identify", "-format", "%w %h", path })
+        if res[1] and res[1]:match("^%d+ %d+$") then
+          table.insert(meta, res[1]:gsub(" ", " x ") .. " px")
+        end
+        table.insert(meta, string.format("%.2f MB", math.max(vim.fn.getfsize(path), 0) / (1024 * 1024)))
+        vim.bo[buf].modifiable = true
+        vim.api.nvim_buf_set_lines(buf, -1, -1, false, { "", "  " .. table.concat(meta, "  ·  ") })
+        vim.bo[buf].modifiable = false
+        local w = loc.width + bs.left + bs.right
+        local h = loc.height + bs.top + bs.bottom + 2
+        recenter(w, h)
+      end,
+    })
+  end)
+end
+
 -- Redraw the selection marker (a sign in the line's left margin) for the given
 -- mini.files buffer. Called on every MiniFilesBufferUpdate so highlights survive
 -- redraws and follow entries by path.
@@ -450,6 +573,16 @@ return {
       noremap = true,
       silent = true,
       desc = "[P]Open with default app",
+    },
+    {
+      "<leader>ip",
+      function()
+        preview_image()
+      end,
+      ft = "minifiles",
+      noremap = true,
+      silent = true,
+      desc = "Preview image in float window",
     },
     {
       "<leader>p",

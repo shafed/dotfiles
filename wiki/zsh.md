@@ -1,7 +1,7 @@
 ---
 title: zsh
 type: component
-updated: 2026-07-09
+updated: 2026-08-03
 covers:
   - zsh/zshrc
   - zsh/zprofile
@@ -55,6 +55,16 @@ covers:
   zsh-vi-mode's default 30ms escape window, leaving a bare Esc + literal `t` instead
   of firing the binding. Unrelated to the lazy-keybindings issue above — both were
   needed at different times for what looked like the same symptom.
+- **`ZVM_LINE_INIT_MODE=$ZVM_MODE_INSERT` in `zvm_config()`** — every new prompt line
+  starts in INSERT mode. zsh-vi-mode otherwise restores whatever mode the previous
+  program left the shell in; a TUI like Claude Code exits in NORMAL mode, so the next
+  `^[t` would be read as bare Esc + vi `t` motion. It lives in `zvm_config()` because
+  `$ZVM_MODE_INSERT` is a `ZVM_*` constant that only exists once the plugin is sourced.
+- **Cursor styling is the plugin default (enabled)** — `ZVM_CURSOR_STYLE_ENABLED` was
+  briefly `false` (`e834340`) to dodge a `zvm_cursor_style` regex error on some
+  terminals/apps, then flipped to `true` (`5089924`), where it's the default and thus a
+  no-op. The dead line was removed 2026-08-03; if the regex error ever resurfaces, set
+  it to `false` to disable zsh-vi-mode's per-mode cursor shapes.
 - **Alt-e (`_aichat_zsh`)** — runs the current buffer through `aichat -r %shell%`
   and substitutes in the resulting command.
 

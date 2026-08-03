@@ -21,7 +21,7 @@ return {
 
     opts.enabled = function()
       local filetype = vim.bo[0].filetype
-      if filetype == "TelescopePrompt" or filetype == "minifiles" or filetype == "snacks_picker_input" then
+      if filetype == "minifiles" or filetype == "snacks_picker_input" then
         return false
       end
       return true

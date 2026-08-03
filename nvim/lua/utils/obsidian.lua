@@ -16,6 +16,7 @@ local M = {}
 local SYNC_SCRIPT = vim.fn.expand("~/dotfiles/scripts/obsidian-sync.sh")
 local VAULT_PATH = vim.fn.expand("~/obsidian")
 local LOG_FILE = vim.fn.stdpath("cache") .. "/obsidian-sync-push.log"
+local LOGBOOK_SCRIPT = vim.fn.expand("~/dotfiles/scripts/generate_logbook.py")
 
 local function in_vault()
   return vim.fn.getcwd():find(VAULT_PATH, 1, true) ~= nil
@@ -170,7 +171,7 @@ end
 
 -- Save the current buffer as a training note in training/
 function M.save_training_note()
-  local training_dir = vim.fn.expand("~/obsidian/training/Full Body 2026/")
+  local training_dir = vim.fn.expand(("~/obsidian/training/Full Body %s/"):format(os.date("%Y")))
 
   --------------------------------------------------------------------------
   -- Extract H1 from the current file to use as training note filename
@@ -225,19 +226,33 @@ function M.save_training_note()
     ------------------------------------------------------------------------
     -- Regenerate the training logbook HTML from the training vault.
     ------------------------------------------------------------------------
-    local script = vim.fn.expand("~/dotfiles/scripts/generate_logbook.py")
-    vim.fn.jobstart({ "python3", script }, {
-      cwd = vim.fn.expand("~/obsidian/training"),
-      on_exit = function(_, code)
-        vim.schedule(function()
-          if code == 0 then
-            vim.notify("logbook.html regenerated", vim.log.levels.INFO)
-          else
-            vim.notify("generate_logbook.py failed (exit " .. code .. ")", vim.log.levels.ERROR)
-          end
-        end)
-      end,
-    })
+    M.regenerate_logbook({ silent = true })
+  end)
+end
+
+-- Regenerate logbook.html from the training vault. Used automatically after
+-- saving a training note and manually via <leader>lr. Guards on the script
+-- existing and reports failures via notify.
+function M.regenerate_logbook(opts)
+  opts = opts or {}
+  if vim.fn.filereadable(LOGBOOK_SCRIPT) == 0 then
+    vim.notify("Logbook generator not found: " .. LOGBOOK_SCRIPT, vim.log.levels.ERROR)
+    return
+  end
+  if not opts.silent then
+    vim.notify("Regenerating logbook…", vim.log.levels.INFO)
+  end
+  vim.system({ "python3", LOGBOOK_SCRIPT }, { text = true }, function(res)
+    vim.schedule(function()
+      if res.code ~= 0 then
+        local out = (res.stdout or "") .. (res.stderr or "")
+        vim.notify("Logbook generation failed:\n" .. vim.trim(out), vim.log.levels.ERROR)
+        return
+      end
+      if not opts.silent then
+        vim.notify("logbook.html regenerated", vim.log.levels.INFO)
+      end
+    end)
   end)
 end
 

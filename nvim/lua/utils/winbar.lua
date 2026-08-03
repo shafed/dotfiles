@@ -24,8 +24,8 @@ local function get_path()
     path = vim.fn.getcwd()
   end
   local home = os.getenv("HOME")
-  if home then
-    path = path:gsub("^" .. home, "~")
+  if home and path:sub(1, #home) == home then
+    path = "~" .. path:sub(#home + 1)
   end
   local max_len = 40
   if #path > max_len then

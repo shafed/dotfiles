@@ -139,6 +139,18 @@ vim.keymap.set({ "n", "v", "i" }, "<M-esc>", "<cmd>q!<cr>", { desc = "[P]Quit Al
 -------------------------------------------------------------------------------
 -- Implementation lives in lua/utils/folding.lua
 
+local function reload_and_refold(middle)
+  -- "Update" saves only if the buffer has been modified since the last save
+  vim.cmd("silent update")
+  -- Reloads the file to refresh folds, otherwise you have to re-open neovim.
+  -- skip_loadview stops the BufWinEnter autocmd from restoring saved folds
+  -- (which would clobber the ones we apply below).
+  vim.b.skip_loadview = true
+  vim.cmd("edit!")
+  middle()
+  vim.cmd("normal! zz") -- center the cursor line on screen
+end
+
 vim.api.nvim_create_autocmd("FileType", {
   pattern = "markdown",
   callback = folding.set_markdown_folding,
@@ -156,21 +168,15 @@ vim.api.nvim_create_autocmd("FileType", {
 -- but "k" for me means "2"), zl level 3+, z; level 4+ lamw25wmal
 for key, level in pairs({ j = 1, k = 2, l = 3, [";"] = 4 }) do
   vim.keymap.set("n", "z" .. key, function()
-    -- "Update" saves only if the buffer has been modified since the last save
-    vim.cmd("silent update")
-    -- Reloads the file to refresh folds, otherwise you have to re-open neovim.
-    -- skip_loadview stops the BufWinEnter autocmd from restoring saved folds
-    -- (which would clobber the ones we apply below).
-    vim.b.skip_loadview = true
-    vim.cmd("edit!")
-    -- Unfold everything first or I had issues
-    vim.cmd("normal! zR")
-    local levels = {}
-    for l = 6, level, -1 do
-      table.insert(levels, l)
-    end
-    folding.fold_headings(levels)
-    vim.cmd("normal! zz") -- center the cursor line on screen
+    reload_and_refold(function()
+      -- Unfold everything first or I had issues
+      vim.cmd("normal! zR")
+      local levels = {}
+      for l = 6, level, -1 do
+        table.insert(levels, l)
+      end
+      folding.fold_headings(levels)
+    end)
   end, { desc = "[P]Fold all headings level " .. level .. " or above" })
 end
 
@@ -191,25 +197,20 @@ end, { desc = "[P]Toggle fold" })
 
 -- Keymap for unfolding all headings
 vim.keymap.set("n", "zu", function()
-  -- "Update" saves only if the buffer has been modified since the last save
-  vim.cmd("silent update")
-  -- Reloads the file to reflect the changes
-  vim.b.skip_loadview = true
-  vim.cmd("edit!")
-  vim.cmd("normal! zR") -- Unfold all headings
-  vim.cmd("normal! zz") -- center the cursor line on screen
+  reload_and_refold(function()
+    vim.cmd("normal! zR") -- Unfold all headings
+  end)
 end, { desc = "[P]Unfold all headings level 2 or above" })
 
 -- gk jumps to the markdown heading above and then folds it
 -- zi by default toggles folding, but I don't need it lamw25wmal
 vim.keymap.set("n", "zi", function()
-  -- "Update" saves only if the buffer has been modified since the last save
-  vim.cmd("silent update")
-  -- `normal` (not `normal!`) so the gk mapping below is respected
-  vim.cmd("normal gk")
-  -- This is to fold the line under the cursor
-  vim.cmd("normal! za")
-  vim.cmd("normal! zz") -- center the cursor line on screen
+  reload_and_refold(function()
+    -- `normal` (not `normal!`) so the gk mapping below is respected
+    vim.cmd("normal gk")
+    -- This is to fold the line under the cursor
+    vim.cmd("normal! za")
+  end)
 end, { desc = "[P]Fold the heading cursor currently on" })
 
 -- Creates a markdown heading based on the level specified
@@ -282,25 +283,8 @@ vim.keymap.set("n", "<leader>lv", function()
   end
 end, { desc = "[P]Logbook View: open HTML" })
 
--- Regenerate the training logbook HTML
-vim.keymap.set("n", "<leader>lr", function()
-  local script = vim.fn.expand("~/dotfiles/scripts/generate_logbook.py")
-  if vim.fn.filereadable(script) == 0 then
-    vim.notify("Logbook generator not found: " .. script, vim.log.levels.ERROR)
-    return
-  end
-  vim.notify("Regenerating logbook…", vim.log.levels.INFO)
-  vim.system({ "python3", script }, { text = true }, function(res)
-    vim.schedule(function()
-      local out = (res.stdout or "") .. (res.stderr or "")
-      if res.code == 0 then
-        vim.notify(vim.trim(out), vim.log.levels.INFO)
-      else
-        vim.notify("Logbook generation failed:\n" .. vim.trim(out), vim.log.levels.ERROR)
-      end
-    end)
-  end)
-end, { desc = "[P]Logbook Reload: rebuild HTML" })
+-- Regenerate the training logbook HTML (shared helper in utils/obsidian.lua)
+vim.keymap.set("n", "<leader>lr", obsidian.regenerate_logbook, { desc = "[P]Logbook Reload: rebuild HTML" })
 
 -- Автопуш Obsidian Vault: с кулдауном при потере фокуса (не спамить commit/push
 -- на алт-табе), без кулдауна перед реальным выходом (не дать кулдауну "съесть"

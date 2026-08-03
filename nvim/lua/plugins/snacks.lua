@@ -170,10 +170,8 @@ return {
       desc = "[P]Snacks picker buffers",
     },
 
-    -- -- Iterate through incomplete tasks in Snacks_picker
+    -- Iterate through incomplete tasks in Snacks_picker
     {
-      -- -- You can confirm in your teminal lamw26wmal with:
-      -- -- rg "^\s*-\s\[ \]" test-markdown.md
       "<leader>tt",
       function()
         Snacks.picker.grep({
@@ -237,7 +235,7 @@ return {
       end,
       desc = "[P]Search for incomplete tasks",
     },
-    -- -- Iterate throuth completed tasks in Snacks_picker lamw26wmal
+    -- Iterate through completed tasks in Snacks_picker
     {
       "<leader>tc",
       function()
@@ -288,10 +286,6 @@ return {
         end
         -- Demote the "lazyvim" keymaps file:
         if item.file:match("lazyvim/lua/config/keymaps%.lua") then
-          item.score_add = (item.score_add or 0) - 30
-        end
-        -- Demote my old kanata config file
-        if item.file:match("kanata/configs/macos%.kbd") then
           item.score_add = (item.score_add or 0) - 30
         end
         return item

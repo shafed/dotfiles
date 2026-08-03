@@ -195,8 +195,33 @@ The full map is in [keymap](keymap.md). Here only the non-obvious bits:
 ## Permissions / env
 
 The `permissions` block (screencopy for grim/portal) is commented out — it runs on
-default permissions. Env variables are just cursor sizes (`XCURSOR_SIZE`,
-`HYPRCURSOR_SIZE = 24`).
+default permissions. Env variables are cursor sizes (`XCURSOR_SIZE`, `HYPRCURSOR_SIZE = 24`) plus
+`QT_QPA_PLATFORM = wayland`. The latter forces Qt apps onto native Wayland — the
+laptop monitor runs at fractional scale `1.6`, and under XWayland a fractional
+scale just upscales the 1x buffer (Qt apps render pixelated). ⚠️ Gotcha:
+`copyq` still launches with `QT_QPA_PLATFORM=xcb` (alias in `zsh/zshrc`), so it
+stays on XWayland and may look soft.
+
+### HiDPI (fractional scale 1.6 on the laptop panel)
+
+Fractional scaling is native for Wayland clients, but **XWayland cannot do it**:
+by default Hyprland upscales the 1x buffer → pixelated UI. Fix per
+[the wiki](https://wiki.hypr.land/Configuring/Advanced-and-Cool/XWayland/):
+`xwayland = { force_zero_scaling = true }` — XWayland surfaces stay unscaled
+(crisp), and each toolkit scales itself:
+
+- **Qt/X11 apps that ignore Wayland** (e.g. Happ — bundled Qt, forces xcb):
+  `QT_SCALE_FACTOR=1.6`, set per-app via a local
+  `~/.local/share/applications/Happ.desktop` override (a global
+  `QT_SCALE_FACTOR` would double-scale Wayland-native Qt apps).
+- **fyne/GLFW apps** (adrop — no Wayland backend in the binary at all):
+  `FYNE_SCALE=1.6`.
+- GTK X11 apps would need `GDK_SCALE` similarly.
+
+⚠️ Gotcha: `QT_QPA_PLATFORM=wayland` is not a guarantee — Happ ships its own
+Qt under `/opt/happ` and still renders via XWayland; verify with
+`hyprctl clients` (`xwayland: true`) and don't chase "why" — force xcb +
+`QT_SCALE_FACTOR` in the .desktop instead.
 
 ## hyprsunset
 

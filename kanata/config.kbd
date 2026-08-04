@@ -146,7 +146,7 @@
 (deflayermap (symbols2)
   y S-grv u S-[ i S-] o S-7  p XX      ;; ~ { } &
   h S-1 j S-3 k S-8 l S-\  ; ; ' ' ;; ! # * |
-  n S-5 m XX  , S-6 . S-4 / /          ;; % ^ $
+  n \ m S-5  , S-6 . S-4 / /          ;; \ % ^ $
 )
 
 ;; workspace numbers, momentary (apps+l held): Super+digit.

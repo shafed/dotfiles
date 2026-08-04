@@ -1,7 +1,7 @@
 ---
 title: index
 type: index
-updated: 2026-07-09
+updated: 2026-08-04
 ---
 
 # Dotfiles wiki — index
@@ -39,7 +39,7 @@ be deepened as edits happen. Legend: ✅ filled in · 🚧 partial · 🌱 stub.
 | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | 🚧 [keymap](keymap.md)     | End-to-end key map: how kanata layers, hypr bindings, and kitty hotkeys combine without conflicting. Single source of truth for hotkeys. |
 | 🚧 [sessions](sessions.md) | Native kitty sessions (migration from tmux): kanata sends C-S- hotkeys, kitty-zoxide-session, obsidian session for the logbook.          |
-| 🚧 [theming](theming.md)   | Gruvbox dark everywhere (palette copied in each component); no dynamic light/dark (darkman scaffolding empty, hyprsunset is gamma only). |
+| 🚧 [theming](theming.md)   | Gruvbox dark as the base palette (copied in each component); darkman (systemd service + `darkman/scripts/kitty` data-dir hook) toggles kitty dark⇄light; hyprsunset is gamma only. |
 
 ## Global
 

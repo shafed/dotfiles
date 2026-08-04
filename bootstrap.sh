@@ -127,6 +127,12 @@ link_configs() {
   ln -sfv "$DOTFILES_DIR/instructions.md" "$HOME/.codex/AGENTS.md"
 
   echo
+  echo "== Linking darkman hook scripts into \$XDG_DATA_HOME =="
+  # darkman v2 reads transition scripts from the data dir (not ~/.config).
+  mkdir -p "$HOME/.local/share"
+  ln -sfvn "$DOTFILES_DIR/darkman/scripts" "$HOME/.local/share/darkman"
+
+  echo
   echo "== Installing ~/.local/bin wrappers =="
   mkdir -p "$HOME/.local/bin"
   cat >"$HOME/.local/bin/sudo" <<EOF

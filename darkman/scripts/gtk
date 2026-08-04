@@ -1,0 +1,14 @@
+#!/bin/sh
+# darkman hook (unified dir): $1 is the new mode, "dark" or "light".
+# Switches GTK/Qt app theme via the system color-scheme preference
+# (prefer-dark / prefer-light). Modern GTK built-in themes render their
+# dark/light variant from this setting, so no separate theme files needed.
+set -e
+
+case "$1" in
+  dark)  mode="prefer-dark" ;;
+  light) mode="prefer-light" ;;
+  *)     exit 0 ;;
+esac
+
+gsettings set org.gnome.desktop.interface color-scheme "$mode"

@@ -2,6 +2,8 @@
 Description=Darkman service
 
 [Service]
+Type=dbus
+BusName=nl.whynothugo.darkman
 ExecStart=/usr/bin/darkman run
 Restart=on-failure
 

@@ -1,7 +1,7 @@
 ---
 title: kitty
 type: component
-updated: 2026-08-03
+updated: 2026-08-04
 covers:
   - kitty/
 ---
@@ -67,7 +67,8 @@ were dead branches and the kitten always toggled).
 
 ## QAT panels (quick-access-terminal)
 
-Drop-down overlay panels for fzf pickers ([scripts](scripts.md): bookmarks/youtube):
+Drop-down overlay panels for fzf pickers ([scripts](scripts.md): bookmarks/youtube;
+also the session pickers in `kitty/scripts/` — see [sessions](sessions.md)):
 
 - `quick-access-terminal-center.conf` — centered (`edge center-sized`,
   22×90, `background_opacity 0.85`), with a full duplication of the gruvbox palette via

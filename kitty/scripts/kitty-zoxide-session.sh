@@ -11,7 +11,9 @@
 #     SSH entries are shown with a "ssh-" prefix.
 #
 # Requires: kitty with allow_remote_control yes + listen_on unix:/tmp/kitty-{kitty_pid}
-# Run as a kitty overlay so $KITTY_LISTEN_ON is set; kitten @ auto-connects.
+# Shown as a kitty quick-access panel (QAT); inside it $KITTY_LISTEN_ON points
+# at the panel instance, so the script is re-pointed at the main kitty socket
+# (--qat) before any `kitten @` call. Plain invocation = QAT launcher.
 
 set -euo pipefail
 
@@ -38,6 +40,12 @@ require_cmd() {
 require_cmd fzf "Install: sudo pacman -S fzf"
 require_cmd jq "Install: sudo pacman -S jq"
 require_cmd zoxide "Install: sudo pacman -S zoxide"
+
+dotfiles_dir="$HOME/dotfiles"
+# Shared QAT helpers (main_kitty_socket, launch_qat) + gruvbox fzf colors.
+# shellcheck source=../../scripts/lib.sh
+source "$dotfiles_dir/scripts/lib.sh"
+qat_group="zoxide-session"
 
 normalize_path() {
   local p="$1"
@@ -348,6 +356,21 @@ EOF
 
 if [[ "${1:-}" == "--named" ]]; then
   focus_or_launch_named_session "${2:-}"
+  exit 0
+fi
+
+# QAT dispatch: `--qat` runs the picker inside the quick-access panel, talking
+# to the MAIN kitty's socket (inside the panel $KITTY_LISTEN_ON points at the
+# panel's own instance, where goto_session would act on the wrong kitty).
+# Plain invocation (kanata apps+e) is the launcher: show the picker as a panel.
+if [[ "${1:-}" == "--qat" ]]; then
+  qat_sock="$(main_kitty_socket)" || {
+    echo "No main kitty socket found."
+    exit 1
+  }
+  export KITTY_LISTEN_ON="unix:${qat_sock}"
+else
+  launch_qat "$qat_group" /usr/bin/env bash "$script_path" --qat
   exit 0
 fi
 

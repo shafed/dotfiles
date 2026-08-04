@@ -95,6 +95,7 @@
   b (t! th $tap-time $hold-time b (macro @aterm 100 A-tab)) ;; kitty last session (goto_session -1)
   x (t! th $tap-time $hold-time x (cmd hyprctl dispatch "hl.dsp.window.cycle_next()")) ;; focus last window
   z (t! th $tap-time $hold-time z (cmd hyprctl dispatch r#"hl.dsp.focus({ workspace = "previous" })"#)) ;; focus last workspace
+  m (t! th $tot 160 m (layer-while-held numws))  ;; tap-hold: switch workspace
 
   caps (t! th $tap-time $hold-time XX (layer-toggle navi))
   bspc XX
@@ -103,7 +104,7 @@
 )
 
 (deflayermap (apps)
-  e (t! kitty-send C-S-f)   ;; zoxide session picker
+  e (multi (on-press tap-vkey apps-us) (cmd zsh -lc "$HOME/dotfiles/kitty/scripts/kitty-zoxide-session.sh")) ;; zoxide session picker QAT
   l (layer-while-held numws)  ;; hold: switch workspace (Super+digit)
   q (cmd hyprctl dispatch "hl.dsp.window.close()") ;; graceful close -> apps with tray icons minimize instead of quitting
   t (t! kitty-send C-S-2)   ;; todos session
@@ -119,7 +120,7 @@
   s (tap-hold-press $subl-time $subl-time (cmd helium-browser) (layer-toggle browser))
   d (t! kitty-send C-S-d)   ;; dotfiles session
   z (cmd zsh -lc "$HOME/.config/kanata/switchApp.sh sioyek 'LIBGL_ALWAYS_SOFTWARE=1 sioyek'")
-  c (t! kitty-send C-S-s)   ;; list sessions picker
+  c (multi (on-press tap-vkey apps-us) (cmd zsh -lc "$HOME/dotfiles/kitty/scripts/kitty-list-sessions.sh")) ;; list sessions picker QAT
   g (t! kitty-send C-S-c)   ;; github session
   . (multi (on-press tap-vkey apps-us) (cmd rofimoji -a clipboard))
   caps caps

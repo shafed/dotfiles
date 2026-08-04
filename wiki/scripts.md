@@ -1,7 +1,7 @@
 ---
 title: scripts
 type: component
-updated: 2026-07-31
+updated: 2026-08-04
 covers:
   - scripts/
 ---
@@ -18,6 +18,11 @@ loops living inside a **long-lived** kitty quick-access panel (QAT). Their
 shared engine is `lib.sh`, which is **sourced, not executed**: it doesn't run as
 a standalone program but is pulled in via `source lib.sh`, and therefore has to
 be safe under `set -euo pipefail`.
+
+(Separately, the session pickers in [`kitty/scripts/`](../kitty/scripts/) —
+`kitty-zoxide-session.sh`, `kitty-list-sessions.sh` — reuse the same QAT launch
+via `lib.sh`, but are **one-shot** panels: they act then close instead of
+looping. See [sessions](sessions.md).)
 
 **Why the panel is long-lived instead of launched on every hotkey.** The panel
 is single-instance (`--instance-group`), so sending the same kitty launch

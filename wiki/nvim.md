@@ -1,7 +1,7 @@
 ---
 title: nvim
 type: component
-updated: 2026-08-03
+updated: 2026-08-05
 covers:
   - nvim/
 ---
@@ -83,7 +83,11 @@ Symlink `~/.config/nvim → ~/dotfiles/nvim` ([bootstrap](bootstrap.md)).
   not already fullscreen, and only restored on close if this module is what
   turned it on) and hides kitty's tab bar via the `toggle_tab_bar.py` kitten
   (see [kitty](kitty.md)); wired into the same `<leader>uz` toggle as
-  `utils/winbar.lua`.
+  `utils/winbar.lua`. The toggle also enables/disables **Snacks.dim** to dim
+  inactive windows in the fullscreen view — the same dimming LazyVim's stock
+  `Snacks.zen()` turns on via its default `toggles.dim = true`, so the custom
+  Hyprland-fullscreen zen gets the built-in dim behavior without a separate
+  twilight.nvim dependency.
 
 ## Integration with the training logbook
 

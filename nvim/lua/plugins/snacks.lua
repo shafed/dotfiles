@@ -5,8 +5,10 @@ return {
     { "<leader>e", false },
     -- Zen mode = Hyprland fullscreen, not Snacks.zen's floating window:
     -- fullscreen the OS window and hide kitty's tab bar (utils/fullscreen.lua),
-    -- plus blank the winbar across all windows (utils/winbar.lua). Overrides
-    -- LazyVim's Snacks.toggle.zen() which would open an nvim float.
+    -- plus blank the winbar across all windows (utils/winbar.lua) and dim
+    -- inactive windows with Snacks.dim (what LazyVim's zen mode enables via
+    -- its `toggles.dim = true`). Overrides LazyVim's Snacks.toggle.zen()
+    -- which would open an nvim float.
     {
       "<leader>uz",
       function()
@@ -19,6 +21,11 @@ return {
         local zen_active = not winbar.zen_active
         winbar.set_zen(zen_active)
         fullscreen.set_zen(zen_active)
+        if zen_active then
+          Snacks.dim.enable()
+        else
+          Snacks.dim.disable()
+        end
       end,
       desc = "Zen Mode (Hyprland fullscreen)",
     },

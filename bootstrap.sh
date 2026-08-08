@@ -126,6 +126,13 @@ link_configs() {
   ln -sfv "$DOTFILES_DIR/instructions.md" "$HOME/.config/opencode/AGENTS.md"
   ln -sfv "$DOTFILES_DIR/instructions.md" "$HOME/.codex/AGENTS.md"
 
+  # This repo's own rules live in CLAUDE.md; AGENTS.md is a symlink to it, so
+  # Codex and opencode (which read AGENTS.md by convention) get the same file.
+  # Git tracks the symlink, so a fresh clone already has it — this line just
+  # repairs it if something replaces it with a regular file. Relative target,
+  # so it survives cloning to a different path.
+  ln -sfvn CLAUDE.md "$DOTFILES_DIR/AGENTS.md"
+
   echo
   echo "== Linking darkman hook scripts into \$XDG_DATA_HOME =="
   # darkman v2 reads transition scripts from the data dir (not ~/.config).

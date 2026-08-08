@@ -96,6 +96,7 @@
   x (t! th $tap-time $hold-time x (cmd hyprctl dispatch "hl.dsp.window.cycle_next()")) ;; focus last window
   z (t! th $tap-time $hold-time z (cmd hyprctl dispatch r#"hl.dsp.focus({ workspace = "previous" })"#)) ;; focus last workspace
   m (t! th $tot 160 m (layer-while-held numws))  ;; tap-hold: switch workspace
+  n (t! th $tot 160 n (layer-while-held movews))  ;; tap-hold: switch workspace
 
   caps (t! th $tap-time $hold-time XX (layer-toggle navi))
   bspc XX
@@ -140,7 +141,6 @@
   y grv u [   i ]   o S-=   p XX       ;; ` [ ] +
   h - j S-9 k S-0 l S-2 ; S-;   ' S-'  ;; - ( ) @ : "
   n S-- m = , S-, . S-.   / S-/      ;; _ = < > ?
-  f (layer-while-held symbols2)      ;; escalate: add f -> symbols2
 )
 
 ;; second symbol set, momentary (s+d+f held); longer chord beats (s d).

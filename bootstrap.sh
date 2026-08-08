@@ -133,6 +133,14 @@ link_configs() {
   # so it survives cloning to a different path.
   ln -sfvn CLAUDE.md "$DOTFILES_DIR/AGENTS.md"
 
+  # The /commit skill. Claude Code and opencode both scan the project's
+  # .claude/skills/ on their own, so only Codex needs wiring: it discovers
+  # skills in $CODEX_HOME/skills alone and has no project-level scope.
+  # Consequence: in Codex the skill is visible in every repo, which is why its
+  # body refuses to run outside this one.
+  mkdir -p "$HOME/.codex/skills"
+  ln -sfvn "$DOTFILES_DIR/.claude/skills/commit" "$HOME/.codex/skills/commit"
+
   echo
   echo "== Linking darkman hook scripts into \$XDG_DATA_HOME =="
   # darkman v2 reads transition scripts from the data dir (not ~/.config).

@@ -133,17 +133,6 @@ link_configs() {
   # so it survives cloning to a different path.
   ln -sfvn CLAUDE.md "$DOTFILES_DIR/AGENTS.md"
 
-  # Skills stay inside the repo for all three agents: Claude Code and opencode
-  # scan .claude/skills/, Codex scans .agents/skills/. So .agents/skills/<name>
-  # is a symlink to the .claude/skills/<name> next to it. Git tracks these, so a
-  # clone already has them — the loop only repairs a clobbered link. Relative
-  # targets, so they survive cloning to a different path.
-  mkdir -p "$DOTFILES_DIR/.agents/skills"
-  for skill in "$DOTFILES_DIR"/.claude/skills/*/; do
-    ln -sfvn "../../.claude/skills/$(basename "$skill")" \
-      "$DOTFILES_DIR/.agents/skills/$(basename "$skill")"
-  done
-
   echo
   echo "== Linking darkman hook scripts into \$XDG_DATA_HOME =="
   # darkman v2 reads transition scripts from the data dir (not ~/.config).

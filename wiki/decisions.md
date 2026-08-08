@@ -1,7 +1,7 @@
 ---
 title: decisions
 type: topic
-updated: 2026-07-18
+updated: 2026-08-08
 ---
 
 # decisions — major decisions and rejected alternatives
@@ -105,4 +105,29 @@ updated: 2026-07-18
   Also rejected: auto-installing missing packages via pacman/yay — more
   invasive and requires sudo; left as a manual step so the user reviews
   what's installed.
+- See [bootstrap](bootstrap.md).
+
+### Repo rules in one file: AGENTS.md is a symlink to CLAUDE.md (2026-08-08)
+- **Decision**: `CLAUDE.md` holds this repo's agent rules; `AGENTS.md` is a
+  symlink to it (relative target, tracked by git). `bootstrap.sh` re-creates it
+  only as repair.
+- **Reason**: `CLAUDE.md` used to be a note ("the main instructions are in
+  AGENTS.md, read it"). Claude Code auto-loads only `CLAUDE.md`, so a session
+  began without the wiki rules in context and had to spend a tool call — or
+  silently skip them. Observed live: a session on 2026-08-08 learned the wiki
+  rules only because the task happened to involve reading the file. A symlink
+  makes the direction irrelevant to tools — Claude Code loads `CLAUDE.md`,
+  Codex and opencode read `AGENTS.md` by convention, all three resolve to the
+  same bytes. Mirrors how global instructions already work (`instructions.md` →
+  three per-tool names, see [bootstrap](bootstrap.md)). `CLAUDE.md` was chosen
+  as the real file because Claude Code is the tool actually in daily use here —
+  and because that is where these instructions originally lived, before
+  `2b57e9b` moved them to `AGENTS.md`.
+- **Rejected**: **the pointer note** (either direction) — the rules reach
+  context only when the agent chooses to follow it. **Duplicating** the content
+  into both files — guarantees drift. The mirror-image symlink (`CLAUDE.md` →
+  `AGENTS.md`) was briefly in place and is functionally identical; the only
+  difference is which filename carries the git history.
+- **Cost**: the file is now resident in every Claude session (~4.5 KB, ~1.1k
+  est. tokens). Keep additions to `CLAUDE.md` tight.
 - See [bootstrap](bootstrap.md).

@@ -9,7 +9,7 @@ updated: 2026-08-04
 Knowledge base for these dotfiles. Answers the question **"why is it done this
 way"** and describes the design of non-trivial parts (primarily `scripts/`).
 Maintenance rules — in [CONVENTIONS](CONVENTIONS.md). Rules for the agent — in
-[../AGENTS.md](../AGENTS.md).
+[../CLAUDE.md](../CLAUDE.md) (`AGENTS.md` is a symlink to it).
 
 Status: 🚧 all pages have brief content (first pass by agents on 2026-07-01); to
 be deepened as edits happen. Legend: ✅ filled in · 🚧 partial · 🌱 stub.

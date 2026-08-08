@@ -1,7 +1,7 @@
 ---
 title: bootstrap
 type: topic
-updated: 2026-08-02
+updated: 2026-08-08
 covers:
   - bootstrap.sh
   - zsh/zshrc
@@ -35,6 +35,16 @@ Linked dirs (`~/.config/<name>` ← `~/dotfiles/<name>`): `hypr`, `kitty`,
 `systemd`. Plus the direct zsh links above. Plus the shared CLI agent
 instructions: `instructions.md` → `~/.claude/CLAUDE.md`,
 `~/.config/opencode/AGENTS.md`, `~/.codex/AGENTS.md` (see [global](global.md)).
+
+✅ 2026-08-08: this repo's own rules are a single file, `../CLAUDE.md`, with
+`AGENTS.md` a symlink to it. Before this, `CLAUDE.md` was a note saying "the
+real instructions are in AGENTS.md, read it" — Claude Code auto-loads only
+`CLAUDE.md`, so a session started knowing nothing about the wiki rules and had
+to spend a tool call, or silently skipped them. A symlink resolves for every
+tool: Claude Code loads `CLAUDE.md`, Codex and opencode read `AGENTS.md` by
+convention, all three get the same bytes. Git tracks the symlink, so a clone
+already has it; `bootstrap.sh` re-links it only to repair a clobbered file. The
+target is relative so it survives cloning to another path.
 
 ✅ fixed 2026-07-01: legacy symlinks `~/.config/tmux` and `~/.config/wezterm`
 (both pointed into dotfiles) were removed — the switch to kitty native sessions is

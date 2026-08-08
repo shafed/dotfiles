@@ -13,7 +13,7 @@
 
 set -euo pipefail
 
-default_mode="insert"
+default_mode="normal"
 
 script_path="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/$(basename -- "${BASH_SOURCE[0]}")"
 kitty_sessions_dir="$HOME/dotfiles/kitty/sessions"
@@ -33,7 +33,7 @@ set_cursor_bar() {
 trap 'set_cursor_bar' EXIT
 
 # Gruvbox Material colors from ../current-theme.conf.
-base_color=$'\033[1;38;2;169;182;101m'    # color2: #a9b665
+base_color=$'\033[1;38;2;169;182;101m'   # color2: #a9b665
 current_color=$'\033[1;38;2;231;138;78m' # color3: #e78a4e
 reset_color=$'\033[0m'
 

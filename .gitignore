@@ -1,3 +1,6 @@
 # Auto-generated from the local Helium profile on each bookmarks.sh run
 bookmarks/firefox-bookmarks.tsv
 bookmarks/helium-bookmarks.tsv
+
+# Python bytecode cache (kitty/ and scripts/ ship .py helpers)
+__pycache__/

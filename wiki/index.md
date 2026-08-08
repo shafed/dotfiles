@@ -46,6 +46,7 @@ be deepened as edits happen. Legend: ✅ filled in · 🚧 partial · 🌱 stub.
 | Page                   | What it covers                                                                                                                                                                |
 | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | ✅ [global](global.md)     | System-level decisions outside config components: the shared `instructions.md` (global agent instructions, symlinked to claude/opencode/codex), the `component: subject` commit convention and its `/commit` skill, and the home directory layout. |
+| ✅ [agents](agents.md)     | Sharing config between Claude Code / Codex / opencode without writing it twice: one source + symlinks, the verified table of what each agent reads (instructions, skills, hooks, MCP), and how to re-probe it after a CLI update. |
 
 ## Decisions
 

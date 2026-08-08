@@ -13,12 +13,6 @@ nothing else — no editing files, no pushing, no amending, no rebasing.
 Don't overthink this. The format below is mechanical; spend your attention on
 the subject lines only.
 
-**Repo guard.** The taxonomy below assumes this repo's flat layout — one
-top-level directory per tool. It is wrong anywhere else, where a first path
-segment is `src/` or `lib/`. Codex has no project-scoped skills and so offers
-this one everywhere: if `git rev-parse --show-toplevel` is not the dotfiles
-repo, stop and say the convention doesn't apply here.
-
 ## 1. Read the state
 
 ```

@@ -49,9 +49,9 @@ way".
   they were made. Why that beats Conventional Commits and a real subagent —
   [decisions](decisions.md).
 
-- It is shared with all three CLI agents, the same way `instructions.md` is —
-  but only Codex needs a symlink, since Claude Code and opencode both read the
-  project's `.claude/skills/` directly. See [bootstrap](bootstrap.md).
+- All three CLI agents pick it up, and it stays project-scoped in all three:
+  Claude Code and opencode read `.claude/skills/`, Codex reads `.agents/skills/`
+  (a symlink to the same directory). See [bootstrap](bootstrap.md).
 
 ⚠️ **Gotcha**: the skill is untracked-blind by design, so it cannot commit
 itself, or any other new file. First-time additions need a manual `git add`.

@@ -45,10 +45,10 @@ be deepened as edits happen. Legend: ✅ filled in · 🚧 partial · 🌱 stub.
 
 | Page                   | What it covers                                                                                                                                                                |
 | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ✅ [global](global.md)     | System-level decisions outside config components: the shared `instructions.md` (global agent instructions, symlinked to claude/opencode/codex) and the home directory layout. |
+| ✅ [global](global.md)     | System-level decisions outside config components: the shared `instructions.md` (global agent instructions, symlinked to claude/opencode/codex), the `component: subject` commit convention and its `/commit` skill, and the home directory layout. |
 
 ## Decisions
 
 | Page                         | What it covers                                                                                                                                                                                                                                              |
 | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 🚧 [decisions](decisions.md) | Major decisions and rejected alternatives: Firefox → Helium default browser; tmux → kitty native sessions; kanata as the single keymap engine; removal of Windows/WSL legacy; manual symlinks → bootstrap.sh (plain symlinks; GNU Stow tried and rejected). |
+| 🚧 [decisions](decisions.md) | Major decisions and rejected alternatives: Firefox → Helium default browser; tmux → kitty native sessions; kanata as the single keymap engine; removal of Windows/WSL legacy; manual symlinks → bootstrap.sh (plain symlinks; GNU Stow tried and rejected); `component: subject` commits via a `/commit` skill (Conventional Commits and a Haiku subagent rejected). |

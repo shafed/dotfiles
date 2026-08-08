@@ -11,6 +11,37 @@ updated: 2026-08-08
 
 ## Recorded
 
+### `component: subject` commits, driven by a `/commit` skill (2026-08-08)
+- **Decision**: commit messages are `component: subject`, where the component is
+  the first path segment of the change. Enforced by the `/commit` skill
+  ([global](global.md)), which splits the tree one commit per component and runs
+  on `model: haiku` in the current session — no subagent.
+- **Reason**: the history had drifted into three styles at once (`feat(nvim):`,
+  `darkman: fix …`, bare `formatted`). Of the candidates, this is the one whose
+  prefix is **derived, not judged**: the component falls out of `git status`
+  mechanically, so it comes out identical every time. The `wiki:` prefix that
+  [AGENTS.md](../AGENTS.md) already mandates becomes a special case of the
+  general rule rather than an exception to a different one.
+- **Rejected**: **Conventional Commits** — its tooling payoff (changelog
+  generation, semver) is nil here, and it adds a judgment call (`feat` or
+  `chore`? for a keybind tweak) at exactly the point where consistency was the
+  goal; it also can't express `wiki:` without contorting into `docs(wiki):`.
+- **Rejected**: **a Haiku subagent** (`.claude/agents/committer.md`), the first
+  implementation. A subagent starts cold: it reads the diff but cannot know
+  **why** a change was made, and the why is what this wiki exists for. The
+  `model:` key in a skill's frontmatter gets the cheap model without that cost —
+  it is a turn-scoped model switch, and only `context: fork` actually forks a
+  subagent. Cheap *and* in-context, so the trade-off that motivated the subagent
+  was never real.
+- **Rejected**: `effort: low` on Sonnet, briefly in place while the above was
+  misunderstood. From the Claude Code model registry: Haiku 4.5 is ~3.75× cheaper
+  per token than Sonnet, while `effort: low` buys ~2× (cost index `low 0.47` vs
+  `high 1`) and only on thinking tokens. Moot for Haiku regardless — its registry
+  entry lists no `effort` capability, so the key would be dead config.
+- **Trade-off**: grouping by component means two unrelated edits to the same file
+  land in one commit. Acceptable at this repo's size; the fix is to run `/commit`
+  more often, not to make the splitting smarter.
+
 ### Removal of the yazi autosession plugin (2026-07-18)
 - **Decision**: drop `barbanevosa/autosession` from yazi entirely — `package.toml`
   dep, `plugins/autosession.yazi/`, the `init.lua` `:setup()` call, and the `q`

@@ -1,9 +1,10 @@
 ---
 title: global
 type: topic
-updated: 2026-08-02
+updated: 2026-08-08
 covers:
   - instructions.md
+  - .claude/skills/commit/SKILL.md
 ---
 
 # Global — decisions outside the config components
@@ -29,6 +30,27 @@ way".
   not the source name.
 - Kept deliberately small (a handful of rules) — it's loaded into context in
   every session of every project.
+
+## Commit convention and the `/commit` skill
+
+- Commit subjects in this repo are `component: subject` — the component is the
+  **first path segment** of what changed (`nvim/lua/config/keymaps.lua` → `nvim`;
+  root files → `repo`). English, imperative, ≤ 72 chars, no `feat:`/`chore:`
+  type prefixes. Rationale and the full rules live in the skill itself:
+  [../.claude/skills/commit/SKILL.md](../.claude/skills/commit/SKILL.md).
+- `/commit` splits the working tree **one commit per component**, `wiki/` always
+  separate — which is how the [AGENTS.md](../AGENTS.md) "wiki commits are their
+  own commit" rule gets enforced mechanically instead of by memory.
+- It only ever runs `git add -u -- <paths>`, so untracked files stay untracked
+  and never ride along.
+- It declares `model: haiku` in its frontmatter. In a skill that is a **turn-
+  scoped model switch, not a subagent** — only `context: fork` forks. So the
+  cheap model still sees the session that produced the changes and can say _why_
+  they were made. Why that beats Conventional Commits and a real subagent —
+  [decisions](decisions.md).
+
+⚠️ **Gotcha**: the skill is untracked-blind by design, so it cannot commit
+itself, or any other new file. First-time additions need a manual `git add`.
 
 ## Home directory layout
 

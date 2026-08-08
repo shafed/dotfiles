@@ -381,4 +381,3 @@ vim.keymap.set("n", "<leader>gca", gcal.agenda, { desc = "[P]gcalcli: show agend
 -- then quit this instance. Uses a detached kitty window so it survives this
 -- nvim closing (a plain jobstart child would be killed on exit).
 vim.keymap.set("n", "<leader>R", "<cmd>restart<cr>", { desc = "[P]Restart nvim" })
-vim.keymap.set("n", "<leader>r", "<cmd>restart<cr>", { desc = "[P]Restart nvim" })

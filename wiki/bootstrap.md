@@ -35,6 +35,16 @@ Linked dirs (`~/.config/<name>` ← `~/dotfiles/<name>`): `hypr`, `kitty`,
 `systemd`. Plus the direct zsh links above. Plus the shared CLI agent
 instructions: `instructions.md` → `~/.claude/CLAUDE.md`,
 `~/.config/opencode/AGENTS.md`, `~/.codex/AGENTS.md` (see [global](global.md)).
+Plus one skill link: `.claude/skills/commit` → `~/.codex/skills/commit`.
+
+✅ 2026-08-08: the `/commit` skill reaches all three agents, but only Codex
+needs a symlink. Claude Code reads the project's `.claude/skills/` natively, and
+opencode scans `.claude/skills/<name>/SKILL.md` as one of its own project skill
+paths — verified with `opencode debug skill`, which lists the skill at its
+dotfiles path. Codex discovers skills in `$CODEX_HOME/skills` only and has no
+project-level scope, hence the link. ⚠️ **Gotcha**: that makes the skill visible
+in _every_ repo under Codex, where its component taxonomy would be wrong — so
+the skill body opens with a guard that stops it outside this repo.
 
 ✅ 2026-08-08: this repo's own rules are a single file, `../CLAUDE.md`, with
 `AGENTS.md` a symlink to it. Before this, `CLAUDE.md` was a note saying "the

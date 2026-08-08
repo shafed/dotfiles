@@ -50,8 +50,9 @@ way".
   [decisions](decisions.md).
 
 - All three CLI agents pick it up, and it stays project-scoped in all three:
-  Claude Code and opencode read `.claude/skills/`, Codex reads `.agents/skills/`
-  (a symlink to the same directory). See [bootstrap](bootstrap.md).
+  Claude Code and opencode read `.claude/skills/`, Codex reads `.agents/skills/`.
+  Those are two copies of the same procedure with different frontmatter — see
+  [bootstrap](bootstrap.md) for why, and for the gotcha about editing both.
 
 ⚠️ **Gotcha**: the skill is untracked-blind by design, so it cannot commit
 itself, or any other new file. First-time additions need a manual `git add`.

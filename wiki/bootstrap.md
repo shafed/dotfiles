@@ -36,18 +36,26 @@ Linked dirs (`~/.config/<name>` ← `~/dotfiles/<name>`): `hypr`, `kitty`,
 instructions: `instructions.md` → `~/.claude/CLAUDE.md`,
 `~/.config/opencode/AGENTS.md`, `~/.codex/AGENTS.md` (see [global](global.md)).
 ✅ 2026-08-08: skills reach all three agents without leaving the repo, so
-nothing is linked into `$HOME` for them. Claude Code and opencode both scan the
-project's `.claude/skills/`; Codex scans the project's `.agents/skills/`. So
-each `.agents/skills/<name>` is a tracked relative symlink to the
-`.claude/skills/<name>` beside it, and `bootstrap.sh` loops over them only to
-repair a clobbered link. Verified per tool rather than assumed: `opencode debug
-skill` and `codex debug prompt-input` each list the skill at its real dotfiles
-path, and opencode reports it once despite reaching it by both paths.
+`bootstrap.sh` links nothing into `$HOME` for them. Claude Code and opencode
+both scan the project's `.claude/skills/`; Codex scans the project's
+`.agents/skills/`. Verified per tool rather than assumed — `opencode debug
+skill` and `codex debug prompt-input` each list the skill at its real path.
 
-⚠️ **Gotcha**: `.agents/` is Codex's neutral namespace, not an opencode or
-Claude Code one, and it is easy to miss because `~/.codex/skills/` also works.
-The global path would make every skill here visible in _every_ repo, where a
-component taxonomy built for this layout is wrong — prefer the in-repo link.
+The two trees hold **separate copies**, not symlinks, because the frontmatter
+differs: `.claude/skills/commit` declares `model: haiku` so mechanical work runs
+on a cheap model, and Codex has no equivalent — `name` and `description` are the
+only fields it reads (confirmed against its docs and its own `skill-creator`),
+and `agents/openai.yaml` adds only UI and invocation policy. A Codex skill runs
+on whatever the session runs on, set by `model` / `model_reasoning_effort` in
+`~/.codex/config.toml`. Codex would load the Claude file fine — unknown
+frontmatter keys are ignored, which was tested — so the copies buy honesty, not
+function. ⚠️ **Gotcha**: the bodies are identical and must be edited together;
+nothing enforces it.
+
+⚠️ **Gotcha**: `.agents/` is Codex's namespace, easy to miss because
+`~/.codex/skills/` also works. Prefer the in-repo path — the global one makes
+every skill visible in _every_ repo, where a taxonomy built for this flat
+layout is wrong.
 
 ✅ 2026-08-08: this repo's own rules are a single file, `../CLAUDE.md`, with
 `AGENTS.md` a symlink to it. Before this, `CLAUDE.md` was a note saying "the

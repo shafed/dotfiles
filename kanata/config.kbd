@@ -184,8 +184,8 @@
   ;; word navigation: n=C-left . =C-right
   n C-lft m C-right
   ;; browser tabs: y=prev u=next; home/end on i/o
-  y C-S-tab u C-tab
-  i home o end
+  u C-S-tab i C-tab
+  o home p end
   ;; browser history: [ back ] fwd; ;=close '=reopen
   [ A-lft ] A-right
   ; C-w ' C-S-t

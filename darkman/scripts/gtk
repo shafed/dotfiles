@@ -6,9 +6,9 @@
 set -e
 
 case "$1" in
-  dark)  mode="prefer-dark" ;;
-  light) mode="prefer-light" ;;
-  *)     exit 0 ;;
+dark) mode="prefer-dark" ;;
+light) mode="prefer-light" ;;
+*) exit 0 ;;
 esac
 
 gsettings set org.gnome.desktop.interface color-scheme "$mode"

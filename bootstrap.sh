@@ -169,6 +169,19 @@ exec "$DOTFILES_DIR/scripts/sudo-notify.sh" "\$@"
 EOF
   chmod +x "$HOME/.local/bin/sudo"
   echo "  wrote $HOME/.local/bin/sudo"
+
+  # sioyek can't create a Qt6 EGL context on nvidia under Wayland (the window
+  # never appears and the process hangs), so force it onto XWayland. The old
+  # LIBGL_ALWAYS_SOFTWARE=1 workaround made it worse: it routes GL to Mesa's
+  # llvmpipe while EGL still resolves to nvidia via libglvnd -> EGL_BAD_MATCH.
+  # A wrapper (not a shell alias) so yazi, kanata, vimtex and the .desktop
+  # entry all get it too.
+  cat >"$HOME/.local/bin/sioyek" <<EOF
+#!/usr/bin/env bash
+exec env -u LIBGL_ALWAYS_SOFTWARE QT_QPA_PLATFORM=xcb /usr/bin/sioyek "\$@"
+EOF
+  chmod +x "$HOME/.local/bin/sioyek"
+  echo "  wrote $HOME/.local/bin/sioyek"
 }
 
 [ "$DO_CHECK" -eq 1 ] && check_requirements

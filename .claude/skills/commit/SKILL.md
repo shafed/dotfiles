@@ -7,9 +7,9 @@ model: haiku
 allowed-tools: Bash(git status:*), Bash(git diff:*), Bash(git add:*), Bash(git commit:*), Bash(git log:*)
 ---
 
-Commit the changes in this repo, new files included. Write the messages, run the
-commits,
-nothing else — no editing files, no pushing, no amending, no rebasing.
+Commit the changes in this repo, new files included. Write the messages, run
+the commits, nothing else — no editing files, no pushing, no amending, no
+rebasing.
 
 Don't overthink this. The format below is mechanical; spend your attention on
 the subject lines only.

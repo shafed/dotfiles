@@ -1,14 +1,9 @@
 ---
 name: commit
-description: Commit the current changes in this dotfiles repo, new files included, with unified `component: subject` messages, split one commit per top-level component. Use when the user runs /commit, says "commit this", "закоммить", or asks to commit the work in this repo.
-user-invocable: true
-argument-hint: [hint about what the change is]
-model: haiku
-allowed-tools: Bash(git status:*), Bash(git diff:*), Bash(git add:*), Bash(git commit:*), Bash(git log:*)
+description: Commit the current tracked changes in this dotfiles repo with unified `component: subject` messages, split one commit per top-level component. Use when the user runs /commit, says "commit this", "закоммить", or asks to commit the work in this repo.
 ---
 
-Commit the changes in this repo, new files included. Write the messages, run the
-commits,
+Commit the tracked changes in this repo. Write the messages, run the commits,
 nothing else — no editing files, no pushing, no amending, no rebasing.
 
 Don't overthink this. The format below is mechanical; spend your attention on
@@ -25,20 +20,15 @@ a space or `?`): the user staged those deliberately. Do not run `git add`. Make
 **one** commit from the index and stop. Say that you committed the pre-staged
 set only and left the rest.
 
-**If there are no changes at all** (empty output): commit nothing, say so, stop.
+**If there are no tracked modifications** (only `??` lines, or nothing): commit
+nothing, say so, stop.
 
 Otherwise continue.
 
 ## 2. Group the changed paths by component
 
-Take every path `git status --porcelain` lists — modifications (` M`, ` D`,
-` T`, ` R`) **and untracked files (`??`)**. Untracked files get committed too;
-anything gitignored never shows up here in the first place, so there's nothing
-extra to filter.
-
-An untracked directory shows as a single `?? dir/` line — expand it with
-`git status --porcelain --untracked-files=all` if you need the individual paths
-to group them.
+Take only the tracked-modified paths — lines starting with ` M`, ` D`, ` T`,
+` R`. **Ignore `??` untracked lines entirely**; never stage new files.
 
 The component is the **first path segment**:
 
@@ -61,7 +51,7 @@ Two hard rules:
 For each group, code components first and `wiki` last:
 
 ```
-git add -- <paths in this group>
+git add -u -- <paths in this group>
 git --no-pager diff --cached -U1
 git commit -m "<component>: <subject>"
 ```
@@ -74,16 +64,15 @@ not which files changed. If a diff runs past ~400 lines, fall back to
 guessing at details you did not read.
 
 You are running in the session that made these changes, so you may know _why_
-they were made where the diff does not show it — use that. `$ARGUMENTS`, if
-given, is the user's own hint about the change and outranks your reading of the
-diff. Never invent a rationale you don't actually have; describing the change is
-always better than a wrong reason.
+they were made where the diff does not show it — use that. Any hint the user
+typed after the command outranks your reading of the diff. Never invent a
+rationale you don't actually have; describing the change is always better than a
+wrong reason.
 
 ## 4. Report
 
 List the commits as `<short hash> <subject>` from `git log --oneline -<N>`.
-Mention anything left uncommitted. Call out newly tracked files explicitly —
-adding a file to the repo is a bigger deal than editing one.
+Mention anything left uncommitted, untracked files included.
 
 ## Message rules
 
@@ -117,9 +106,6 @@ wiki: document Snacks.dim in zen mode
 
 - `git push`, `git commit --amend`, `git rebase`, `git reset --hard`,
   `git stash`
-- `git add -A`, `git add .`, `git commit -a` — always stage explicit paths, so
-  the index holds exactly one component's group at a time
-- `git add -f` — a gitignored file stays ignored; if one genuinely belongs in
-  the repo, say so and let the user fix `.gitignore`
+- `git add -A`, `git add .`, `git commit -a` — untracked files stay untracked
 - Editing any file, including the wiki. If a code change looks like it needs a
   wiki update, say so in the report; do not write it.

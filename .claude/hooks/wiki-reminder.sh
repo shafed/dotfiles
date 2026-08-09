@@ -19,26 +19,26 @@ repo="$(cd "$(dirname "$0")/../.." && pwd)"
 
 # Make the path relative to the repo, if it's inside it.
 case "$file" in
-  "$repo"/*) rel="${file#"$repo"/}" ;;
-  *) exit 0 ;;  # edit outside the repo — nothing to do
+"$repo"/*) rel="${file#"$repo"/}" ;;
+*) exit 0 ;; # edit outside the repo — nothing to do
 esac
 
 # Never nag about edits to the wiki itself or agent-instruction files.
 case "$rel" in
-  wiki/*|AGENTS.md|CLAUDE.md|.claude/*) exit 0 ;;
+wiki/* | AGENTS.md | CLAUDE.md | .claude/*) exit 0 ;;
 esac
 
 # Only react to config areas that have wiki coverage.
 case "$rel" in
-  kanata/*|hypr/*|scripts/*|zsh/*|kitty/*|nvim/*|waybar/*|yazi/*|darkman/*) ;;
-  *) exit 0 ;;
+kanata/* | hypr/* | scripts/* | zsh/* | kitty/* | nvim/* | waybar/* | yazi/* | darkman/*) ;;
+*) exit 0 ;;
 esac
 
 # Find wiki page(s) whose `covers:` lists a path under the same top dir as rel.
 # Skip meta pages (index/CONVENTIONS) — they mention `covers:` as prose.
 top="${rel%%/*}"
 match="$(for page in "$repo"/wiki/*.md; do
-  case "$(basename "$page")" in index.md|CONVENTIONS.md) continue ;; esac
+  case "$(basename "$page")" in index.md | CONVENTIONS.md) continue ;; esac
   # match a covers: list entry that starts with "<top>/"
   if grep -qE "^[[:space:]]*-[[:space:]]*${top}/" "$page" 2>/dev/null; then
     basename "$page" .md

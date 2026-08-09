@@ -126,6 +126,13 @@ link_configs() {
   ln -sfv "$DOTFILES_DIR/instructions.md" "$HOME/.config/opencode/AGENTS.md"
   ln -sfv "$DOTFILES_DIR/instructions.md" "$HOME/.codex/AGENTS.md"
 
+  # no-coauthor.sh enforces the "no Co-Authored-By" rule from instructions.md in
+  # every project, so it is linked to $HOME rather than staying repo-scoped.
+  # Only the script is linked — the `hooks` block in ~/.claude/settings.json
+  # that registers it is machine state this repo does not track.
+  mkdir -p "$HOME/.claude/hooks"
+  ln -sfv "$DOTFILES_DIR/.claude/hooks/no-coauthor.sh" "$HOME/.claude/hooks/no-coauthor.sh"
+
   # This repo's own rules live in CLAUDE.md; AGENTS.md is a symlink to it, so
   # Codex and opencode (which read AGENTS.md by convention) get the same file.
   # Git tracks the symlink, so a fresh clone already has it — this line just

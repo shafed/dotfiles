@@ -1,10 +1,11 @@
 ---
 title: global
 type: topic
-updated: 2026-08-08
+updated: 2026-08-09
 covers:
   - instructions.md
   - .claude/skills/commit/SKILL.md
+  - .claude/hooks/no-coauthor.sh
 ---
 
 # Global — decisions outside the config components
@@ -31,6 +32,26 @@ way".
 - Kept deliberately small (a handful of rules) — it's loaded into context in
   every session of every project.
 
+### The one rule that is also enforced, not just stated
+
+Of those rules only **no `Co-Authored-By`** is mechanically checkable, so it has
+a second, hard layer:
+[../.claude/hooks/no-coauthor.sh](../.claude/hooks/no-coauthor.sh) denies any
+`git commit` whose message carries an attribution footer. It is registered in
+`~/.claude/settings.json` (not the repo's), because the rule it enforces is
+global; `bootstrap.sh` links the script into `~/.claude/hooks/`.
+
+- **Why a hook and not just the sentence**: prose competes for attention and
+  loses it on a long task. Which rules earn this treatment, and why the sentence
+  stays in `instructions.md` anyway — [decisions](decisions.md#recorded).
+- ⚠️ **Gotcha**: the `hooks` block in `~/.claude/settings.json` is **not tracked
+  by this repo** — that file holds machine state (plugins, marketplaces) and is
+  a real file, not a symlink. `bootstrap.sh` restores the script but not its
+  registration; on a fresh machine the block has to be re-added by hand.
+- The guard only sees an agent's `Bash` calls. A commit typed directly in a
+  terminal bypasses it — which is the escape hatch if a human co-author ever
+  genuinely needs crediting.
+
 ## Commit convention and the `/commit` skill
 
 - Commit subjects in this repo are `component: subject` — the component is the
@@ -49,9 +70,10 @@ way".
   they were made. Why that beats Conventional Commits and a real subagent —
   [decisions](decisions.md).
 
-- It is shared with all three CLI agents, the same way `instructions.md` is —
-  but only Codex needs a symlink, since Claude Code and opencode both read the
-  project's `.claude/skills/` directly. See [bootstrap](bootstrap.md).
+- All three CLI agents pick it up, and it stays project-scoped in all three:
+  Claude Code and opencode read `.claude/skills/`, Codex reads `.agents/skills/`.
+  Those are two copies of the same procedure with different frontmatter — see
+  [bootstrap](bootstrap.md) for why, and for the gotcha about editing both.
 
 ⚠️ **Gotcha**: the skill is untracked-blind by design, so it cannot commit
 itself, or any other new file. First-time additions need a manual `git add`.

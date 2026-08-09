@@ -1,7 +1,7 @@
 ---
 title: decisions
 type: topic
-updated: 2026-08-08
+updated: 2026-08-09
 ---
 
 # decisions — major decisions and rejected alternatives
@@ -10,6 +10,43 @@ updated: 2026-08-08
 **decision → reason → rejected alternative → date**.
 
 ## Recorded
+
+### Mechanizable rules go into hooks, judgment stays prose (2026-08-09)
+- **Decision**: a rule leaves `CLAUDE.md` for a `.claude/hooks/` script only when
+  it is checkable **without judgment**. Two moved:
+  [../.claude/hooks/wiki-date.sh](../.claude/hooks/wiki-date.sh) (`PostToolUse`
+  — sets `updated:` in a wiki page's frontmatter to today) and
+  [../.claude/hooks/no-coauthor.sh](../.claude/hooks/no-coauthor.sh)
+  (`PreToolUse` — denies a `git commit` whose message carries a
+  `Co-Authored-By:` / 🤖 attribution footer). Everything needing judgment —
+  status transitions 🌱→🚧→✅, what earns an entry here, "record why, not what"
+  — stays in prose.
+- **Scope follows the rule, not the file**: the wiki hooks are repo-scoped
+  (`.claude/settings.json`), while `no-coauthor.sh` enforces a line from
+  `instructions.md` that holds everywhere, so it is registered in
+  `~/.claude/settings.json` and linked into `$HOME` by `bootstrap.sh` —
+  [global](global.md). Registering it in both places would just fire it twice.
+- **Reason**: **determinism, not token economy**. An instruction competes for
+  attention and loses it on a long task; a hook fires every time. The date bump
+  fixes something prose cannot: the agent does not reliably know today's date,
+  `date +%F` does.
+- **Cost**: a hook is free until it *prints*. Definitions never enter the
+  model's context — only `additionalContext` and a deny `reason` do. Both new
+  hooks are silent on the happy path, so they cost 0 tokens.
+  `wiki-reminder.sh` is the opposite: ~70–80 tokens per firing (its message is
+  Cyrillic, which tokenizes ~2× worse than Latin), so ~7 config edits in a
+  session already cost more than the whole UPDATE/INGEST/LINT block it points
+  at.
+- **Rejected**: **moving the wiki ruleset wholesale into hooks**. Codex and
+  opencode don't execute Claude Code hooks, so those rules would silently
+  vanish for them while `AGENTS.md` keeps promising them — against this repo's
+  own one-source rule ([cli-agents](cli-agents.md)). Prose also carries the
+  *why*, which a one-line reminder cannot.
+- ⚠️ **Gotcha**: a commit guard must anchor on the **command segment** (start,
+  or after `&&`/`;`/`|`), not on a substring — the first version blocked its own
+  test case, because the test merely *contained* the words `git commit`. It also
+  requires the colon in `Co-Authored-By:`; without it, the commit documenting
+  this very rule would block itself.
 
 ### `component: subject` commits, driven by a `/commit` skill (2026-08-08)
 - **Decision**: commit messages are `component: subject`, where the component is

@@ -57,8 +57,16 @@ and `agents/openai.yaml` adds only UI and invocation policy. A Codex skill runs
 on whatever the session runs on, set by `model` / `model_reasoning_effort` in
 `~/.codex/config.toml`. Codex would load the Claude file fine — unknown
 frontmatter keys are ignored, which was tested — so the copies buy honesty, not
-function. ⚠️ **Gotcha**: the bodies are identical and must be edited together;
-nothing enforces it.
+function. ⚠️ **Gotcha**: the bodies must be edited together and nothing enforces
+it. They are identical except for **one paragraph**: the Claude copy names
+`$ARGUMENTS`, which Codex does not expand, so the Codex copy says "any hint the
+user typed after the command" instead. Diff the two with the frontmatter and
+that paragraph excluded; anything else that differs is drift.
+
+This is not hypothetical — `1ee2d84` merged a change that taught the skill to
+stage untracked files into the Claude copy only. Git reported no conflict (only
+one side had touched that path), and the two skills disagreed about whether new
+files get committed until it was caught by hand.
 
 ⚠️ **Gotcha**: `.agents/` is Codex's namespace, easy to miss because
 `~/.codex/skills/` also works. Prefer the in-repo path — the global one makes

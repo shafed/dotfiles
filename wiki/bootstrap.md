@@ -43,6 +43,13 @@ Plus the Claude Code theme: `.claude/themes/gruvbox-material.json` →
 `~/.claude/themes/gruvbox-material.json` (the live `~/.claude/settings.json`
 references it as `"theme": "custom:gruvbox-material"`).
 
+Besides symlinks, `bootstrap.sh` also **generates two wrappers** into
+`~/.local/bin`: `sudo` (routes to `scripts/sudo-notify.sh`) and `sioyek` (pins
+the viewer to XWayland — see [sioyek](sioyek.md) for why an alias can't do the
+job). ⚠️ **Gotcha**: `~/.local/bin` is on the interactive shell's `PATH` but
+**not** on the systemd user session's, so anything launched from a `.desktop`
+entry must call these wrappers by absolute path.
+
 ✅ 2026-08-08: skills reach all three agents without leaving the repo, so
 `bootstrap.sh` links nothing into `$HOME` for them. Claude Code and opencode
 both scan the project's `.claude/skills/`; Codex scans the project's

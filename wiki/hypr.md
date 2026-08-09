@@ -1,7 +1,7 @@
 ---
 title: hypr
 type: component
-updated: 2026-08-03
+updated: 2026-08-09
 covers:
   - hypr/hyprland.lua
   - hypr/hyprland.conf
@@ -168,7 +168,7 @@ The full map is in [keymap](keymap.md). Here only the non-obvious bits:
 
 - `SUPER, Q` (killactive) is **commented out** in hyprland.lua — killactive is wired up
   via the kanata apps layer (Q under the thumb), see [keymap](keymap.md).
-- `SUPER, M` — smart exit: `hyprshutdown` if present, otherwise `hyprctl dispatch 'hl.dsp.exit()'`.
+- `F5` — smart exit: `hyprshutdown` if present, otherwise `hyprctl dispatch 'hl.dsp.exit()'`.
 - `SUPER, home` — `systemctl suspend && hyprlock` (manual sleep+lock).
 - `SUPER, V` — `copyq toggle` (clipboard manager; the CopyQ window is caught by a windowrule into float).
 - `SUPER, N` — `nvim-scratch-toggle.sh`: floating kitty+nvim scratch note (QAT
@@ -203,7 +203,11 @@ default permissions. Env variables are cursor sizes (`XCURSOR_SIZE`, `HYPRCURSOR
 laptop monitor runs at fractional scale `1.6`, and under XWayland a fractional
 scale just upscales the 1x buffer (Qt apps render pixelated). ⚠️ Gotcha:
 `copyq` still launches with `QT_QPA_PLATFORM=xcb` (alias in `zsh/zshrc`), so it
-stays on XWayland and may look soft.
+stays on XWayland and may look soft. ⚠️ Gotcha: `sioyek` is a second forced-xcb
+exception, for a harder reason — its Qt6 cannot create an EGL context on nvidia
+under Wayland at all (no window, process hangs alive), so it is pinned to
+XWayland by the `~/.local/bin/sioyek` wrapper rather than an alias; see
+[sioyek](sioyek.md).
 
 ### HiDPI (fractional scale 1.6 on the laptop panel)
 

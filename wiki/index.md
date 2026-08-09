@@ -32,6 +32,7 @@ be deepened as edits happen. Legend: ✅ filled in · 🚧 partial · 🌱 stub.
 | 🚧 [zsh](zsh.md)         | `zsh/`     | oh-my-zsh, aliases, functions (yazi cd, im-select), aichat.                                                                                                                               |
 | 🚧 [waybar](waybar.md)   | `waybar/`  | Status bar for Hyprland.                                                                                                                                                                  |
 | 🚧 [yazi](yazi.md)       | `yazi/`    | File manager: plugins, flavors, keymap.                                                                                                                                                   |
+| ✅ [sioyek](sioyek.md)   | `sioyek/`  | PDF viewer. Mostly about why every launcher goes through the `~/.local/bin/sioyek` wrapper: Qt6 can't create an EGL context on nvidia/Wayland, the old `LIBGL_ALWAYS_SOFTWARE` "fix" was itself the bug, and a failed launch leaves a windowless zombie that swallows every later launch. |
 
 ## Cross-cutting
 

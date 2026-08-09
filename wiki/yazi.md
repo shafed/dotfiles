@@ -1,7 +1,7 @@
 ---
 title: yazi
 type: component
-updated: 2026-07-18
+updated: 2026-08-09
 covers:
   - yazi/
 ---
@@ -40,8 +40,11 @@ the source of truth for what's wired in is `package.toml` + the bindings in `key
 ## yazi.toml
 
 Three columns (`ratio [1,4,3]`), hidden files off by default. Openers:
-PDF — viewed via `sioyek` (`LIBGL_ALWAYS_SOFTWARE=1` — works around a GL issue,
-commit `ae6cf4b`), annotation — `xournalpp`.
+PDF — viewed via plain `sioyek`, annotation — `xournalpp`. The opener carries no
+env prefix on purpose: the GL workaround lives in the `~/.local/bin/sioyek`
+wrapper, see [sioyek](sioyek.md). (Until 2026-08-09 it was
+`LIBGL_ALWAYS_SOFTWARE=1 sioyek`, commit `ae6cf4b` — that variable was itself
+the bug, not the fix.)
 
 ⚠️ Gotcha (2026-07-18, yazi v26.5.6): the `"$schema" = "..."` TOML-key convention
 in `yazi.toml`/`keymap.toml` is dead — new yazi rejects it at startup ("must be

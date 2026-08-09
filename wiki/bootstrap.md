@@ -1,7 +1,7 @@
 ---
 title: bootstrap
 type: topic
-updated: 2026-08-08
+updated: 2026-08-09
 covers:
   - bootstrap.sh
   - zsh/zshrc
@@ -35,7 +35,10 @@ Linked dirs (`~/.config/<name>` ← `~/dotfiles/<name>`): `hypr`, `kitty`,
 `systemd`. Plus the direct zsh links above. Plus the shared CLI agent
 instructions: `instructions.md` → `~/.claude/CLAUDE.md`,
 `~/.config/opencode/AGENTS.md`, `~/.codex/AGENTS.md` (see [global](global.md)).
-Plus one skill link: `.claude/skills/commit` → `~/.codex/skills/commit`.
+Plus one skill link: `.claude/skills/commit` → `~/.codex/skills/commit`. Plus the
+Claude Code theme: `.claude/themes/gruvbox-material.json` →
+`~/.claude/themes/gruvbox-material.json` (the live `~/.claude/settings.json`
+references it as `"theme": "custom:gruvbox-material"`).
 
 ✅ 2026-08-08: the `/commit` skill reaches all three agents, but only Codex
 needs a symlink. Claude Code reads the project's `.claude/skills/` natively, and

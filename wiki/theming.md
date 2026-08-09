@@ -1,11 +1,12 @@
 ---
 title: theming
 type: topic
-updated: 2026-08-04
+updated: 2026-08-09
 covers:
   - darkman/
   - hypr/hyprsunset.conf
   - kitty/current-theme.conf
+  - .claude/themes/gruvbox-material.json
 ---
 
 # theming — gruvbox (dark everywhere)
@@ -28,6 +29,9 @@ duplicated across components by hand:
 - `waybar/style.css` (`@define-color gb_*`),
 - `yazi/flavors/gruvbox-dark.yazi` + `theme.toml`,
 - nvim — its own gruvbox-material plugin,
+- `.claude/themes/gruvbox-material.json` — Claude Code's theme (custom
+  overrides, "custom:gruvbox-material"), symlinked to `~/.claude/themes/` by
+  `bootstrap.sh`,
 - hyprland/hyprlock — hex colors for borders/fields directly in configs (`d8a657`, `a9b665`…).
 
 Change a shade — edit ALL of these places, there's no automatic sync.

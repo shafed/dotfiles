@@ -141,6 +141,12 @@ link_configs() {
   mkdir -p "$HOME/.codex/skills"
   ln -sfvn "$DOTFILES_DIR/.claude/skills/commit" "$HOME/.codex/skills/commit"
 
+  # The gruvbox-material Claude Code theme (referenced by
+  # ~/.claude/settings.json as "theme": "custom:gruvbox-material").
+  mkdir -p "$HOME/.claude/themes"
+  ln -sfvn "$DOTFILES_DIR/.claude/themes/gruvbox-material.json" \
+    "$HOME/.claude/themes/gruvbox-material.json"
+
   echo
   echo "== Linking darkman hook scripts into \$XDG_DATA_HOME =="
   # darkman v2 reads transition scripts from the data dir (not ~/.config).

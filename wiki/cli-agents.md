@@ -1,7 +1,7 @@
 ---
-title: agents
+title: cli-agents
 type: topic
-updated: 2026-08-08
+updated: 2026-08-09
 covers:
   - instructions.md
   - AGENTS.md
@@ -49,6 +49,18 @@ Hook **events** line up almost exactly (`PreToolUse`, `PostToolUse`,
 read JSON on stdout, so a hook script such as
 [../.claude/hooks/wiki-reminder.sh](../.claude/hooks/wiki-reminder.sh) runs
 unmodified under either — only the block that registers it is per-agent.
+
+Three hooks exist, and they split by **scope**, not by agent.
+`.claude/settings.json` registers the two repo-scoped ones on `PostToolUse`
+(`wiki-reminder.sh`, `wiki-date.sh`); `no-coauthor.sh` enforces a rule from
+`instructions.md` that holds in every project, so it is registered globally in
+`~/.claude/settings.json` instead — see [global](global.md).
+
+All three are plain scripts and would port to Codex unmodified; only the
+registration block is per-agent, and so far only Claude Code has one. That is
+why the rules they enforce must **stay written down** in `instructions.md` and
+`CLAUDE.md` — for Codex and opencode the prose is still the only copy. See
+[decisions](decisions.md#recorded).
 
 ⚠️ **Gotcha**: Claude Code has no `AGENTS.md` fallback, in any version. It reads
 `AGENTS.md` only through a symlink or an `@AGENTS.md` import on the first line

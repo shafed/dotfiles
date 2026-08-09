@@ -1,7 +1,7 @@
 ---
 title: bootstrap
 type: topic
-updated: 2026-08-08
+updated: 2026-08-09
 covers:
   - bootstrap.sh
   - zsh/zshrc
@@ -35,6 +35,10 @@ Linked dirs (`~/.config/<name>` ← `~/dotfiles/<name>`): `hypr`, `kitty`,
 `systemd`. Plus the direct zsh links above. Plus the shared CLI agent
 instructions: `instructions.md` → `~/.claude/CLAUDE.md`,
 `~/.config/opencode/AGENTS.md`, `~/.codex/AGENTS.md` (see [global](global.md)).
+Plus one hook script — `.claude/hooks/no-coauthor.sh` → `~/.claude/hooks/` —
+because the rule it enforces is global, not repo-scoped. ⚠️ **Gotcha**: only the
+script is linked; the `hooks` block registering it lives in the untracked
+`~/.claude/settings.json` and won't come back on a fresh machine.
 ✅ 2026-08-08: skills reach all three agents without leaving the repo, so
 `bootstrap.sh` links nothing into `$HOME` for them. Claude Code and opencode
 both scan the project's `.claude/skills/`; Codex scans the project's

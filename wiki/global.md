@@ -1,10 +1,11 @@
 ---
 title: global
 type: topic
-updated: 2026-08-08
+updated: 2026-08-09
 covers:
   - instructions.md
   - .claude/skills/commit/SKILL.md
+  - .claude/hooks/no-coauthor.sh
 ---
 
 # Global — decisions outside the config components
@@ -30,6 +31,26 @@ way".
   not the source name.
 - Kept deliberately small (a handful of rules) — it's loaded into context in
   every session of every project.
+
+### The one rule that is also enforced, not just stated
+
+Of those rules only **no `Co-Authored-By`** is mechanically checkable, so it has
+a second, hard layer:
+[../.claude/hooks/no-coauthor.sh](../.claude/hooks/no-coauthor.sh) denies any
+`git commit` whose message carries an attribution footer. It is registered in
+`~/.claude/settings.json` (not the repo's), because the rule it enforces is
+global; `bootstrap.sh` links the script into `~/.claude/hooks/`.
+
+- **Why a hook and not just the sentence**: prose competes for attention and
+  loses it on a long task. Which rules earn this treatment, and why the sentence
+  stays in `instructions.md` anyway — [decisions](decisions.md#recorded).
+- ⚠️ **Gotcha**: the `hooks` block in `~/.claude/settings.json` is **not tracked
+  by this repo** — that file holds machine state (plugins, marketplaces) and is
+  a real file, not a symlink. `bootstrap.sh` restores the script but not its
+  registration; on a fresh machine the block has to be re-added by hand.
+- The guard only sees an agent's `Bash` calls. A commit typed directly in a
+  terminal bypasses it — which is the escape hatch if a human co-author ever
+  genuinely needs crediting.
 
 ## Commit convention and the `/commit` skill
 

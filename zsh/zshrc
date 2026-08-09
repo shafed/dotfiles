@@ -191,7 +191,6 @@ function y() {
 }
 
 alias cdd="cd -"
-alias sioyek="LIBGL_ALWAYS_SOFTWARE=1 sioyek"
 
 alias copyq='QT_QPA_PLATFORM=xcb copyq'
 

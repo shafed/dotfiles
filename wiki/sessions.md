@@ -1,7 +1,7 @@
 ---
 title: sessions
 type: topic
-updated: 2026-07-26
+updated: 2026-08-10
 covers:
   - kitty/sessions
   - kitty/scripts
@@ -51,6 +51,11 @@ kanata from the `apps` layer sends `C-S-` hotkeys (`kitty_mod = ctrl+shift`) via
 [`../kitty/scripts/kitty-zoxide-session.sh`](../kitty/scripts/kitty-zoxide-session.sh)
 (`C-S-f`, overlay) — switch/create a session by directory via zoxide.
 Supports `--named <name>` for addressed invocation (used by nvim-edit-handler).
+Named session files and zoxide directories are displayed without type prefixes,
+and directory-backed sessions use the sanitized directory basename as their
+session name. The picker already distinguishes entry types internally, so the
+former `s-` and `z-` labels added visual noise without helping selection; SSH
+sessions retain `ssh-` because the prefix identifies a remote destination.
 
 ## obsidian session and training logbook
 

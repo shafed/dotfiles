@@ -1,7 +1,7 @@
 ---
 title: theming
 type: topic
-updated: 2026-08-09
+updated: 2026-08-10
 covers:
   - darkman/
   - hypr/hyprsunset.conf
@@ -31,7 +31,9 @@ duplicated across components by hand:
 - nvim — its own gruvbox-material plugin,
 - `.claude/themes/gruvbox-material.json` — Claude Code's theme (custom
   overrides, "custom:gruvbox-material"), symlinked to `~/.claude/themes/` by
-  `bootstrap.sh`,
+  `bootstrap.sh`. Its thinking indicator deliberately keeps Claude Code's
+  built-in colors: overriding `claude` / `claudeShimmer` made that animated
+  state harder to distinguish, while the rest of the UI stays gruvbox,
 - hyprland/hyprlock — hex colors for borders/fields directly in configs (`d8a657`, `a9b665`…).
 
 Change a shade — edit ALL of these places, there's no automatic sync.

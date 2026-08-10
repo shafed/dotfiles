@@ -235,7 +235,7 @@ hl.bind(mainMod .. " + period", hl.dsp.exec_cmd("pkill -USR2 -x handy"))
 hl.bind(mainMod .. " + Return", hl.dsp.exec_cmd(terminal))
 -- hl.bind(mainMod .. " + Q", hl.dsp.window.close())
 hl.bind(
-  "F5",
+  mainMod .. " + F5",
   hl.dsp.exec_cmd("command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch 'hl.dsp.exit()'")
 )
 hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(fileManager))

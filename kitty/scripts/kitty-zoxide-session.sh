@@ -6,7 +6,6 @@
 #
 # Also supports:
 #   - Named sessions from *.kitty-session files in ~/dotfiles/kitty/sessions/.
-#     These are shown with a "s-" prefix.
 #   - SSH host entries from ~/.ssh/config (and Include files).
 #     SSH entries are shown with a "ssh-" prefix.
 #
@@ -136,14 +135,12 @@ print_kitty_session_menu_lines() {
   [[ -d "$kitty_sessions_dir" ]] || return 0
   local f=""
   local name=""
-  local label=""
   for f in "$kitty_sessions_dir"/*.kitty-session; do
     [[ -f "$f" ]] || continue
     name="$(basename "$f" .kitty-session)"
-    label="s-${name}"
     printf "named:%s\t%b%s%b  %s\n" \
       "$name" \
-      "${base_color}" "$label" "${reset_color}" \
+      "${base_color}" "$name" "${reset_color}" \
       "$f"
   done
 }
@@ -293,11 +290,11 @@ focus_or_launch_dir() {
 
   base="$(basename "$selected_real")"
   safe_base="$(printf "%s" "$base" | tr -cs 'A-Za-z0-9._-' '_')"
-  session_name="z-${safe_base}"
+  session_name="$safe_base"
 
   # Append a numeric suffix until the name is free.
   while session_exists "$session_name"; do
-    session_name="z-${safe_base}-${suffix}"
+    session_name="${safe_base}-${suffix}"
     ((suffix++))
   done
 

@@ -2,8 +2,6 @@
   "name": "gruvbox-material",
   "base": "dark",
   "overrides": {
-    "claude": "#d8a657",
-    "claudeShimmer": "#e78a4e",
     "text": "#d4be98",
     "inverseText": "#1d2021",
     "inactive": "#928374",

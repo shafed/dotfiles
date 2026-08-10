@@ -1,36 +1,51 @@
 ---
 name: commit
-description: Commit the current changes in this dotfiles repo, new files included, with unified `component: subject` messages, split one commit per top-level component. Use when the user runs /commit, says "commit this", "закоммить", or asks to commit the work in this repo.
+description: 'Commit only changes made in the current chat by default, including new files, with unified `component: subject` messages split by top-level component. Use when the user runs /commit, says "commit this", "закоммить", or asks to commit work in this dotfiles repo; include other changes only when explicitly requested.'
 ---
 
-Commit the changes in this repo, new files included. Write the messages, run
-the commits, nothing else — no editing files, no pushing, no amending, no
-rebasing.
+Commit only the changes made in the current chat, including new files. Leave
+pre-existing and unrelated changes untouched unless the user explicitly asks to
+include them. Write the messages, run the commits, nothing else — no editing
+files, no pushing, no amending, no rebasing.
 
 Don't overthink this. The format below is mechanical; spend your attention on
 the subject lines only.
 
-## 1. Read the state
+## 1. Determine the scope
+
+Use the conversation and the edits made during it to identify the exact paths
+and hunks that belong to this chat. `git status` shows candidates, not automatic
+permission to commit every change it lists.
+
+- A bare `/commit`, "commit this", or equivalent means only this chat's changes.
+- "Commit all", "commit everything", or an equally explicit instruction means
+  every current working-tree change.
+- If ownership of a path or hunk is uncertain, leave it uncommitted and report
+  the uncertainty; do not guess.
+- If a file mixes this chat's edits with unrelated edits, stage only this chat's
+  hunks. Never stage the whole file merely because part of it is in scope.
+
+## 2. Read the state
 
 ```
 git status --porcelain
 ```
 
 **If the index already has staged changes** (any line whose first column is not
-a space or `?`): the user staged those deliberately. Do not run `git add`. Make
-**one** commit from the index and stop. Say that you committed the pre-staged
-set only and left the rest.
+a space or `?`), inspect whether the complete staged set is in scope. If it is,
+do not run `git add`; make one commit from the index and stop. If it contains
+anything outside the scope, do not alter or commit the user's staged set; stop
+and report the conflict.
 
 **If there are no changes at all** (empty output): commit nothing, say so, stop.
 
 Otherwise continue.
 
-## 2. Group the changed paths by component
+## 3. Group the in-scope changes by component
 
-Take every path `git status --porcelain` lists — modifications (` M`, ` D`,
-` T`, ` R`) **and untracked files (`??`)**. Untracked files get committed too;
-anything gitignored never shows up here in the first place, so there's nothing
-extra to filter.
+Take only the in-scope paths and hunks identified in step 1. Include their
+modifications (` M`, ` D`, ` T`, ` R`) and untracked files (`??`). Leave every
+out-of-scope path and hunk untouched.
 
 An untracked directory shows as a single `?? dir/` line — expand it with
 `git status --porcelain --untracked-files=all` if you need the individual paths
@@ -52,7 +67,7 @@ Two hard rules:
   [AGENTS.md](../../../AGENTS.md).
 - Files at the repo root (no `/` in the path) group under `repo`.
 
-## 3. Commit each group, one at a time
+## 4. Commit each group, one at a time
 
 For each group, code components first and `wiki` last:
 
@@ -62,7 +77,8 @@ git --no-pager diff --cached -U1
 git commit -m "<component>: <subject>"
 ```
 
-Stage only that group's paths, so the index holds one group at a time.
+Stage only that group's in-scope paths or hunks, so the index holds one group at
+a time.
 
 Read the diff before writing the message — the message describes what changed,
 not which files changed. If a diff runs past ~400 lines, fall back to
@@ -75,7 +91,7 @@ typed after the command outranks your reading of the diff. Never invent a
 rationale you don't actually have; describing the change is always better than a
 wrong reason.
 
-## 4. Report
+## 5. Report
 
 List the commits as `<short hash> <subject>` from `git log --oneline -<N>`.
 Mention anything left uncommitted. Call out newly tracked files explicitly —

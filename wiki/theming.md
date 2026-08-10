@@ -31,9 +31,9 @@ duplicated across components by hand:
 - nvim — its own gruvbox-material plugin,
 - `.claude/themes/gruvbox-material.json` — Claude Code's theme (custom
   overrides, "custom:gruvbox-material"), symlinked to `~/.claude/themes/` by
-  `bootstrap.sh`. Its thinking indicator deliberately keeps Claude Code's
-  built-in colors: overriding `claude` / `claudeShimmer` made that animated
-  state harder to distinguish, while the rest of the UI stays gruvbox,
+  `bootstrap.sh`. Its thinking shimmer deliberately keeps Claude Code's
+  built-in color: overriding `claudeShimmer` made the animation harder to
+  distinguish, while the base `claude` accent and the rest of the UI stay gruvbox,
 - hyprland/hyprlock — hex colors for borders/fields directly in configs (`d8a657`, `a9b665`…).
 
 Change a shade — edit ALL of these places, there's no automatic sync.

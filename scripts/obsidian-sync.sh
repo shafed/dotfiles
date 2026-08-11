@@ -6,17 +6,12 @@
 set -euo pipefail
 
 # OBSIDIAN_VAULT is an override for testing against a throwaway repo; normal
-# use leaves it unset. The pull marker is keyed to the vault path so a test
-# run can't make the real vault skip its next pull.
+# use leaves it unset. The lock is keyed to the vault path so test and real
+# repositories do not block each other.
 vault_path="${OBSIDIAN_VAULT:-$HOME/obsidian}"
 cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/obsidian-sync"
 mkdir -p "$cache_dir"
-last_pull_marker="$cache_dir/last-pull$(printf '%s' "$vault_path" | md5sum | cut -c1-8)"
-
-# The vault syncs across multiple devices, so pull-on-entry matters, but
-# opening several kitty sessions back to back (e.g. todos -> obsidian) would
-# otherwise pull the same remote state repeatedly within seconds.
-pull_throttle_secs=30
+lock_file="$cache_dir/lock$(printf '%s' "$vault_path" | md5sum | cut -c1-8)"
 
 # Both commands can run unattended -- pull from a session file that is about to
 # hand the terminal to nvim, push detached in the background from nvim -- so a
@@ -26,7 +21,7 @@ pull_throttle_secs=30
 warn() {
   echo "obsidian-sync: $1" >&2
   if command -v notify-send >/dev/null 2>&1; then
-    notify-send -u critical "Obsidian sync" "$1" || true
+    notify-send -u critical -t 3000 "Obsidian sync" "$1" || true
   fi
 }
 
@@ -36,15 +31,15 @@ has_conflicts() {
   [[ -n "$(git -C "$vault_path" ls-files --unmerged)" ]]
 }
 
-cmd_pull() {
-  if [[ -f "$last_pull_marker" ]]; then
-    local age=$(($(date +%s) - $(stat -c %Y "$last_pull_marker")))
-    if ((age < pull_throttle_secs)); then
-      echo "obsidian-sync: skipping pull, last one was ${age}s ago"
-      return 0
-    fi
+acquire_lock() {
+  exec 9>"$lock_file"
+  if ! flock 9; then
+    warn "could not acquire sync lock"
+    return 1
   fi
+}
 
+cmd_pull() {
   if ! git -C "$vault_path" pull --rebase --autostash; then
     warn "pull failed -- resolve manually before editing"
     return 1
@@ -59,12 +54,11 @@ cmd_pull() {
     warn "pull left merge conflicts in the vault -- resolve them before editing"
     return 1
   fi
-
-  touch "$last_pull_marker"
 }
 
 cmd_push() {
   local silent="${1:-}"
+  local diff_status
   cd "$vault_path"
 
   # `git add -A` would happily stage files full of conflict markers and ship
@@ -74,9 +68,25 @@ cmd_push() {
     return 1
   fi
 
-  git add -A
-  if ! git diff --cached --quiet; then
-    git commit -m "Vault backup: $(date '+%Y-%m-%d %H:%M:%S')" >/dev/null
+  if ! git add -A; then
+    warn "could not stage vault changes"
+    return 1
+  fi
+
+  if git diff --cached --quiet; then
+    diff_status=0
+  else
+    diff_status=$?
+  fi
+  if ((diff_status > 1)); then
+    warn "could not inspect staged vault changes"
+    return 1
+  fi
+  if ((diff_status == 1)); then
+    if ! git commit -m "Vault backup: $(date '+%Y-%m-%d %H:%M:%S')" >/dev/null; then
+      warn "could not commit vault changes"
+      return 1
+    fi
   fi
 
   if ! git push; then
@@ -87,8 +97,14 @@ cmd_push() {
 }
 
 case "${1:-}" in
-pull) cmd_pull ;;
-push) cmd_push "${2:-}" ;;
+pull)
+  acquire_lock
+  cmd_pull
+  ;;
+push)
+  acquire_lock
+  cmd_push "${2:-}"
+  ;;
 *)
   echo "usage: $(basename "$0") {pull|push} [silent]" >&2
   exit 1

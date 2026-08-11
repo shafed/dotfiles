@@ -1,7 +1,7 @@
 ---
 title: scripts
 type: component
-updated: 2026-08-04
+updated: 2026-08-11
 covers:
   - scripts/
 ---
@@ -363,18 +363,23 @@ Shared git sync for `~/obsidian`, single source of truth for pull-on-entry and
 push-on-exit so call sites stop inlining their own `git pull`/`git push`.
 `{pull|push} [silent]`:
 
-- `pull` — `git pull --rebase --autostash`, throttled to once per 30s via a
-  `~/.cache/obsidian-sync/last-pull` marker (multiple kitty sessions opened back
-  to back, e.g. todos → obsidian, would otherwise repull within seconds).
+- `pull` — `git pull --rebase --autostash` on every session entry. A former
+  30-second marker saved an occasional fetch but introduced state that could
+  skip a just-published remote update, so the simpler unconditional pull won.
 - `push` — `git add -A`, commit as `Vault backup: <timestamp>` if there's
   anything staged, then `git push`; `silent` suppresses the success message.
+- Both commands take the same vault-specific `flock`, because Neovim exit and
+  focus events can overlap with each other or with a session-entry pull. Waiting
+  for the active sync avoids Git index-lock races without dropping a push.
+- Unattended failures are printed and sent as critical desktop notifications
+  with a requested three-second lifetime, so they are visible without lingering.
 
 Call sites: [`../kitty/sessions/obsidian.kitty-session`](../kitty/sessions/obsidian.kitty-session)
 and `daily-notes.sh` (pull side, see below and [sessions](sessions.md)),
 [`../nvim/lua/utils/obsidian.lua`](../nvim/lua/utils/obsidian.lua) (push side —
-`push_with_cooldown` fire-and-forget for frequent events, `push_sync` blocking
-for events where nvim is about to exit, so a mid-cooldown push doesn't eat the
-one that actually mattered).
+`push_with_cooldown` for frequent events and detached `push_now` for exit
+events; the latter ignores the cooldown so a recent focus-loss push does not
+eat the last opportunity to start syncing before Neovim exits).
 
 ### daily-notes.sh
 

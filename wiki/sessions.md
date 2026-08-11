@@ -1,7 +1,7 @@
 ---
 title: sessions
 type: topic
-updated: 2026-08-10
+updated: 2026-08-11
 covers:
   - kitty/sessions
   - kitty/scripts
@@ -88,15 +88,20 @@ string built in `nvim/lua/utils/obsidian.lua` — now consolidated into
 [`../scripts/obsidian-sync.sh`](../scripts/obsidian-sync.sh) (`pull` / `push`
 subcommands), called from all four sites.
 
-- `pull`: `git pull --rebase --autostash`, throttled — skipped if the last
-  pull happened less than 30s ago (marker file in `~/.cache/obsidian-sync/`),
-  so opening `todos` then `obsidian` back to back doesn't hit the remote
-  twice. On failure it prints to stderr and exits nonzero; since the session
-  files chain with `&&`, that stops nvim from launching silently on top of a
-  broken pull — you land in the shell with the error visible instead.
+- `pull`: `git pull --rebase --autostash` on every entry. The former 30-second
+  throttle was removed: avoiding one nearby fetch was not worth the extra
+  marker state or the small window in which a fresh remote update was skipped.
+  On failure it prints to stderr and exits nonzero; since the session files
+  chain with `&&`, that stops nvim from launching silently on top of a broken
+  pull — you land in the shell with the error visible instead. Sync failures
+  also request a critical desktop notification that expires after three seconds.
 - `push`: `git add -A`, commit only if there's something staged, always
   `git push` (so an earlier unpushed commit doesn't get stuck waiting for a
   new change).
+- `pull` and `push` share a blocking, vault-specific `flock`. Exit/focus
+  autocmds can launch overlapping pushes, and session entry can overlap either;
+  serializing the whole Git operation prevents index-lock races without
+  silently dropping a sync attempt.
 
 `nvim/lua/utils/obsidian.lua` calls `push` two ways, since a single
 async-fire-and-forget path used to be both killable mid-flight by nvim
@@ -104,12 +109,12 @@ exiting and silently skippable by its own cooldown at the worst time:
 
 - `push_with_cooldown` (bound to `FocusLost`): async (`jobstart`), gated by a
   1h cooldown — best-effort, so alt-tabbing doesn't spam commits/pushes.
-- `push_sync` (bound to `QuitPre`/`VimSuspend`/`VimLeavePre`, and `<leader>go`):
-  synchronous (`vim.fn.system`), **ignores the cooldown**. Exit events are the
-  last chance to push before the process disappears, so they must not be
-  skipped just because a recent `FocusLost` push already consumed the
-  cooldown window — that used to mean edits could sit unpushed across
-  devices for up to an hour.
+- `push_now` (bound to `QuitPre`/`VimSuspend`/`VimLeavePre`, and `<leader>go`):
+  detached and **ignores the cooldown**. Exit events are the last opportunity
+  to start a push before the process disappears, so they must not be skipped
+  just because a recent `FocusLost` push already consumed the cooldown window.
+  It survives Neovim and kitty exiting, but remains best-effort: network or
+  system shutdown failures are reported rather than treated as guaranteed.
 
 ## daily-notes.sh
 

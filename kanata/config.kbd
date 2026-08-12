@@ -185,10 +185,8 @@
   n C-lft m C-right
   ;; browser tabs: y=prev u=next; home/end on i/o
   u C-S-tab i C-tab
-  o home p end
-  ;; browser history: [ back ] fwd; ;=close '=reopen
-  [ A-lft ] A-right
-  ; C-w ' C-S-t
+  o A-lft p A-right 
+  [ home ] end
 
   ;; mods (left hand, free while w is held)
   f (t! th $tot 160 f lsft)

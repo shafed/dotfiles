@@ -43,6 +43,19 @@ if vim.fn.executable("hyprctl") == 1 then
     vim.system({ "hyprctl", "switchxkblayout", layout_dev, tostring(layout) })
   end
 
+  -- Snacks picker: its input is a prompt like ':' cmdline, so while a picker
+  -- is open the layout must stay US — a picker opened from insert mode would
+  -- otherwise trigger InsertEnter and restore RU. The picker never touches
+  -- insert_layout (the InsertEnter/InsertLeave guards below), so on close the
+  -- user is in normal mode (US) and re-entering insert restores RU from
+  -- insert_layout — no layout restore on close needed.
+  local picker_active = false
+
+  local function has_active_picker()
+    local ok, picker = pcall(require, "snacks.picker")
+    return ok and #picker.get() > 0
+  end
+
   local function is_layout_typing_mode()
     local mode = vim.fn.mode()
     if mode:match("^[iRtsS]") then
@@ -103,6 +116,14 @@ if vim.fn.executable("hyprctl") == 1 then
 
   vim.api.nvim_create_autocmd({ "VimEnter", "InsertLeave" }, {
     callback = function()
+      -- While a picker is open, forcing US must not clobber insert_layout:
+      -- the picker input is US regardless, and restoring insert_layout on
+      -- return is what puts the user back in RU after a picker opened from
+      -- insert mode.
+      if has_active_picker() then
+        switch_layout(0)
+        return
+      end
       save_and_force_us(true)
     end,
   })
@@ -123,9 +144,36 @@ if vim.fn.executable("hyprctl") == 1 then
   })
   vim.api.nvim_create_autocmd("InsertEnter", {
     callback = function()
+      -- A picker input starts insert mode; keep it US like the ':' cmdline
+      -- instead of restoring the RU remembered from the last insert.
+      if has_active_picker() then
+        switch_layout(0)
+        return
+      end
       if insert_layout ~= 0 then
         switch_layout(insert_layout)
       end
+    end,
+  })
+
+  vim.api.nvim_create_autocmd("WinEnter", {
+    callback = function()
+      -- Entering a picker: force US. Guarded so re-focusing between picker
+      -- windows (input/list/preview) doesn't re-trigger.
+      if has_active_picker() and not picker_active then
+        picker_active = true
+        switch_layout(0)
+        return
+      end
+      -- Deferred close detection: picker:close() clears M._active only after
+      -- focus already returned to the main window, so evaluate on the next
+      -- loop tick. No layout change on close — normal mode is US anyway and
+      -- insert_layout was never touched by the picker.
+      vim.schedule(function()
+        if picker_active and not has_active_picker() then
+          picker_active = false
+        end
+      end)
     end,
   })
 end

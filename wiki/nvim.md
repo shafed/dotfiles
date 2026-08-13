@@ -1,7 +1,7 @@
 ---
 title: nvim
 type: component
-updated: 2026-08-05
+updated: 2026-08-13
 covers:
   - nvim/
 ---
@@ -298,6 +298,13 @@ normal mode:
   document's language. `CmdlineLeave` forces US again for normal mode, but
   unlike `InsertLeave` it doesn't overwrite a remembered RU with US — otherwise
   a `:w` right after typing Russian would make the next insert start in US.
+  - Snacks pickers are treated like the `:` cmdline: the picker input is a
+    prompt buffer (`snacks_picker_input`) that starts insert mode, so while a
+    picker is open the layout is forced to US (otherwise `InsertEnter` would
+    restore RU mid-search). While a picker is open, `InsertEnter`/`InsertLeave`
+    skip the restore/remember entirely, so a picker session never clobbers
+    `insert_layout`. On close no layout is restored — normal mode is US anyway,
+    and re-entering insert picks up RU from `insert_layout`.
 - **langmap (safety net)**: the `hyprctl` calls are async (~10–20 ms), so a key
   hit immediately after `Esc` can still arrive as Cyrillic; the ЙЦУКЕН→QWERTY
   `langmap` in `options.lua` translates it. Covers all letters plus punctuation

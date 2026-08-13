@@ -1,7 +1,7 @@
 ---
 title: keymap
 type: topic
-updated: 2026-08-04
+updated: 2026-08-13
 covers:
   - kanata/config.kbd
   - hypr/hyprland.lua
@@ -79,6 +79,6 @@ Switching language during normal work: tap `ralt` (`@sw` →
 `hyprctl switchxkblayout kanata next`), or `lsft` in the `normal` layer.
 
 nvim drives the same `kanata` device for its modes: normal mode forces US
-(`InsertLeave`/`VimEnter`/`CmdlineLeave`), entering insert restores the layout
-last used there; a fixed `langmap` covers the async switch gap — see
-[nvim](nvim.md).
+(`InsertLeave`/`VimEnter`/`CmdlineLeave`, plus snacks picker windows), entering
+insert restores the layout last used there; a fixed `langmap` covers the async
+switch gap — see [nvim](nvim.md).

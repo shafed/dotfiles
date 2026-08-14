@@ -74,6 +74,17 @@ main_kitty_socket() {
   return 1
 }
 
+# Focus the main kitty OS window. Best-effort: silent no-op outside Hyprland.
+# The QAT panel is its own overlay OS window, so picking a session inside a
+# panel switches the session in the main kitty but leaves OS focus on whatever
+# was focused before the panel opened; this is what pulls the main kitty to the
+# front. (class:kitty matches only the main window — panels are layer-shell
+# overlays that hyprctl clients does not list.)
+focus_main_kitty() {
+  command -v hyprctl >/dev/null 2>&1 || return 0
+  hyprctl dispatch "hl.dsp.focus({ window = \"class:kitty\" })" >/dev/null 2>&1 || true
+}
+
 # toggle_qat <instance-group> — hide/show the QAT panel of that group. Because
 # the panel is single-instance per instance-group, re-sending the same launch
 # command flips its visibility instead of spawning a second panel — this is
@@ -102,6 +113,16 @@ launch_qat() {
   switch_to_english
 
   sock="$(main_kitty_socket)" || {
+    # No main kitty running: start one so the QAT has a host to attach to. Its
+    # socket only appears a moment after launch, so poll for it.
+    setsid -f "$kitty_bin" >/dev/null 2>&1 </dev/null || true
+    for _ in {1..40}; do
+      sock="$(main_kitty_socket)" && break
+      sleep 0.25
+    done
+  }
+
+  [[ -n "$sock" ]] || {
     echo "No main kitty socket found."
     exit 1
   }
@@ -111,6 +132,19 @@ launch_qat() {
     --config "$qat_config" \
     --instance-group "$group" \
     "$@"
+}
+
+# goto_kitty_session <session-arg> — switch to a kitty session and bring the
+# main kitty window to the front. Used by the session pickers
+# (kitty-zoxide-session.sh, kitty-list-sessions.sh), which run inside the QAT
+# panel: goto_session alone switches the session but does not raise the main
+# kitty window over the panel's overlay (nor over whatever had focus before the
+# panel opened). Focus first while the panel is still up (same pattern as
+# apps.sh's focus_app), then hide the panel so focus stays on the main kitty.
+goto_kitty_session() {
+  kitten @ action goto_session "$@"
+  focus_main_kitty
+  toggle_qat "${qat_group:-}" || true
 }
 
 ###############################################################################

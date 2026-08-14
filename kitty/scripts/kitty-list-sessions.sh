@@ -164,7 +164,7 @@ switch_to_session() {
   local name="$1"
   local file=""
   file="$(session_file_for_name "$name")"
-  kitten @ action goto_session "$file"
+  goto_kitty_session "$file"
 }
 
 # Set the startup mode

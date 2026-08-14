@@ -254,7 +254,7 @@ focus_or_launch_named_session() {
   fi
 
   # goto_session re-focuses if already open, or creates it if not.
-  kitten @ action goto_session "$session_file"
+  goto_kitty_session "$session_file"
 }
 
 focus_or_launch_dir() {
@@ -281,9 +281,9 @@ focus_or_launch_dir() {
     # The transient file for this session (if any) lives in the cache dir.
     local transient_file="${transient_sessions_dir}/${existing_session}.kitty-session"
     if [[ -f "$transient_file" ]]; then
-      kitten @ action goto_session "$transient_file"
+      goto_kitty_session "$transient_file"
     else
-      kitten @ action goto_session "$existing_session"
+      goto_kitty_session "$existing_session"
     fi
     return 0
   fi
@@ -309,7 +309,7 @@ focus
 focus_os_window
 EOF
 
-  kitten @ action goto_session "$session_file"
+  goto_kitty_session "$session_file"
   bump_zoxide_score "$selected_real"
 }
 
@@ -327,7 +327,7 @@ focus_or_launch_ssh() {
   if session_exists "$session_name"; then
     local transient_file="${transient_sessions_dir}/${session_name}.kitty-session"
     if [[ -f "$transient_file" ]]; then
-      kitten @ action goto_session "$transient_file"
+      goto_kitty_session "$transient_file"
       return 0
     fi
   fi
@@ -348,7 +348,7 @@ focus
 focus_os_window
 EOF
 
-  kitten @ action goto_session "$session_file"
+  goto_kitty_session "$session_file"
 }
 
 if [[ "${1:-}" == "--named" ]]; then

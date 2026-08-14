@@ -329,7 +329,13 @@ if [[ "${1:-}" == "--ythistory" || "${1:-}" == "--ytwatchlater" ]]; then
     # background so the list shows instantly and channel search lights up shortly
     # after. Reuse the cache for every keystroke that follows.
     if [[ ! -s "$cache_file" ]]; then
-      emit_feed >"$cache_file"
+      # Fail soft: pipefail+set -e would make a failed feed exit nonzero and
+      # fzf would surface a bare "command error". Instead drop the empty cache
+      # and print a hint on stderr (visible when run manually / in the panel).
+      if ! emit_feed >"$cache_file"; then
+        rm -f "$cache_file"
+        echo "Could not fetch $([ "$1" == "--ythistory" ] && printf history || printf 'Watch later') — signed in to YouTube in the browser?" >&2
+      fi
       # </dev/null: the enricher (and its yt-dlp pool) runs ~20s after the
       # picker may have exited; an inherited panel tty on stdin would keep the
       # QAT window open that whole time (kitty close_on_child_death=no).

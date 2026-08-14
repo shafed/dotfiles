@@ -16,7 +16,11 @@ browser_bin="${DOTFILES_BROWSER_BIN:-helium-browser}"
 browser_class="${DOTFILES_BROWSER_CLASS:-helium}"
 browser_desktop="${DOTFILES_BROWSER_DESKTOP:-helium.desktop}"
 browser_profile_dir="${DOTFILES_BROWSER_PROFILE_DIR:-$HOME/.config/net.imput.helium/Default}"
-browser_cookies_from_browser="${DOTFILES_BROWSER_COOKIES_FROM_BROWSER:-chromium:${browser_profile_dir}}"
+# Helium stores cookies v11-encrypted with the key in the Secret Service
+# keyring ("Chromium Safe Storage"). Under Hyprland yt-dlp cannot detect a DE,
+# auto-picks the basictext keyring and decrypts 0 cookies ("no key found"), so
+# the gnomekeyring backend must be forced explicitly.
+browser_cookies_from_browser="${DOTFILES_BROWSER_COOKIES_FROM_BROWSER:-chromium+gnomekeyring:${browser_profile_dir}}"
 browser_brotab_names="${DOTFILES_BROWSER_BROTAB_NAMES:-helium chromium}"
 brotab_bin="${BROTAB_BIN:-$(command -v bt || echo "$HOME/.local/bin/bt")}"
 

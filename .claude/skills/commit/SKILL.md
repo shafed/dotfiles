@@ -2,7 +2,7 @@
 name: commit
 description:
   "Commit work in this dotfiles repo the house way: only the current chat's
-  changes, one commit per top-level component with `scope: description`, `wiki/`
+  changes, one commit per logical change with `scope: description`, `wiki/`
   always committed on its own, never mixed with code. Use whenever the user runs
   /commit, says 'commit this', 'закоммить', 'сделай коммит', 'зафиксируй
   изменения', or otherwise asks for work here to be committed — including when
@@ -17,4 +17,5 @@ allowed-tools:
   Bash(git log:*)
 ---
 - commit like `scope: description`
+- keep one atomic change in one commit even when it spans multiple top-level directories; split only independent logical changes
 - `wiki/` is committed alone

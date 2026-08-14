@@ -67,6 +67,7 @@ if [[ "${1:-}" == "--qat" ]]; then
   }
   export KITTY_LISTEN_ON="unix:${qat_sock}"
 else
+  qat_need_kitty=1
   launch_qat "$qat_group" /usr/bin/env bash "$script_path" --qat
   exit 0
 fi

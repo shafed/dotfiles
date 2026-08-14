@@ -85,51 +85,20 @@ focus_main_kitty() {
   hyprctl dispatch "hl.dsp.focus({ window = \"class:kitty\" })" >/dev/null 2>&1 || true
 }
 
-# toggle_qat <instance-group> — hide/show the QAT panel of that group. Because
-# the panel is single-instance per instance-group, re-sending the same launch
-# command flips its visibility instead of spawning a second panel — this is
-# what makes re-triggers instant.
-toggle_qat() {
-  local group="$1" sock
-
-  sock="$(main_kitty_socket)" || return 0
-  "$kitty_bin" @ --to "unix:${sock}" \
-    action launch --type=background kitten quick-access-terminal \
-    --config "$qat_config" \
-    --instance-group "$group" >/dev/null 2>&1 || true
-}
-
-# launch_qat <instance-group> [command...] — show (or toggle) the QAT panel of
-# that group, running [command...] inside it on a cold start.
-#
-# Forces the English layout first: this runs on EVERY hotkey press, and when
-# the panel already exists kitty merely toggles its visibility — the picker
-# loop's own switch_to_english never re-runs — so doing it here guarantees the
-# layout flips to "us" each time the panel is shown.
-launch_qat() {
+# run_qat_panel <instance-group> [command...] — show (or toggle) the QAT panel
+# of that group, running [command...] inside it on a cold start. The panel is
+# single-instance per instance-group, so re-sending the same launch command
+# flips its visibility instead of spawning a second panel. Requires a running
+# main kitty (the panel is hosted on it); callers decide whether to create one.
+run_qat_panel() {
   local group="$1" sock
   shift
 
-  switch_to_english
-
-  sock="$(main_kitty_socket)" || {
-    # No main kitty running: start one so the QAT has a host to attach to. Its
-    # socket only appears a moment after launch, so poll for it.
-    setsid -f "$kitty_bin" >/dev/null 2>&1 </dev/null || true
-    for _ in {1..40}; do
-      sock="$(main_kitty_socket)" && break
-      sleep 0.25
-    done
-  }
-
-  [[ -n "$sock" ]] || {
-    echo "No main kitty socket found."
-    exit 1
-  }
+  sock="$(main_kitty_socket)" || return 1
 
   # The socket file existing does not guarantee the listener accepts yet (tiny
-  # window on a cold start), so retry the panel launch instead of failing the
-  # whole picker on a flaky first attempt.
+  # window on a cold start), so retry instead of failing the whole picker on a
+  # flaky first attempt.
   local i
   for i in {1..3}; do
     if "$kitty_bin" @ --to "unix:${sock}" \
@@ -142,6 +111,54 @@ launch_qat() {
     sleep 0.25
   done
   return 1
+}
+
+# toggle_qat <instance-group> — hide/show the QAT panel of that group. Because
+# the panel is single-instance per instance-group, re-sending the same launch
+# command flips its visibility instead of spawning a second panel — this is
+# what makes re-triggers instant.
+toggle_qat() {
+  local group="$1"
+  run_qat_panel "$group" >/dev/null 2>&1 || true
+}
+
+# launch_qat <instance-group> [command...] — show (or toggle) the QAT panel of
+# that group, running [command...] inside it on a cold start.
+#
+# Forces the English layout first: this runs on EVERY hotkey press, and when
+# the panel already exists kitty merely toggles its visibility — the picker
+# loop's own switch_to_english never re-runs — so doing it here guarantees the
+# layout flips to "us" each time the panel is shown.
+#
+# Only the session pickers (kitty-zoxide-session.sh, kitty-list-sessions.sh)
+# set qat_need_kitty=1 and get the main kitty started for them when none is
+# running. Every other picker (apps, bookmarks, youtube, search) needs a kitty
+# host to draw its panel but must never create one, so it silently does
+# nothing when no main kitty is running.
+launch_qat() {
+  local group="$1"
+  shift
+
+  switch_to_english
+
+  if [[ -z "$(main_kitty_socket)" ]]; then
+    if [[ "${qat_need_kitty:-0}" != 1 ]]; then
+      return 0
+    fi
+    # No main kitty running: start one so the QAT has a host to attach to. Its
+    # socket only appears a moment after launch, so poll for it.
+    setsid -f "$kitty_bin" >/dev/null 2>&1 </dev/null || true
+    for _ in {1..40}; do
+      [[ -n "$(main_kitty_socket)" ]] && break
+      sleep 0.25
+    done
+    [[ -n "$(main_kitty_socket)" ]] || {
+      echo "No main kitty socket found."
+      exit 1
+    }
+  fi
+
+  run_qat_panel "$group" "$@"
 }
 
 # goto_kitty_session <session-arg> — switch to a kitty session and bring the

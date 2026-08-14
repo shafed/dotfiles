@@ -16,41 +16,65 @@ be deepened as edits happen. Legend: ✅ filled in · 🚧 partial · 🌱 stub.
 
 ## Setup
 
-| Page                         | What it covers                                                                                                           |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| 🚧 [bootstrap](bootstrap.md) | Deploying on a new machine: `bootstrap.sh` checks required packages and symlinks `~/.config/<tool> → ~/dotfiles/<tool>`. |
+- 🚧 **[bootstrap](bootstrap.md)** — `bootstrap/`. Deploying on a new machine:
+  `bootstrap.sh` checks required packages and symlinks
+  `~/.config/<tool> → ~/dotfiles/<tool>`.
 
 ## Components
 
-| Page                     | Covers     | What it covers                                                                                                                                                                            |
-| ------------------------ | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 🚧 [kanata](kanata.md)   | `kanata/`  | Keyboard layers, opposite-hand HRM, chords, kitty-send instead of a tmux prefix, xkb US-wrap for symbols. The most thought-through and fragile part of the keymap.                        |
-| 🚧 [scripts](scripts.md) | `scripts/` | fzf pickers (apps/bookmarks/search/youtube) on a shared `lib.sh`; training logbook (`generate_logbook.py`); daily-notes; nvim-edit-handler. The most active and complex part of the repo. |
-| 🚧 [hypr](hypr.md)       | `hypr/`    | Hyprland: bindings, monitors, exec-at-launch, hypridle/hyprlock/hyprsunset.                                                                                                               |
-| 🚧 [kitty](kitty.md)     | `kitty/`   | Terminal: native sessions, quick-access-terminal, pass_keys, themes (gruvbox). Large config — mostly commented-out defaults.                                                   |
-| 🚧 [nvim](nvim.md)       | `nvim/`    | LazyVim base, custom plugins/snippets, logbook integration, harper exceptions.                                                                                                            |
-| 🚧 [zsh](zsh.md)         | `zsh/`     | oh-my-zsh, aliases, functions (yazi cd, im-select), aichat.                                                                                                                               |
-| 🚧 [waybar](waybar.md)   | `waybar/`  | Status bar for Hyprland.                                                                                                                                                                  |
-| 🚧 [yazi](yazi.md)       | `yazi/`    | File manager: plugins, flavors, keymap.                                                                                                                                                   |
-| ✅ [sioyek](sioyek.md)   | `sioyek/`  | PDF viewer. Mostly about why every launcher goes through the `~/.local/bin/sioyek` wrapper: Qt6 can't create an EGL context on nvidia/Wayland, the old `LIBGL_ALWAYS_SOFTWARE` "fix" was itself the bug, and a failed launch leaves a windowless zombie that swallows every later launch. |
+- 🚧 **[kanata](kanata.md)** — `kanata/`. Keyboard layers, opposite-hand HRM,
+  chords, kitty-send instead of a tmux prefix, xkb US-wrap for symbols. The most
+  thought-through and fragile part of the keymap.
+- 🚧 **[scripts](scripts.md)** — `scripts/`. fzf pickers
+  (apps/bookmarks/search/youtube) on a shared `lib.sh`; training logbook
+  (`generate_logbook.py`); daily-notes; nvim-edit-handler. The most active and
+  complex part of the repo.
+- 🚧 **[hypr](hypr.md)** — `hypr/`. Hyprland: bindings, monitors,
+  exec-at-launch, hypridle/hyprlock/hyprsunset.
+- 🚧 **[kitty](kitty.md)** — `kitty/`. Terminal: native sessions,
+  quick-access-terminal, pass_keys, themes (gruvbox). Large config — mostly
+  commented-out defaults.
+- 🚧 **[nvim](nvim.md)** — `nvim/`. LazyVim base, custom plugins/snippets,
+  logbook integration, harper exceptions.
+- 🚧 **[zsh](zsh.md)** — `zsh/`. oh-my-zsh, aliases, functions (yazi cd,
+  im-select), aichat.
+- 🚧 **[waybar](waybar.md)** — `waybar/`. Status bar for Hyprland.
+- 🚧 **[yazi](yazi.md)** — `yazi/`. File manager: plugins, flavors, keymap.
+- ✅ **[sioyek](sioyek.md)** — `sioyek/`. PDF viewer. Mostly about why every
+  launcher goes through the `~/.local/bin/sioyek` wrapper: Qt6 can't create an
+  EGL context on nvidia/Wayland, the old `LIBGL_ALWAYS_SOFTWARE` "fix" was
+  itself the bug, and a failed launch leaves a windowless zombie that swallows
+  every later launch.
 
 ## Cross-cutting
 
-| Page                       | What it covers                                                                                                                           |
-| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| 🚧 [keymap](keymap.md)     | End-to-end key map: how kanata layers, hypr bindings, and kitty hotkeys combine without conflicting. Single source of truth for hotkeys. |
-| 🚧 [sessions](sessions.md) | Native kitty sessions (migration from tmux): kanata sends C-S- hotkeys, kitty-zoxide-session, obsidian session for the logbook.          |
-| 🚧 [theming](theming.md)   | Gruvbox dark as the base palette (copied in each component); darkman (systemd service + `darkman/scripts/kitty` data-dir hook) toggles kitty dark⇄light; hyprsunset is gamma only. |
+- 🚧 **[keymap](keymap.md)** — End-to-end key map: how kanata layers, hypr
+  bindings, and kitty hotkeys combine without conflicting. Single source of
+  truth for hotkeys.
+- 🚧 **[sessions](sessions.md)** — Native kitty sessions (migration from tmux):
+  kanata sends C-S- hotkeys, kitty-zoxide-session, obsidian session for the
+  logbook.
+- 🚧 **[theming](theming.md)** — Gruvbox dark as the base palette (copied in
+  each component); darkman (systemd service + `darkman/scripts/kitty` data-dir
+  hook) toggles kitty dark⇄light; hyprsunset is gamma only.
 
 ## Global
 
-| Page                           | What it covers                                                                                                                                                                |
-| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ✅ [global](global.md)         | System-level decisions outside config components: the shared `instructions.md` (global agent instructions, symlinked to claude/opencode/codex), the `component: subject` commit convention and its `/commit` skill, the global `no-coauthor.sh` hook, and the home directory layout. |
-| ✅ [cli-agents](cli-agents.md) | Sharing config between Claude Code / Codex / opencode without writing it twice: one source + symlinks, the verified table of what each agent reads (instructions, skills, hooks, MCP), and how to re-probe it after a CLI update. |
+- ✅ **[global](global.md)** — System-level decisions outside config components:
+  the shared `instructions.md` (global agent instructions, symlinked to
+  claude/opencode/codex), the `component: subject` commit convention and its
+  `/commit` skill, the global `no-coauthor.sh` hook, and the home directory
+  layout.
+- ✅ **[cli-agents](cli-agents.md)** — Sharing config between Claude Code /
+  Codex / opencode without writing it twice: one source + symlinks, the verified
+  table of what each agent reads (instructions, skills, hooks, MCP), and how to
+  re-probe it after a CLI update.
 
 ## Decisions
 
-| Page                         | What it covers                                                                                                                                                                                                                                              |
-| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 🚧 [decisions](decisions.md) | Major decisions and rejected alternatives: Firefox → Helium default browser; tmux → kitty native sessions; kanata as the single keymap engine; removal of Windows/WSL legacy; manual symlinks → bootstrap.sh (plain symlinks; GNU Stow tried and rejected); `component: subject` commits via a `/commit` skill (Conventional Commits and a Haiku subagent rejected). |
+- 🚧 **[decisions](decisions.md)** — Major decisions and rejected alternatives:
+  Firefox → Helium default browser; tmux → kitty native sessions; kanata as the
+  single keymap engine; removal of Windows/WSL legacy; manual symlinks →
+  bootstrap.sh (plain symlinks; GNU Stow tried and rejected);
+  `component: subject` commits via a `/commit` skill (Conventional Commits and a
+  Haiku subagent rejected).

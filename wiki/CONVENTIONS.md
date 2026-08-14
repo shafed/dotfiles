@@ -6,84 +6,64 @@ updated: 2026-08-14
 
 # Wiki conventions (schema)
 
-This wiki is a knowledge base for the dotfiles, optimized for reading by an
-**LLM agent** (Claude Code), not just a human. The main value of the pages is to
-answer the question **"why is it done this way"** (rationale/decisions), not to
-retell the code, which the agent can already read on its own.
+Written to be read by an **LLM agent**, not just a human.
 
-## What kind of pattern this is
+The code (`../hypr`, `../kanata`, `../scripts`, …) is the source of truth for
+_how_ things work, and the agent reads it directly. So a page earns its keep
+only by carrying what the code cannot: **why it's this way**, what was rejected,
+and where the traps are. Before writing a line, ask whether an agent could
+recover it by opening the config. If yes, don't write it.
 
-Built after Andrej Karpathy's "LLM Wiki"
-(https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f): a
-persistent, compounding collection of markdown pages that the agent reads before
-working and **updates** after config changes. The wiki is not a snapshot of the
-code, but a knowledge layer on top of it: decisions, trade-offs, gotchas,
-connections between components.
-
-## Layers
-
-- **Code** (`../hypr`, `../kanata`, `../scripts`, …) — the source of truth for
-  _how_ everything works. The agent reads it directly. The wiki does **not**
-  duplicate it.
-- **`wiki/`** — the knowledge layer: _why_ it's this way, what alternatives were
-  rejected, where the gotchas are, how components connect. Maintained entirely
-  with the agent's involvement.
-- **`index.md`** — a catalog of all pages with links and one-line summaries.
-- **Git history** — the change history for the wiki. Use `git log -- wiki/`
-  instead of keeping a separate changelog file.
+Change history is `git log -- wiki/`. Never add a changelog page.
 
 ## Page naming
 
-- One page = one component or one cross-cutting topic.
-- File name in `kebab-case.md`, matching the `title` in frontmatter. The two meta
-  pages — `index.md` and this file — are the exception; `CONVENTIONS.md` stays
-  uppercase so the two files that describe the wiki sort apart from the pages
-  that are the wiki. Don't "fix" it by renaming.
-- Component pages are named after the repo folder: `kanata.md`, `hypr.md`,
-  `scripts.md`, `kitty.md`, `nvim.md`, `zsh.md`.
-- Cross-cutting topics — by task: `keymap.md`, `bootstrap.md`, `theming.md`,
-  `decisions.md`, `sessions.md`.
+- One page = one component or one cross-cutting topic. Component pages take the
+  repo folder's name; topic pages are named by task.
+- A page that outgrows a single context window may split into sub-pages, with
+  the original becoming a map of content that links to them. Sub-pages are
+  prefixed with their parent: `scripts-pickers.md`, `nvim-editing.md`.
+- File name in `kebab-case.md`, matching the `title` in frontmatter. The two
+  meta pages — `index.md` and this file — are the exception; `CONVENTIONS.md`
+  stays uppercase so the two files that describe the wiki sort apart from the
+  pages that are the wiki. Don't "fix" it by renaming.
 
 ## Frontmatter
-
-Minimal YAML at the top of each page:
 
 ```yaml
 ---
 title: kanata
-type: component # component | topic | index
+type: component # component | topic | moc | index
 updated: 2026-07-01 # ISO date of the last substantive change
 covers: # which repo paths the page describes
   - kanata/config.kbd
 ---
 ```
 
-Don't turn frontmatter into a database. `covers` matters: it lets the agent find
-the page that needs updating when editing a file.
+`covers` is the one field that does work: it's how the agent finds which page to
+update when it edits a file. Keep the rest minimal — this is not a database.
 
-## Text style (LLM-friendly)
+`type: moc` marks a page that **routes rather than answers**: it has sub-pages
+and its body is a map of them. Read it expecting to open something else next,
+and when recording a new fact, put it on the sub-page — a MoC only carries what
+spans siblings. `index` stays reserved for the two meta pages that describe the
+wiki itself (`index.md`, this file); `index.md` is a map too, but it is the root
+one, not a component that grew sub-pages.
 
-- Write as if the page is read by an agent **with no other context**: explicit
-  headings, self-contained paragraphs, minimal "as mentioned above".
-- Keep pages small and self-contained — so they fit in context whole.
-- Record **decisions and their reasons**, not code behavior. Bad: "bind = SUPER,
-  Q, killactive". Good: "killactive on Super+Q, because Q is under the thumb in
-  kanata's apps layer; see [keymap](keymap.md)".
-- Mark **gotchas** with the explicit `⚠️ Gotcha:` marker.
-- Links between wiki pages are **relative markdown links** to the page file:
-  `[keymap](keymap.md)`, `[scripts](scripts.md)`. This is the primary and only
-  style for internal links — it renders everywhere the wiki is read (nvim,
-  GitHub, any markdown viewer), and Obsidian resolves it too. We don't use
-  `[[wikilinks]]`, because GitHub and most renderers show them as literal text.
-- Links outside `wiki/` (e.g. the root `AGENTS.md`) use the same relative
-  markdown style: `[../AGENTS.md](../AGENTS.md)`.
-- Links to code — relative from the repo root: `../kanata/config.kbd`.
+## Text style
 
-## Categories for index.md
-
-- **Setup** — how to deploy/maintain (bootstrap, deploy symlinks).
-- **Components** — one page per tool.
-- **Cross-cutting** — cross-cutting topics (keymap, theming, sessions).
-- **Global** — system-level decisions outside config components (global agent
-  instructions, home layout) — see `global.md`.
-- **Decisions** — major architectural decisions and rejected alternatives.
+- Assume the reader has **no other context**: explicit headings, self-contained
+  paragraphs, no "as mentioned above".
+- Keep a page small enough to fit in context whole. When it stops fitting, split
+  it (see above) rather than letting it sprawl.
+- Record **decisions and their reasons**, not code behavior:
+  - Bad: "bind = SUPER, Q, killactive"
+  - Good: "killactive on Super+Q, because Q is under the thumb in kanata's apps
+    layer; see [keymap](keymap.md)"
+- Mark traps with an explicit `⚠️ Gotcha:` and state the **consequence** — what
+  breaks, and how it looks when it does. A warning with no failure mode is not
+  actionable.
+- Internal links are relative markdown: `[keymap](keymap.md)`. Not
+  `[[wikilinks]]` — GitHub and most renderers show those as literal text, while
+  Obsidian resolves markdown links fine. Same style for links out of `wiki/` and
+  into code: `[../AGENTS.md](../AGENTS.md)`, `../kanata/config.kbd`.

@@ -1,7 +1,7 @@
 ---
 title: kitty
 type: component
-updated: 2026-08-04
+updated: 2026-08-14
 covers:
   - kitty/
 ---
@@ -20,61 +20,47 @@ Do NOT read it in full. The actual (uncommented) settings can be gotten like thi
 grep -vE '^\s*#' kitty/kitty.conf | grep -vE '^\s*$'
 ```
 
-Everything substantive boils down to:
+The settings that carry a reason worth knowing:
 
-- **Font/cursor**: JetBrains Mono Nerd Font (Mono) 14 — the plain `JetBrains Mono`
-  family is no longer installed, only the Nerd Font-patched variant; the plain
-  `ttf-jetbrains-mono` was removed from the system so kitty would otherwise fall
-  back to PT Mono (and lose ligatures). `cursor_blink_interval 0`, `cursor_trail 1`
-  (cursor trail).
-- **Scroll/mouse**: `wheel_scroll_multiplier 3.0`, `copy_on_select yes`,
-  `mouse_hide_wait -1` (cursor doesn't hide).
-- **Appearance**: `hide_window_decorations yes`, `tab_bar_style powerline`,
-  `include current-theme.conf` (gruvbox, see below), borders matching the theme.
-- **Remote control**: `allow_remote_control yes` + `listen_on unix:/tmp/kitty-{kitty_pid}`
-  — enabled FOR the session pickers and QAT panels (they talk via `kitten @`).
-- **Sessions**: `startup_session .../home.kitty-session` (kitty starts WITHOUT tmux,
-  commit `65d18e9`), `tab_bar_filter session:~ ...`, the tab title template
-  shows the session name. Everything about sessions is in [sessions](sessions.md).
-- **`kitty_mod+i`** — open scrollback in the nvim pager (yank from the panel's history).
-  Runs `scripts/kitty-scrollback-nvim.sh`, which trims trailing blank lines from
-  both sources of padding: kitty's `@screen_scrollback` (full screen grid) via sed,
-  and `nvim_open_term()`'s buffer padding via deferred lua.
+- ⚠️ **Font**: the `Mono` variant of JetBrains Mono Nerd Font is deliberate — the
+  plain `ttf-jetbrains-mono` package was removed from the system, so naming the
+  unpatched family would silently fall back to PT Mono and lose ligatures. The
+  `Mono` variant is also narrower, which has bitten nvim float sizing
+  ([nvim](nvim.md)).
+- **Remote control** (`allow_remote_control` + `listen_on
+  unix:/tmp/kitty-{kitty_pid}`) exists **for** the session pickers and QAT
+  panels, which drive kitty via `kitten @`. Turning it off breaks
+  [scripts](scripts.md) and [sessions](sessions.md), not just convenience.
+- **`kitty_mod+i`** opens scrollback in an nvim pager via
+  `scripts/kitty-scrollback-nvim.sh`. ⚠️ It trims trailing blank lines from
+  **two** independent sources of padding — kitty's `@screen_scrollback` returns
+  the full screen grid (trimmed with sed) and `nvim_open_term()` pads the buffer
+  again (trimmed with deferred lua). Fixing only one leaves the blank tail.
 
 ## `pass_keys.py` — contextual Ctrl-h/j/k/l navigation
 
-`map ctrl+h/j/k/l → kitten pass_keys.py`. ⚠️ Key idea: **the same keys
-serve both as kitty window navigation and as input inside a child program**. The kitten looks
-at the window's foreground process: if it's `nvim` OR `fzf` (the default regex
-`n?vim|fzf`), the key is passed through (nvim splits, moving through an fzf list);
-otherwise `boss.active_tab.neighboring_window(direction)` moves focus between kitty
-windows. The regex is overridable via the 4th argument of the binding. This replaces
-Hyprland window navigation inside the terminal (commit `24b289d`).
+⚠️ Key idea: **the same keys serve both as kitty window navigation and as input
+inside a child program**. The kitten dispatches on the window's foreground
+process — `nvim`/`fzf` get the key passed through, anything else moves focus
+between kitty windows. This is what replaces Hyprland window navigation inside
+the terminal, so changing it affects both layers.
 
 ## `toggle_tab_bar.py` — hide/show the tab bar at runtime
 
-Custom `no_ui` kitten (`hide`/`show`/`toggle` args) that pokes
-`tab.tab_manager_ref().tab_bar_hidden` directly and calls `tm.resize()`. Needed
-because kitty's remote-control protocol has no builtin command for this —
-`tab_bar_hidden` is normally set exactly once at startup, from
-`tab_bar_style == "hidden"` (`kitty/tabs.py`). Driven from nvim
-(`nvim/lua/utils/fullscreen.lua`) so zen mode (`<leader>uz`) hides the tab
-bar and fullscreens the Hyprland window on open, restoring both on close.
+A custom kitten exists here only because **kitty's remote-control protocol has
+no builtin command to toggle the tab bar** — `tab_bar_hidden` is normally set
+exactly once at startup from `tab_bar_style == "hidden"` (`kitty/tabs.py`), so
+the kitten pokes it directly and calls `tm.resize()`. Driven from nvim's zen
+mode (`nvim/lua/utils/fullscreen.lua`, see [nvim](nvim.md)).
 
-⚠️ The action arg is `args[1]` — kitty places the script path in `args[0]` — so
-`hide`/`show` dispatch deterministically (fixed 2026-08-03; previously they
-were dead branches and the kitten always toggled).
+⚠️ The action arg is `args[1]`, not `args[0]` — kitty puts the script path
+first. Before this was fixed (2026-08-03) `hide`/`show` were dead branches and
+the kitten always toggled.
 
 ## QAT panels (quick-access-terminal)
 
-Drop-down overlay panels for fzf pickers ([scripts](scripts.md): bookmarks/youtube;
-also the session pickers in `kitty/scripts/` — see [sessions](sessions.md)):
-
-- `quick-access-terminal-center.conf` — centered (`edge center-sized`,
-  22×90, `background_opacity 0.85`), with a full duplication of the gruvbox palette via
-  `kitty_override` and `tab_bar_style=hidden`.
-
-## current-theme.conf
-
-Gruvbox Material Dark Medium (`background #282828` matching nvim — commit `e5557fc`).
-Details and why this particular color source was chosen — [theming](theming.md).
+Drop-down overlay panels hosting the fzf pickers in [scripts](scripts.md) and
+the session pickers in `kitty/scripts/` ([sessions](sessions.md)). Their config
+(`quick-access-terminal-center.conf`) carries **another full copy of the gruvbox
+palette** via `kitty_override` — one of the duplication sites
+[theming](theming.md) warns about.

@@ -1,7 +1,7 @@
 ---
 title: theming
 type: topic
-updated: 2026-08-10
+updated: 2026-08-14
 covers:
   - darkman/
   - hypr/hyprsunset.conf
@@ -40,36 +40,22 @@ Change a shade — edit ALL of these places, there's no automatic sync.
 
 ## Light/dark: darkman toggles the system color-scheme, not kitty
 
-- **darkman** runs as a systemd user service (`systemd/user/darkman.service`,
-  `Type=dbus`, `BusName=nl.whynothugo.darkman`). It auto-transitions at
-  sunrise/sundown using static Moscow coordinates (`darkman/config.yaml`,
-  `usegeoclue: false`); day = light, night = dark.
-- **Hooks live in the XDG *data* dir, not `~/.config`.** darkman v2 only scans
-  `$XDG_DATA_HOME/darkman/` (+ `XDG_DATA_DIRS`) for transition scripts.
-  `~/.local/share/darkman → ~/dotfiles/darkman/scripts` (symlink created by
-  `bootstrap.sh`). The unified script `darkman/scripts/gtk` takes the mode as
-  `$1` (`dark`/`light`) and sets
-  `gsettings org.gnome.desktop.interface color-scheme` to `prefer-dark`/
-  `prefer-light`. Modern GTK (built-in Adwaita) and Qt apps honor this and render
-  their dark/light variant, so no separate theme files are needed.
-- **kitty is intentionally NOT toggled** — the terminal keeps its single
-  gruvbox-dark `current-theme.conf` (included from `kitty.conf:3015`).
+darkman flips the GTK/Qt `color-scheme` preference at sunrise/sundown. Modern
+GTK and Qt apps honor that preference and render their own dark/light variant,
+which is why no per-app theme files exist for them.
+
+- ⚠️ **Hooks live in the XDG *data* dir, not `~/.config`.** darkman v2 only
+  scans `$XDG_DATA_HOME/darkman/` (+ `XDG_DATA_DIRS`) for transition scripts,
+  hence the `~/.local/share/darkman → ~/dotfiles/darkman/scripts` symlink from
+  `bootstrap.sh`. A hook placed in `~/.config` is silently never run.
+- **kitty is intentionally NOT toggled** — it keeps its single gruvbox-dark
+  `current-theme.conf`.
 - ⚠️ **Gaps**: waybar/yazi/nvim are static gruvbox dark and don't follow the
   color-scheme; only GTK/Qt apps do. To widen the switch, add per-app hooks to
   `darkman/scripts/`.
 
 ## hyprsunset — screen gamma/temperature only
 
-`hypr/hyprsunset.conf` controls display color temperature by time of day (day
-7:30 — `identity`; night 20:00 — `temperature 6000, gamma 0.7`), started from
-`exec-once` in [hypr](hypr.md). ⚠️ Don't confuse with theme switching: hyprsunset does NOT
-touch app colors and is NOT linked to darkman — it's an independent night filter
-over the whole screen.
-
-## Summary for the agent
-
-Base theme is static gruvbox dark (kitty/waybar/yazi/nvim). darkman (systemd
-user service + data-dir hook `darkman/scripts/gtk`) toggles the GTK/Qt
-`color-scheme` preference (dark/light), affecting system apps — kitty is left
-untouched. hyprsunset is a separate gamma/temperature night filter, independent
-of darkman.
+⚠️ Don't confuse `hypr/hyprsunset.conf` with theme switching: it is an
+independent night filter over the whole screen, does NOT touch app colors, and
+is NOT linked to darkman.

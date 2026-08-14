@@ -6,72 +6,48 @@ updated: 2026-08-14
 
 # Dotfiles wiki — index
 
-Knowledge base for these dotfiles. Answers the question **"why is it done this
-way"** and describes the design of non-trivial parts (primarily `scripts/`).
-Maintenance rules — in [CONVENTIONS](CONVENTIONS.md). Rules for the agent — in
-[../CLAUDE.md](../CLAUDE.md) (`AGENTS.md` is a symlink to it).
+Why things are done this way, not how they work — the code is the source of
+truth for how. Schema and writing rules: [CONVENTIONS](CONVENTIONS.md). Agent
+rules: [../CLAUDE.md](../CLAUDE.md) (`AGENTS.md` symlinks to it).
 
 ## Setup
 
-- **[bootstrap](bootstrap.md)** — `bootstrap/`. Deploying on a new machine:
-  `bootstrap.sh` checks required packages and symlinks
-  `~/.config/<tool> → ~/dotfiles/<tool>`.
+- **[bootstrap](bootstrap.md)** — deploying on a new machine; what gets
+  symlinked where, and what `bootstrap.sh` deliberately won't do for you.
 
 ## Components
 
-- **[kanata](kanata.md)** — `kanata/`. Keyboard layers, opposite-hand HRM,
-  chords, kitty-send instead of a tmux prefix, xkb US-wrap for symbols. The most
-  thought-through and fragile part of the keymap.
-- **[scripts](scripts.md)** — `scripts/`. fzf pickers
-  (apps/bookmarks/search/youtube) on a shared `lib.sh`; training logbook
-  (`generate_logbook.py`); daily-notes; nvim-edit-handler. The most active and
-  complex part of the repo.
-- **[hypr](hypr.md)** — `hypr/`. Hyprland: bindings, monitors,
-  exec-at-launch, hypridle/hyprlock/hyprsunset.
-- **[kitty](kitty.md)** — `kitty/`. Terminal: native sessions,
-  quick-access-terminal, pass_keys, themes (gruvbox). Large config — mostly
-  commented-out defaults.
-- **[nvim](nvim.md)** — `nvim/`. LazyVim base, custom plugins/snippets,
-  logbook integration, harper exceptions.
-- **[zsh](zsh.md)** — `zsh/`. oh-my-zsh, aliases, functions (yazi cd,
-  im-select), aichat.
-- **[waybar](waybar.md)** — `waybar/`. Status bar for Hyprland.
-- **[yazi](yazi.md)** — `yazi/`. File manager: plugins, flavors, keymap.
-- **[sioyek](sioyek.md)** — `sioyek/`. PDF viewer. Mostly about why every
-  launcher goes through the `~/.local/bin/sioyek` wrapper: Qt6 can't create an
-  EGL context on nvidia/Wayland, the old `LIBGL_ALWAYS_SOFTWARE` "fix" was
-  itself the bug, and a failed launch leaves a windowless zombie that swallows
-  every later launch.
+- **[kanata](kanata.md)** — keyboard layers, home-row mods, chords. The most
+  fragile part of the keymap.
+- **[scripts](scripts.md)** — map of content: fzf pickers, the self-pasting
+  scratch note, training logbook, standalone helpers. The most active and
+  gotcha-dense part of the repo.
+- **[hypr](hypr.md)** — Hyprland: bindings, monitors, idle/lock/gamma.
+- **[kitty](kitty.md)** — terminal: QAT panels, custom kittens, remote control.
+- **[nvim](nvim.md)** — map of content: which LazyVim behavior was overridden
+  and why — window UI, vault workflows, clipboard, Russian layout.
+- **[zsh](zsh.md)** — shell config, aliases, functions.
+- **[waybar](waybar.md)** — status bar; needs `waybar-git`, not the release.
+- **[yazi](yazi.md)** — file manager.
+- **[sioyek](sioyek.md)** — PDF viewer; why every launcher must go through the
+  `~/.local/bin/sioyek` wrapper.
 
 ## Cross-cutting
 
-- **[keymap](keymap.md)** — End-to-end key map: how kanata layers, hypr
-  bindings, and kitty hotkeys combine without conflicting. Single source of
-  truth for hotkeys.
-- **[sessions](sessions.md)** — Native kitty sessions (migration from tmux):
-  kanata sends C-S- hotkeys, kitty-zoxide-session, obsidian session for the
-  logbook.
-- **[theming](theming.md)** — Gruvbox dark as the base palette (copied in
-  each component); darkman (systemd service + `darkman/scripts/kitty` data-dir
-  hook) toggles kitty dark⇄light; hyprsunset is gamma only.
+- **[keymap](keymap.md)** — single source of truth for hotkeys: how kanata,
+  hypr, and kitty divide the keyboard without colliding.
+- **[sessions](sessions.md)** — native kitty sessions after the tmux removal.
+- **[theming](theming.md)** — gruvbox everywhere; what darkman does and does not
+  switch.
 
 ## Global
 
-- **[global](global.md)** — System-level decisions outside config components:
-  the shared `instructions.md` (global agent instructions, symlinked to
-  claude/opencode/codex), the `component: subject` commit convention and its
-  `/commit` skill, the global `no-coauthor.sh` hook, and the home directory
-  layout.
-- **[cli-agents](cli-agents.md)** — Sharing config between Claude Code /
-  Codex / opencode without writing it twice: one source + symlinks, the verified
-  table of what each agent reads (instructions, skills, hooks, MCP), and how to
-  re-probe it after a CLI update.
+- **[global](global.md)** — agent instruction files, the commit convention, home
+  layout. ⚠️ Also records which global links are currently broken.
+- **[cli-agents](cli-agents.md)** — sharing config between Claude Code, Codex,
+  and opencode without writing it twice.
 
 ## Decisions
 
-- **[decisions](decisions.md)** — Major decisions and rejected alternatives:
-  Firefox → Helium default browser; tmux → kitty native sessions; kanata as the
-  single keymap engine; removal of Windows/WSL legacy; manual symlinks →
-  bootstrap.sh (plain symlinks; GNU Stow tried and rejected);
-  `component: subject` commits via a `/commit` skill (Conventional Commits and a
-  Haiku subagent rejected).
+- **[decisions](decisions.md)** — major decisions and the alternatives that were
+  rejected, with reasons.

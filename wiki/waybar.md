@@ -1,7 +1,7 @@
 ---
 title: waybar
 type: component
-updated: 2026-07-31
+updated: 2026-08-14
 covers:
   - waybar/config.jsonc
   - waybar/style.css
@@ -11,21 +11,9 @@ covers:
 
 Status bar for Hyprland. Colors — [theming](theming.md).
 
-## Layout and modules
-
-Bar at the top, height 30. Layout:
-
-- **left**: `hyprland/workspaces` (icons, `all-outputs`), `hyprland/submap`,
-  `custom/media`.
-- **center**: `hyprland/window` (active window title).
-- **right**: `mpd`, `pulseaudio`, `network`, `power-profiles-daemon`,
-  `hyprland/language` (layout indicator), `battery` + `battery#bat2`, `clock`,
-  `tray`, `custom/power`.
-
-⚠️ Gotcha: some modules are commented out in `modules-right` (`idle_inhibitor`,
-`cpu`, `memory`, `temperature`, `keyboard-state`, `backlight`) — their configs
-remain in the file, but they aren't shown on the bar. Don't be surprised by
-"dead" config blocks.
+⚠️ Gotcha: several modules keep full config blocks while being absent from
+`modules-right` (`idle_inhibitor`, `cpu`, `memory`, `temperature`,
+`keyboard-state`, `backlight`) — a configured module is not a displayed one.
 
 ## waybar-git vs release (Hyprland 0.55+ Lua)
 
@@ -42,20 +30,17 @@ workspaces module's `show-special` option). The config was updated accordingly.
 
 ## Custom modules (scripts/menus)
 
-- **`custom/media`** — `exec: $HOME/.config/waybar/mediaplayer.py` (JSON,
-  playerctl/MPRIS). ⚠️ The `mediaplayer.py` script does NOT live in this repo (expected at
-  `~/.config/waybar/`); dotfiles only has `config.jsonc` and `style.css`.
-- **`custom/power`** — a `⏻` button with a click menu (`menu-file:
-  power_menu.xml`, also outside the repo): shutdown/reboot/suspend/hibernate.
-- **`hyprland/language`** — shows the layout that kanata switches
-  (see [keymap](keymap.md)); waybar only displays the state.
-- **`backlight`** — laptop-only: needs `/sys/class/backlight/<device>`, which the
-  desktop (DP-2 monitor) doesn't expose, so it's commented out here. Re-enable
-  on a laptop.
+- ⚠️ **Two custom modules depend on files this repo does not contain**:
+  `custom/media` needs `~/.config/waybar/mediaplayer.py` and `custom/power`
+  needs `power_menu.xml`. Only `config.jsonc` and `style.css` are versioned
+  here, so a fresh machine gets a bar with two broken modules and no clue why.
+- **`hyprland/language`** only *displays* the layout — kanata is what switches
+  it ([keymap](keymap.md)). Don't try to change layout behavior from here.
+- **`backlight`** is commented out because it needs `/sys/class/backlight/<dev>`,
+  which this desktop doesn't expose. Re-enable on a laptop.
 
 ## style.css — gruvbox
 
-Colors are set via `@define-color gb_*` (the full gruvbox palette: bg `#282828`,
-fg `#d4be98`, accents red/green/yellow/orange/blue/purple/aqua). The bar is semi-transparent
-(`rgba(40,40,40,0.88)`). This is a local copy of the palette (not a shared source) — the same
-approach as in kitty/nvim; the single color guide is [theming](theming.md).
+The `@define-color gb_*` palette here is a **local copy**, not a shared source —
+same as kitty/nvim. Changing a shade means editing every component;
+[theming](theming.md) lists them all.

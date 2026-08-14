@@ -11,6 +11,24 @@ Key "why it's done this way" page. Each entry:
 
 ## Recorded
 
+### `scripts.md` and `nvim.md` became maps of content (2026-08-14)
+- **Decision**: the two 400-line pages are now short hub pages that route to
+  `scripts-{pickers,scratch,logbook,misc}.md` and
+  `nvim-{ui,obsidian,clipboard,layout}.md`. [CONVENTIONS](CONVENTIONS.md) was
+  amended to permit parent-prefixed sub-pages.
+- **Reason**: **retrieval cost, not context limits**. Both pages fit in context
+  fine; the problem was that learning one fact about `sudo-notify.sh` meant
+  reading 400 lines about fzf pickers first. A hub page lets the agent decide
+  what to open before paying for it.
+- **Rejected**: **deleting content to shrink them**. The ablation pass that
+  preceded this split found almost nothing to cut in these two pages — they are
+  mostly gotchas and rationale, which is exactly what the wiki exists for. Size
+  was the symptom; undifferentiated retrieval was the disease. All 22 gotchas
+  survived the split unchanged.
+- **Trade-off**: a fact touching two sub-pages now needs a cross-link instead of
+  sitting in one file. Accepted — the parent hub is the place to state anything
+  that spans siblings.
+
 ### Page-status markers (🌱/🚧/✅) removed from the wiki (2026-08-14)
 - **Decision**: pages and `index.md` rows no longer carry a completeness marker.
   The `✅ fixed <date>:` entries inside `bootstrap.md`/`zsh.md` stay — those mark

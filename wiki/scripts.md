@@ -1,7 +1,7 @@
 ---
 title: scripts
 type: component
-updated: 2026-08-11
+updated: 2026-08-14
 covers:
   - scripts/
 ---
@@ -33,9 +33,17 @@ cold-start again. Esc in fzf is treated as "hide and re-arm," not "quit."
 
 Key parts of `lib.sh`:
 
-- `launch_qat` / `toggle_qat` — show/hide the panel via the remote-control
+- `run_qat_panel` / `toggle_qat` — show/hide the panel via the remote-control
   socket of the **main** kitty (`main_kitty_socket` filters `/tmp/kitty-*` by
   process name so it doesn't accidentally target some other floating terminal).
+  `run_qat_panel` centralizes the launch (with a 3× retry — the socket file
+  existing doesn't guarantee the listener is ready on a cold start) and
+  `toggle_qat` is just it with a soft failure.
+- `launch_qat` — `switch_to_english` + show the panel, and **start a main kitty
+  when none is running only if the picker asked for it** via `qat_need_kitty=1`.
+  Only the session pickers set it; every other picker (apps, bookmarks, youtube,
+  search) must never create a kitty (its host must already exist), so without a
+  running main kitty they silently no-op instead of spawning one.
 
 ⚠️ Gotcha (`main_kitty_socket` must exclude QAT panels themselves): every QAT
 panel (apps/bookmarks/youtube) is *also* a `kitty` process (`kitty +kitten

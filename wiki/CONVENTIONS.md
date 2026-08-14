@@ -1,3 +1,9 @@
+---
+title: CONVENTIONS
+type: index
+updated: 2026-08-14
+---
+
 # Wiki conventions (schema)
 
 This wiki is a knowledge base for the dotfiles, optimized for reading by an
@@ -29,7 +35,10 @@ connections between components.
 ## Page naming
 
 - One page = one component or one cross-cutting topic.
-- File name in `kebab-case.md`, matching the `title` in frontmatter.
+- File name in `kebab-case.md`, matching the `title` in frontmatter. The two meta
+  pages — `index.md` and this file — are the exception; `CONVENTIONS.md` stays
+  uppercase so the two files that describe the wiki sort apart from the pages
+  that are the wiki. Don't "fix" it by renaming.
 - Component pages are named after the repo folder: `kanata.md`, `hypr.md`,
   `scripts.md`, `kitty.md`, `nvim.md`, `zsh.md`.
 - Cross-cutting topics — by task: `keymap.md`, `bootstrap.md`, `theming.md`,

@@ -11,7 +11,7 @@ covers:
 
 # theming — gruvbox (dark everywhere)
 
-🚧 End-to-end visual theme. Components: [kitty](kitty.md), [waybar](waybar.md),
+End-to-end visual theme. Components: [kitty](kitty.md), [waybar](waybar.md),
 [yazi](yazi.md), [hypr](hypr.md), nvim ([nvim](nvim.md)).
 
 ## One visual language: Gruvbox Material Dark

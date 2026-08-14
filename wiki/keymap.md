@@ -11,7 +11,7 @@ covers:
 
 # keymap — end-to-end key map
 
-🚧 Partially filled in. Single source of truth for hotkeys — so layers don't
+Partially filled in. Single source of truth for hotkeys — so layers don't
 conflict or get forgotten. See component pages [kanata](kanata.md),
 [hypr](hypr.md), [kitty](kitty.md).
 

@@ -8,7 +8,7 @@ covers:
 
 # yazi
 
-🚧 File manager (TUI). Theme — [theming](theming.md); launched from [kitty](kitty.md)/sessions.
+File manager (TUI). Theme — [theming](theming.md); launched from [kitty](kitty.md)/sessions.
 
 ## Plugins (which ones are actually wired in)
 

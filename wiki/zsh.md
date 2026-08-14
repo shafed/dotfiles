@@ -1,7 +1,7 @@
 ---
 title: zsh
 type: component
-updated: 2026-08-03
+updated: 2026-08-14
 covers:
   - zsh/zshrc
   - zsh/zprofile
@@ -9,7 +9,7 @@ covers:
 
 # zsh
 
-🚧 Base oh-my-zsh + manual auto-install of plugins. Main file — `../zsh/zshrc`
+Base oh-my-zsh + manual auto-install of plugins. Main file — `../zsh/zshrc`
 (symlink `~/.zshrc → ~/dotfiles/zsh/zshrc`, see [bootstrap](bootstrap.md)).
 
 ## Why it's built this way
@@ -78,6 +78,8 @@ covers:
 
 - `EDITOR`/`VISUAL=nvim`, `BROWSER=helium-browser`, `TERMCMD=kitty` (after dropping
   Windows, see [decisions](decisions.md)).
+- PATH: `~/.npm-global/bin`, `~/.local/bin`, then `~/.cargo/bin` and `~/go/bin` (added
+  2026-08-14 for LSP binaries: `gopls`, `taplo`, `basedpyright`).
 - nvim: `v`=nvim.
 - misc: `y`=yazi, `ta`/`tl`=taskwarrior, `ai`=aichat, `pulldeez`=git pull
   dotfiles + resource, `cdd`=`cd -`.

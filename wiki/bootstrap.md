@@ -10,7 +10,7 @@ covers:
 
 # Bootstrap — deploying on a new machine
 
-🚧 Platform: Arch Linux + Hyprland. The Windows/WSL part is removed (see
+Platform: Arch Linux + Hyprland. The Windows/WSL part is removed (see
 [decisions](decisions.md)). Session autostart — `../zsh/zprofile`: on tty1 with no
 `$DISPLAY`, runs `exec uwsm start hyprland-uwsm.desktop` (not the raw
 `start-hyprland` binary) — uwsm wraps Hyprland in a proper systemd user

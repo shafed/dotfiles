@@ -1,15 +1,34 @@
 ---
 title: decisions
 type: topic
-updated: 2026-08-09
+updated: 2026-08-14
 ---
 
 # decisions — major decisions and rejected alternatives
 
-🚧 Key "why it's done this way" page. Each entry:
+Key "why it's done this way" page. Each entry:
 **decision → reason → rejected alternative → date**.
 
 ## Recorded
+
+### Page-status markers (🌱/🚧/✅) removed from the wiki (2026-08-14)
+- **Decision**: pages and `index.md` rows no longer carry a completeness marker.
+  The `✅ fixed <date>:` entries inside `bootstrap.md`/`zsh.md` stay — those mark
+  a specific past problem as resolved, which is content, not page metadata.
+- **Reason**: the marker stopped discriminating. 15 of 18 pages were 🚧 —
+  `scripts.md` (417 lines, a dozen hard-won gotchas) and `waybar.md` (61 lines of
+  overview) carried the identical badge, so it informed no reading decision while
+  appearing on every `index.md` row and every page's first line.
+- **Reason it was safe to drop now**: the rule that kept the markers current
+  ("if the change shifts status 🌱→🚧→✅, fix the row in `index.md`") lived in the
+  103-line `CLAUDE.md` deleted in `1add5fc`. Nothing referenced them any more, so
+  they were upkeep with no consumer.
+- **Rejected**: **re-grounding the marker on a real criterion** (say, "does this
+  page cover every file in `covers:`"). That is a judgment call per page per
+  edit, and the payoff is a badge — the agent already learns a page's depth by
+  reading it, which it must do anyway.
+- **Aligned with**: Anthropic's Opus 5 prompting guidance, which is half about
+  *removing* inherited scaffolding rather than adding rules.
 
 ### Mechanizable rules go into hooks, judgment stays prose (2026-08-09)
 - **Decision**: a rule leaves `CLAUDE.md` for a `.claude/hooks/` script only when
@@ -19,8 +38,7 @@ updated: 2026-08-09
   [../.claude/hooks/no-coauthor.sh](../.claude/hooks/no-coauthor.sh)
   (`PreToolUse` — denies a `git commit` whose message carries a
   `Co-Authored-By:` / 🤖 attribution footer). Everything needing judgment —
-  status transitions 🌱→🚧→✅, what earns an entry here, "record why, not what"
-  — stays in prose.
+  what earns an entry here, "record why, not what" — stays in prose.
 - **Scope follows the rule, not the file**: the wiki hooks are repo-scoped
   (`.claude/settings.json`), while `no-coauthor.sh` enforces a line from
   `instructions.md` that holds everywhere, so it is registered in

@@ -1,7 +1,7 @@
 ---
 title: cli-agents
 type: topic
-updated: 2026-08-09
+updated: 2026-08-14
 covers:
   - instructions.md
   - AGENTS.md
@@ -32,7 +32,7 @@ the script, the markdown — and duplicate only the few lines of **wiring**.
 
 | Thing           | Claude Code                       | Codex                                          | Can it be one file?                      |
 | --------------- | --------------------------------- | ---------------------------------------------- | ---------------------------------------- |
-| Global rules    | `~/.claude/CLAUDE.md`             | `~/.codex/AGENTS.md`                           | ✅ symlink — done, `instructions.md`     |
+| Global rules    | `~/.claude/CLAUDE.md`             | `~/.codex/AGENTS.md`                           | ✅ symlink — `instructions.md`; the Claude Code link is currently missing, see [global](global.md) |
 | Repo rules      | `./CLAUDE.md`                     | `./AGENTS.md`                                  | ✅ symlink — done, tracked in git        |
 | Skills (repo)   | `./.claude/skills/<n>/SKILL.md`   | `./.agents/skills/`, `./.codex/skills/`        | ⚠️ path differs; body portable           |
 | Skills (global) | `~/.claude/skills/`               | `~/.codex/skills/`, `~/.agents/skills/`        | ⚠️ same, at `$HOME` scope                |

@@ -1,14 +1,14 @@
 ---
 title: nvim
 type: component
-updated: 2026-08-13
+updated: 2026-08-14
 covers:
   - nvim/
 ---
 
 # nvim
 
-🚧 Config built on **LazyVim**; customization on top lives in `../nvim/lua/`.
+Config built on **LazyVim**; customization on top lives in `../nvim/lua/`.
 Symlink `~/.config/nvim → ~/dotfiles/nvim` ([bootstrap](bootstrap.md)).
 
 ## Why it's built this way
@@ -150,15 +150,6 @@ positives. Commit `ef70575` ("recursive disable harper in training").
 
 ## Companion kitty terminal (`<M-t>`, `utils/kitty.lua`)
 
-## Restarting nvim (`:Restart`, `<leader>R`)
-
-`:Restart` (bound to `<leader>R`, `keymaps.lua`) saves all buffers, spawns a
-fresh nvim in the current directory as a **detached kitty window** via
-`kitten @ launch --type=window --cwd=<dir> nvim`, then quits the current
-instance. Detached so the new process survives this nvim exiting (a plain
-`jobstart` child would be killed on `:qa`). The new window opens in the same
-kitty tab/session — handy after `:Lazy` config edits when a reload isn't enough.
-
 `<M-t>` (`keymaps.lua`) calls `require("utils.kitty").open()`, which toggles a
 companion kitty terminal window (split right/bottom per
 `vim.g.tmux_pane_direction`) via `kitten @` remote control, `cd`-ing it into the
@@ -193,6 +184,15 @@ re-created the session, opening a fresh tab that re-ran the session file (e.g.
 the new tab). Fixed by adding `--add-to-session .` to the `launch`, which tags
 the window with the source window's session. Same class of fix as `kitty_mod+t`
 in [sessions](sessions.md).
+
+## Restarting nvim (`:Restart`, `<leader>R`)
+
+`:Restart` (bound to `<leader>R`, `keymaps.lua`) saves all buffers, spawns a
+fresh nvim in the current directory as a **detached kitty window** via
+`kitten @ launch --type=window --cwd=<dir> nvim`, then quits the current
+instance. Detached so the new process survives this nvim exiting (a plain
+`jobstart` child would be killed on `:qa`). The new window opens in the same
+kitty tab/session — handy after `:Lazy` config edits when a reload isn't enough.
 
 ## Clipboard vs. registers (`keymaps.lua`, `utils/tasks.lua`)
 

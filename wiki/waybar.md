@@ -9,7 +9,7 @@ covers:
 
 # waybar
 
-🚧 Status bar for Hyprland. Colors — [theming](theming.md).
+Status bar for Hyprland. Colors — [theming](theming.md).
 
 ## Layout and modules
 

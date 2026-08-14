@@ -1,13 +1,14 @@
 ---
 title: sessions
 type: topic
-updated: 2026-08-11
+updated: 2026-08-14
 covers:
   - kitty/sessions
   - kitty/scripts
   - scripts/nvim-edit-handler.sh
   - scripts/daily-notes.sh
   - scripts/obsidian-sync.sh
+  - scripts/kitty-new-window.sh
   - nvim/lua/utils/obsidian.lua
 ---
 
@@ -141,14 +142,32 @@ avoids for the same reason.
 
 ## Splits and layout
 
-Splits: `C-S--` = hsplit, `C-S-\` = vsplit (`launch --location=... --cwd=current`).
+Splits: `kitty_mod+backslash` = vsplit (`launch --location=vsplit --cwd=current`) — the
+only split binding that exists; there is no hsplit binding.
 `C-h/j/k/l` — context-aware split/window navigation via `pass_keys.py` (passes through
 in nvim/fzf, otherwise moves between kitty windows).
 
 ⚠️ Gotcha (`tab.layout`): tab title and session filter are tied to
-`session_name`/`tab.active_wd`; session files set `layout` (usually `tall`) explicitly
-on the first line. The former `M-t` split toggle is absent in the current kitty.conf —
-splits now go through `C-S--` / `C-S-\`.
+`session_name`/`tab.active_wd`; session files set `layout` explicitly on the first
+line. The former `M-t` split toggle is absent in the current kitty.conf —
+splits now go through `kitty_mod+backslash` (`launch --location=vsplit --cwd=current`).
+
+⚠️ Gotcha (`tall` vs `horizontal` layout, and kitty's counter-intuitive naming):
+all session files (and the generators in `kitty-zoxide-session.sh` /
+`daily-notes.sh`) used `layout tall` — one main window plus a stack. Under
+`tall`, `--location=vsplit` only has an effect for the *second* window; a
+third+ window gets added to the stack (top-to-bottom), ignoring the requested
+direction, because `tall`'s own placement algorithm
+(`/usr/lib/kitty/kitty/layout/tall.py`) doesn't consult `--location` beyond
+that. Switched every session file to `layout horizontal` so every window is
+always a new side-by-side column (opens to the right), regardless of window
+count. ⚠️ kitty's layout names describe the axis windows are *distributed
+along*, not the divider orientation — `horizontal` (`main_axis_layout =
+Layout.xlayout`, neighbors left/right) tiles windows in a horizontal row
+side-by-side; `vertical` (`Layout.ylayout`, neighbors top/bottom) stacks them
+in a vertical column instead, i.e. the opposite of what the names suggest at
+a glance (`/usr/lib/kitty/kitty/layout/vertical.py`). To apply to already-open
+tabs without recreating them: `kitten @ goto-layout --match all horizontal`.
 
 ⚠️ Gotcha (`kitty_mod+t` / new tab scope): `session_name` is only assigned to a tab
 when it's created *inside* a session (loaded from a `.kitty-session` file, or via
@@ -158,3 +177,22 @@ matches "no session") — so such a tab appears regardless of which session is
 active, i.e. it isn't scoped to "current session" at all. Fixed by mapping
 `kitty_mod+t` to `launch --type=tab --cwd=current --add-to-session .`, which tags
 the new tab with the source window's session.
+
+⚠️ Gotcha (orphan kitty processes / "invisible" tabs): `--add-to-session .`
+*inherits* the source window's session — blank or not. A bare `exec kitty`
+(Hyprland's old `bind = $mainMod, return, exec, $terminal`) starts a brand-new,
+independent process with no source window at all, so its first tab gets
+`session_name: ""` permanently; `kitty_mod+t` pressed inside it then inherits
+that same blank, so every tab spawned from that process stays invisible to
+`kitty-list-sessions.sh`'s `select(.session_name != null and .session_name !=
+"")` filter — with nothing to explain why. It's also a second, untracked
+kitty process, so `main_kitty_socket()` (`../scripts/lib.sh`) may not even be
+querying it. Fixed by routing Super+Return through
+[`../scripts/kitty-new-window.sh`](../scripts/kitty-new-window.sh)
+(`hypr/hyprland.lua:235`) instead of a bare `exec`: it resolves the running
+main kitty's socket and does `launch --type=os-window --add-to-session .`
+against it, so "new terminal" is always a new OS window inside the one
+tracked process — tagged into a session like everything else — falling back
+to a plain `exec kitty` only on a cold start with no main kitty yet (login's
+`hl.on("hyprland.start", ...)` hook is left as a bare launch for exactly that
+reason — nothing exists yet to inherit from).

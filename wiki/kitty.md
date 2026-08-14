@@ -8,7 +8,7 @@ covers:
 
 # kitty
 
-🚧 Terminal and multiplexer (native sessions instead of tmux). Sessions in detail —
+Terminal and multiplexer (native sessions instead of tmux). Sessions in detail —
 [sessions](sessions.md); colors — [theming](theming.md).
 
 ## ⚠️ Gotcha: kitty.conf is ~3000 lines, but the customization is a handful of lines

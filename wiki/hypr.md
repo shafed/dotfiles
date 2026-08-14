@@ -1,7 +1,7 @@
 ---
 title: hypr
 type: component
-updated: 2026-08-09
+updated: 2026-08-14
 covers:
   - hypr/hyprland.lua
   - hypr/hyprland.conf
@@ -12,18 +12,8 @@ covers:
 
 # hypr
 
-🚧 The compositor (Wayland). The full keymap is in [keymap](keymap.md), colors/theme are in
+The compositor (Wayland). The full keymap is in [keymap](keymap.md), colors/theme are in
 [theming](theming.md), terminal/sessions are in [kitty](kitty.md) and [sessions](sessions.md).
-
-> ⚠️ Gotcha (LLM meta-note): **Google everything Hyprland-related until a model
-> trained on the 0.55+ Lua syntax ships.** Since 0.55, hyprlang is deprecated and
-> the config API is Lua (`hl.dsp.*`, `hl.bind`, `hyprctl dispatch 'hl.dsp...'`),
-> which postdates current LLM training data. Models trained on pre-0.55 configs
-> will confidently rewrite things into old hyprlang (`bind =`, `killactive`,
-> `dispatch workspace 3`), which is now a silent no-op. Treat generated
-> Hyprland code with suspicion; verify every call against the installed stubs
-> `/usr/share/hypr/stubs/hl.meta.lua` and the current [wiki](https://wiki.hypr.land/)
-> before applying.
 
 ## Key decisions
 
@@ -56,6 +46,13 @@ covers:
   rewrites have no effect — the inline bind (`CTRL, Super_L` → dbus toggle) is
   the single source of truth. If OpenWhispr's bind changes, copy it into
   `hyprland.lua` by hand.
+- **`SUPER+Return` routes through `kitty-new-window.sh`, not a bare `exec kitty`.**
+  A bare launch starts a fully independent kitty process with no source window,
+  so its tabs never get tagged into a session — see the orphan-process gotcha
+  in [sessions](sessions.md). The script opens a new OS window inside the
+  already-running main kitty instead. The login `hl.on("hyprland.start", ...)`
+  hook is left as a bare `exec` on purpose — at that point no main kitty exists
+  yet to attach to.
 - **Dwindle layout, gaps and rounding = 0, almost no animations.** A deliberately minimalist
   tiling setup with no visual extras: `gaps_in/out = 0`, `rounding = 0`,
   `animations = { enabled = false }` (except utility curves left at default).

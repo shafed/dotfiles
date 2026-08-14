@@ -8,7 +8,7 @@ covers:
 
 # scripts
 
-🚧 The most active and complex part of the repo. Three blocks: fzf pickers,
+The most active and complex part of the repo. Three blocks: fzf pickers,
 training logbook, misc.
 
 ## fzf pickers (shared `lib.sh`)
@@ -273,20 +273,8 @@ instead of lingering.
 
 ## Training logbook
 
-## Downloads clipboard watcher
-
-`watch-downloads.sh` is run by the user systemd unit
-`systemd/user/watch-downloads.service`. It watches `~/Downloads` with
-`inotifywait` and copies each completed download to the clipboard:
-
-- image files (`png`, `jpg`, `webp`, etc.) are copied as `image/*` via CopyQ,
-  with `text/plain` and `text/uri-list` alongside it, so browsers/Claude paste
-  the bitmap instead of literal `file://...` text;
-- non-image files are copied as `text/uri-list`, which `mini.files` can paste
-  into the current directory with `<leader>p`.
-
-The unit intentionally starts the script from `~/dotfiles/scripts/` rather than
-`~/.local/bin`, so the behavior is versioned with the rest of the dotfiles.
+Markdown training sessions in `~/obsidian/training/` become a single generated
+`logbook.html`, with a reverse link back into nvim for editing a session.
 
 ### generate_logbook.py
 
@@ -338,6 +326,21 @@ asynchronous):
 - `generate_logbook.py` (generates links) ↔ `nvim-edit-handler.sh` (opens them).
 
 ## Misc
+
+### watch-downloads.sh — Downloads clipboard watcher
+
+Run by the user systemd unit `systemd/user/watch-downloads.service`. It watches
+`~/Downloads` with `inotifywait` and copies each completed download to the
+clipboard:
+
+- image files (`png`, `jpg`, `webp`, etc.) are copied as `image/*` via CopyQ,
+  with `text/plain` and `text/uri-list` alongside it, so browsers/Claude paste
+  the bitmap instead of literal `file://...` text;
+- non-image files are copied as `text/uri-list`, which `mini.files` can paste
+  into the current directory with `<leader>p`.
+
+The unit intentionally starts the script from `~/dotfiles/scripts/` rather than
+`~/.local/bin`, so the behavior is versioned with the rest of the dotfiles.
 
 ### sudo-notify.sh — sudo password-prompt notifier
 

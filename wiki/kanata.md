@@ -11,7 +11,7 @@ covers:
 
 # kanata
 
-🚧 Partially filled in. The most thought-out and fragile part of the keymap. See
+Partially filled in. The most thought-out and fragile part of the keymap. See
 also the cross-cutting [keymap](keymap.md) and [sessions](sessions.md).
 
 ## Runs as a systemd user service

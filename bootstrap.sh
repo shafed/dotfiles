@@ -141,12 +141,18 @@ link_configs() {
   ln -sfvn CLAUDE.md "$DOTFILES_DIR/AGENTS.md"
 
   # The /commit skill. Claude Code and opencode both scan the project's
-  # .claude/skills/ on their own, so only Codex needs wiring: it discovers
-  # skills in $CODEX_HOME/skills alone and has no project-level scope.
-  # Consequence: in Codex the skill is visible in every repo, which is why its
-  # body refuses to run outside this one.
-  mkdir -p "$HOME/.codex/skills"
-  ln -sfvn "$DOTFILES_DIR/.claude/skills/commit" "$HOME/.codex/skills/commit"
+  # .claude/skills/ on their own; Codex reads .agents/skills/, so that path is
+  # a relative symlink to the single real copy under .claude/.
+  # Verified on Codex 0.147.0 (`codex debug prompt-input` in a probe repo):
+  # repo-level discovery works, and the Claude-only frontmatter keys
+  # (user-invocable, argument-hint, allowed-tools, model) are ignored rather
+  # than rejected — so one file serves both agents and cannot rot apart.
+  # Keeping it repo-scoped also stops the skill leaking into unrelated repos,
+  # which the old $CODEX_HOME/skills wiring did back when Codex had no
+  # project-level scope.
+  # Git tracks the symlink, so a fresh clone already has it — this line just
+  # repairs it if something replaces it with a regular file.
+  ln -sfvn ../../.claude/skills/commit "$DOTFILES_DIR/.agents/skills/commit"
 
   # The gruvbox-material Claude Code theme (referenced by
   # ~/.claude/settings.json as "theme": "custom:gruvbox-material").

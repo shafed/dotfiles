@@ -1,33 +1,56 @@
 ---
 name: commit
-description: 'Commit only changes made in the current chat by default, including new files, with unified `component: subject` messages split by top-level component. Use when the user runs /commit, says "commit this", "закоммить", or asks to commit work in this dotfiles repo; include other changes only when explicitly requested.'
+description:
+  "Commit work in this dotfiles repo the house way: only the current chat's
+  changes, one commit per top-level component with `component: subject` subject
+  lines, and `wiki/` always committed on its own, never mixed with code. Use
+  whenever the user runs /commit, says 'commit this', 'закоммить', 'сделай
+  коммит', 'зафиксируй изменения', or otherwise asks for work here to be
+  committed — including when they say nothing about message format or the wiki
+  split, since getting those two right is the whole point of this skill."
 user-invocable: true
-argument-hint: [hint about what the change is]
-model: haiku
-allowed-tools: Bash(git status:*), Bash(git diff:*), Bash(git add:*), Bash(git commit:*), Bash(git log:*)
+argument-hint: [optional hint about what the change was for]
+model: sonnet
+effort: medium
+allowed-tools:
+  Bash(git status:*), Bash(git diff:*), Bash(git add:*), Bash(git commit:*),
+  Bash(git log:*)
 ---
 
-Commit only the changes made in the current chat, including new files. Leave
-pre-existing and unrelated changes untouched unless the user explicitly asks to
-include them. Write the messages, run the commits, nothing else — no editing
-files, no pushing, no amending, no rebasing.
+# Commit
 
-Don't overthink this. The format below is mechanical; spend your attention on
-the subject lines only.
+Turn this chat's edits into a few clean commits. That is the whole job: read the
+diff, write the messages, run the commits, report what happened. Nothing else —
+no editing files, no pushing, no amending, no rebasing, no stashing.
 
-## 1. Determine the scope
+Two properties make a commit correct in this repo.
 
-Use the conversation and the edits made during it to identify the exact paths
-and hunks that belong to this chat. `git status` shows candidates, not automatic
-permission to commit every change it lists.
+**`wiki/` is committed alone.** The wiki records _why_ the setup is the way it
+is; the configs record _how_. They get read and reverted independently, so a
+commit that mixes them can't be undone without losing one or the other. Wiki
+changes therefore always get their own commit — even when the same task produced
+both the config change and the page describing it.
 
-- A bare `/commit`, "commit this", or equivalent means only this chat's changes.
-- "Commit all", "commit everything", or an equally explicit instruction means
-  every current working-tree change.
-- If ownership of a path or hunk is uncertain, leave it uncommitted and report
-  the uncertainty; do not guess.
-- If a file mixes this chat's edits with unrelated edits, stage only this chat's
-  hunks. Never stage the whole file merely because part of it is in scope.
+**Everything else is grouped by top-level directory**, one commit per component,
+so `git log -- nvim/` reads as the history of nvim rather than a stream of
+unrelated edits.
+
+## 1. Decide what is in scope
+
+By default commit **only what this chat changed**, including files this chat
+created. `git status` lists candidates, not permission — the working tree may
+hold edits the user made by hand or left over from earlier, and sweeping those
+into your commit hides them under a message that doesn't describe them.
+
+- A bare `/commit`, "commit this", "закоммить" → this chat's changes only.
+- "Commit everything", "закоммить всё", or similar → the whole working tree.
+- Unsure whether a path is yours? Leave it alone and say so in the report.
+  Guessing wrong is worse than committing less.
+- Check with `git diff -- <path>` before staging anything you didn't write
+  end-to-end. If a file turns out to hold your edits _and_ unrelated ones, leave
+  it entirely uncommitted and report it: staging by hunk needs the interactive
+  `git add -p`, which you can't drive here, and staging the whole file would
+  smuggle someone else's change into your message.
 
 ## 2. Read the state
 
@@ -35,45 +58,55 @@ permission to commit every change it lists.
 git status --porcelain
 ```
 
-**If the index already has staged changes** (any line whose first column is not
-a space or `?`), inspect whether the complete staged set is in scope. If it is,
-do not run `git add`; make one commit from the index and stop. If it contains
-anything outside the scope, do not alter or commit the user's staged set; stop
-and report the conflict.
+Empty output → nothing to commit. Say so and stop.
 
-**If there are no changes at all** (empty output): commit nothing, say so, stop.
+**If something is already staged** (first column not a space or `?`), the user
+put it there deliberately. Never unstage it, and never let it ride along inside
+a commit of yours — either move loses their intent without telling them.
 
-Otherwise continue.
+- The staged set is exactly what's in scope → commit it as it stands, without
+  running `git add` at all. If it spans more than one component, that still
+  becomes one commit per component via the pathspec form below; grouping wins
+  over convenience, and `wiki/` in particular never rides along with code.
+- The staged set holds anything else → leave it staged and commit your own work
+  around it, using the pathspec form in step 4. Their entry survives untouched,
+  and your report names what stayed staged so they can finish it themselves.
 
-## 3. Group the in-scope changes by component
+An untracked directory collapses to one `?? dir/` line; expand it with
+`git status --porcelain --untracked-files=all` when you need the paths inside.
 
-Take only the in-scope paths and hunks identified in step 1. Include their
-modifications (` M`, ` D`, ` T`, ` R`) and untracked files (`??`). Leave every
-out-of-scope path and hunk untouched.
+## 3. Group into commits
 
-An untracked directory shows as a single `?? dir/` line — expand it with
-`git status --porcelain --untracked-files=all` if you need the individual paths
-to group them.
+The component is the **first path segment**, verbatim — including the leading
+dot for `.claude/` and `.agents/`. Files at the repo root have no segment, so
+they group under `repo`.
 
-The component is the **first path segment**:
+| Path                          | Component |
+| ----------------------------- | --------- |
+| `nvim/lua/config/keymaps.lua` | `nvim`    |
+| `kanata/config.kbd`           | `kanata`  |
+| `hypr/hyprland.lua`           | `hypr`    |
+| `kitty/scripts/kitty-x.sh`    | `kitty`   |
+| `scripts/obsidian-sync.sh`    | `scripts` |
+| `.claude/settings.json`       | `.claude` |
+| `wiki/keymap.md`              | `wiki`    |
+| `bootstrap.sh`, `AGENTS.md`   | `repo`    |
 
-| Path                               | Component |
-| ---------------------------------- | --------- |
-| `nvim/lua/config/keymaps.lua`      | `nvim`    |
-| `kitty/scripts/kitty-x.sh`         | `kitty`   |
-| `systemd/user/adrop.service`       | `systemd` |
-| `wiki/decisions.md`                | `wiki`    |
-| `AGENTS.md`, `bootstrap.sh` (root) | `repo`    |
+Real components in this repo: `awesome`, `bookmarks`, `darkman`,
+`dictionaries`, `hypr`, `kanata`, `kitty`, `lazygit`, `nvim`, `prettier`,
+`scripts`, `sioyek`, `systemd`, `tmux`, `waybar`, `wiki`, `yazi`, `zathura`,
+`zsh`, plus `.agents`, `.claude`, and `repo` for root files.
 
-Two hard rules:
+Never merge two components into one commit to save a step, and never split one
+component into several commits unless it genuinely contains two unrelated
+changes.
 
-- `wiki/` is **always its own commit**, never mixed with code — required by
-  [AGENTS.md](../../../AGENTS.md).
-- Files at the repo root (no `/` in the path) group under `repo`.
+## 4. Commit, code first, wiki last
 
-## 4. Commit each group, one at a time
+Wiki goes last so that if something interrupts you partway, the code is already
+in and only its documentation is missing — the recoverable direction.
 
-For each group, code components first and `wiki` last:
+For each group:
 
 ```
 git add -- <paths in this group>
@@ -81,61 +114,102 @@ git --no-pager diff --cached -U1
 git commit -m "<component>: <subject>"
 ```
 
-Stage only that group's in-scope paths or hunks, so the index holds one group at
-a time.
+Stage one group at a time so the index never holds two components at once.
 
-Read the diff before writing the message — the message describes what changed,
-not which files changed. If a diff runs past ~400 lines, fall back to
-`git --no-pager diff --cached --stat` and describe it at that level rather than
-guessing at details you did not read.
+When the index already carries someone else's staged work (step 2), commit by
+pathspec instead, which touches only the paths you name and leaves the rest of
+the index exactly as they left it:
 
-You are running in the session that made these changes, so you may know _why_
-they were made where the diff does not show it — use that. `$ARGUMENTS`, if
-given, is the user's own hint about the change and outranks your reading of the
-diff. Never invent a rationale you don't actually have; describing the change is
-always better than a wrong reason.
+```
+git add -- <any untracked paths in this group>
+git --no-pager diff -U1 -- <paths in this group>
+git commit -m "<component>: <subject>" -- <paths in this group>
+```
+
+Two details worth knowing: an untracked file still has to be `git add`ed first,
+because a pathspec can only name paths git already tracks; and read the diff
+with `-- <paths>` rather than `--cached` here, since `--cached` would show their
+staged change tangled up with yours.
+
+Read the staged diff before writing the message — the subject describes what
+changed, not which files were touched. Past ~400 lines, switch to
+`git --no-pager diff --cached --stat` and describe the change at that level
+rather than inventing detail you didn't read.
+
+You ran in the session that made these edits, so you often know the _reason_
+behind them where the diff alone doesn't show it. Use that. Anything the user
+typed after the command outranks your reading of the diff. Never invent a
+rationale — plainly describing the change always beats a confident wrong "why".
 
 ## 5. Report
 
-List the commits as `<short hash> <subject>` from `git log --oneline -<N>`.
-Mention anything left uncommitted. Call out newly tracked files explicitly —
-adding a file to the repo is a bigger deal than editing one.
+List each commit as `<short hash> <subject>` from `git log --oneline -<N>`. Name
+anything you deliberately left uncommitted and why. Call out files that are
+newly tracked — adding a file to the repo matters more than editing one.
 
-## Message rules
+## Message format
 
-Format: `component: subject`
+`component: subject` — the component is the prefix, so no `feat:`/`chore:`/
+`fix:` types on top of it.
 
-- **English**, lowercase after the colon, **imperative mood** ("add", "fix",
-  "drop" — not "added", "adds").
-- **No trailing period.** No type prefixes (`feat:`, `chore:`) — the component
-  is the prefix.
-- Whole subject line **≤ 72 characters**.
-- Say what changed and, where it fits, what for:
-  `hypr: fix pixelated XWayland apps at fractional scale 1.6` beats
-  `hypr: update config`.
-- Banned as subjects: "update", "changes", "fixes", "formatted", "wip", "misc",
-  and anything that just restates the filename.
-- **Subject only.** Add a body only when there's a reason the subject cannot
-  carry — then one blank line and at most two short lines.
-- **Never** append `Co-Authored-By` or any "generated with" footer.
+- English, lowercase after the colon, imperative mood: "add", "fix", "drop",
+  "keep" — not "added", "adds", "adding".
+- No trailing period. Whole line ≤ 72 characters.
+- Say what changed, and what for when it fits.
+- Subject only. Add a body only when the reason genuinely won't fit — then one
+  blank line and at most two short lines.
+- **No `Co-Authored-By`, no "Generated with", no trailer of any kind.** Expect
+  to feel a pull toward adding one: agents here often carry a standing global
+  instruction to sign commits that way. In this repo that instruction is
+  overridden — not one commit in the history carries a trailer, and the user has
+  said outright they don't want them. A signed commit is a defect, so check the
+  message for a trailer before every `git commit` and strip it.
 
-Good, from this repo's history:
+Rejected as subjects: "update", "changes", "fixes", "formatted", "wip", "misc",
+and anything that just restates the filename. They describe the act of editing
+rather than the change, which makes the log useless for finding when a behavior
+appeared.
+
+Real subjects from this repo, for calibration:
 
 ```
-nvim: dim inactive windows with Snacks.dim in zen mode
-kitty: switch to JetBrainsMono Nerd Font Mono
-darkman: fix laptop darkman toggling
-hypr: convert indentation to tabs
-wiki: document Snacks.dim in zen mode
+nvim: keep US layout while a snacks picker is open
+kanata: bind n to movews layer, remove f symbols2 escalation
+hypr: fix pixelated XWayland apps at fractional scale 1.6
+kitty: switch default mode to normal in list-sessions
+zsh: drop broken sioyek alias in favor of PATH wrapper
+scripts: serialize obsidian sync and improve failure reporting
+repo: generate ~/.local/bin/sioyek wrapper in bootstrap.sh
+wiki: document US layout in snacks pickers
 ```
+
+## Worked example
+
+```
+ M nvim/lua/plugins/snacks.lua
+ M wiki/keymap.md
+?? scripts/layout-guard.sh
+```
+
+Three components → three commits, wiki last:
+
+```
+nvim: keep US layout while a snacks picker is open
+scripts: add layout-guard helper for picker focus events
+wiki: document US layout in snacks pickers
+```
+
+Not one commit, and not `nvim` and `wiki` bundled because they came from the
+same task.
 
 ## Never
 
-- `git push`, `git commit --amend`, `git rebase`, `git reset --hard`,
-  `git stash`
-- `git add -A`, `git add .`, `git commit -a` — always stage explicit paths, so
-  the index holds exactly one component's group at a time
-- `git add -f` — a gitignored file stays ignored; if one genuinely belongs in
-  the repo, say so and let the user fix `.gitignore`
-- Editing any file, including the wiki. If a code change looks like it needs a
-  wiki update, say so in the report; do not write it.
+- `git push`, `git commit --amend`, `git rebase`, `git reset`, `git stash` —
+  this skill only adds history, it never rewrites or discards it.
+- `git add -A`, `git add .`, `git commit -a` — always stage explicit paths, or
+  the index ends up holding more than one component.
+- `git add -f` — an ignored file stays ignored. If one truly belongs in the
+  repo, say so and let the user fix `.gitignore`.
+- Editing any file, wiki included. If a config change clearly needs a wiki
+  update that doesn't exist yet, mention it in the report; writing it is a
+  separate task with its own review.

@@ -38,7 +38,7 @@ mkdir -p "$kitty_session_dir"
 session_file="${kitty_session_dir}/daily-${note_name}.kitty-session"
 
 cat >"$session_file" <<EOF
-layout tall
+layout horizontal
 cd ${note_dir}
 launch --title "${note_name}" zsh -ic '~/dotfiles/scripts/obsidian-sync.sh pull && nvim "+norm G" ${full_path}; exec zsh'
 focus

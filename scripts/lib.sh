@@ -127,11 +127,21 @@ launch_qat() {
     exit 1
   }
 
-  "$kitty_bin" @ --to "unix:${sock}" \
-    action launch --type=background kitten quick-access-terminal \
-    --config "$qat_config" \
-    --instance-group "$group" \
-    "$@"
+  # The socket file existing does not guarantee the listener accepts yet (tiny
+  # window on a cold start), so retry the panel launch instead of failing the
+  # whole picker on a flaky first attempt.
+  local i
+  for i in {1..3}; do
+    if "$kitty_bin" @ --to "unix:${sock}" \
+      action launch --type=background kitten quick-access-terminal \
+      --config "$qat_config" \
+      --instance-group "$group" \
+      "$@"; then
+      return 0
+    fi
+    sleep 0.25
+  done
+  return 1
 }
 
 # goto_kitty_session <session-arg> — switch to a kitty session and bring the
@@ -141,10 +151,17 @@ launch_qat() {
 # kitty window over the panel's overlay (nor over whatever had focus before the
 # panel opened). Focus first while the panel is still up (same pattern as
 # apps.sh's focus_app), then hide the panel so focus stays on the main kitty.
+#
+# The hide/focus only happens when qat_in_panel is set (the pickers' --qat
+# branch); external callers like nvim-edit-handler.sh's --named flow do their
+# own focusing, and toggling there would flip a non-existent panel into a fresh
+# blank overlay (toggle_qat creates a panel when none exists).
 goto_kitty_session() {
   kitten @ action goto_session "$@"
-  focus_main_kitty
-  toggle_qat "${qat_group:-}" || true
+  if [[ "${qat_in_panel:-0}" == 1 ]]; then
+    focus_main_kitty
+    toggle_qat "${qat_group:-}" || true
+  fi
 }
 
 ###############################################################################

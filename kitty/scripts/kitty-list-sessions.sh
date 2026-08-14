@@ -60,6 +60,7 @@ qat_group="list-sessions"
 # panel's own instance, where goto/close_session would act on the wrong kitty).
 # Plain invocation (kanata apps+c) is the launcher: show the picker as a panel.
 if [[ "${1:-}" == "--qat" ]]; then
+  qat_in_panel=1
   qat_sock="$(main_kitty_socket)" || {
     echo "No main kitty socket found."
     exit 1

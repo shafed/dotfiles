@@ -115,6 +115,20 @@ Fuzzy search over bookmarks, opens in Helium **preferring an already-open tab**
 via **bruvtab** (`bruvtab list` → `bruvtab activate --focused`) rather than
 duplicating it.
 
+Tab reuse is a 3-tier match in `open_or_focus_url` (`scripts/lib.sh`); the
+bookmark's display name is threaded in from `bookmarks.sh` for tier 2:
+
+0. **exact normalized URL** (scheme + trailing `/` + `#fragment` stripped) —
+   covers the common case (Reverso, Gemini on a direct link).
+1. **same hostname** — covers same-site path/query drift (YouTube `.../watch?v=…`
+   vs bookmark `.../playlist?list=WL`).
+2. **exact tab title == bookmark name** (fallback only) — covers cross-host
+   redirects, e.g. the `chat.openai.com/chat` bookmark matching a live tab at
+   `chatgpt.com/`, where only the title survives the redirect. `search.sh` does
+   not pass a name, so it stops at the URL/host tiers.
+
+If none match, a new tab is opened.
+
 ⚠️ Gotcha (bruvtab): `bruvtab` is an optional dependency (uv tool/pipx),
 requires the bruvtab extension and native-messaging manifest to be installed for
 Helium. Without it —
@@ -130,6 +144,10 @@ client cannot steal a migrated open.
   auto-export of Helium bookmarks (`export_browser_bookmarks`) from
   `~/.config/net.imput.helium/Default/Bookmarks`. This is Chromium JSON, not
   Firefox `places.sqlite`, so `jq` is used and duplicate URLs are dropped.
+  Redirected bookmark URLs (e.g. `chat.openai.com/chat` → `chatgpt.com/`) are
+  still reused via the title tier instead of opening a duplicate; the browser's
+  `Bookmarks` JSON is the canonical source, so fixing a URL there (not the
+  exported TSV, which regenerates) is the durable fix.
 - New tabs are **never** opened on the YouTube workspace (ws4):
   `prepare_browser_for_new_tab` picks a `tab`/`newwindow`/`cold` strategy.
 - Recents log same as in apps.sh: empty query → recently opened.

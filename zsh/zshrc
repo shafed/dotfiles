@@ -172,7 +172,8 @@ alias cl="claude"
 alias clr="claude --resume"
 alias cx="codex"
 alias oc="opencode"
-alias bt='bruvtab'
+alias bt="bruvtab"
+alias ls="eza"
 
 export PATH="$HOME/.local/bin:$PATH"
 export PATH=~/.npm-global/bin:$PATH

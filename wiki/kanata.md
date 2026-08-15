@@ -1,7 +1,7 @@
 ---
 title: kanata
 type: component
-updated: 2026-08-14
+updated: 2026-08-15
 covers:
   - kanata/config.kbd
   - kanata/switchApp.sh
@@ -110,6 +110,26 @@ functional. Re-derive from the actual key codes when auditing.
 `aterm-settle 250` ms, then sends a `C-S-` hotkey that kitty turns into a
 session action ([sessions](sessions.md)). ⚠️ Gotcha: without the settle delay
 the hotkey goes out before kitty has focus and the session doesn't switch.
+
+⚠️ **`switchApp.sh`'s else-branch also now `pkill -x`s the app before
+launching it** (2026-08-15): a windowless-but-running process (e.g. one stuck
+retrying a failed EGL context) blocks `hyprctl clients | grep -q "class:
+..."` forever and, for single-instance apps, absorbs every further launch
+attempt via IPC without ever showing a window — so the key silently does
+nothing. Killing whatever's already running by that name before relaunching
+clears that stuck state.
+
+⚠️ **Gotcha — `cmd`'s `zsh -lc` is a login shell but not an *interactive*
+one, so `.zshrc` never sources**, only `.zshenv`/`.zprofile`. Any `PATH`
+prepend that lives in `.zshrc` (here: `~/.local/bin`, see `.zshrc:178`) is
+invisible to every `(cmd zsh -lc "...")` binding. This silently broke the `z`
+binding for [sioyek](sioyek.md): it called bare `sioyek`, which under
+kanata's shell resolved to `/usr/bin/sioyek` instead of the
+`~/.local/bin/sioyek` wrapper that forces `QT_QPA_PLATFORM=xcb` — so it hit
+the EGL_BAD_MATCH bug every time, while the exact same `sioyek` command
+worked fine from an interactive shell. Fix: reference launcher wrappers by
+full path (`$HOME/.local/bin/sioyek`) in `config.kbd` instead of relying on
+`PATH`.
 
 ## apps layer + force-English
 

@@ -1,7 +1,7 @@
 ---
 title: sioyek
 type: component
-updated: 2026-08-09
+updated: 2026-08-15
 covers:
   - sioyek/
   - bootstrap.sh
@@ -10,9 +10,10 @@ covers:
 # sioyek
 
 PDF viewer for papers/technical books. Config in `../sioyek/` is only
-`prefs_user.config` (inverse search into nvim) + `keys_user.config` (vim-style
-rebinds, deliberately overriding stock keys — the startup "Warning: key
-overwritten by keys_user.config" lines are expected, not an error).
+`prefs_user.config` (inverse search into nvim, `always_copy_selected_text`)
++ `keys_user.config` (vim-style rebinds, deliberately overriding stock keys —
+the startup "Warning: key overwritten by keys_user.config" lines are
+expected, not an error).
 
 The non-trivial part is **not** the config — it's getting the window to appear
 at all on this machine.
@@ -53,9 +54,17 @@ places, four of which never see it:
 | -------------------------------------------- | ---------------------------------------- |
 | interactive shell                            | `sioyek` from `PATH`                     |
 | [yazi](yazi.md) `view_pdf` opener            | `sioyek %s1` from `PATH`                 |
-| [kanata](kanata.md) apps-layer `z`           | `switchApp.sh sioyek 'sioyek'`           |
+| [kanata](kanata.md) apps-layer `z`           | `switchApp.sh sioyek '$HOME/.local/bin/sioyek'` |
 | nvim vimtex (`vimtex_view_method = "sioyek"`) | `sioyek` from `PATH`                     |
 | `xdg-open` (nvim mini.files `<leader>o`)     | `~/.local/share/applications/sioyek.desktop` |
+
+⚠️ **The kanata row used bare `sioyek` until 2026-08-15** — same bug class as
+the alias: `(cmd zsh -lc ...)` is a non-interactive login shell, so `.zshrc`
+(where `~/.local/bin` gets prepended to `PATH`) never sources, and `sioyek`
+resolved to the unwrapped `/usr/bin/sioyek` instead. The wrapper never ran,
+so the `z` key hit the EGL_BAD_MATCH bug below on every launch even though
+the wrapper existed. See [kanata](kanata.md) for the full trace. Fixed by
+hardcoding the wrapper's path in `config.kbd` rather than relying on `PATH`.
 
 So `bootstrap.sh` writes a wrapper next to the existing `sudo` one:
 

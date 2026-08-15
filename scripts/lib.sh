@@ -21,8 +21,8 @@ browser_profile_dir="${DOTFILES_BROWSER_PROFILE_DIR:-$HOME/.config/net.imput.hel
 # auto-picks the basictext keyring and decrypts 0 cookies ("no key found"), so
 # the gnomekeyring backend must be forced explicitly.
 browser_cookies_from_browser="${DOTFILES_BROWSER_COOKIES_FROM_BROWSER:-chromium+gnomekeyring:${browser_profile_dir}}"
-browser_brotab_names="${DOTFILES_BROWSER_BROTAB_NAMES:-helium chromium}"
-brotab_bin="${BROTAB_BIN:-$(command -v bt || echo "$HOME/.local/bin/bt")}"
+browser_bruvtab_names="${DOTFILES_BROWSER_BRUVTAB_NAMES:-helium chromium}"
+bruvtab_bin="${BRUVTAB_BIN:-$(command -v bruvtab || echo "$HOME/.local/bin/bruvtab")}"
 
 # QAT pickers run under bash, so they do not reliably inherit the interactive
 # zsh FZF_DEFAULT_OPTS. Keep their fzf palette pinned to kitty's Gruvbox
@@ -291,7 +291,7 @@ focus_browser() {
   return 0
 }
 
-# Raise the browser window whose active tab brotab just activated, identified by
+# Raise the browser window whose active tab bruvtab just activated, identified by
 # the tab title that becomes the window title after activation. Falls back to
 # focus_browser when no window matches.
 focus_browser_for_title() {
@@ -353,12 +353,12 @@ normalize_url() {
   printf '%s\n' "$u"
 }
 
-# Print brotab tab-id prefixes for the configured browser, one per line. This
-# prevents a leftover Firefox brotab client from stealing a Helium migration.
-brotab_browser_prefixes() {
-  [[ -x "$brotab_bin" ]] || return 0
+# Print bruvtab tab-id prefixes for the configured browser, one per line. This
+# prevents a leftover Firefox bruvtab client from stealing a Helium migration.
+bruvtab_browser_prefixes() {
+  [[ -x "$bruvtab_bin" ]] || return 0
 
-  "$brotab_bin" clients 2>/dev/null | awk -v names="$browser_brotab_names" '
+  "$bruvtab_bin" clients 2>/dev/null | awk -v names="$browser_bruvtab_names" '
     BEGIN {
       count = split(tolower(names), parts, /[[:space:],]+/)
       for (i = 1; i <= count; i++) {
@@ -385,19 +385,19 @@ brotab_browser_prefixes() {
 }
 
 # open_or_focus_url <url> <target-workspace> <avoid-workspace> — open a URL,
-# preferring an already-open brotab tab in the configured browser. New tabs are
+# preferring an already-open bruvtab tab in the configured browser. New tabs are
 # kept away from <avoid-workspace>; when the browser only has windows there, a
 # fresh window is opened on <target-workspace>.
 open_or_focus_url() {
   local url="$1" target_workspace="$2" avoid_workspace="$3"
   local want prefixes match tab_id tab_title
 
-  if [[ -x "$brotab_bin" ]]; then
+  if [[ -x "$bruvtab_bin" ]]; then
     want="$(normalize_url "$url")"
-    prefixes="$(brotab_browser_prefixes)"
+    prefixes="$(bruvtab_browser_prefixes)"
     if [[ -n "$prefixes" ]]; then
       match="$(
-        "$brotab_bin" list 2>/dev/null | awk -F'\t' -v want="$want" -v prefixes="$prefixes" '
+        "$bruvtab_bin" list 2>/dev/null | awk -F'\t' -v want="$want" -v prefixes="$prefixes" '
           BEGIN {
             count = split(prefixes, parts, /\n/)
             for (i = 1; i <= count; i++) {
@@ -420,7 +420,7 @@ open_or_focus_url() {
       )"
       if [[ -n "$match" ]]; then
         IFS=$'\t' read -r tab_id tab_title <<<"$match"
-        "$brotab_bin" activate --focused "$tab_id" >/dev/null 2>&1 || true
+        "$bruvtab_bin" activate --focused "$tab_id" >/dev/null 2>&1 || true
         focus_browser_for_title "$tab_title" "$target_workspace"
         return 0
       fi

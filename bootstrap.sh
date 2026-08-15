@@ -36,7 +36,7 @@ REQUIRED_PKGS=(
   "lazygit:lazygit"
   "sioyek:sioyek"
   "yt-dlp:yt-dlp"
-  "brotab:brotab (pipx/AUR)"
+  "bruvtab:bruvtab (uv tool/pipx)"
   "task:taskwarrior"
   "copyq:copyq"
   "python3:python"

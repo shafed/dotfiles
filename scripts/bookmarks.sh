@@ -8,7 +8,7 @@ script_path="$script_dir/$(basename "${BASH_SOURCE[0]}")"
 source "$script_dir/lib.sh"
 
 # Fuzzy-find bookmarks and open the pick in Helium, preferring an already-open
-# tab (focused via brotab) over opening a duplicate. Runs inside a long-lived
+# tab (focused via bruvtab) over opening a duplicate. Runs inside a long-lived
 # kitty quick-access panel toggled via the remote-control socket — same
 # mechanism as apps.sh — so it overlays the screen and re-opens instantly.
 #
@@ -32,7 +32,7 @@ bookmarks_group="bookmarks"
 browser_workspace="2"
 # Workspace reserved exclusively for YouTube. New bookmark tabs must never open
 # here: if the only browser window lives on it, we open a new window on
-# browser_workspace first. (Already-open tabs found via brotab are still
+# browser_workspace first. (Already-open tabs found via bruvtab are still
 # activated wherever they are, including here.)
 youtube_workspace="4"
 # Recently-opened log (most recent first), one "name<tab>url" row per opened

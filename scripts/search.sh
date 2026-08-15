@@ -29,7 +29,7 @@ search_group="search"
 browser_workspace="2"
 # Workspace reserved exclusively for YouTube. New tabs must never open here: if
 # the only browser window lives on it, we open a new window on browser_workspace
-# first. (Already-open tabs found via brotab are still activated wherever.)
+# first. (Already-open tabs found via bruvtab are still activated wherever.)
 youtube_workspace="4"
 
 # Search engine the typed query / chosen suggestion is sent to. %s is replaced

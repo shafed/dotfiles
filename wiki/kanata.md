@@ -1,7 +1,7 @@
 ---
 title: kanata
 type: component
-updated: 2026-08-03
+updated: 2026-08-14
 covers:
   - kanata/config.kbd
   - kanata/switchApp.sh
@@ -11,198 +11,126 @@ covers:
 
 # kanata
 
-Partially filled in. The most thought-out and fragile part of the keymap. See
-also the cross-cutting [keymap](keymap.md) and [sessions](sessions.md).
+The most thought-out and fragile part of the keymap. See also
+[keymap](keymap.md) and [sessions](sessions.md).
 
 ## Runs as a systemd user service
 
-kanata is launched by `../systemd/user/kanata.service`
-(`WantedBy=graphical-session.target`), not Hyprland's `exec-once` — it's not
-Wayland-specific, just a userspace process needing `/dev/uinput` (group
-`uinput`). This gives login-independent-of-compositor startup, automatic
-restart on crash (`Restart=on-failure`), and `journalctl --user -u kanata`
-for logs, matching the pattern used by `adrop.service` (see
-[hypr](hypr.md)/[bootstrap](bootstrap.md)). After editing
-`kanata/config.kbd`, reload with
-`systemctl --user restart kanata` (or `--check` first, per the comment
-that used to live next to the old `exec-once` line).
+`../systemd/user/kanata.service`, not Hyprland's `exec-once` — kanata isn't
+Wayland-specific, it just needs `/dev/uinput`. Reload after editing
+`config.kbd` with `systemctl --user restart kanata`.
 
-⚠️ Gotcha: the unit needs `After=graphical-session.target` **and**
-`BindsTo=graphical-session.target`, and must be `WantedBy=` that same target
-(not `default.target`). Several kanata bindings shell out to `hyprctl`
-(layout switch on `sw`, `x`/`z` window/workspace nav, `q` killactive — see
-config.kbd), which requires `HYPRLAND_INSTANCE_SIGNATURE` in the process
-environment. Since Hyprland 0.55 the dispatches use the Lua syntax
-(`hyprctl dispatch 'hl.dsp.window.kill()'`, `'hl.dsp.window.cycle_next()'`,
-`'hl.dsp.focus({ workspace = "previous" })'`) — the old `hyprctl dispatch
-killactive` form is rejected and silently does nothing (see [hypr](hypr.md)).
+⚠️ Gotcha: the unit needs `After=`, `BindsTo=`, **and** `WantedBy=` on
+`graphical-session.target` — not `default.target`. Several bindings shell out to
+`hyprctl` (`sw`, `x`, `z`, `q`), which needs `HYPRLAND_INSTANCE_SIGNATURE` in
+the environment. `After=` alone only *orders* two units that are both already
+starting; it doesn't make kanata wait for the target or pull it in. Under the
+old `WantedBy=default.target`, kanata started via that unrelated path up to a
+couple of seconds *before* the target went active — so it came up with no
+Hyprland env and those bindings silently failed (`HYPRLAND_INSTANCE_SIGNATURE
+not set!` in the journal). `WantedBy=graphical-session.target` makes it a real
+dependent of the target's start job; `BindsTo=` also stops it when the session
+goes away, which is right since its `hyprctl` calls are meaningless without one.
 
-⚠️ Kanata-specific gotcha: `(cmd ...)` runs the program **directly, without a
-shell**, and its config lexer has **no escaping** — `(`/`)` are always list
-structure and single quotes `'` are not string delimiters. So an inline Lua
-expression gets split/mangled (flattened lists, quotes dropped). The fix is to
-pass the whole dispatch string as **one quoted token**: `(cmd hyprctl dispatch
-"hl.dsp.window.kill()")` works for expressions without nested quotes; if the
-Lua needs a quoted string inside (e.g. `workspace = "previous"`) a normal
-`"..."` can't hold a `"`, so use a **raw string** instead:
-`(cmd hyprctl dispatch r#"hl.dsp.focus({ workspace = "previous" })"#)`. Don't
-shell out via `bash -c` just to fix this — the direct single-token form is
-simpler. `After=` alone only orders the two units *if both are already
-going to start* — it doesn't make kanata wait on the target, and doesn't pull
-it in. With the old `WantedBy=default.target`, kanata could start via that
-unrelated pull-in path before uwsm finalized the session environment into
-systemd, so kanata started with no Hyprland env vars and those bindings
-silently failed (`hyprctl` prints `HYPRLAND_INSTANCE_SIGNATURE not set!` to
-the journal; confirmed via `ActiveEnterTimestamp` — kanata was starting up to
-a couple seconds before `graphical-session.target` itself went active).
+⚠️ `Requisite=graphical-session.target` was tried first and made it **worse**:
+it doesn't wait, it checks at job-scheduling time and hard-fails the start if
+the target isn't active yet — and because that's a dependency-job failure rather
+than a crash, `Restart=on-failure` never fires, so kanata didn't start at all.
 
-`Requisite=graphical-session.target` was tried first as a fix and made things
-**worse**: `Requisite=` doesn't wait, it checks at job-scheduling time and
-hard-fails the start ("Dependency failed") if the target isn't active *yet* —
-and since that's a dependency-job failure rather than a service crash,
-`Restart=on-failure` never kicks in, so kanata didn't start at all. The
-working fix is to make kanata an actual dependent of the target's own start
-job via `WantedBy=graphical-session.target` (instead of `default.target`), so
-systemd orders and starts it as part of reaching that target rather than
-racing it in from an unrelated path. `BindsTo=` additionally stops kanata
-when the graphical session goes away, which is correct since its `hyprctl`
-calls are meaningless without one.
+⚠️ **Kanata's config lexer has no escaping, and `(cmd ...)` runs without a
+shell.** `(`/`)` are always list structure and `'` is not a string delimiter, so
+an inline Lua expression gets flattened and its quotes dropped. Pass the whole
+dispatch as **one token**: `(cmd hyprctl dispatch "hl.dsp.window.kill()")`. When
+the Lua itself contains quotes, a normal `"..."` can't hold them — use a raw
+string: `(cmd hyprctl dispatch r#"hl.dsp.focus({ workspace = "previous" })"#)`.
+Don't reach for `bash -c` to work around this. (Since Hyprland 0.55 the legacy
+`hyprctl dispatch killactive` form is rejected outright — [hypr](hypr.md).)
 
 ## Opposite-hand HRM (home-row mods)
 
-Home-row mods follow the **AGCS** scheme (Alt-GUI-Ctrl-Shift from pinky to index
-finger, mirrored: `a/;`=Alt, `s/l`=Super, `d/k`=Ctrl, `f/j`=Shift). Implemented
-via `tap-hold-opposite-hand-release` (kanata PR #1955) on top of `defhands` —
-hold fires **only if the next key is on the other hand**. This removed misfires
-like `sh → Super+h` without the manual "typing keys" lists that had to be
-maintained before.
+**AGCS** from pinky to index, mirrored (`a/;`=Alt, `s/l`=Super, `d/k`=Ctrl,
+`f/j`=Shift), via `tap-hold-opposite-hand-release` on top of `defhands`: hold
+fires **only if the next key is on the other hand**. This removed misfires like
+`sh → Super+h` without the hand-maintained "typing keys" lists it used to need.
 
-Why the `-release` variant specifically: the decision is made on the **release**
-of the interrupting key. If during a fast roll/bigram the second key comes up
-before the HRM key does, both resolve as letters. This is the main killer of
-cross-hand misfires.
+Why the `-release` variant: the decision happens on the **release** of the
+interrupting key, so during a fast roll, if the second key comes up before the
+HRM key does, both resolve as letters. That is the main killer of cross-hand
+misfires.
 
-Settings inside the `hrm` template:
+- `(neutral hold)` + `neutral-keys` (digits, spc/tab/ret/bspc/esc) — outside
+  `defhands`, but must preserve hold so Super+2, Ctrl+Space, Shift+Tab work.
+- `(timeout hold)` — if the interrupting key was *held* past the timeout, force
+  hold, giving combos like `hold j` + `hold v` → `C-S-v`.
+- ⚠️ Gotcha: same-hand defaults to **tap**, so one-handed mod combos don't work
+  through HRM at all. One-handed Ctrl+Shift moved out to a chord.
 
-- `(neutral hold)` + `neutral-keys` (digits, spc/tab/ret/bspc/esc) — these keys
-  are outside `defhands`, but must **preserve** hold so that Super+2,
-  Ctrl+Space, Shift+Tab, Ctrl+Enter work.
-- `(timeout hold)` — if the interrupting key was **held** longer than the
-  timeout (and `-release` didn't fire), force hold. This produces combos like
-  `hold j (Shift) + hold v (C-v) → C-S-v`.
-- ⚠️ Gotcha: same-hand defaults to `tap`. One-handed mod combos (e.g. `d+f` as
-  Ctrl+Shift **on one left hand**) no longer work through HRM — they have to be
-  taken across different hands. One-handed Ctrl+Shift is moved out to a separate
-  chord (see below).
+## Chords and timings
 
-## Chords (chords-v2) and timings
+⚠️ The core trade-off, and the reason these numbers look arbitrary: too wide a
+window catches false mod-combos during rolls, too narrow and you can't press one
+on purpose. Tuned empirically — change with care.
 
-`concurrent-tap-hold yes` + `defchordsv2`. Key timings:
+- `mod-chord-time 35` — both keys must land almost simultaneously, so a
+  sequential roll like `fd` does **not** become Ctrl+Shift.
+- `chords-v2-min-idle 80` — chords are skipped for 80 ms after any non-chord
+  key, so a chord fires instantly after a pause but never mid-typing.
+- `all-released` holds modifiers until both keys come up, letting a third key
+  join (e.g. `C-S-tab`).
 
-- `mod-chord-time 35` — a very narrow window for one-handed mod chords (`d+f`,
-  `j+k`, `s+f`, `k+l`…): both keys must land almost simultaneously so that a
-  sequential roll like `fd` does **not** trigger Ctrl+Shift.
-- `chords-v2-min-idle 80` — after any non-chord keypress, chords are skipped for
-  80 ms. The result: a one-handed mod chord fires almost instantly after a short
-  pause, but not in the middle of fast typing.
-- `all-released` in most chords holds the modifiers until both keys come up —
-  letting you add a third one (e.g. `C-S-tab`).
-
-⚠️ Gotcha (rolls vs. mod-combos): this is a fundamental trade-off. Too wide a
-window catches false mod combos on rolls; too narrow a window doesn't let you
-press a combo intentionally. The 35/80 values were tuned empirically; change
-with care.
-
-What lives on chords: `d+f`=tap Esc / hold C-S, `j+k`=tap Enter / hold C-S,
-`s+f`=Super+Shift, `w+e`=Tab, `k+l`=numplain, `j+k+l`=numplain2 (shifted
-numbers), `s+d`=symbols, `s+d+f`=symbols2, `j+l`=movews, `lsft+rsft`=exit to
-base.
+⚠️ Related trade-off: press-decided layer-holds on frequent letters (`n`, `e`,
+`r`, `w`) are instant, but "letter + bigram" can misfire. Deliberate, in
+exchange for fast layer entry.
 
 ## Symbol layers + xkb US-wrap
 
-Symbols (`symbols`, `symbols2`) hold `S-...` keycodes on the right hand (the
-left holds the entry key). ⚠️ Problem: on the RU layout `S-2` produces `"`, not
-`@`. The fix is to switch **kanata's xkb device to US** (index 0) on layer
-entry, and restore the previous index on exit. That way `S-...` produces the
-same symbols on US and RU.
+⚠️ The problem: on the RU layout `S-2` produces `"`, not `@`. So layer entry
+switches kanata's **xkb device** to US (index 0) and restores the previous index
+on exit, making `S-...` yield the same symbols under either language.
 
-Mechanics: the `sym-enter`/`sym-enter2` aliases wrap `layer-while-held` in
-`(on-press tap-vkey sym-us)` / `(on-release tap-vkey sym-restore)`. Vkeys call
-[`../scripts/symlayout-watch.sh`](../scripts/symlayout-watch.sh) `enter`/`leave`
-directly (no TCP server; a POSIX port of the old Python — about 13 ms faster per
-call). The script stores the previous index in
-`/tmp/symlayout-watch-$UID-kanata.layout` and guards against a double enter.
+The `sym-enter` aliases wrap `layer-while-held` in
+`(on-press tap-vkey sym-us)` / `(on-release tap-vkey sym-restore)`, which call
+[`../scripts/symlayout-watch.sh`](../scripts/symlayout-watch.sh) directly — no
+TCP server. It stores the previous index in `/tmp/symlayout-watch-$UID-kanata.layout`
+and guards against a double enter.
 
-The symbol layout is **frequency-ordered**: hot symbols sit on the strong home
-row — `()` on `j k`, `@` on `l`, `` ` `` on `y`, `: "` on `; '`, `=` on `m`.
-`symbols2` is an escalation: adding the index finger `f` gets you into rarer
-`~ { } ! # * & ^ $ |` (`|` moved here from `symbols/l` to make room for `@`).
-Symbols aren't duplicated between layers (shorter = hotter chord). `\` sits on
-`symbols2/m` — moved from `symbols/p` (2026-07-31): `\` is rare, so it gave up
-its pinky top-row slot on `symbols` (now `p` is `XX` there) for the
-index-finger bottom row of the deeper layer. Only `symbols2/p` stays free
-(`XX`).
+The layout is **frequency-ordered**: hot symbols on the strong home row, with
+`symbols2` as an escalation (add the index finger) for rarer ones. Symbols are
+never duplicated between the two — shorter chord means hotter symbol.
 
-⚠️ Don't trust layout comments blindly — verify against the actual
-`S-...`/key codes in `deflayermap`, not the inline `;;` annotations. They've
-drifted from the real mapping before (e.g. claiming `: "` lived on `symbols2`
-when they were actually on `symbols`, and that `symbols2 ; '` did something
-when those keys were no-ops). Re-derive the mapping from the code when
-auditing frequency placement.
+⚠️ **Don't trust the inline `;;` comments in `config.kbd`, and don't mirror the
+mapping here.** They have drifted from the real `deflayermap` before — claiming
+keys lived on `symbols2` when they were on `symbols`, and describing no-ops as
+functional. Re-derive from the actual key codes when auditing.
 
-## kitty-send (tmux prefix replacement)
+## kitty-send (the tmux prefix replacement)
 
-`deftemplate kitty-send` replaced the old tmux-prefix scheme (`C-s`). Now kanata
-**focuses kitty** (`@aterm` → [`switchApp.sh`](../kanata/switchApp.sh)
-focus-or-launch), waits `aterm-settle 250` ms for the focus to settle, then
-sends a `C-S-` hotkey (kitty's `kitty_mod = C-S-`), which drives native
-sessions. See [sessions](sessions.md). ⚠️ Gotcha: without the delay the hotkey goes out
-before kitty received focus, and the session doesn't switch.
+`deftemplate kitty-send` focuses kitty (`@aterm` →
+[`switchApp.sh`](../kanata/switchApp.sh), focus-or-launch), waits
+`aterm-settle 250` ms, then sends a `C-S-` hotkey that kitty turns into a
+session action ([sessions](sessions.md)). ⚠️ Gotcha: without the settle delay
+the hotkey goes out before kitty has focus and the session doesn't switch.
 
 ## apps layer + force-English
 
-Holding the thumb key (`lalt`/`ralt`, tap=bspc/switch-lang) gives the `apps`
-layer — the launcher for apps/sessions/pickers. The `apps` layer itself does
-**not** change the layout: `apps-enter` is just `layer-while-held apps`.
+Holding the thumb key gives the `apps` launcher layer. ⚠️ The layer itself does
+**not** touch the layout — force-English is attached to the *actions*
+(`(on-press tap-vkey apps-us)` → `symlayout-watch.sh app`), so fzf pickers and
+rofimoji always start in English while a bare hold/release stays harmless.
 
-Force-English is done by **actions**, not by entering the layer: picker/session
-actions start with `(on-press tap-vkey apps-us)` → `symlayout-watch.sh app`
-(hard-forcing xkb US index 0). This way fzf pickers
-(bookmarks/youtube/apps/search) and rofimoji always start on the English layout
-regardless of the current language. A plain hold/release of the apps key with no
-action is harmless.
+## Screenshots
 
-Browser actions in this layer use `helium-browser` directly: tap `s` launches
-Helium, hold `s` enters the URL sub-layer, and the YouTube watch-later shortcut
-opens a new Helium window. This keeps keyboard-launched browser actions aligned
-with Hyprland's lazy workspace browser and the fzf picker scripts.
+`s` in the **navi** layer is a tap-hold between two `hyprshot` calls, both
+straight to the clipboard: tap = whole monitor, hold = interactive region. The
+split exists so the fast full-screen path doesn't pay the region-select cost.
 
-## Screenshot pipeline (`sshot-full` / `sshot-region`)
+Deliberately removed and not to be reinstated: `flameshot` + its service
+(2026-07-18, no daemon needed since hyprshot runs on demand) and `satty`
+annotation on the region path (2026-08-03).
 
-The `s` key in the **navi** layer (hold `w`, see [keymap](keymap.md)) is a
-tap-hold between two `hyprshot` invocations, both straight to the clipboard:
+## numplain2
 
-- **tap** → `sshot-full`: `hyprshot -m output --clipboard-only --silent` —
-  whole active monitor straight to the clipboard, no region select.
-- **hold** ($tap-time/$hold-time = 200ms) → `sshot-region`: `hyprshot -m
-  region --clipboard-only --silent` — interactive region select, then straight
-  to the clipboard.
-
-Replaced `flameshot gui --clipboard` + `flameshot.service` (2026-07-18) — no
-long-lived daemon needed since hyprshot is invoked on demand. Region
-annotation (satty) was dropped (2026-08-03) so the hold path is also a
-plain clipboard capture; the tap/hold split keeps the fast full-screen path
-from paying the region-select cost every time.
-
-## Shifted number layer (numplain2)
-
-`numplain` — plain digits on the left hand (home row 1-5, top row 6-0), entered
-via the `k+l` chord. `numplain2` — same positions, but `S-...` (symbols above
-the digits: `! @ # $ % ...`), entered via the longer `j+k+l` chord. Why a
-separate layer: it lets you type shifted symbols of the digit row without
-leaving for the symbol layers and without a real Shift, preserving muscle memory
-for digit positions.
-
-⚠️ Gotcha about timings in general: press-decided layer-holds on frequent
-letters (`n`, `e`, `r`, `w`) are instant, but "letter + bigram" can misfire —
-this is a deliberate trade-off for speed of entering layers.
+`numplain` gives plain digits on the left hand; `numplain2` gives the *shifted*
+symbols of the digit row from the same positions. Why a separate layer rather
+than a real Shift: it preserves digit-position muscle memory and avoids leaving
+for the symbol layers.

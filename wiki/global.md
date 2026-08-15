@@ -29,12 +29,14 @@ tool expects: `~/.claude/CLAUDE.md`, `~/.config/opencode/AGENTS.md`,
   `CLAUDE.md` in subdirectories; opencode/Codex read `AGENTS.md`). A neutral
   name avoids duplication. What each tool reads is set by the **symlink name**,
   not the source name.
-- **It is now one block, not a ruleset** (2026-08-14, `1add5fc`): the file used
-  to carry ~70 lines of general coding rules (think-before-coding, simplicity,
-  surgical changes, goal-driven execution, no `Co-Authored-By`), and this repo's
-  `CLAUDE.md` carried another ~103. Both were deleted the same day; what remains
-  in `instructions.md` is the Context7 MCP block. Rationale for cutting rather
-  than growing these files — [decisions](decisions.md).
+- **It is now a single rule, not a ruleset** (2026-08-14): the file used to carry
+  ~70 lines of general coding rules and this repo's `CLAUDE.md` another ~103.
+  Both were deleted in `1add5fc`; a Context7 MCP block that briefly replaced them
+  was cut too, because the Context7 server already injects that guidance itself
+  and the rest of it was step-by-step tool-use instruction — the category
+  Anthropic removed wholesale for Opus 5. What remains is one line: no
+  `Co-Authored-By`. Rationale for cutting rather than growing these files —
+  [decisions](decisions.md).
 - Anything that does survive here is loaded into context in **every session of
   every project**, so the bar for adding a line is high.
 - ⚠️ **Do not add verification instructions** — "double-check your work", "add a
@@ -45,21 +47,11 @@ tool expects: `~/.claude/CLAUDE.md`, `~/.config/opencode/AGENTS.md`,
   findings" in a review prompt — Opus 5 follows it literally and reports less.
   Ask for everything and filter in a second pass instead.
 
-⚠️ **Gotcha — current state on this machine does not match `bootstrap.sh`**
-(verified 2026-08-14):
-
-| Link                                        | State                          |
-| ------------------------------------------- | ------------------------------ |
-| `~/.codex/AGENTS.md`                        | live symlink                   |
-| `~/.config/opencode/AGENTS.md`              | live symlink                   |
-| `~/.claude/CLAUDE.md`                       | **missing** — Claude Code gets no global instructions |
-| `~/.claude/hooks/no-coauthor.sh`            | **missing**                    |
-| `no-coauthor` entry in `~/.claude/settings.json` | **absent** — the guard never fires |
-
-`instructions.md` itself is **untracked** since `1add5fc` deleted it, so
-`bootstrap.sh` on a fresh clone would link three names at a file that isn't
-there. Re-running `bootstrap.sh` restores the three symlinks but never the
-`settings.json` registration (see below).
+All three symlinks and the hook script are in place again as of 2026-08-14, and
+`instructions.md` is tracked once more. ⚠️ **The one piece still missing is the
+hook's registration** in `~/.claude/settings.json` — the script is linked but
+nothing invokes it, so the guard never fires (see below for why that file is
+the one thing `bootstrap.sh` cannot repair).
 
 ### The one rule that was also enforced, not just stated
 

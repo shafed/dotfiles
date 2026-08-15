@@ -32,7 +32,7 @@ the script, the markdown — and duplicate only the few lines of **wiring**.
 
 | Thing           | Claude Code                       | Codex                                          | Can it be one file?                      |
 | --------------- | --------------------------------- | ---------------------------------------------- | ---------------------------------------- |
-| Global rules    | `~/.claude/CLAUDE.md`             | `~/.codex/AGENTS.md`                           | ✅ symlink — `instructions.md`; the Claude Code link is currently missing, see [global](global.md) |
+| Global rules    | `~/.claude/CLAUDE.md`             | `~/.codex/AGENTS.md`                           | ✅ symlink — done, `instructions.md`     |
 | Repo rules      | `./CLAUDE.md`                     | `./AGENTS.md`                                  | ✅ symlink — done, tracked in git        |
 | Skills (repo)   | `./.claude/skills/<n>/SKILL.md`   | `./.agents/skills/`, `./.codex/skills/`        | ⚠️ path differs; body portable           |
 | Skills (global) | `~/.claude/skills/`               | `~/.codex/skills/`, `~/.agents/skills/`        | ⚠️ same, at `$HOME` scope                |
@@ -40,9 +40,9 @@ the script, the markdown — and duplicate only the few lines of **wiring**.
 | MCP servers     | `.mcp.json` / `~/.claude.json`    | `~/.codex/config.toml` `[mcp_servers]`         | ❌ JSON vs TOML                          |
 | Permissions     | `settings.json` `permissions`     | `config.toml` `approval_policy`/`sandbox_mode` | ❌ different security models             |
 
-Claude Code reads **only** `.claude/skills/`; Codex reads **only** its own two.
-Neither looks into the other's directory, so a repo-level skill needs a second
-path either way — symlink if the frontmatter is identical, copy if it isn't.
+Neither tool looks into the other's skill directory, so a repo-level skill needs
+a second path either way — symlink if the frontmatter is identical, copy if it
+isn't.
 
 Hook **events** line up almost exactly (`PreToolUse`, `PostToolUse`,
 `SessionStart`, `UserPromptSubmit`, `Stop`, …) and both pass JSON on stdin and
@@ -56,16 +56,15 @@ Three hooks exist, and they split by **scope**, not by agent.
 `instructions.md` that holds in every project, so it is registered globally in
 `~/.claude/settings.json` instead — see [global](global.md).
 
-All three are plain scripts and would port to Codex unmodified; only the
-registration block is per-agent, and so far only Claude Code has one. That is
-why the rules they enforce must **stay written down** in `instructions.md` and
-`CLAUDE.md` — for Codex and opencode the prose is still the only copy. See
+All three are plain scripts that would port to Codex unmodified; only the
+registration block is per-agent, and so far only Claude Code has one. ⚠️ That is
+why a rule cannot live *only* in a hook: for Codex and opencode the prose in
+`instructions.md` / `CLAUDE.md` is still the sole copy. See
 [decisions](decisions.md#recorded).
 
 ⚠️ **Gotcha**: Claude Code has no `AGENTS.md` fallback, in any version. It reads
 `AGENTS.md` only through a symlink or an `@AGENTS.md` import on the first line
-of `CLAUDE.md`. Use the import form on Windows, where symlinks need admin
-rights.
+of `CLAUDE.md`.
 
 ## How to re-verify after a CLI update
 

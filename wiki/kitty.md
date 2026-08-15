@@ -26,11 +26,11 @@ The settings that carry a reason worth knowing:
   plain `ttf-jetbrains-mono` package was removed from the system, so naming the
   unpatched family would silently fall back to PT Mono and lose ligatures. The
   `Mono` variant is also narrower, which has bitten nvim float sizing
-  ([nvim](nvim.md)).
+  ([nvim-ui](nvim-ui.md)).
 - **Remote control** (`allow_remote_control` + `listen_on
   unix:/tmp/kitty-{kitty_pid}`) exists **for** the session pickers and QAT
   panels, which drive kitty via `kitten @`. Turning it off breaks
-  [scripts](scripts.md) and [sessions](sessions.md), not just convenience.
+  [scripts-pickers](scripts-pickers.md) and [sessions](sessions.md), not just convenience.
 - **`kitty_mod+i`** opens scrollback in an nvim pager via
   `scripts/kitty-scrollback-nvim.sh`. ⚠️ It trims trailing blank lines from
   **two** independent sources of padding — kitty's `@screen_scrollback` returns
@@ -51,7 +51,7 @@ A custom kitten exists here only because **kitty's remote-control protocol has
 no builtin command to toggle the tab bar** — `tab_bar_hidden` is normally set
 exactly once at startup from `tab_bar_style == "hidden"` (`kitty/tabs.py`), so
 the kitten pokes it directly and calls `tm.resize()`. Driven from nvim's zen
-mode (`nvim/lua/utils/fullscreen.lua`, see [nvim](nvim.md)).
+mode (`nvim/lua/utils/fullscreen.lua`, see [nvim-ui](nvim-ui.md)).
 
 ⚠️ The action arg is `args[1]`, not `args[0]` — kitty puts the script path
 first. Before this was fixed (2026-08-03) `hide`/`show` were dead branches and
@@ -59,7 +59,7 @@ the kitten always toggled.
 
 ## QAT panels (quick-access-terminal)
 
-Drop-down overlay panels hosting the fzf pickers in [scripts](scripts.md) and
+Drop-down overlay panels hosting the fzf pickers in [scripts-pickers](scripts-pickers.md) and
 the session pickers in `kitty/scripts/` ([sessions](sessions.md)). Their config
 (`quick-access-terminal-center.conf`) carries **another full copy of the gruvbox
 palette** via `kitty_override` — one of the duplication sites

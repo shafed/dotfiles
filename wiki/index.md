@@ -43,7 +43,7 @@ rules: [../CLAUDE.md](../CLAUDE.md) (`AGENTS.md` symlinks to it).
 ## Global
 
 - **[global](global.md)** — agent instruction files, the commit convention, home
-  layout. ⚠️ Also records which global links are currently broken.
+  layout.
 - **[cli-agents](cli-agents.md)** — sharing config between Claude Code, Codex,
   and opencode without writing it twice.
 

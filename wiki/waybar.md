@@ -23,10 +23,9 @@ sends `hl.dsp.*` dispatches from the workspace buttons. The stock 0.15.0
 release sends legacy `dispatch workspace N`, which fails silently — clicking a
 workspace in the bar does nothing. See [hypr](hypr.md).
 
-With waybar-git, two modules were dropped/renamed vs 0.15.0:
-`hyprland/mode` is now `hyprland/submap` (config key), and
-`hyprland/scratchpad` was removed entirely (its function is covered by the
-workspaces module's `show-special` option). The config was updated accordingly.
+Two config keys differ from 0.15.0 as a result: `hyprland/mode` is now
+`hyprland/submap`, and `hyprland/scratchpad` is gone (covered by the workspaces
+module's `show-special`).
 
 ## Custom modules (scripts/menus)
 

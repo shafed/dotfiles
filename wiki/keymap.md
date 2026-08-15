@@ -1,7 +1,7 @@
 ---
 title: keymap
 type: topic
-updated: 2026-08-13
+updated: 2026-08-14
 covers:
   - kanata/config.kbd
   - hypr/hyprland.lua
@@ -11,74 +11,63 @@ covers:
 
 # keymap — end-to-end key map
 
-Partially filled in. Single source of truth for hotkeys — so layers don't
-conflict or get forgotten. See component pages [kanata](kanata.md),
-[hypr](hypr.md), [kitty](kitty.md).
+Single source of truth for how the layers divide the keyboard. Component detail:
+[kanata](kanata.md), [hypr](hypr.md), [kitty](kitty.md).
 
-## Three levels and the boundary between them
+## Three levels and why they don't collide
 
-1. **kanata** (`process-unmapped-keys (all-except lctl ralt)`) — intercepts
-   nearly the entire physical keyboard, does HRM, chords, layers, symbols.
-   Modifies streams at the level **before** the window manager.
-2. **hypr** — catches only `Super` bindings (`$mainMod`). kanata doesn't touch
-   Super (except `numws`/`movews`, where Super is **baked into the keycode** and
-   goes to hypr as Super+digit).
-3. **kitty** — catches `C-S-` (`kitty_mod = ctrl+shift`) for sessions/splits.
+1. **kanata** (`process-unmapped-keys (all-except lctl ralt)`) intercepts nearly
+   the whole physical keyboard — HRM, chords, layers, symbols — *before* the
+   compositor sees anything.
+2. **hypr** catches only `Super`. kanata never touches Super, except in
+   `numws`/`movews` where Super is **baked into the keycode** and arrives at
+   hypr as a normal Super+digit.
+3. **kitty** catches `C-S-` (`kitty_mod`) for sessions and splits.
 
-Key separation: **kanata sends `C-S-` hotkeys to kitty** (via `kitty-send`,
-after focusing kitty), while **hypr listens for `Super`**. There's no overlap,
-because kitty only catches C-S combos when focused, while hypr catches Super
-globally.
+The separation works because **kanata sends `C-S-` to kitty** (via `kitty-send`,
+after focusing it) while **hypr listens for `Super`** — and kitty only sees C-S
+combos when focused, whereas hypr catches Super globally.
 
-## kanata layers (what's where)
+## kanata layers
 
-- **base** — letters + HRM (AGCS) + functional thumb/letter-holds.
-- **normal** — a "safe" layer (letters as-is, `lsft`=switch-lang), entered via
-  hold Enter; return to base from base via Enter-hold / `lsft+rsft`.
-- **apps** (hold thumb) — launcher: apps, kitty sessions (`kitty-send C-S-*`),
-  fzf pickers (**QAT panels, launched directly** — `apps+e`/`apps+c` start the
-  zoxide / list-sessions session pickers; `b`/`f`/`a`/`u` start bookmarks /
-  search / apps / youtube), graceful close to tray (`q` —
-  `hl.dsp.window.close()`, not `kill()`, so tray apps minimize instead of being
-  SIGKILL'd), browser sub-layer (`s` hold → `browser`).
-- **browser** (from apps, hold `s`) — direct URLs in Helium (gmail, perplexity,
-  chatgpt, claude…); tapping `s` launches `helium-browser`.
-- **symbols / symbols2** (hold `e`/`r` or chords `s+d` / `s+d+f`) — programmer
-  symbols on the right hand; xkb is forced to US (see [kanata](kanata.md)).
-- **navi** (hold `w` or toggle via caps-hold) — arrows/navigation on the right
-  hand, mods free on the left.
-- **numplain / numplain2** (chords `k+l` / `j+k+l`) — digits and shifted symbols
-  of the digit row on the left hand.
-- **numws / movews** (from apps hold `l`, or chord `j+l`) — `Super+digit` /
-  `Super+Shift+digit` on the left hand → hypr workspaces / move-to-workspace.
+- **base** — letters + HRM + functional thumb/letter holds.
+- **normal** — a "safe" layer (letters as-is, `lsft` = switch language), entered
+  by holding Enter.
+- **apps** (hold thumb) — launcher: applications, kitty sessions, fzf pickers,
+  and a browser sub-layer on hold `s`. ⚠️ `q` here is `hl.dsp.window.close()`,
+  **not** kill — so tray apps minimize instead of being SIGKILL'd.
+- **symbols / symbols2** (hold `e`/`r`, or chords `s+d` / `s+d+f`) — programmer
+  symbols on the right hand, with xkb forced to US ([kanata](kanata.md)).
+- **navi** (hold `w`, or toggle via caps-hold) — arrows and navigation on the
+  right hand, left-hand mods free.
+- **numplain / numplain2** (chords `k+l` / `j+k+l`) — digits and their shifted
+  symbols on the left hand.
+- **numws / movews** (apps hold `l`, or chord `j+l`) — `Super+digit` /
+  `Super+Shift+digit`, i.e. hypr workspace switch and move-to-workspace.
 
-## Potential conflicts and how they're resolved
+## Collisions that had to be resolved
 
-| Keys                  | Who owns it                              | Resolution                                                                                                                                                                                                                                                                                                                       |
-| --------------------- | ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `h j k l`             | kanata HRM (base) / navi / hypr Super    | HRM only on hold with opposite-hand; hypr `Super+hjkl`=movefocus, kanata doesn't touch Super                                                                                                                                                                                                                                     |
-| digits `1-0`          | numplain (left hand) / hypr `Super+N`    | numplain gives **plain** digits; workspace-switching only via numws (Super baked in)                                                                                                                                                                                                                                             |
-| `C-tab` / `C-S-tab`   | navi (browser tabs) / kitty              | in navi this is `@j/k-navi` (fork on alt); kitty catches `C-S-*` only when focused                                                                                                                                                                                                                                               |
-| `Alt-t` / `^[t`       | kitty/zsh/nvim companion toggle          | zsh binds `^[t` through zsh-vi-mode to `kitty_other_window` from `zvm_after_init` (with `ZVM_LAZY_KEYBINDINGS=false`, so the binding exists from the first prompt instead of only after a mode switch); `ZVM_ESCAPE_KEYTIMEOUT=0.2` keeps the ESC-prefixed sequence together despite kanata's tap-hold delay. See [zsh](zsh.md). |
-| one-handed Ctrl+Shift | HRM no longer gives this (same-hand=tap) | moved to chords `d+f` / `j+k` (hold)                                                                                                                                                                                                                                                                                             |
-| `w+e`                 | letter roll vs. Tab chord                | `mod-chord-time 35` + `chords-v2-min-idle 80` separate rolling from an intentional chord                                                                                                                                                                                                                                         |
+| Keys                | Contenders                            | Resolution                                                                      |
+| ------------------- | ------------------------------------- | ------------------------------------------------------------------------------- |
+| `h j k l`           | kanata HRM / navi / hypr `Super+hjkl` | HRM fires only on opposite-hand hold; kanata never touches Super                 |
+| digits `1-0`        | numplain / hypr `Super+N`             | numplain emits **plain** digits; workspace switching only via numws              |
+| `C-tab` / `C-S-tab` | navi (browser tabs) / kitty           | kitty only catches `C-S-*` while focused                                         |
+| one-handed `C-S`    | HRM can't (same-hand = tap)           | moved to the `d+f` / `j+k` chords                                                |
+| `w+e`               | letter roll vs. Tab chord             | `mod-chord-time 35` + `chords-v2-min-idle 80` separate a roll from a chord       |
+| `Alt-t` / `^[t`     | kitty / zsh / nvim companion toggle   | zsh needs three zsh-vi-mode settings before this fires reliably — [zsh](zsh.md)  |
 
-## RU/US and force-English
+## Forcing the US layout
 
-Two logics for forcing the US layout, both via
-[`../scripts/symlayout-watch.sh`](../scripts/symlayout-watch.sh) on the xkb
-device `kanata`:
+Everything that must type ASCII drives the **`kanata` xkb device** (never the
+global layout), through
+[`../scripts/symlayout-watch.sh`](../scripts/symlayout-watch.sh):
 
-- **symbol layers** (`enter`/`leave`): switch to US for the duration the layer
-  is held and restore the previous index — so `S-...` keycodes give the same
-  symbols on RU and US.
-- **apps actions** (`app`): hard-force US index 0 when launching a
-  picker/session action — so fzf/rofimoji start in English.
+- **symbol layers** switch to US for as long as the layer is held, then restore
+  the remembered index — so `S-...` yields the same symbols under RU and US.
+- **apps actions** hard-force US index 0 when launching a picker, so fzf starts
+  in English.
+- **nvim** does the same for normal mode on its own, with a `langmap` covering
+  the async gap ([nvim-layout](nvim-layout.md)).
 
-Switching language during normal work: tap `ralt` (`@sw` →
-`hyprctl switchxkblayout kanata next`), or `lsft` in the `normal` layer.
-
-nvim drives the same `kanata` device for its modes: normal mode forces US
-(`InsertLeave`/`VimEnter`/`CmdlineLeave`, plus snacks picker windows), entering
-insert restores the layout last used there; a fixed `langmap` covers the async
-switch gap — see [nvim](nvim.md).
+Switching language during normal work: tap `ralt`, or `lsft` in the `normal`
+layer.

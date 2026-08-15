@@ -11,32 +11,24 @@ covers:
 
 # theming — gruvbox (dark everywhere)
 
-End-to-end visual theme. Components: [kitty](kitty.md), [waybar](waybar.md),
-[yazi](yazi.md), [hypr](hypr.md), nvim ([nvim](nvim.md)).
+Everything is **Gruvbox Material Dark Medium**, anchored to `background #282828`
+/ `foreground #d4be98`. **nvim is the reference** — kitty's background was tuned
+to match it, not the other way round.
 
-## One visual language: Gruvbox Material Dark
+⚠️ Gotcha: **there is no source-of-truth color file.** The palette is
+hand-duplicated in seven places, and changing a shade means editing all of them:
 
-Same palette everywhere — **Gruvbox Material Dark Medium**, anchored to
-`background #282828` / `foreground #d4be98`. Reference point is nvim; the kitty
-background was specifically tuned to match it (`e5557fc`: hard→medium `#282828`),
-terminal colors aligned to gruvbox material (`1a43177`, `81ce442`).
+- `kitty/current-theme.conf`, plus a second copy in
+  `quick-access-terminal-center.conf` via `kitty_override`
+- `waybar/style.css` (`@define-color gb_*`)
+- `yazi/flavors/gruvbox-dark.yazi` + `theme.toml`
+- nvim's own gruvbox-material plugin
+- `.claude/themes/gruvbox-material.json`
+- hyprland/hyprlock — raw hex in the configs for borders and lock fields
 
-⚠️ Gotcha: **there is no single source-of-truth color file.** The palette is
-duplicated across components by hand:
-
-- `kitty/current-theme.conf` (+ a duplicate in `quick-access-terminal-center.conf` via
-  `kitty_override`),
-- `waybar/style.css` (`@define-color gb_*`),
-- `yazi/flavors/gruvbox-dark.yazi` + `theme.toml`,
-- nvim — its own gruvbox-material plugin,
-- `.claude/themes/gruvbox-material.json` — Claude Code's theme (custom
-  overrides, "custom:gruvbox-material"), symlinked to `~/.claude/themes/` by
-  `bootstrap.sh`. Its thinking shimmer deliberately keeps Claude Code's
-  built-in color: overriding `claudeShimmer` made the animation harder to
-  distinguish, while the base `claude` accent and the rest of the UI stay gruvbox,
-- hyprland/hyprlock — hex colors for borders/fields directly in configs (`d8a657`, `a9b665`…).
-
-Change a shade — edit ALL of these places, there's no automatic sync.
+The Claude Code theme deliberately leaves `claudeShimmer` at its built-in color:
+overriding it made the thinking animation harder to pick out. The base `claude`
+accent and the rest of that UI are gruvbox.
 
 ## Light/dark: darkman toggles the system color-scheme, not kitty
 

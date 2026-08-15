@@ -11,6 +11,31 @@ Key "why it's done this way" page. Each entry:
 
 ## Recorded
 
+### The wiki is ablation-tested, not just written (2026-08-14)
+- **Decision**: every line must survive the question **"could an agent recover
+  this by opening the config?"** If yes, it's duplication and gets deleted. The
+  rule is stated in [CONVENTIONS](CONVENTIONS.md); the whole wiki was passed
+  through it once on this date.
+- **Reason**: adapted from Anthropic's Opus 5 prompting guidance, which is half
+  about *removing* inherited instructions. But the criterion had to change on
+  the way over: a system-prompt line is paid for in **every** session, while a
+  wiki page is paid for only when read. So the test isn't "does this line earn
+  permanent context" but "is this line recoverable" — which is why the wiki can
+  stay long where it is dense with gotchas.
+- **What it actually deleted**: restatements of config values, per-file lists
+  recoverable with `ls`, "Summary for the agent" sections that repeated the page
+  above them, `index.md` entries that summarized pages instead of routing to
+  them, and history entries about code that no longer exists.
+- **What it deliberately kept**: every `⚠️ Gotcha`, every rejected alternative,
+  and anything describing a *third-party* behavior (darkman's XDG scan, kitty's
+  layout naming, yazi's config renames) — none of that is in this repo's code.
+- **Surprise finding**: roughly a third of the changes were not deletions but
+  **replacing a description with its reason**. "JetBrains Mono Nerd Font (Mono)
+  14" became "the `Mono` variant is deliberate — the plain package was removed,
+  so the unpatched family would silently fall back to PT Mono".
+- **Rejected**: deleting by page size. See the MoC entry below — the two longest
+  pages turned out to have almost nothing to cut.
+
 ### `scripts.md` and `nvim.md` became maps of content (2026-08-14)
 - **Decision**: the two 400-line pages are now short hub pages that route to
   `scripts-{pickers,scratch,logbook,misc}.md` and
@@ -31,8 +56,6 @@ Key "why it's done this way" page. Each entry:
 
 ### Page-status markers (🌱/🚧/✅) removed from the wiki (2026-08-14)
 - **Decision**: pages and `index.md` rows no longer carry a completeness marker.
-  The `✅ fixed <date>:` entries inside `bootstrap.md`/`zsh.md` stay — those mark
-  a specific past problem as resolved, which is content, not page metadata.
 - **Reason**: the marker stopped discriminating. 15 of 18 pages were 🚧 —
   `scripts.md` (417 lines, a dozen hard-won gotchas) and `waybar.md` (61 lines of
   overview) carried the identical badge, so it informed no reading decision while
@@ -144,7 +167,7 @@ Key "why it's done this way" page. Each entry:
   `yt-dlp --cookies-from-browser firefox` behind.
 - Trade-off: `yt-dlp` does not know a `helium` browser name, so the YouTube
   picker uses the Chromium cookie extractor pointed at Helium's profile. See
-  [scripts](scripts.md), [hypr](hypr.md), [keymap](keymap.md).
+  [scripts-pickers](scripts-pickers.md), [hypr](hypr.md), [keymap](keymap.md).
 
 ### tmux → kitty native sessions (2026-06)
 - **Decision**: remove tmux; do multiplexing and splits with native kitty

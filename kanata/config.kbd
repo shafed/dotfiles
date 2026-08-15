@@ -120,7 +120,7 @@
   h (t! kitty-send C-S-a)   ;; home session
   s (tap-hold-press $subl-time $subl-time (cmd helium-browser) (layer-toggle browser))
   d (t! kitty-send C-S-d)   ;; dotfiles session
-  z (cmd zsh -lc "$HOME/.config/kanata/switchApp.sh sioyek 'sioyek'")
+  z (cmd zsh -lc "$HOME/.config/kanata/switchApp.sh sioyek '$HOME/.local/bin/sioyek'")
   c (multi (on-press tap-vkey apps-us) (cmd zsh -lc "$HOME/dotfiles/kitty/scripts/kitty-list-sessions.sh")) ;; list sessions picker QAT
   g (t! kitty-send C-S-c)   ;; github session
   . (multi (on-press tap-vkey apps-us) (cmd rofimoji -a clipboard))

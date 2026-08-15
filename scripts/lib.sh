@@ -384,25 +384,36 @@ bruvtab_browser_prefixes() {
   '
 }
 
-# open_or_focus_url <url> <target-workspace> <avoid-workspace> — open a URL,
-# preferring an already-open bruvtab tab in the configured browser. New tabs are
-# kept away from <avoid-workspace>; when the browser only has windows there, a
+# open_or_focus_url <url> <target-workspace> <avoid-workspace> [tab-name] — open a
+# URL, preferring an already-open bruvtab tab in the configured browser. New tabs
+# are kept away from <avoid-workspace>; when the browser only has windows there, a
 # fresh window is opened on <target-workspace>.
+#
+# Match tiers, first hit wins:
+#   0. exact normalized URL  (handles fresh redirects, trailing slash, #frag)
+#   1. same hostname           (handles same-site path/query drift like YouTube)
+#   2. exact tab title == [tab-name]  (handles cross-host redirects like
+#      chat.openai.com -> chatgpt.com, where only the title survives)
+# If nothing matches, a new tab is opened.
 open_or_focus_url() {
-  local url="$1" target_workspace="$2" avoid_workspace="$3"
-  local want prefixes match tab_id tab_title
+  local url="$1" target_workspace="$2" avoid_workspace="$3" tab_name="${4:-}"
+  local want want_host prefixes match tab_id tab_title
 
   if [[ -x "$bruvtab_bin" ]]; then
     want="$(normalize_url "$url")"
+    want_host="${want%%/*}"
     prefixes="$(bruvtab_browser_prefixes)"
     if [[ -n "$prefixes" ]]; then
       match="$(
-        "$bruvtab_bin" list 2>/dev/null | awk -F'\t' -v want="$want" -v prefixes="$prefixes" '
+        "$bruvtab_bin" list 2>/dev/null | awk -F'\t' \
+          -v want="$want" -v wanthost="$want_host" -v prefixes="$prefixes" \
+          -v name="$tab_name" '
           BEGIN {
             count = split(prefixes, parts, /\n/)
             for (i = 1; i <= count; i++) {
               if (parts[i] != "") ok[parts[i]] = 1
             }
+            best_tier = 99
           }
           {
             id = $1
@@ -414,8 +425,21 @@ open_or_focus_url() {
             sub(/^https?:\/\//, "", u)
             sub(/#.*$/, "", u)
             sub(/\/$/, "", u)
-            if (u == want) { print $1 "\t" $2; exit }
+
+            tier = 99
+            if (u == want)            tier = 0
+            else if (name != "" && $2 == name) tier = 2
+            else {
+              uh = u
+              sub(/\/.*/, "", uh)
+              if (uh == wanthost)     tier = 1
+            }
+            if (tier < best_tier) {
+              best_tier = tier
+              best = $1 "\t" $2
+            }
           }
+          END { if (best != "") print best }
         '
       )"
       if [[ -n "$match" ]]; then

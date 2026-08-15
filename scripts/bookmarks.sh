@@ -88,10 +88,12 @@ record_open() {
   mv "$tmp" "$recent_file"
 }
 
-# Open a bookmark, preferring an already-open browser tab. Always returns 0 so
-# the picker loop keeps running.
+# Open a bookmark, preferring an already-open browser tab (matched by URL, then
+# host, then by the bookmark's name against the tab title for redirect-only
+# cases like chat.openai.com -> chatgpt.com). Always returns 0 so the picker
+# loop keeps running.
 open_or_focus() {
-  open_or_focus_url "$1" "$browser_workspace" "$youtube_workspace"
+  open_or_focus_url "$2" "$browser_workspace" "$youtube_workspace" "$1"
 }
 
 # Dump Chromium-style browser bookmarks to a TSV the picker can read.
@@ -185,7 +187,7 @@ run_picker() {
     record_open "$_name" "$url"
 
     toggle_qat "$bookmarks_group"
-    open_or_focus "$url"
+    open_or_focus "$_name" "$url"
   done
 }
 

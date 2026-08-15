@@ -1,7 +1,7 @@
 ---
 title: bootstrap
 type: topic
-updated: 2026-08-14
+updated: 2026-08-15
 covers:
   - bootstrap.sh
   - zsh/zprofile
@@ -66,10 +66,10 @@ is wrong.
 
 These do not survive a fresh machine and nothing in `bootstrap.sh` covers them:
 
-- Helium extension + native-messaging manifest for `brotab` (what lets
+- Helium extension + native-messaging manifest for `bruvtab` (what lets
   `bookmarks.sh` focus an existing tab, [scripts-pickers](scripts-pickers.md)).
-  `bt install` only writes the standard Chromium/Chrome/Brave paths, so Helium
-  likely needs `brotab_mediator.json` copied into
+  `bruvtab install` only writes the standard Chromium/Chrome/Brave paths, so
+  Helium likely needs `bruvtab_mediator.json` copied into
   `~/.config/net.imput.helium/NativeMessagingHosts/`.
 - XDG default browser — set `helium.desktop` for `http`, `https`, `text/html`.
 - systemd user services from `~/.config/systemd`.

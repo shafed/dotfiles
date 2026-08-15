@@ -1,7 +1,7 @@
 ---
 title: decisions
 type: topic
-updated: 2026-08-14
+updated: 2026-08-15
 ---
 
 # decisions — major decisions and rejected alternatives
@@ -10,6 +10,30 @@ Key "why it's done this way" page. Each entry:
 **decision → reason → rejected alternative → date**.
 
 ## Recorded
+
+### brotab → BruvTab fork (2026-08-15)
+- **Decision**: replace `brotab` with `bruvtab`
+  (https://github.com/pschmitt/bruvtab) — a maintained fork of brotab — as the
+  tab-focus mechanism behind `bookmarks.sh`/`search.sh`. In `scripts/lib.sh`
+  the binary/vars/functions are renamed (`bt` → `bruvtab`,
+  `brotab_bin` → `bruvtab_bin`, `brotab_browser_prefixes` →
+  `bruvtab_browser_prefixes`), and the CLI is invoked directly as `bruvtab`,
+  not through the interactive `alias bt='bruvtab'` in `zshrc` (scripts don't
+  see aliases).
+- **Reason**: the original brotab Chrome extension was pulled from the Chrome
+  Web Store — "no longer available because it doesn't follow best practices for
+  Chrome extensions" — so a fresh Helium install can't get the mediator
+  extension from the store anymore. BruvTab keeps the same mediator protocol and
+  output formats (`clients`, `list`, `activate --focused`), so the existing awk
+  in `lib.sh` needs no parsing changes — only the names. CLI is installed via
+  `uv tool install bruvtab`/pipx, native manifests via `bruvtab install`
+  (mediator renamed to `bruvtab_mediator.json`).
+- **Rejected**: keeping `bt` as the scripted command name for backward
+  compatibility — the interactive alias is a zsh convenience, not a contract;
+  a leftover `brotab` install on some machine would silently keep serving the
+  scripts while this repo promised bruvtab.
+- **Rejected**: a different tab/CLI tool (e.g. a fresh extension) — the fork is
+  the drop-in path with the least churn.
 
 ### The wiki is ablation-tested, not just written (2026-08-14)
 - **Decision**: every line must survive the question **"could an agent recover
@@ -159,11 +183,11 @@ Key "why it's done this way" page. Each entry:
   `~/.config/net.imput.helium/Default`) instead of scattered as raw Firefox
   strings.
 - **Reason**: the migration crosses several contracts at once: Hyprland window
-  class, new-window launching, bookmarks export, brotab tab activation, and
+  class, new-window launching, bookmarks export, bruvtab tab activation, and
   `yt-dlp` cookies. A shared browser helper keeps bookmarks/search/youtube
   aligned and makes future browser changes smaller.
 - **Rejected**: blind `firefox` → `helium-browser` replacement. That would leave
-  Firefox `places.sqlite` export, Firefox-only brotab clients, and
+  Firefox `places.sqlite` export, Firefox-only bruvtab clients, and
   `yt-dlp --cookies-from-browser firefox` behind.
 - Trade-off: `yt-dlp` does not know a `helium` browser name, so the YouTube
   picker uses the Chromium cookie extractor pointed at Helium's profile. See

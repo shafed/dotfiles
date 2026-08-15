@@ -1,7 +1,7 @@
 ---
 title: scripts-pickers
 type: component
-updated: 2026-08-14
+updated: 2026-08-15
 covers:
   - scripts/lib.sh
   - scripts/apps.sh
@@ -112,16 +112,18 @@ Design decisions:
 ### bookmarks.sh — bookmarks (focus an existing browser tab)
 
 Fuzzy search over bookmarks, opens in Helium **preferring an already-open tab**
-via **brotab** (`bt list` → `bt activate --focused`) rather than duplicating it.
+via **bruvtab** (`bruvtab list` → `bruvtab activate --focused`) rather than
+duplicating it.
 
-⚠️ Gotcha (brotab): `bt` is an optional dependency (pipx), requires the brotab
-extension and native-messaging manifest to be installed for Helium. Without it
-— fallback to launching the URL with `helium-browser`.
-`bt activate --focused` on Hyprland doesn't raise the window itself, so the
+⚠️ Gotcha (bruvtab): `bruvtab` is an optional dependency (uv tool/pipx),
+requires the bruvtab extension and native-messaging manifest to be installed for
+Helium. Without it —
+fallback to launching the URL with `helium-browser`.
+`bruvtab activate --focused` on Hyprland doesn't raise the window itself, so the
 window is raised manually — `focus_browser_for_title` finds the window by tab
 title (the tab title becomes the window title after activation), so that the tab
 on the YouTube ws wins, not some random other browser window. `lib.sh` filters
-brotab prefixes to Helium/Chromium-like clients so a leftover Firefox brotab
+bruvtab prefixes to Helium/Chromium-like clients so a leftover Firefox bruvtab
 client cannot steal a migrated open.
 
 - Sources: its own `bookmarks.tsv`, the private dotfiles-private, and an
@@ -139,7 +141,7 @@ search.sh"): the "search the web" address-bar-like half was carved out into its
 own independent QAT with no bookmark rows — bookmarks.sh now only searches
 bookmarks. You type a query → live Google suggestions
 (`suggestqueries.google.com`) → Enter on a suggestion or on your raw query opens
-the search in Helium (same brotab logic as bookmarks.sh). The Google suggestions
+the search in Helium (same bruvtab logic as bookmarks.sh). The Google suggestions
 URL still uses `client=firefox`; that is only Google's response format selector,
 not a local Firefox dependency.
 

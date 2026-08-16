@@ -22,7 +22,7 @@ esac
 REQUIRED_PKGS=(
   "hyprland:hyprland"
   "uwsm:uwsm"
-  "kanata:kanata (AUR)"
+  "kanata:kanata-bin (AUR)"
   "kitty:kitty"
   "helium-browser:helium-browser-bin (AUR)"
   "waybar:waybar"

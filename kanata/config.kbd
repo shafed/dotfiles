@@ -113,7 +113,6 @@
   y (cmd helium-browser --new-window https://www.youtube.com/playlist?list=WL)
   u (multi (on-press tap-vkey apps-us) (cmd zsh -lc "$HOME/dotfiles/scripts/youtube-qat.sh")) ;; youtube channel search QAT
   b (multi (on-press tap-vkey apps-us) (cmd zsh -lc "$HOME/dotfiles/scripts/bookmarks.sh")) ;; bookmarks fzf QAT
-  f (multi (on-press tap-vkey apps-us) (cmd zsh -lc "$HOME/dotfiles/scripts/search.sh")) ;; web search fzf QAT
   a (multi (on-press tap-vkey apps-us) (cmd zsh -lc "$HOME/dotfiles/scripts/apps.sh")) ;; applications fzf QAT
   o (t! kitty-send C-S-o)   ;; obsidian session
   w (t! kitty-send C-S-w)   ;; downloads session

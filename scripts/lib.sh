@@ -83,6 +83,18 @@ main_kitty_socket() {
 focus_main_kitty() {
   command -v hyprctl >/dev/null 2>&1 || return 0
   hyprctl dispatch "hl.dsp.focus({ window = \"class:kitty\" })" >/dev/null 2>&1 || true
+
+  # Wait for the OS-level focus dispatch above to actually land before
+  # returning. Without this, a keypress immediately following goto_session
+  # (e.g. kitty_mod+t right after a session switch) can still be delivered
+  # to whatever previously had focus rather than the main kitty window,
+  # racing the session-inheriting launch mapping in kitty.conf.
+  local i
+  for i in {1..20}; do
+    [[ "$(hyprctl activewindow -j 2>/dev/null | jq -r '.class // empty' 2>/dev/null)" == "kitty" ]] && return 0
+    sleep 0.05
+  done
+  return 0
 }
 
 # run_qat_panel <instance-group> [command...] — show (or toggle) the QAT panel

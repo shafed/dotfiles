@@ -21,6 +21,18 @@ The most thought-out and fragile part of the keymap. See also
 Wayland-specific, it just needs `/dev/uinput`. Reload after editing `config.kbd`
 with `systemctl --user restart kanata`.
 
+⚠️ **`ExecStart` must point at a `cmd`-enabled binary** (currently
+`/usr/bin/kanata_cmd_allowed` from the AUR `kanata-bin` package), because
+`config.kbd` sets `danger-enable-cmd yes` and leans on `(cmd ...)` throughout
+(app switching, screenshots, layer-switch notifications, symlayout watch,
+`open-url.sh`, etc). The `cmd` action is a Cargo feature disabled in upstream's
+default build, so plain `kanata`/AUR `kanata` won't parse the config at all.
+`kanata-bin` ships two binaries — `/usr/bin/kanata` (no cmd) and
+`/usr/bin/kanata_cmd_allowed` (cmd-enabled) — install the former by accident and
+every `(cmd ...)` binding silently fails to start. (2026-08-16: switched here
+from a manual `cargo build --release --features cmd` install so updates come
+through `yay -Syu` instead of a manual rebuild.)
+
 ⚠️ Gotcha: the unit needs `After=`, `BindsTo=`, **and** `WantedBy=` on
 `graphical-session.target` — not `default.target`. Several bindings shell out to
 `hyprctl` (`sw`, `x`, `z`, `q`), which needs `HYPRLAND_INSTANCE_SIGNATURE` in

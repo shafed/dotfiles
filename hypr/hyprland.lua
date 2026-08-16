@@ -41,6 +41,10 @@ hl.on("hyprland.start", function()
   )
   hl.exec_cmd("hypridle")
   hl.exec_cmd("hyprsunset")
+  hl.exec_cmd(
+    "systemctl --user import-environment WAYLAND_DISPLAY DISPLAY XDG_CURRENT_DESKTOP "
+      .. "&& systemctl --user restart adrop.service"
+  )
 end)
 
 -------------------------------

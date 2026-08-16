@@ -96,6 +96,16 @@ on purpose. Tuned empirically — change with care.
 `r`, `w`) are instant, but "letter + bigram" can misfire. Deliberate, in
 exchange for fast layer entry.
 
+⚠️ **`lalt`/`ralt` tap-hold timeout is keyboard-hardware sensitive.** They used
+a tighter 160ms hold-timeout (vs the `$hold-time` 200ms everything else uses)
+until 2026-08-16. On the desktop's Razer Huntsman (optical switches, near-zero
+travel) that's easy to release under; on the HP Envy x360's built-in
+membrane/chiclet keyboard, taps routinely ran past 160ms and silently resolved
+as hold (entering the apps layer, doing nothing visible) instead of firing
+`ralt`'s tap action (switch xkb layout) — felt like "Alt doesn't switch
+language immediately." Bumped both to `$hold-time` to match the rest of the
+config.
+
 ## Symbol layers + xkb US-wrap
 
 ⚠️ The problem: on the RU layout `S-2` produces `"`, not `@`. So layer entry

@@ -88,8 +88,8 @@
   ; (t! hrm 400 ; ralt)
 
   ;; functional keys
-  lalt (t! th $tot 160 bspc @apps-enter) ;; tap=bspc hold=apps
-  ralt (t! th $tot 160 @sw @apps-enter)  ;; tap=switch lang hold=apps
+  lalt (t! th $tot $hold-time bspc @apps-enter) ;; tap=bspc hold=apps
+  ralt (t! th $tot $hold-time @sw @apps-enter)  ;; tap=switch lang hold=apps
   c (t! th $tap-time $hold-time c C-c)
   v (t! th $tap-time $hold-time v C-v)
   b (t! th $tap-time $hold-time b (macro @aterm 100 A-tab)) ;; kitty last session (goto_session -1)

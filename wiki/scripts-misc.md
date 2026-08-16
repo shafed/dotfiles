@@ -1,20 +1,20 @@
 ---
 title: scripts-misc
 type: component
-updated: 2026-08-14
+updated: 2026-08-16
 covers:
   - scripts/watch-downloads.sh
   - scripts/sudo-notify.sh
   - scripts/obsidian-sync.sh
   - scripts/daily-notes.sh
   - scripts/symlayout-watch.sh
+  - scripts/open-url.sh
 ---
 
 # scripts — standalone helpers
 
 Parent: [scripts](scripts.md). Unrelated one-off scripts; each section is
 self-contained.
-
 
 ## watch-downloads.sh — Downloads clipboard watcher
 
@@ -42,20 +42,20 @@ unversioned file in `~/.local/bin`. `bootstrap.sh` writes this wrapper (see
 `git clone` + `./bootstrap.sh` gets the notification working with no manual
 step.
 
-Sends a `notify-send` if a sudo call is about to block on a password **and**
-the terminal window it's running in isn't currently focused (Hyprland-only,
-via `hyprctl activewindow`) — otherwise a password prompt sitting in a
-background terminal goes unnoticed. Design:
+Sends a `notify-send` if a sudo call is about to block on a password **and** the
+terminal window it's running in isn't currently focused (Hyprland-only, via
+`hyprctl activewindow`) — otherwise a password prompt sitting in a background
+terminal goes unnoticed. Design:
 
-- First does `sudo -n true` (non-interactive credential check): if a valid
-  sudo timestamp already exists, no prompt will occur, so it skips the
-  notification path entirely.
+- First does `sudo -n true` (non-interactive credential check): if a valid sudo
+  timestamp already exists, no prompt will occur, so it skips the notification
+  path entirely.
 - Otherwise walks up the process tree from its own PID (capped at 12 hops) to
   find the enclosing terminal emulator (`TERMINAL_COMMS` — kitty, alacritty,
   foot, etc.), and compares that PID against Hyprland's active window PID.
 - Always `exec`s the real `/usr/bin/sudo` at the end regardless of the notify
-  path, so behavior/exit code/stdio are byte-identical to calling sudo
-  directly — this wrapper is meant to be fully transparent.
+  path, so behavior/exit code/stdio are byte-identical to calling sudo directly
+  — this wrapper is meant to be fully transparent.
 
 ## obsidian-sync.sh
 
@@ -74,12 +74,13 @@ push-on-exit so call sites stop inlining their own `git pull`/`git push`.
 - Unattended failures are printed and sent as critical desktop notifications
   with a requested three-second lifetime, so they are visible without lingering.
 
-Call sites: [`../kitty/sessions/obsidian.kitty-session`](../kitty/sessions/obsidian.kitty-session)
+Call sites:
+[`../kitty/sessions/obsidian.kitty-session`](../kitty/sessions/obsidian.kitty-session)
 and `daily-notes.sh` (pull side, see below and [sessions](sessions.md)),
 [`../nvim/lua/utils/obsidian.lua`](../nvim/lua/utils/obsidian.lua) (push side —
 `push_with_cooldown` for frequent events and detached `push_now` for exit
-events; the latter ignores the cooldown so a recent focus-loss push does not
-eat the last opportunity to start syncing before Neovim exits).
+events; the latter ignores the cooldown so a recent focus-loss push does not eat
+the last opportunity to start syncing before Neovim exits).
 
 ## daily-notes.sh
 
@@ -90,10 +91,10 @@ must stay in sync with `daily_notes_folder` in the vault's `.moxide.toml`.
 
 On first entry it does `obsidian-sync.sh pull`, then opens straight into the
 note (`nvim "+norm G" <full_path>`) — deliberately **no** `persistence.load()`.
-Earlier versions tried combining the two for a "reopen last layout"
-convenience, but the journal directory is shared by every daily note, so
-persistence could restore an older multi-tab layout instead of showing today's
-note. See [sessions](sessions.md) for the history.
+Earlier versions tried combining the two for a "reopen last layout" convenience,
+but the journal directory is shared by every daily note, so persistence could
+restore an older multi-tab layout instead of showing today's note. See
+[sessions](sessions.md) for the history.
 
 ## symlayout-watch.sh
 
@@ -107,3 +108,13 @@ Forces the `us` layout while kanata's symbol layers are active. Called
 - `enter` remembers the current layout index in a state file and switches to
   `us`; `leave` restores the saved index. The state file also guards against a
   double enter.
+
+## open-url.sh
+
+Thin non-interactive wrapper around `open_or_focus_url` (`lib.sh`,
+[scripts-pickers](scripts-pickers.md)) — no fzf, no QAT panel. Takes a URL (and
+optional tab-name for the title-match tier) as argv and either focuses a
+matching already-open tab or opens a new one. Used by kanata's `browser` layer
+bindings ([kanata](kanata.md)) so its one-key site shortcuts (ChatGPT, Claude,
+Perplexity, Gmail, Reverso) reuse an existing tab instead of piling up
+duplicates on every press.

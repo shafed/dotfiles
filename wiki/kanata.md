@@ -1,11 +1,12 @@
 ---
 title: kanata
 type: component
-updated: 2026-08-15
+updated: 2026-08-16
 covers:
   - kanata/config.kbd
   - kanata/switchApp.sh
   - scripts/symlayout-watch.sh
+  - scripts/open-url.sh
   - systemd/user/kanata.service
 ---
 
@@ -17,20 +18,21 @@ The most thought-out and fragile part of the keymap. See also
 ## Runs as a systemd user service
 
 `../systemd/user/kanata.service`, not Hyprland's `exec-once` — kanata isn't
-Wayland-specific, it just needs `/dev/uinput`. Reload after editing
-`config.kbd` with `systemctl --user restart kanata`.
+Wayland-specific, it just needs `/dev/uinput`. Reload after editing `config.kbd`
+with `systemctl --user restart kanata`.
 
 ⚠️ Gotcha: the unit needs `After=`, `BindsTo=`, **and** `WantedBy=` on
 `graphical-session.target` — not `default.target`. Several bindings shell out to
 `hyprctl` (`sw`, `x`, `z`, `q`), which needs `HYPRLAND_INSTANCE_SIGNATURE` in
-the environment. `After=` alone only *orders* two units that are both already
+the environment. `After=` alone only _orders_ two units that are both already
 starting; it doesn't make kanata wait for the target or pull it in. Under the
 old `WantedBy=default.target`, kanata started via that unrelated path up to a
-couple of seconds *before* the target went active — so it came up with no
-Hyprland env and those bindings silently failed (`HYPRLAND_INSTANCE_SIGNATURE
-not set!` in the journal). `WantedBy=graphical-session.target` makes it a real
-dependent of the target's start job; `BindsTo=` also stops it when the session
-goes away, which is right since its `hyprctl` calls are meaningless without one.
+couple of seconds _before_ the target went active — so it came up with no
+Hyprland env and those bindings silently failed
+(`HYPRLAND_INSTANCE_SIGNATURE not set!` in the journal).
+`WantedBy=graphical-session.target` makes it a real dependent of the target's
+start job; `BindsTo=` also stops it when the session goes away, which is right
+since its `hyprctl` calls are meaningless without one.
 
 ⚠️ `Requisite=graphical-session.target` was tried first and made it **worse**:
 it doesn't wait, it checks at job-scheduling time and hard-fails the start if
@@ -60,7 +62,7 @@ misfires.
 
 - `(neutral hold)` + `neutral-keys` (digits, spc/tab/ret/bspc/esc) — outside
   `defhands`, but must preserve hold so Super+2, Ctrl+Space, Shift+Tab work.
-- `(timeout hold)` — if the interrupting key was *held* past the timeout, force
+- `(timeout hold)` — if the interrupting key was _held_ past the timeout, force
   hold, giving combos like `hold j` + `hold v` → `C-S-v`.
 - ⚠️ Gotcha: same-hand defaults to **tap**, so one-handed mod combos don't work
   through HRM at all. One-handed Ctrl+Shift moved out to a chord.
@@ -88,11 +90,11 @@ exchange for fast layer entry.
 switches kanata's **xkb device** to US (index 0) and restores the previous index
 on exit, making `S-...` yield the same symbols under either language.
 
-The `sym-enter` aliases wrap `layer-while-held` in
-`(on-press tap-vkey sym-us)` / `(on-release tap-vkey sym-restore)`, which call
+The `sym-enter` aliases wrap `layer-while-held` in `(on-press tap-vkey sym-us)`
+/ `(on-release tap-vkey sym-restore)`, which call
 [`../scripts/symlayout-watch.sh`](../scripts/symlayout-watch.sh) directly — no
-TCP server. It stores the previous index in `/tmp/symlayout-watch-$UID-kanata.layout`
-and guards against a double enter.
+TCP server. It stores the previous index in
+`/tmp/symlayout-watch-$UID-kanata.layout` and guards against a double enter.
 
 The layout is **frequency-ordered**: hot symbols on the strong home row, with
 `symbols2` as an escalation (add the index finger) for rarer ones. Symbols are
@@ -111,30 +113,28 @@ functional. Re-derive from the actual key codes when auditing.
 session action ([sessions](sessions.md)). ⚠️ Gotcha: without the settle delay
 the hotkey goes out before kitty has focus and the session doesn't switch.
 
-⚠️ **`switchApp.sh`'s else-branch also now `pkill -x`s the app before
-launching it** (2026-08-15): a windowless-but-running process (e.g. one stuck
-retrying a failed EGL context) blocks `hyprctl clients | grep -q "class:
-..."` forever and, for single-instance apps, absorbs every further launch
-attempt via IPC without ever showing a window — so the key silently does
-nothing. Killing whatever's already running by that name before relaunching
-clears that stuck state.
+⚠️ **`switchApp.sh`'s else-branch also now `pkill -x`s the app before launching
+it** (2026-08-15): a windowless-but-running process (e.g. one stuck retrying a
+failed EGL context) blocks `hyprctl clients | grep -q "class: ..."` forever and,
+for single-instance apps, absorbs every further launch attempt via IPC without
+ever showing a window — so the key silently does nothing. Killing whatever's
+already running by that name before relaunching clears that stuck state.
 
-⚠️ **Gotcha — `cmd`'s `zsh -lc` is a login shell but not an *interactive*
-one, so `.zshrc` never sources**, only `.zshenv`/`.zprofile`. Any `PATH`
-prepend that lives in `.zshrc` (here: `~/.local/bin`, see `.zshrc:178`) is
-invisible to every `(cmd zsh -lc "...")` binding. This silently broke the `z`
-binding for [sioyek](sioyek.md): it called bare `sioyek`, which under
-kanata's shell resolved to `/usr/bin/sioyek` instead of the
-`~/.local/bin/sioyek` wrapper that forces `QT_QPA_PLATFORM=xcb` — so it hit
-the EGL_BAD_MATCH bug every time, while the exact same `sioyek` command
-worked fine from an interactive shell. Fix: reference launcher wrappers by
-full path (`$HOME/.local/bin/sioyek`) in `config.kbd` instead of relying on
-`PATH`.
+⚠️ **Gotcha — `cmd`'s `zsh -lc` is a login shell but not an _interactive_ one,
+so `.zshrc` never sources**, only `.zshenv`/`.zprofile`. Any `PATH` prepend that
+lives in `.zshrc` (here: `~/.local/bin`, see `.zshrc:178`) is invisible to every
+`(cmd zsh -lc "...")` binding. This silently broke the `z` binding for
+[sioyek](sioyek.md): it called bare `sioyek`, which under kanata's shell
+resolved to `/usr/bin/sioyek` instead of the `~/.local/bin/sioyek` wrapper that
+forces `QT_QPA_PLATFORM=xcb` — so it hit the EGL_BAD_MATCH bug every time, while
+the exact same `sioyek` command worked fine from an interactive shell. Fix:
+reference launcher wrappers by full path (`$HOME/.local/bin/sioyek`) in
+`config.kbd` instead of relying on `PATH`.
 
 ## apps layer + force-English
 
 Holding the thumb key gives the `apps` launcher layer. ⚠️ The layer itself does
-**not** touch the layout — force-English is attached to the *actions*
+**not** touch the layout — force-English is attached to the _actions_
 (`(on-press tap-vkey apps-us)` → `symlayout-watch.sh app`), so fzf pickers and
 rofimoji always start in English while a bare hold/release stays harmless.
 
@@ -148,9 +148,20 @@ Deliberately removed and not to be reinstated: `flameshot` + its service
 (2026-07-18, no daemon needed since hyprshot runs on demand) and `satty`
 annotation on the region path (2026-08-03).
 
+## browser layer (site shortcuts)
+
+Held from `apps`, `s`, then a one-key press dispatches straight to a site
+(ChatGPT, Claude, Perplexity, Gmail, Reverso). Each key runs
+[`scripts/open-url.sh`](../scripts/open-url.sh), not a bare
+`helium-browser <url>` — the script goes through `open_or_focus_url`
+([scripts-pickers](scripts-pickers.md)) so pressing the key again **focuses the
+existing tab** instead of opening a duplicate. Same `bruvtab`-based mechanism as
+`bookmarks.sh`; the script exists so kanata can drive it without an fzf picker
+in between.
+
 ## numplain2
 
-`numplain` gives plain digits on the left hand; `numplain2` gives the *shifted*
+`numplain` gives plain digits on the left hand; `numplain2` gives the _shifted_
 symbols of the digit row from the same positions. Why a separate layer rather
 than a real Shift: it preserves digit-position muscle memory and avoids leaving
 for the symbol layers.

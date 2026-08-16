@@ -126,12 +126,14 @@
   caps caps
 )
 
+;; each binding focuses an already-open tab (via bruvtab) instead of opening a
+;; duplicate; see scripts/open-url.sh.
 (deflayermap (browser)
-  e (cmd helium-browser https://mail.google.com/mail/u/0/#inbox)
-  f (cmd helium-browser https://www.perplexity.ai)
-  g (cmd helium-browser https://chatgpt.com)
-  d (cmd helium-browser https://claude.ai/new)
-  r (cmd helium-browser https://www.reverso.net/text-translation)
+  e (cmd zsh -lc "$HOME/dotfiles/scripts/open-url.sh https://mail.google.com/mail/u/0/#inbox")
+  f (cmd zsh -lc "$HOME/dotfiles/scripts/open-url.sh https://www.perplexity.ai")
+  g (cmd zsh -lc "$HOME/dotfiles/scripts/open-url.sh https://chatgpt.com")
+  d (cmd zsh -lc "$HOME/dotfiles/scripts/open-url.sh https://claude.ai/new")
+  r (cmd zsh -lc "$HOME/dotfiles/scripts/open-url.sh https://www.reverso.net/text-translation")
 )
 
 ;; right-hand symbols, momentary (s+d held). S-... keycodes output the same

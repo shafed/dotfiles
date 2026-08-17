@@ -1,7 +1,7 @@
 ---
 title: keymap
 type: topic
-updated: 2026-08-14
+updated: 2026-08-17
 covers:
   - kanata/config.kbd
   - hypr/hyprland.lua
@@ -17,7 +17,7 @@ Single source of truth for how the layers divide the keyboard. Component detail:
 ## Three levels and why they don't collide
 
 1. **kanata** (`process-unmapped-keys (all-except lctl ralt)`) intercepts nearly
-   the whole physical keyboard — HRM, chords, layers, symbols — *before* the
+   the whole physical keyboard — HRM, chords, layers, symbols — _before_ the
    compositor sees anything.
 2. **hypr** catches only `Super`. kanata never touches Super, except in
    `numws`/`movews` where Super is **baked into the keycode** and arrives at
@@ -34,8 +34,11 @@ combos when focused, whereas hypr catches Super globally.
 - **normal** — a "safe" layer (letters as-is, `lsft` = switch language), entered
   by holding Enter.
 - **apps** (hold thumb) — launcher: applications, kitty sessions, fzf pickers,
-  and a browser sub-layer on hold `s`. ⚠️ `q` here is `hl.dsp.window.close()`,
-  **not** kill — so tray apps minimize instead of being SIGKILL'd.
+  and a browser sub-layer on hold `s`. ⚠️ `q` here runs
+  [close-window.sh](kanata.md), which is `hl.dsp.window.close()` for most apps —
+  **not** kill, so tray apps minimize instead of being SIGKILL'd — except
+  Telegram, which is force-killed since a graceful close just minimizes it to
+  tray instead of quitting.
 - **symbols / symbols2** (hold `e`/`r`, or chords `s+d` / `s+d+f`) — programmer
   symbols on the right hand, with xkb forced to US ([kanata](kanata.md)).
 - **navi** (hold `w`, or toggle via caps-hold) — arrows and navigation on the
@@ -49,12 +52,12 @@ combos when focused, whereas hypr catches Super globally.
 
 | Keys                | Contenders                            | Resolution                                                                      |
 | ------------------- | ------------------------------------- | ------------------------------------------------------------------------------- |
-| `h j k l`           | kanata HRM / navi / hypr `Super+hjkl` | HRM fires only on opposite-hand hold; kanata never touches Super                 |
-| digits `1-0`        | numplain / hypr `Super+N`             | numplain emits **plain** digits; workspace switching only via numws              |
-| `C-tab` / `C-S-tab` | navi (browser tabs) / kitty           | kitty only catches `C-S-*` while focused                                         |
-| one-handed `C-S`    | HRM can't (same-hand = tap)           | moved to the `d+f` / `j+k` chords                                                |
-| `w+e`               | letter roll vs. Tab chord             | `mod-chord-time 35` + `chords-v2-min-idle 80` separate a roll from a chord       |
-| `Alt-t` / `^[t`     | kitty / zsh / nvim companion toggle   | zsh needs three zsh-vi-mode settings before this fires reliably — [zsh](zsh.md)  |
+| `h j k l`           | kanata HRM / navi / hypr `Super+hjkl` | HRM fires only on opposite-hand hold; kanata never touches Super                |
+| digits `1-0`        | numplain / hypr `Super+N`             | numplain emits **plain** digits; workspace switching only via numws             |
+| `C-tab` / `C-S-tab` | navi (browser tabs) / kitty           | kitty only catches `C-S-*` while focused                                        |
+| one-handed `C-S`    | HRM can't (same-hand = tap)           | moved to the `d+f` / `j+k` chords                                               |
+| `w+e`               | letter roll vs. Tab chord             | `mod-chord-time 35` + `chords-v2-min-idle 80` separate a roll from a chord      |
+| `Alt-t` / `^[t`     | kitty / zsh / nvim companion toggle   | zsh needs three zsh-vi-mode settings before this fires reliably — [zsh](zsh.md) |
 
 ## Forcing the US layout
 

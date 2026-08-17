@@ -107,7 +107,7 @@
 (deflayermap (apps)
   e (multi (on-press tap-vkey apps-us) (cmd zsh -lc "$HOME/dotfiles/kitty/scripts/kitty-zoxide-session.sh")) ;; zoxide session picker QAT
   l (layer-while-held numws)  ;; hold: switch workspace (Super+digit)
-  q (cmd hyprctl dispatch "hl.dsp.window.close()") ;; graceful close -> apps with tray icons minimize instead of quitting
+  q (cmd zsh -lc "$HOME/dotfiles/kanata/close-window.sh") ;; graceful close -> apps with tray icons minimize instead of quitting; telegram is force-killed to actually quit
   t (t! kitty-send C-S-2)   ;; todos session
   r (t! kitty-send C-S-1)   ;; daily note
   y (cmd helium-browser --new-window https://www.youtube.com/playlist?list=WL)

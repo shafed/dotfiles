@@ -1,7 +1,7 @@
 ---
 title: scripts-pickers
 type: component
-updated: 2026-08-15
+updated: 2026-08-18
 covers:
   - scripts/lib.sh
   - scripts/apps.sh
@@ -52,18 +52,19 @@ Key parts of `lib.sh`:
   running main kitty they silently no-op instead of spawning one.
 
 ⚠️ Gotcha (`main_kitty_socket` must exclude QAT panels themselves): every QAT
-panel (apps/bookmarks/youtube) is *also* a `kitty` process (`kitty +kitten
-panel --instance-group=...`), so a naive "argv starts with the kitty binary"
-match is true for panels too, not just the real main terminal. The function
-used to return the first `/tmp/kitty-*` socket matching that prefix, in
+panel (apps/bookmarks/youtube) is _also_ a `kitty` process
+(`kitty +kitten panel --instance-group=...`), so a naive "argv starts with the
+kitty binary" match is true for panels too, not just the real main terminal. The
+function used to return the first `/tmp/kitty-*` socket matching that prefix, in
 lexicographic order — which happens to be the real main kitty only if it was
-started before the panels got their PIDs. On a machine where a panel's PID
-sorts before the main kitty's, `toggle_qat`/`launch_qat` end up sending
-remote-control actions to a panel's own kitty process instead of the main one,
-which fights with that panel's own event loop/fzf for input — symptom:
-apps.sh's picker intermittently stops accepting keystrokes (only Ctrl-C, i.e.
-SIGINT via the tty, still works). Fixed by explicitly skipping any socket
-whose process argv contains `+kitten panel`.
+started before the panels got their PIDs. On a machine where a panel's PID sorts
+before the main kitty's, `toggle_qat`/`launch_qat` end up sending remote-control
+actions to a panel's own kitty process instead of the main one, which fights
+with that panel's own event loop/fzf for input — symptom: apps.sh's picker
+intermittently stops accepting keystrokes (only Ctrl-C, i.e. SIGINT via the tty,
+still works). Fixed by explicitly skipping any socket whose process argv
+contains `+kitten panel`.
+
 - `switch_to_english` — forces the `us` layout (index 0 in `us,ru`) via
   `hyprctl switchxkblayout`, so fzf queries get typed in Latin script even when
   Russian is active. Called inside `launch_qat` on **every** show, because on
@@ -76,6 +77,36 @@ whose process argv contains `+kitten panel`.
   for delivering tabs away from the YouTube workspace. The browser contract is
   centralized in `lib.sh`: `helium-browser`, Hyprland class `helium`, desktop id
   `helium.desktop`, profile `~/.config/net.imput.helium/Default`.
+
+⚠️ Gotcha (switch workspace BEFORE spawning, not after): whenever a new browser
+window has to be created (`open_in_new_browser_window`'s `newwindow` path, and
+the `cold`-start path in `open_or_focus_url` / `youtube.sh`'s `open_url`),
+`switch_to_workspace` is called **first**, then the browser is launched.
+Hyprland places a new window on the currently active workspace, so launching
+before switching made the window flash onto whatever workspace was active —
+visible as a broken fullscreen if that happened to be the YouTube workspace
+mid-video — before the follow-up move dispatch pulled it away. The move/focus
+dispatches after the launch are kept as a belt-and-suspenders fallback, not the
+primary placement mechanism anymore.
+
+⚠️ Gotcha (switching to an empty ws2 races `hyprland.lua`'s `on-created-empty`
+rule): `hl.workspace_rule({ workspace = "2", on_created_empty = browser })`
+auto-launches a bare browser window the moment ws2 is focused while it has zero
+windows — exactly the state `switch_to_workspace` produces right before spawning
+one of its own. Left unhandled, this races: the rule's bare window and the
+script's own (`--new-window` in `open_in_new_browser_window`, or a plain launch
+in the `cold` path) both land, so opening a bookmark while the only browser
+window was fullscreen elsewhere (ws2 therefore empty) visibly opened **twice**
+and took roughly twice as long. Fixed by `switch_to_workspace_for_browser`
+(`lib.sh`): it checks whether the target workspace was empty _before_ switching,
+and if so, polls briefly for a browser window to land there and hands its
+address back via the global `rule_browser_addr`. Callers that see it set reuse
+that window (a plain tab open) instead of also forcing their own.
+`open_in_new_browser_window` and both `cold`-start call sites use it instead of
+the bare `switch_to_workspace`. One cosmetic leftover: the rule's own blank tab
+(`chrome://newtab/`) still sits alongside the opened URL in that window —
+deliberately not auto-closed, since reliably telling "the rule's blank tab"
+apart from a tab the user opened blank on purpose isn't safe to guess.
 
 ⚠️ Gotcha: all external process launches go with `</dev/null` and `disown`. QAT
 keeps the panel open as long as some process holds its tty
@@ -120,8 +151,8 @@ bookmark's display name is threaded in from `bookmarks.sh` for tier 2:
 
 0. **exact normalized URL** (scheme + trailing `/` + `#fragment` stripped) —
    covers the common case (Reverso, Gemini on a direct link).
-1. **same hostname** — covers same-site path/query drift (YouTube `.../watch?v=…`
-   vs bookmark `.../playlist?list=WL`).
+1. **same hostname** — covers same-site path/query drift (YouTube
+   `.../watch?v=…` vs bookmark `.../playlist?list=WL`).
 2. **exact tab title == bookmark name** (fallback only) — covers cross-host
    redirects, e.g. the `chat.openai.com/chat` bookmark matching a live tab at
    `chatgpt.com/`, where only the title survives the redirect. `search.sh` does
@@ -131,8 +162,7 @@ If none match, a new tab is opened.
 
 ⚠️ Gotcha (bruvtab): `bruvtab` is an optional dependency (uv tool/pipx),
 requires the bruvtab extension and native-messaging manifest to be installed for
-Helium. Without it —
-fallback to launching the URL with `helium-browser`.
+Helium. Without it — fallback to launching the URL with `helium-browser`.
 `bruvtab activate --focused` on Hyprland doesn't raise the window itself, so the
 window is raised manually — `focus_browser_for_title` finds the window by tab
 title (the tab title becomes the window title after activation), so that the tab
@@ -159,9 +189,9 @@ search.sh"): the "search the web" address-bar-like half was carved out into its
 own independent QAT with no bookmark rows — bookmarks.sh now only searches
 bookmarks. You type a query → live Google suggestions
 (`suggestqueries.google.com`) → Enter on a suggestion or on your raw query opens
-the search in Helium (same bruvtab logic as bookmarks.sh). The Google suggestions
-URL still uses `client=firefox`; that is only Google's response format selector,
-not a local Firefox dependency.
+the search in Helium (same bruvtab logic as bookmarks.sh). The Google
+suggestions URL still uses `client=firefox`; that is only Google's response
+format selector, not a local Firefox dependency.
 
 ⚠️ Gotcha (debounce): `suggest_rows` does a **leading** `sleep 0.18` before the
 curl. fzf kills the previous reload process on every keystroke, so the pause
@@ -179,22 +209,21 @@ apps layer).
 - Videos open on **ws4** (unlike bookmarks/search, which use ws2).
 - `-H`/`-L` (history/watch-later) read the logged-in session via
   `--cookies-from-browser chromium:~/.config/net.imput.helium/Default` (no
-  OAuth). `yt-dlp` does not support `helium` as a browser name, so the
-  Chromium extractor is pointed at Helium's profile path.
+  OAuth). `yt-dlp` does not support `helium` as a browser name, so the Chromium
+  extractor is pointed at Helium's profile path.
 - `-s` live search: Enter on an empty query opens the page matching the active
   mode — Watch Later for Videos, `youtube.com/feed/channels` for Channels,
   History for History, and the WL playlist in Watch Later mode. This keeps the
   picker useful as a quick route to the corresponding full YouTube view when no
-  item is selected.
-  Otherwise, Enter with no results opens the corresponding full YouTube view
-  with the typed query: regular results for Videos or channel-filtered results
-  for Channels (an `enter:transform` bind checks `{}` for emptiness). History
-  and Watch Later have no reliable URL-addressable video filter, so filtering
-  those feeds remains local to the picker; their no-result fallbacks open the
-  corresponding unfiltered feed pages.
-  ⚠️ Gotcha: the fallback sentinel must stay a plain two-field row, not the
-  usual 6-column shape — `IFS=$'\t' read` collapses *consecutive* tab delimiters
-  (tab is IFS-whitespace), so extra empty columns would swallow the payload into
+  item is selected. Otherwise, Enter with no results opens the corresponding
+  full YouTube view with the typed query: regular results for Videos or
+  channel-filtered results for Channels (an `enter:transform` bind checks `{}`
+  for emptiness). History and Watch Later have no reliable URL-addressable video
+  filter, so filtering those feeds remains local to the picker; their no-result
+  fallbacks open the corresponding unfiltered feed pages. ⚠️ Gotcha: the
+  fallback sentinel must stay a plain two-field row, not the usual 6-column
+  shape — `IFS=$'\t' read` collapses _consecutive_ tab delimiters (tab is
+  IFS-whitespace), so extra empty columns would swallow the payload into
   nothing.
 
 ⚠️ Gotcha (cache/preview): the preview makes **no** network requests on hover —

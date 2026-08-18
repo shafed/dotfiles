@@ -523,11 +523,15 @@ open_url() {
       exit 0
     fi
 
-    # Browser only on ws4, or cold start: open a tab and pull the browser to ws4.
+    # Browser only on ws4, or cold start: switch to ws4 FIRST so a cold-started
+    # browser lands there directly (see lib.sh switch_to_workspace_for_browser)
+    # instead of appearing on whatever workspace we came from and getting
+    # moved after. Then open a tab and pull the browser to ws4.
     # Backgrounded: on a cold start the browser may keep the launcher alive (no running
     # instance to hand off to), so it blocks for the entire browser session
     # instead of returning immediately -- without "&" move_browser_when_up would
     # never even start polling until the browser quits.
+    switch_to_workspace_for_browser "$ws"
     open_browser_url "$url"
     move_browser_when_up "$ws"
   ' _ "$script_dir/lib.sh" "$url" "$browser_workspace" </dev/null >/dev/null 2>&1

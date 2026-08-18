@@ -197,6 +197,63 @@ goto_kitty_session() {
 #                    Browser window helpers (Hyprland + jq)
 ###############################################################################
 
+# switch_to_workspace <workspace> — focus a workspace directly (no window
+# involved). Callers that are about to spawn a browser window use this FIRST,
+# so the window is created already on the target workspace instead of on
+# whatever workspace is currently active and then moved: a window briefly
+# appearing on the active workspace breaks a fullscreen video there (e.g.
+# YouTube on ws4) even though it gets moved away a moment later. Best-effort:
+# silent no-op outside Hyprland.
+switch_to_workspace() {
+  local workspace="$1"
+  hyprctl dispatch "hl.dsp.focus({ workspace = \"${workspace}\" })" >/dev/null 2>&1 || true
+}
+
+# True when the given workspace currently has zero windows of any kind.
+workspace_is_empty() {
+  hyprctl clients -j 2>/dev/null | jq -e --argjson ws "$1" '
+    all(.[]; .workspace.id != $ws)
+  ' >/dev/null 2>&1
+}
+
+# Print the address of a configured-browser window that lives on <workspace>,
+# or nothing if there is none there (yet).
+browser_window_on_workspace() {
+  hyprctl clients -j 2>/dev/null | jq -r --arg class "$browser_class" --argjson ws "$1" '
+    .[] | select(.class == $class and .workspace.id == $ws) | .address
+  ' 2>/dev/null | head -n1
+}
+
+# switch_to_workspace_for_browser <workspace> — switch_to_workspace, but aware
+# of Hyprland's `on-created-empty` workspace rules (e.g. ws2's
+# `hl.workspace_rule({ workspace = "2", on_created_empty = browser })` in
+# hyprland.lua): switching to an EMPTY workspace that carries such a rule
+# auto-launches its own bare browser window right there. If a caller then also
+# force-opens its own window (`open_in_new_browser_window`'s `--new-window`),
+# the two race and BOTH land — a redundant second browser process/window on
+# top of the one the rule already created, which roughly doubles the visible
+# wait and shows up as the picker "opening twice". So: note whether the
+# workspace was empty *before* switching, and if it was, poll briefly for a
+# browser window to land there and report its address via the global
+# `rule_browser_addr` so the caller can reuse it instead of also spawning its
+# own.
+rule_browser_addr=""
+switch_to_workspace_for_browser() {
+  local workspace="$1" was_empty=false i
+  rule_browser_addr=""
+
+  workspace_is_empty "$workspace" && was_empty=true
+  switch_to_workspace "$workspace"
+  [[ "$was_empty" == true ]] || return 0
+
+  for i in {1..4}; do
+    rule_browser_addr="$(browser_window_on_workspace "$workspace")"
+    [[ -n "$rule_browser_addr" ]] && return 0
+    sleep 0.15
+  done
+  return 0
+}
+
 # True when any configured browser window exists.
 browser_running() {
   hyprctl clients -j 2>/dev/null | jq -e --arg class "$browser_class" '
@@ -229,12 +286,27 @@ open_browser_url() {
   return 0
 }
 
-# open_in_new_browser_window <url> <workspace> — open the URL in a fresh browser
-# window, then move that window (and only that window) to <workspace> and focus
-# it. The window address set is diffed before/after the launch so the move
-# targets the newly created window rather than an existing one.
+# open_in_new_browser_window <url> <workspace> — switch to <workspace> FIRST,
+# then open the URL in a fresh browser window there (Hyprland places new
+# windows on the active workspace), and focus it. The window address set is
+# diffed before/after the launch so the focus targets the newly created window
+# rather than an existing one. Switching before launching (rather than
+# launching then moving) matters: opening the window on whatever workspace was
+# active and moving it a moment later makes it flash there first, which breaks
+# a fullscreen video on that workspace (e.g. YouTube on ws4).
 open_in_new_browser_window() {
   local url="$1" workspace="$2" before after i new_addr=""
+
+  switch_to_workspace_for_browser "$workspace"
+  if [[ -n "$rule_browser_addr" ]]; then
+    # switch_to_workspace_for_browser found $workspace empty and a workspace
+    # rule already landed a bare browser window there — reuse it (a plain tab
+    # open) instead of ALSO forcing --new-window below, which would spawn a
+    # redundant second window racing the rule's.
+    open_browser_url "$url"
+    hyprctl dispatch "hl.dsp.focus({ window = \"address:${rule_browser_addr}\" })" >/dev/null 2>&1 || true
+    return 0
+  fi
 
   before="$(browser_window_addresses)"
   # </dev/null: never hand the browser the caller's tty. A QAT panel stays open
@@ -468,6 +540,12 @@ open_or_focus_url() {
     open_in_new_browser_window "$url" "$target_workspace"
     ;;
   cold)
+    # Switch first: a cold-started browser lands on the active workspace, so
+    # this puts it there directly instead of it appearing wherever we were
+    # and then getting moved (see switch_to_workspace_for_browser, which also
+    # detects a workspace rule like ws2's on-created-empty=browser beating us
+    # to it so we don't ALSO spawn our own on top of it).
+    switch_to_workspace_for_browser "$target_workspace"
     open_browser_url "$url"
     move_browser_when_up "$target_workspace"
     ;;

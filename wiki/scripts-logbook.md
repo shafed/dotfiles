@@ -1,7 +1,7 @@
 ---
 title: scripts-logbook
 type: component
-updated: 2026-08-14
+updated: 2026-08-22
 covers:
   - scripts/generate_logbook.py
   - scripts/nvim-edit-handler.sh
@@ -41,6 +41,12 @@ Key decisions (from git evolution):
 - **note-links / nvim-edit** (`fc30a5c`): in the feed and history — links
   `nvim-edit://<percent-encoded absolute path>` that open the session's source
   md file. Handled by `nvim-edit-handler.sh` (see below).
+- **Events** (`training/events.md`): one event = `YYYY-MM-DD: #bad|#neutral|
+  #good text`. Prettier hard-wraps long lines, so `parse_events` treats a
+  non-empty, non-heading continuation line as the previous event's next line:
+  the break is kept (`\n`) and rendered as a visible `<br>` (WYSIWYG; a blank
+  line ends the block). A line that starts like an event but has a bad date or
+  unknown tag is warned about and skipped — never glued to the event above it.
 
 ## nvim-edit-handler.sh — the `nvim-edit://` handler
 

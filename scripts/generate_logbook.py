@@ -31,6 +31,8 @@ FILENAME_RE = re.compile(r"^(\d{4})-(\d{2})-(\d{2})-Day-\d+$")
 EVENT_LINE_RE = re.compile(
     r"^(?:[-*]\s+)?(\d{4}-\d{2}-\d{2}):\s*#(bad|neutral|good)\b\s*(.*)$", re.I
 )
+# Looks like an event start ("YYYY-MM-DD: ...") but failed the tag check.
+EVENT_MAYBE_RE = re.compile(r"^(?:[-*]\s+)?\d{4}-\d{2}-\d{2}:\s*\S")
 EVENTS_FILE = "events.md"
 # Non-session markdown files that should be ignored by the session scan without
 # a warning (events + hand-kept aggregates).
@@ -315,26 +317,47 @@ def parse_session(path: Path) -> Session | None:
 def parse_events(path: Path) -> list[Event]:
     """Parse ``training/events.md`` into a list of timeline Events.
 
-    Only lines matching ``YYYY-MM-DD: #bad|#neutral text`` are kept; empty
-    lines, headings and other markdown are ignored. The order of events on the
-    same date follows the file order.
+    An event starts with ``YYYY-MM-DD: #bad|#neutral|#good text``; headings and
+    empty lines are ignored. Prettier hard-wraps long lines, so a non-empty,
+    non-heading line that does not start a new event continues the previous
+    event's text on a new line (kept as "\n" and rendered as <br>; a blank line
+    ends the block). The order of events on the same date follows the file order.
     """
     if not path.is_file():
         return []
     events: list[Event] = []
+    cur: Event | None = None
     for raw in path.read_text(encoding="utf-8").split("\n"):
         line = raw.strip()
-        if not line or line.startswith("#") and not EVENT_LINE_RE.match(line):
-            continue
         m = EVENT_LINE_RE.match(line)
-        if not m:
+        if m:
+            try:
+                date = dt.date.fromisoformat(m.group(1))
+            except ValueError:
+                print(
+                    f"WARNING: {path.name}: bad event date in {line!r}", file=sys.stderr
+                )
+                cur = None
+                continue
+            cur = Event(date=date, tag=m.group(2).lower(), text=m.group(3).strip())
+            events.append(cur)
             continue
-        try:
-            date = dt.date.fromisoformat(m.group(1))
-        except ValueError:
-            print(f"WARNING: {path.name}: bad event date in {line!r}", file=sys.stderr)
+        if not line:
+            cur = None  # blank line ends a wrapped event
             continue
-        events.append(Event(date=date, tag=m.group(2).lower(), text=m.group(3).strip()))
+        if line.startswith("#"):
+            continue  # heading
+        if EVENT_MAYBE_RE.match(line):
+            # Date + unknown/missing tag -> not glued to the previous event.
+            print(
+                f"WARNING: {path.name}: ignored malformed event {line!r}",
+                file=sys.stderr,
+            )
+            cur = None
+            continue
+        if cur is not None:
+            # prettier hard-wrapped continuation -> keep the break visible
+            cur.text = line if not cur.text else f"{cur.text}\n{line}"
     return events
 
 
@@ -514,12 +537,14 @@ def render_session(s: Session) -> str:
 
 
 def render_event(e: Event) -> str:
+    # hard newlines in the source (e.g. prettier wraps) stay visible
+    body = "<br>".join(md_inline(line) for line in e.text.split("\n"))
     return (
         f'<article class="event event-{e.tag}" data-date="{e.date.isoformat()}" '
         f'data-year="{e.date.year}" data-month="{e.date.month:02d}">'
         f"<time>{e.date.isoformat()}</time>"
         f'<span class="event-tag">{html.escape(e.tag)}</span>'
-        f'<span class="event-body">{md_inline(e.text)}</span>'
+        f'<span class="event-body">{body}</span>'
         "</article>"
     )
 

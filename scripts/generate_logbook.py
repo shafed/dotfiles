@@ -22,11 +22,14 @@ from urllib.parse import quote
 TRAINING_DIR = Path(os.environ.get("LOGBOOK_ROOT", "~/obsidian/training")).expanduser()
 # Written outside the vault so the generated artifact never pollutes/gets
 # pushed by the vault's `git add -A` sync (see scripts/obsidian-sync.sh).
-OUTPUT = Path(os.environ.get("LOGBOOK_CACHE", "~/.cache/logbook")).expanduser() / "logbook.html"
+OUTPUT = (
+    Path(os.environ.get("LOGBOOK_CACHE", "~/.cache/logbook")).expanduser()
+    / "logbook.html"
+)
 
 FILENAME_RE = re.compile(r"^(\d{4})-(\d{2})-(\d{2})-Day-\d+$")
 EVENT_LINE_RE = re.compile(
-    r"^(?:[-*]\s+)?(\d{4}-\d{2}-\d{2}):\s*#(bad|neutral)\b\s*(.*)$", re.I
+    r"^(?:[-*]\s+)?(\d{4}-\d{2}-\d{2}):\s*#(bad|neutral|good)\b\s*(.*)$", re.I
 )
 EVENTS_FILE = "events.md"
 # Non-session markdown files that should be ignored by the session scan without
@@ -93,7 +96,7 @@ class Session:
 @dataclass
 class Event:
     date: dt.date
-    tag: str  # "bad" | "neutral"
+    tag: str  # "bad" | "neutral" | "good"
     text: str
 
 
@@ -726,9 +729,12 @@ details.extra summary{cursor:pointer;font-size:12px;color:var(--accent);
 .event-bad .event-tag{color:#9d3535}
 .event-neutral{background:#eceae4}
 .event-neutral .event-tag{color:var(--soft)}
+.event-good{background:#e6f3ec}
+.event-good .event-tag{color:#3f8f68}
 @media (prefers-color-scheme:dark){
   .event-bad{background:#3a211e}
   .event-neutral{background:#2a2922}
+  .event-good{background:#1d3126}
 }
 
 mark{background:var(--mark);color:inherit;border-radius:2px;padding:0 1px}

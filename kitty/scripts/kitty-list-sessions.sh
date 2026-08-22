@@ -13,7 +13,7 @@
 
 set -euo pipefail
 
-default_mode="normal"
+default_mode="insert"
 
 script_path="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/$(basename -- "${BASH_SOURCE[0]}")"
 kitty_sessions_dir="$HOME/dotfiles/kitty/sessions"

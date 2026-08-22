@@ -141,7 +141,7 @@
 (deflayermap (symbols)
   y grv u [   i ]   o S-=   p XX       ;; ` [ ] +
   h - j S-9 k S-0 l S-2 ; S-;   ' S-'  ;; - ( ) @ : "
-  n S-- m = , S-, . S-.   / S-/      ;; _ = < > ?
+  n = m S-- , S-, . S-.   / S-/      ;; = _ < > ?
 )
 
 ;; second symbol set, momentary (s+d+f held); longer chord beats (s d).
@@ -212,7 +212,7 @@
 )
 
 (deflayermap (normal)
-  lsft @sw-lalt
+  lsft lsft
   rsft rsft
   lalt lalt
   ralt ralt

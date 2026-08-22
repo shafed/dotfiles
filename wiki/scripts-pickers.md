@@ -1,7 +1,7 @@
 ---
 title: scripts-pickers
 type: component
-updated: 2026-08-18
+updated: 2026-08-22
 covers:
   - scripts/lib.sh
   - scripts/apps.sh
@@ -103,10 +103,14 @@ and if so, polls briefly for a browser window to land there and hands its
 address back via the global `rule_browser_addr`. Callers that see it set reuse
 that window (a plain tab open) instead of also forcing their own.
 `open_in_new_browser_window` and both `cold`-start call sites use it instead of
-the bare `switch_to_workspace`. One cosmetic leftover: the rule's own blank tab
-(`chrome://newtab/`) still sits alongside the opened URL in that window —
-deliberately not auto-closed, since reliably telling "the rule's blank tab"
-apart from a tab the user opened blank on purpose isn't safe to guess.
+the bare `switch_to_workspace`. The rule's own blank tab (`chrome://newtab/`) no
+longer lingers alongside the opened URL: `open_browser_url` (`lib.sh`) now
+checks `empty_browser_tab_id` first and, when an empty tab is open, navigates it
+in place via `bruvtab navigate` + `bruvtab activate --focused` instead of
+opening a new one — so the rule's blank tab gets filled in rather than sitting
+next to a second tab. Matches `chrome://newtab/`, `chrome://new-tab-page/`,
+`edge://newtab/`, and `about:blank`; falls back to the old plain-launch behavior
+when `bruvtab` is unavailable or no empty tab is found.
 
 ⚠️ Gotcha: all external process launches go with `</dev/null` and `disown`. QAT
 keeps the panel open as long as some process holds its tty

@@ -278,8 +278,22 @@ browser_window_off_workspace() {
 
 # open_browser_url <url> — open a URL in the configured browser without giving
 # the browser the caller's tty. Used for normal "new tab" delivery.
+#
+# Prefers reusing an already-open empty tab (a fresh "New Tab" page) over
+# spawning a genuinely new one: cold-starting via a Hyprland on-created-empty
+# workspace rule (see switch_to_workspace_for_browser) leaves exactly such an
+# empty tab behind, and shelling out to $browser_bin would otherwise add a
+# second tab next to it instead of filling it in.
 open_browser_url() {
-  local url="$1"
+  local url="$1" empty_tab
+
+  if [[ -x "$bruvtab_bin" ]]; then
+    empty_tab="$(empty_browser_tab_id)"
+    if [[ -n "$empty_tab" ]] && "$bruvtab_bin" navigate "$empty_tab" "$url" >/dev/null 2>&1; then
+      "$bruvtab_bin" activate --focused "$empty_tab" >/dev/null 2>&1 || true
+      return 0
+    fi
+  fi
 
   "$browser_bin" "$url" </dev/null >/dev/null 2>&1 &
   disown
@@ -463,6 +477,37 @@ bruvtab_browser_prefixes() {
           print prefix
           next
         }
+      }
+    }
+  '
+}
+
+# Print the bruvtab tab-id of an empty tab (a fresh "New Tab" page) belonging
+# to the configured browser, or nothing if none is open. Used by
+# open_browser_url to reuse such a tab instead of adding a new one next to it.
+empty_browser_tab_id() {
+  local prefixes
+
+  prefixes="$(bruvtab_browser_prefixes)"
+  [[ -n "$prefixes" ]] || return 0
+
+  "$bruvtab_bin" list 2>/dev/null | awk -F'\t' -v prefixes="$prefixes" '
+    BEGIN {
+      count = split(prefixes, parts, /\n/)
+      for (i = 1; i <= count; i++) {
+        if (parts[i] != "") ok[parts[i]] = 1
+      }
+    }
+    {
+      id = $1
+      prefix = id
+      sub(/\..*/, "", prefix)
+      if (!(prefix in ok)) next
+
+      u = $3
+      if (u ~ /^(chrome|edge):\/\/new-?tab(-page)?\/?$/ || u == "about:blank") {
+        print id
+        exit
       }
     }
   '

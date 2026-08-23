@@ -118,7 +118,7 @@ unset _plugin _repo _zsh_custom_plugins
 
 # Link custom theme from dotfiles (gruvbox-material lives in this repo, not upstream ohmyzsh)
 if [ ! -e "$ZSH_CUSTOM/themes/gruvbox-material.zsh-theme" ]; then
-  ln -s "$HOME/github/dotfiles/zsh/gruvbox-material.zsh-theme" "$ZSH_CUSTOM/themes/gruvbox-material.zsh-theme"
+  ln -sfn "$HOME/github/dotfiles/zsh/gruvbox-material.zsh-theme" "$ZSH_CUSTOM/themes/gruvbox-material.zsh-theme"
 fi
 
 source $ZSH/oh-my-zsh.sh

@@ -19,7 +19,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from urllib.parse import quote
 
-TRAINING_DIR = Path(os.environ.get("LOGBOOK_ROOT", "~/obsidian/training")).expanduser()
+TRAINING_DIR = Path(os.environ.get("LOGBOOK_ROOT", "~/github/obsidian/training")).expanduser()
 # Written outside the vault so the generated artifact never pollutes/gets
 # pushed by the vault's `git add -A` sync (see scripts/obsidian-sync.sh).
 OUTPUT = (
@@ -515,7 +515,7 @@ def render_session(s: Session) -> str:
         )
 
     # nvim-edit:// link -> opens the source file in nvim inside the kitty
-    # obsidian session via ~/dotfiles/scripts/nvim-edit-handler.sh. Path is percent-encoded.
+    # obsidian session via ~/github/dotfiles/scripts/nvim-edit-handler.sh. Path is percent-encoded.
     edit_uri = "nvim-edit://" + quote(str(s.path.resolve()))
     mood_class = f" mood-{s.mood}" if s.mood else ""
     mood_badge = (

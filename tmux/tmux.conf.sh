@@ -1,9 +1,9 @@
 unbind r
 bind r source-file ~/.tmux.conf
 
-tmux_zoxide="~/dotfiles/tmux/tools/scripts/tmux-zoxide-session.sh"
-tmux_list="~/dotfiles/tmux/tools/scripts/tmux-list-sessions.sh"
-daily_note="~/dotfiles/scripts/daily-notes.sh"
+tmux_zoxide="~/github/dotfiles/tmux/tools/scripts/tmux-zoxide-session.sh"
+tmux_list="~/github/dotfiles/tmux/tools/scripts/tmux-list-sessions.sh"
+daily_note="~/github/dotfiles/scripts/daily-notes.sh"
 
 bind -n M-Tab switch-client -l # переключение между двумя последними сессиями
 

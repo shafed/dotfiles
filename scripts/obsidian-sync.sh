@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Shared git sync for the Obsidian vault (~/obsidian). Single source of truth
+# Shared git sync for the Obsidian vault (~/github/obsidian). Single source of truth
 # for the pull-on-session-entry (kitty/sessions/*.kitty-session,
 # daily-notes.sh) and push-on-exit (nvim/lua/utils/obsidian.lua) call sites,
 # which used to each inline their own `git pull`/`git push` command.
@@ -8,7 +8,7 @@ set -euo pipefail
 # OBSIDIAN_VAULT is an override for testing against a throwaway repo; normal
 # use leaves it unset. The lock is keyed to the vault path so test and real
 # repositories do not block each other.
-vault_path="${OBSIDIAN_VAULT:-$HOME/obsidian}"
+vault_path="${OBSIDIAN_VAULT:-$HOME/github/obsidian}"
 cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/obsidian-sync"
 mkdir -p "$cache_dir"
 lock_file="$cache_dir/lock$(printf '%s' "$vault_path" | md5sum | cut -c1-8)"

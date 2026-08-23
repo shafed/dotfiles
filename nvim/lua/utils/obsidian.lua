@@ -1,4 +1,4 @@
--- Obsidian vault helpers: auto commit+push of ~/obsidian, saving training
+-- Obsidian vault helpers: auto commit+push of ~/github/obsidian, saving training
 -- notes and exporting workout tables (used by <leader>l* and <leader>go).
 --
 -- Push is fully detached rather than a plain nvim job: jobstart() children
@@ -13,10 +13,10 @@
 
 local M = {}
 
-local SYNC_SCRIPT = vim.fn.expand("~/dotfiles/scripts/obsidian-sync.sh")
-local VAULT_PATH = vim.fn.expand("~/obsidian")
+local SYNC_SCRIPT = vim.fn.expand("~/github/dotfiles/scripts/obsidian-sync.sh")
+local VAULT_PATH = vim.fn.expand("~/github/obsidian")
 local LOG_FILE = vim.fn.stdpath("cache") .. "/obsidian-sync-push.log"
-local LOGBOOK_SCRIPT = vim.fn.expand("~/dotfiles/scripts/generate_logbook.py")
+local LOGBOOK_SCRIPT = vim.fn.expand("~/github/dotfiles/scripts/generate_logbook.py")
 
 local function in_vault()
   return vim.fn.getcwd():find(VAULT_PATH, 1, true) ~= nil
@@ -171,7 +171,7 @@ end
 
 -- Save the current buffer as a training note in training/
 function M.save_training_note()
-  local training_dir = vim.fn.expand(("~/obsidian/training/Full Body %s/"):format(os.date("%Y")))
+  local training_dir = vim.fn.expand(("~/github/obsidian/training/Full Body %s/"):format(os.date("%Y")))
 
   --------------------------------------------------------------------------
   -- Extract H1 from the current file to use as training note filename

@@ -28,7 +28,7 @@ clipboard:
 - non-image files are copied as `text/uri-list`, which `mini.files` can paste
   into the current directory with `<leader>p`.
 
-The unit intentionally starts the script from `~/dotfiles/scripts/` rather than
+The unit intentionally starts the script from `~/github/dotfiles/scripts/` rather than
 `~/.local/bin`, so the behavior is versioned with the rest of the dotfiles.
 
 ## sudo-notify.sh — sudo password-prompt notifier
@@ -59,7 +59,7 @@ terminal goes unnoticed. Design:
 
 ## obsidian-sync.sh
 
-Shared git sync for `~/obsidian`, single source of truth for pull-on-entry and
+Shared git sync for `~/github/obsidian`, single source of truth for pull-on-entry and
 push-on-exit so call sites stop inlining their own `git pull`/`git push`.
 `{pull|push} [silent]`:
 
@@ -86,7 +86,7 @@ the last opportunity to start syncing before Neovim exits).
 
 Opens today's daily note in nvim inside a **per-day kitty session**
 (`daily-<note>.kitty-session`), creating the note on first access. Layout:
-`~/obsidian/journal/<YYYY-MM-DD-Weekday>.md` — the folder is flat, so the path
+`~/github/obsidian/journal/<YYYY-MM-DD-Weekday>.md` — the folder is flat, so the path
 must stay in sync with `daily_notes_folder` in the vault's `.moxide.toml`.
 
 On first entry it does `obsidian-sync.sh pull`, then opens straight into the

@@ -232,7 +232,7 @@ local secondaryMod = "ALT"
 
 hl.bind("SUPER + V", hl.dsp.exec_cmd("copyq toggle"))
 hl.bind("SUPER + Home", hl.dsp.exec_cmd("systemctl suspend && hyprlock"))
-hl.bind(mainMod .. " + N", hl.dsp.exec_cmd("~/dotfiles/scripts/nvim-scratch-toggle.sh"))
+hl.bind(mainMod .. " + N", hl.dsp.exec_cmd("~/github/dotfiles/scripts/nvim-scratch-toggle.sh"))
 
 hl.bind(mainMod .. " + period", hl.dsp.exec_cmd("pkill -USR2 -x handy"))
 -- Example binds, see https://wiki.hypr.land/Configuring/Basics/Binds/ for more
@@ -240,7 +240,7 @@ hl.bind(mainMod .. " + period", hl.dsp.exec_cmd("pkill -USR2 -x handy"))
 -- fresh kitty process has no source window to inherit a session from, so its
 -- tabs come up permanently orphaned (see wiki/sessions.md). The script opens
 -- a new OS window inside the already-running main kitty instead.
-hl.bind(mainMod .. " + Return", hl.dsp.exec_cmd("~/dotfiles/scripts/kitty-new-window.sh"))
+hl.bind(mainMod .. " + Return", hl.dsp.exec_cmd("~/github/dotfiles/scripts/kitty-new-window.sh"))
 -- hl.bind(mainMod .. " + Q", hl.dsp.window.close())
 hl.bind(
   mainMod .. " + F5",

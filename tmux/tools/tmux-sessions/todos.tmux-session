@@ -1,2 +1,2 @@
-dir ~/obsidian/notes
+dir ~/github/obsidian/notes
 cmd git pull && nvim todos.md

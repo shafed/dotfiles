@@ -13,13 +13,13 @@ Parent: [scripts](scripts.md). The editing side lives in [nvim](nvim.md); the
 kitty session it opens into is in [sessions](sessions.md).
 
 
-Markdown training sessions in `~/obsidian/training/` become a single generated
+Markdown training sessions in `~/github/obsidian/training/` become a single generated
 `logbook.html`, with a reverse link back into nvim for editing a session.
 
 ## generate_logbook.py
 
 Generates a **single self-contained** `logbook.html` from the markdown sessions
-in `~/obsidian/training/`. CSS+JS are inlined into the HTML, exercise
+in `~/github/obsidian/training/`. CSS+JS are inlined into the HTML, exercise
 data is injected as JSON (`__EXDATA__`). Structure: parse sessions/events →
 minimal markdown→HTML → render → assemble the page (`main`).
 

@@ -109,7 +109,7 @@ link_configs() {
   echo "== Linking configs into ~/.config =="
   mkdir -p "$HOME/.config"
 
-  # Whole-directory symlinks: ~/.config/<name> -> ~/dotfiles/<name>
+  # Whole-directory symlinks: ~/.config/<name> -> ~/github/dotfiles/<name>
   for name in "${CONFIG_DIRS[@]}"; do
     ln -sfvn "$DOTFILES_DIR/$name" "$HOME/.config/$name"
   done

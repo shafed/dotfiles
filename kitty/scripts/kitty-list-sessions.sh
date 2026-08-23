@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Filename: ~/dotfiles/kitty/scripts/kitty-list-sessions.sh
+# Filename: ~/github/dotfiles/kitty/scripts/kitty-list-sessions.sh
 # Shows open kitty sessions in fzf and switches using goto_session.
 # Adds a vim-like "mode":
 # - Normal mode (default): j/k move, d closes, enter opens, i enters insert mode, esc quits
@@ -16,7 +16,7 @@ set -euo pipefail
 default_mode="insert"
 
 script_path="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/$(basename -- "${BASH_SOURCE[0]}")"
-kitty_sessions_dir="$HOME/dotfiles/kitty/sessions"
+kitty_sessions_dir="$DOTFILES/kitty/sessions"
 transient_sessions_dir="${XDG_CACHE_HOME:-$HOME/.cache}/kitty-sessions"
 
 set_cursor_block() {
@@ -49,7 +49,7 @@ if ! command -v jq >/dev/null 2>&1; then
   exit 1
 fi
 
-dotfiles_dir="$HOME/dotfiles"
+dotfiles_dir="$DOTFILES"
 # Shared QAT helpers (main_kitty_socket, launch_qat) + gruvbox fzf colors.
 # shellcheck source=../../scripts/lib.sh
 source "$dotfiles_dir/scripts/lib.sh"

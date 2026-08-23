@@ -107,9 +107,9 @@ return {
           max_items = 8,
           min_keyword_length = 2,
           opts = {
-            dictionary_directories = { vim.fn.expand("~/dotfiles/dictionaries") },
+            dictionary_directories = { vim.fn.expand("~/github/dotfiles/dictionaries") },
             dictionary_files = {
-              vim.fn.expand("~/dotfiles/nvim/spell/en.utf-8.add"),
+              vim.fn.expand("~/github/dotfiles/nvim/spell/en.utf-8.add"),
             },
             -- dictionaries/*.txt are frequency-ordered (most common word
             -- first); fzf's default tiebreak is match length, which would

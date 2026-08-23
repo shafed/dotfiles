@@ -1,10 +1,10 @@
--- Daily note review helpers: fold the last N daily notes of ~/obsidian into
+-- Daily note review helpers: fold the last N daily notes of ~/github/obsidian into
 -- one scratch buffer, or show the same calendar day across previous years
 -- (used by <leader>lw, <leader>lm and <leader>ld).
 
 local M = {}
 
-local vault = vim.fn.expand("~/obsidian")
+local vault = vim.fn.expand("~/github/obsidian")
 
 -- Drop YAML frontmatter and the meta-bind-button blocks left over from the
 -- Obsidian daily template, they are noise when reading many notes at once

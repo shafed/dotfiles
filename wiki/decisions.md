@@ -225,7 +225,7 @@ Key "why it's done this way" page. Each entry:
 
 ### Manual symlinks instead of stow/an install script (2026-07-01, superseded 2026-07-04)
 - **Decision**: wire up configs manually via symlinks `~/.config/<tool> →
-  ~/dotfiles/<tool>` (list — [bootstrap](bootstrap.md)).
+  ~/github/dotfiles/<tool>` (list — [bootstrap](bootstrap.md)).
 - **Reason**: one personal machine, few symlinks created only once —
   an install script/`stow` would be extra infrastructure with no payoff. It's
   transparently visible what links where.

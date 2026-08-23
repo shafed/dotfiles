@@ -28,16 +28,16 @@ nvim is the editing side of the training logbook; generation and viewing are in
   into a single guarded runner that takes `{ silent = true }` for the
   auto-trigger.)
 - `<leader>lp` saves the buffer as
-  `~/obsidian/training/Full Body <текущий год>/YYYY-MM-DD-<h1>.md` (the H1 is
+  `~/github/obsidian/training/Full Body <текущий год>/YYYY-MM-DD-<h1>.md` (the H1 is
   rewritten into a slug so the filename matches the heading) and **immediately
-  triggers** `~/dotfiles/scripts/generate_logbook.py` to regenerate
+  triggers** `~/github/dotfiles/scripts/generate_logbook.py` to regenerate
   `logbook.html`. Prompts for the session date (`vim.ui.input`, defaults to
   today, validated as `YYYY-MM-DD`) so a session logged late can be dated to
   when it actually happened instead of the save date — the date drives both the
   filename and the strict `^\d{4}-\d{2}-\d{2}-Day-\d+$` regex
   `generate_logbook.py` uses to sort/parse sessions.
 - A separate keymap opens `logbook.html` via `xdg-open`.
-- `obsidian.push_with_cooldown()` — auto commit+push of the `~/obsidian` vault
+- `obsidian.push_with_cooldown()` — auto commit+push of the `~/github/obsidian` vault
   (an hour cooldown) so note edits get backed up without manual commits.
 - `nvim-edit-handler.sh` in [scripts](scripts.md) — the reverse link: the
   logbook opens a note for editing in nvim.
@@ -69,7 +69,7 @@ override it. Fixed in `keymaps.lua` by `vim.keymap.del("n", "<leader>l")` and
 remapping `:Lazy` to `<leader>L`.
 
 ⚠️ Gotcha: `harper_ls` (grammar checking) is **disabled on training notes** —
-`excludePatterns` contains `~/obsidian/training/**/*.md` and `Day [123].md`.
+`excludePatterns` contains `~/github/obsidian/training/**/*.md` and `Day [123].md`.
 Reason: training notes are tables/abbreviations, and harper chokes on false
 positives. Commit `ef70575` ("recursive disable harper in training").
 

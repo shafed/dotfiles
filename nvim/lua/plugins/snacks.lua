@@ -40,12 +40,12 @@ return {
       desc = "Keymaps",
     },
     -- File picker
-    -- When invoked inside ~/obsidian, search notes by filename AND by frontmatter
+    -- When invoked inside ~/github/obsidian, search notes by filename AND by frontmatter
     -- `aliases`. Anywhere else, fall back to the regular Find Files picker.
     {
       "<leader><space>",
       function()
-        local obsidian = vim.fn.expand("~/obsidian")
+        local obsidian = vim.fn.expand("~/github/obsidian")
         local cwd = vim.fn.getcwd()
         if cwd:sub(1, #obsidian) ~= obsidian then
           Snacks.picker.files({

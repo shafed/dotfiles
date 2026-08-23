@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Filename: ~/dotfiles/scripts/kitty-new-window.sh
+# Filename: ~/github/dotfiles/scripts/kitty-new-window.sh
 # Bound to Super+Return in hypr/hyprland.lua in place of a bare `exec kitty`.
 #
 # A bare `exec kitty` starts a brand-new, independent kitty process every
@@ -17,7 +17,7 @@
 
 set -euo pipefail
 
-dotfiles_dir="$HOME/dotfiles"
+dotfiles_dir="$HOME/github/dotfiles"
 # shellcheck source=./lib.sh
 source "$dotfiles_dir/scripts/lib.sh"
 

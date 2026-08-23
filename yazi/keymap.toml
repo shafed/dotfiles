@@ -56,8 +56,8 @@ desc = "Move in relative steps"
 
 [[mgr.prepend_keymap]]
 on   = [ "g", "f" ]
-run  = "cd ~/dotfiles"
-desc = "Go ~/dotfiles"
+run  = "cd ~/github/dotfiles"
+desc = "Go ~/github/dotfiles"
 
 [[mgr.prepend_keymap]]
 on   = [ "g", "l" ]
@@ -274,7 +274,7 @@ keymap = [
 	{ on = [ "g", "d" ],       run = "cd ~/Downloads",   desc = "Go ~/Downloads" },
 	{ on = [ "g", "<Space>" ], run = "cd --interactive", desc = "Jump interactively" },
 	{ on = [ "g", "l" ],       run = "follow",           desc = "Follow hovered symlink" },
-	{ on = [ "g", "f" ],       run = "cd ~/dotfiles",     desc = "Go ~/dotfiles" },
+	{ on = [ "g", "f" ],       run = "cd ~/github/dotfiles",     desc = "Go ~/github/dotfiles" },
 
 	# Tabs
 	{ on = "t", run = "tab_create --current", desc = "Create a new tab with CWD" },

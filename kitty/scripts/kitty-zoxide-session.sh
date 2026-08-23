@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
-# Filename: ~/dotfiles/kitty/scripts/kitty-zoxide-session.sh
+# Filename: ~/github/dotfiles/kitty/scripts/kitty-zoxide-session.sh
 # Select a zoxide entry and switch to an existing kitty session,
 # or create it if it doesn't exist.
 #
 # Also supports:
-#   - Named sessions from *.kitty-session files in ~/dotfiles/kitty/sessions/.
+#   - Named sessions from *.kitty-session files in $DOTFILES/kitty/sessions/.
 #   - SSH host entries from ~/.ssh/config (and Include files).
 #     SSH entries are shown with a "ssh-" prefix.
 #
@@ -17,7 +17,7 @@
 set -euo pipefail
 
 script_path="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/$(basename -- "${BASH_SOURCE[0]}")"
-kitty_sessions_dir="$HOME/dotfiles/kitty/sessions"
+kitty_sessions_dir="$DOTFILES/kitty/sessions"
 transient_sessions_dir="${XDG_CACHE_HOME:-$HOME/.cache}/kitty-sessions"
 work_env_file="$HOME/github/dotfiles-private/work/work-env.sh"
 
@@ -40,7 +40,7 @@ require_cmd fzf "Install: sudo pacman -S fzf"
 require_cmd jq "Install: sudo pacman -S jq"
 require_cmd zoxide "Install: sudo pacman -S zoxide"
 
-dotfiles_dir="$HOME/dotfiles"
+dotfiles_dir="$DOTFILES"
 # Shared QAT helpers (main_kitty_socket, launch_qat) + gruvbox fzf colors.
 # shellcheck source=../../scripts/lib.sh
 source "$dotfiles_dir/scripts/lib.sh"
@@ -243,7 +243,7 @@ if [[ "${1:-}" == "--reload" ]]; then
   exit 0
 fi
 
-# Switch to (or create) a named kitty session file from ~/dotfiles/kitty/sessions/.
+# Switch to (or create) a named kitty session file from $DOTFILES/kitty/sessions/.
 focus_or_launch_named_session() {
   local name="$1"
   local session_file="${kitty_sessions_dir}/${name}.kitty-session"

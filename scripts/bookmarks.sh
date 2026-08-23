@@ -18,10 +18,10 @@ source "$script_dir/lib.sh"
 #   bookmarks.sh --pick           # internal: picker loop inside the QAT panel
 #   bookmarks.sh --recent|--all   # internal: list providers for fzf's reloads
 
-browser_bookmarks_file="$HOME/dotfiles/bookmarks/helium-bookmarks.tsv"
+browser_bookmarks_file="$HOME/github/dotfiles/bookmarks/helium-bookmarks.tsv"
 browser_bookmarks_source="${DOTFILES_BROWSER_BOOKMARKS_SOURCE:-$browser_profile_dir/Bookmarks}"
 bookmarks_files=(
-  "$HOME/dotfiles/bookmarks/bookmarks.tsv"
+  "$HOME/github/dotfiles/bookmarks/bookmarks.tsv"
   "$HOME/dotfiles-private/bookmarks/bookmarks.tsv"
   "$browser_bookmarks_file"
 )

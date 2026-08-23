@@ -38,7 +38,7 @@ which is why no per-app theme files exist for them.
 
 - ⚠️ **Hooks live in the XDG *data* dir, not `~/.config`.** darkman v2 only
   scans `$XDG_DATA_HOME/darkman/` (+ `XDG_DATA_DIRS`) for transition scripts,
-  hence the `~/.local/share/darkman → ~/dotfiles/darkman/scripts` symlink from
+  hence the `~/.local/share/darkman → ~/github/dotfiles/darkman/scripts` symlink from
   `bootstrap.sh`. A hook placed in `~/.config` is silently never run.
 - **kitty is intentionally NOT toggled** — it keeps its single gruvbox-dark
   `current-theme.conf`.

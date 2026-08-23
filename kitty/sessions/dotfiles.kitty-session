@@ -1,6 +1,6 @@
 layout horizontal
 
-cd ~/dotfiles
+cd ~/github/dotfiles
 
 launch --title "dotfiles" /bin/zsh -i -c 'nvim "+lua require(\"persistence\").load()"; exec zsh'
 focus

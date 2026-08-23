@@ -1,7 +1,7 @@
 layout horizontal
 
-cd ~/obsidian
+cd ~/github/obsidian
 
-launch --title "obsidian" /bin/zsh -i -c '~/dotfiles/scripts/obsidian-sync.sh pull && nvim INDEX.md; exec zsh'
+launch --title "obsidian" /bin/zsh -i -c '~/github/dotfiles/scripts/obsidian-sync.sh pull && nvim INDEX.md; exec zsh'
 focus
 focus_os_window

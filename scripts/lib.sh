@@ -5,7 +5,7 @@
 # bookmarks.sh, youtube.sh, youtube-qat.sh). Sourced, not executed; everything
 # here is safe under `set -euo pipefail`.
 
-qat_config="$HOME/dotfiles/kitty/quick-access-terminal-center.conf"
+qat_config="$HOME/github/dotfiles/kitty/quick-access-terminal-center.conf"
 kitty_bin="$(command -v kitty || echo /usr/bin/kitty)"
 
 # Browser integration used by bookmarks/search/youtube. Environment overrides

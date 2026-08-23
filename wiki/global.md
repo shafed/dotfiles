@@ -107,7 +107,7 @@ itself, or any other new file. First-time additions need a manual `git add`.
 
 Restructure done (2026-08-02).
 
-- `~/obsidian/` — notes vault.
-- `~/dotfiles/` — this repo.
+- `~/github/obsidian/` — notes vault.
+- `~/github/dotfiles/` — this repo.
 - `~/github/` — home for all other git repos.
 - `~/projects` — renamed to `study/` under `~/github/`.

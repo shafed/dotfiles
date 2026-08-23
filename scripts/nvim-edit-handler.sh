@@ -26,8 +26,8 @@ if [[ -z "$path" || ! -e "$path" ]]; then
   exit 1
 fi
 
-session_file="$HOME/dotfiles/kitty/sessions/obsidian.kitty-session"
-zoxide_session_script="$HOME/dotfiles/kitty/scripts/kitty-zoxide-session.sh"
+session_file="$HOME/github/dotfiles/kitty/sessions/obsidian.kitty-session"
+zoxide_session_script="$HOME/github/dotfiles/kitty/scripts/kitty-zoxide-session.sh"
 
 newest_kitty() { ls -t /tmp/kitty-* 2>/dev/null | head -n1; }
 

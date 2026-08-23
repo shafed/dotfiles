@@ -69,9 +69,9 @@
 )
 
 (defvirtualkeys
-  sym-us (cmd /home/shafed/dotfiles/scripts/symlayout-watch.sh enter)
-  sym-restore (cmd /home/shafed/dotfiles/scripts/symlayout-watch.sh leave)
-  apps-us (cmd /home/shafed/dotfiles/scripts/symlayout-watch.sh app)
+  sym-us (cmd /home/shafed/github/dotfiles/scripts/symlayout-watch.sh enter)
+  sym-restore (cmd /home/shafed/github/dotfiles/scripts/symlayout-watch.sh leave)
+  apps-us (cmd /home/shafed/github/dotfiles/scripts/symlayout-watch.sh app)
 )
 
 (defsrc)
@@ -105,22 +105,22 @@
 )
 
 (deflayermap (apps)
-  e (multi (on-press tap-vkey apps-us) (cmd zsh -lc "$HOME/dotfiles/kitty/scripts/kitty-zoxide-session.sh")) ;; zoxide session picker QAT
+  e (multi (on-press tap-vkey apps-us) (cmd zsh -lc "$HOME/github/dotfiles/kitty/scripts/kitty-zoxide-session.sh")) ;; zoxide session picker QAT
   l (layer-while-held numws)  ;; hold: switch workspace (Super+digit)
-  q (cmd zsh -lc "$HOME/dotfiles/kanata/close-window.sh") ;; graceful close -> apps with tray icons minimize instead of quitting; telegram is force-killed to actually quit
+  q (cmd zsh -lc "$HOME/github/dotfiles/kanata/close-window.sh") ;; graceful close -> apps with tray icons minimize instead of quitting; telegram is force-killed to actually quit
   t (t! kitty-send C-S-2)   ;; todos session
   r (t! kitty-send C-S-1)   ;; daily note
   y (cmd helium-browser --new-window https://www.youtube.com/playlist?list=WL)
-  u (multi (on-press tap-vkey apps-us) (cmd zsh -lc "$HOME/dotfiles/scripts/youtube-qat.sh")) ;; youtube channel search QAT
-  b (multi (on-press tap-vkey apps-us) (cmd zsh -lc "$HOME/dotfiles/scripts/bookmarks.sh")) ;; bookmarks fzf QAT
-  a (multi (on-press tap-vkey apps-us) (cmd zsh -lc "$HOME/dotfiles/scripts/apps.sh")) ;; applications fzf QAT
+  u (multi (on-press tap-vkey apps-us) (cmd zsh -lc "$HOME/github/dotfiles/scripts/youtube-qat.sh")) ;; youtube channel search QAT
+  b (multi (on-press tap-vkey apps-us) (cmd zsh -lc "$HOME/github/dotfiles/scripts/bookmarks.sh")) ;; bookmarks fzf QAT
+  a (multi (on-press tap-vkey apps-us) (cmd zsh -lc "$HOME/github/dotfiles/scripts/apps.sh")) ;; applications fzf QAT
   o (t! kitty-send C-S-o)   ;; obsidian session
   w (t! kitty-send C-S-w)   ;; downloads session
   h (t! kitty-send C-S-a)   ;; home session
   s (tap-hold-press $subl-time $subl-time (cmd helium-browser) (layer-toggle browser))
   d (t! kitty-send C-S-d)   ;; dotfiles session
   z (cmd zsh -lc "$HOME/.config/kanata/switchApp.sh sioyek '$HOME/.local/bin/sioyek'")
-  c (multi (on-press tap-vkey apps-us) (cmd zsh -lc "$HOME/dotfiles/kitty/scripts/kitty-list-sessions.sh")) ;; list sessions picker QAT
+  c (multi (on-press tap-vkey apps-us) (cmd zsh -lc "$HOME/github/dotfiles/kitty/scripts/kitty-list-sessions.sh")) ;; list sessions picker QAT
   g (t! kitty-send C-S-c)   ;; github session
   . (multi (on-press tap-vkey apps-us) (cmd rofimoji -a clipboard))
   caps caps
@@ -129,11 +129,11 @@
 ;; each binding focuses an already-open tab (via bruvtab) instead of opening a
 ;; duplicate; see scripts/open-url.sh.
 (deflayermap (browser)
-  e (cmd zsh -lc "$HOME/dotfiles/scripts/open-url.sh https://mail.google.com/mail/u/0/#inbox")
-  f (cmd zsh -lc "$HOME/dotfiles/scripts/open-url.sh https://www.perplexity.ai")
-  g (cmd zsh -lc "$HOME/dotfiles/scripts/open-url.sh https://chatgpt.com")
-  d (cmd zsh -lc "$HOME/dotfiles/scripts/open-url.sh https://claude.ai/new")
-  r (cmd zsh -lc "$HOME/dotfiles/scripts/open-url.sh https://www.reverso.net/text-translation")
+  e (cmd zsh -lc "$HOME/github/dotfiles/scripts/open-url.sh https://mail.google.com/mail/u/0/#inbox")
+  f (cmd zsh -lc "$HOME/github/dotfiles/scripts/open-url.sh https://www.perplexity.ai")
+  g (cmd zsh -lc "$HOME/github/dotfiles/scripts/open-url.sh https://chatgpt.com")
+  d (cmd zsh -lc "$HOME/github/dotfiles/scripts/open-url.sh https://claude.ai/new")
+  r (cmd zsh -lc "$HOME/github/dotfiles/scripts/open-url.sh https://www.reverso.net/text-translation")
 )
 
 ;; right-hand symbols, momentary (s+d held). S-... keycodes output the same

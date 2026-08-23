@@ -2,8 +2,8 @@
 Type=Application
 Name=Neovim
 Comment=Edit text files in a dedicated Neovim window
-TryExec=/home/shafed/dotfiles/scripts/nvim-open.sh
-Exec=/home/shafed/dotfiles/scripts/nvim-open.sh %F
+TryExec=/home/shafed/github/dotfiles/scripts/nvim-open.sh
+Exec=/home/shafed/github/dotfiles/scripts/nvim-open.sh %F
 Icon=nvim
 Terminal=false
 StartupNotify=true

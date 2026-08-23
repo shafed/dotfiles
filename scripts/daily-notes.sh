@@ -3,11 +3,11 @@
 # Open today's daily note in neovim inside a per-day kitty session, creating the
 # note on first use.
 #
-# Layout: ~/obsidian/journal/<YYYY-MM-DD-Weekday>.md
+# Layout: ~/github/obsidian/journal/<YYYY-MM-DD-Weekday>.md
 
 set -euo pipefail
 
-main_note_dir="$HOME/obsidian/journal"
+main_note_dir="$HOME/github/obsidian/journal"
 
 current_year=$(date +"%Y")
 current_month_num=$(date +"%m")
@@ -40,7 +40,7 @@ session_file="${kitty_session_dir}/daily-${note_name}.kitty-session"
 cat >"$session_file" <<EOF
 layout horizontal
 cd ${note_dir}
-launch --title "${note_name}" zsh -ic '~/dotfiles/scripts/obsidian-sync.sh pull && nvim "+norm G" ${full_path}; exec zsh'
+launch --title "${note_name}" zsh -ic '~/github/dotfiles/scripts/obsidian-sync.sh pull && nvim "+norm G" ${full_path}; exec zsh'
 focus
 focus_os_window
 EOF

@@ -10,8 +10,7 @@ description:
   two right is the whole point of this skill."
 user-invocable: true
 argument-hint: [optional hint about what the change was for]
-model: sonnet
-effort: medium
+model: haiku
 allowed-tools:
   Bash(git status:*), Bash(git diff:*), Bash(git add:*), Bash(git commit:*),
   Bash(git log:*)

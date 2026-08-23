@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Neovim
+Comment=Edit text files in a dedicated Neovim window
+TryExec=/home/shafed/dotfiles/scripts/nvim-open.sh
+Exec=/home/shafed/dotfiles/scripts/nvim-open.sh %F
+Icon=nvim
+Terminal=false
+StartupNotify=true
+NoDisplay=false
+Categories=Utility;TextEditor;
+MimeType=text/plain;text/markdown;text/x-markdown;application/json;application/yaml;text/yaml;application/toml;text/x-toml;application/xml;text/xml;text/html;text/css;text/javascript;application/javascript;text/x-shellscript;text/x-python;text/x-c;text/x-csrc;text/x-c++src;text/x-chdr;text/x-c++hdr;text/x-java;text/x-rust;text/x-go;text/x-lua;text/x-ruby;application/x-perl;

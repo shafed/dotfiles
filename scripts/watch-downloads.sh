@@ -28,15 +28,30 @@ path_to_uri() {
   python3 -c 'import pathlib, sys; print(pathlib.Path(sys.argv[1]).absolute().as_uri())' "$1"
 }
 
+file_is_open() {
+  local path="$1"
+
+  if command -v lsof >/dev/null 2>&1; then
+    lsof -t -- "$path" >/dev/null 2>&1
+  else
+    fuser -- "$path" >/dev/null 2>&1
+  fi
+}
+
 wait_for_stable_file() {
   local path="$1"
   local previous_size current_size
 
+  # A single short size check isn't enough: yt-dlp flushes progress to disk
+  # between percentage updates, so the file can look momentarily stable
+  # while still downloading. Require the size to hold steady over a longer
+  # window and confirm no process still has the file open for writing.
   previous_size="$(stat -c %s -- "$path" 2>/dev/null)" || return 1
-  sleep 0.2
+  sleep 1
   current_size="$(stat -c %s -- "$path" 2>/dev/null)" || return 1
+  [[ "$previous_size" == "$current_size" ]] || return 1
 
-  [[ "$previous_size" == "$current_size" ]]
+  ! file_is_open "$path"
 }
 
 copy_file_to_clipboard() {
@@ -60,11 +75,16 @@ copy_file_to_clipboard() {
   fi
 }
 
+declare -A last_copied_size
+
 inotifywait -m -e moved_to -e close_write --format '%w%f' "$WATCH_DIR" |
   while IFS= read -r filepath; do
     [[ -f "$filepath" ]] || continue
     is_temporary_download "$filepath" && continue
     wait_for_stable_file "$filepath" || continue
 
-    copy_file_to_clipboard "$filepath"
+    size="$(stat -c %s -- "$filepath" 2>/dev/null)" || continue
+    [[ "${last_copied_size[$filepath]:-}" == "$size" ]] && continue
+
+    copy_file_to_clipboard "$filepath" && last_copied_size[$filepath]="$size"
   done

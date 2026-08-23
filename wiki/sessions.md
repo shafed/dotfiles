@@ -72,7 +72,7 @@ often the wrong thing appeared. A daily note has to be a guarantee rather than
 
 ## Splits and layout
 
-`kitty_mod+backslash` = vsplit — the only split binding; there is no hsplit.
+`kitty_mod+enter` = vsplit — the only split binding; there is no hsplit.
 `C-h/j/k/l` navigate contextually via `pass_keys.py` ([kitty](kitty.md)). The
 former `M-t` split toggle no longer exists in kitty.conf.
 
@@ -94,6 +94,46 @@ tabs created _inside_ a session — from a `.kitty-session` file or via
 clause matches "no session", so such a tab shows up under **every** session.
 Fixed by mapping `kitty_mod+t` to
 `launch --type=tab --cwd=current --add-to-session .`.
+
+⚠️ Gotcha (`kitty_mod+enter` vsplit losing the session on close — the real bug,
+after two false starts): a session opened with `kitty_mod+c` et al., split, then
+had its original pane closed, would vanish from `kitty-list-sessions.sh`. Two
+live captures (via `kitten @ ls` polling while reproducing in real time) showed
+the split's `session_name` was **already blank at creation**, even though its
+`cwd` correctly matched the source window's — first with the split done by
+whatever key was assumed to be in use, then again after adding
+`--add-to-session .` to `kitty_mod+backslash`, which didn't fix it either. Both
+rounds of investigation targeted `kitty_mod+backslash`, including an elaborate
+workaround (routing the split through `kitten @ launch` over the remote-control
+socket via a `--type=background`-launched wrapper script) built to route around
+an apparent unreliability in native keymap-dispatched `launch` calls.
+
+That workaround was solving the wrong problem: the user was actually splitting
+with **`kitty_mod+enter`**, which this config never mapped at all. Unmapped
+`kitty_mod+enter` falls through to kitty's own stock default binding —
+`new_window` — a completely different action from `launch`. Plain `new_window`
+copies `cwd` (ordinary shell-inheritance default) but never looks at
+`created_in_session_name` at all: `boss._new_window()`'s session-copying block
+is gated behind `if cwd_from is not None`, and bare `new_window` always calls it
+with `cwd_from=None`. So the split was deterministically, 100%-of-the-time
+unsessioned by design — not a kitty race or a native-dispatch quirk. Confirmed
+with `kitten @ action new_window` reproducing a blank `session_name` on every
+call, and
+`kitten @ action launch --location=vsplit --cwd=current --add-to-session .`
+(invoked the same native way a keypress would) correctly inheriting session_name
+on every call — so the `launch`-based approach, and the `--type=background`
+workaround built for it, were never actually the problem.
+
+Fixed by explicitly mapping the key actually in use:
+`map kitty_mod+enter launch --location=vsplit --cwd=current --add-to-session .`
+(no wrapper script needed — the plain `launch` command was always reliable).
+`kitty_mod+backslash` was dropped from this config entirely — `kitty_mod+enter`
+is now the only split binding.
+
+Lesson: confirm which key the user is actually pressing before trusting a "the
+only split binding" claim in this file — a keybinding the user has been using
+out of habit can be entirely unmapped here and still work by falling through to
+kitty's stock defaults, invisibly, with different (or no) semantics.
 
 ⚠️ Gotcha (`focus_main_kitty` race): `goto_kitty_session` (called by the QAT
 session pickers) issues `hl.dsp.focus` via `hyprctl dispatch` and returns

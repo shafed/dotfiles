@@ -17,7 +17,11 @@
 set -euo pipefail
 
 script_path="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/$(basename -- "${BASH_SOURCE[0]}")"
-kitty_sessions_dir="$DOTFILES/kitty/sessions"
+# Derived from the script's own path rather than $DOTFILES: kanata invokes
+# this via its systemd --user service (zsh -lc "..."), a login-but-not-
+# interactive shell that never sources ~/.zshrc, so $DOTFILES is unset there.
+dotfiles_dir="$(cd -- "$(dirname -- "$script_path")/../.." && pwd)"
+kitty_sessions_dir="$dotfiles_dir/kitty/sessions"
 transient_sessions_dir="${XDG_CACHE_HOME:-$HOME/.cache}/kitty-sessions"
 work_env_file="$HOME/github/dotfiles-private/work/work-env.sh"
 
@@ -40,7 +44,6 @@ require_cmd fzf "Install: sudo pacman -S fzf"
 require_cmd jq "Install: sudo pacman -S jq"
 require_cmd zoxide "Install: sudo pacman -S zoxide"
 
-dotfiles_dir="$DOTFILES"
 # Shared QAT helpers (main_kitty_socket, launch_qat) + gruvbox fzf colors.
 # shellcheck source=../../scripts/lib.sh
 source "$dotfiles_dir/scripts/lib.sh"

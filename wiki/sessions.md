@@ -1,7 +1,7 @@
 ---
 title: sessions
 type: topic
-updated: 2026-08-14
+updated: 2026-08-24
 covers:
   - kitty/sessions
   - kitty/scripts
@@ -55,6 +55,22 @@ Named sessions and zoxide directories show **without** type prefixes — the
 former `s-`/`z-` labels were noise, since the picker already distinguishes them
 internally. `ssh-` stays, because there the prefix carries real information: the
 destination is remote.
+
+⚠️ Gotcha (`$DOTFILES` is unset when kanata launches these, settled
+2026-08-24): `kitty-zoxide-session.sh` and `kitty-list-sessions.sh` used to
+resolve their own paths via `dotfiles_dir="$DOTFILES"`. kanata runs as a
+systemd `--user` service and invokes these through `zsh -lc "..."` — a
+login-but-**not-interactive** shell, so `~/.zshrc` (the only place `$DOTFILES`
+is exported) never gets sourced, and neither the service's environment nor
+`~/.zprofile`/`~/.zshenv` set it either. The result: `source
+"$dotfiles_dir/scripts/lib.sh"` became `source "/scripts/lib.sh"`, which
+doesn't exist — `set -e` killed the script before the QAT panel ever launched,
+with no visible error (kanata doesn't surface stderr from `cmd`). The other
+`apps` pickers (`apps.sh`, `bookmarks.sh`, `youtube-qat.sh`) never had this bug
+because they resolve `lib.sh` from their own `BASH_SOURCE` location, not
+`$DOTFILES`. Fixed the same way: both scripts now derive `dotfiles_dir` from
+`script_path` (two levels up from `kitty/scripts/`) instead of the
+environment.
 
 ## Vault sessions
 

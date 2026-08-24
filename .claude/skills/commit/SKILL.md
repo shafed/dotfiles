@@ -10,11 +10,13 @@ description:
   two right is the whole point of this skill."
 user-invocable: true
 argument-hint: [optional hint about what the change was for]
-model: haiku
+model: sonnet
+effort: medium
 allowed-tools:
   Bash(git status:*), Bash(git diff:*), Bash(git add:*), Bash(git commit:*),
   Bash(git log:*)
 ---
+
 - commit like `scope: description`
 - keep one atomic change in one commit even when it spans multiple top-level directories; split only independent logical changes
 - `wiki/` is committed alone

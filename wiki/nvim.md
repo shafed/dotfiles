@@ -1,7 +1,7 @@
 ---
 title: nvim
 type: moc
-updated: 2026-08-14
+updated: 2026-08-24
 covers:
   - nvim/
 ---
@@ -31,6 +31,22 @@ which LazyVim behavior was overridden and why.
   lens, `:Daily` for opening notes via natural language).
 - `harper_ls` is enabled only for `markdown`/`typst`, `isolateEnglish=true`,
   ignoring links and `[[wikilinks]]`.
+
+## code-runner
+
+`CRAG666/code_runner.nvim` (`nvim/lua/plugins/code_runner.lua`) is lazy-loaded
+on its commands/keys, with the README's recommended mappings: `<leader>rr`
+(`RunCode`), `<leader>rf`/`<leader>rft` (`RunFile`, always by filetype, no
+project lookup), `<leader>rp` (`RunProject`), `<leader>rc` (`RunClose`).
+
+`RunCode`/`RunProject` auto-detect a project by walking **up from the current
+file to filesystem root** looking for `root_markers` (`pom.xml`,
+`Cargo.toml`, `go.mod`, `package.json` → `npm start`, `Makefile`,
+`CMakeLists.txt`). `~/package.json` exists on this machine (Deepseek/dsh
+deps, no `start` script), so `<leader>rr` on _any_ file under the home
+directory that has no closer marker bubbles all the way up to it and fails
+with `Missing script: "start"`. Use `<leader>rf` for one-off files outside a
+real project to skip this lookup entirely.
 
 ## neobean
 

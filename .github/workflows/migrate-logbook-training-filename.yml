@@ -1,0 +1,108 @@
+name: Migrate logbook training filename
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    if: github.event.head_commit.message == 'Temporary logbook filename migration workflow'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create regression test
+        shell: bash
+        run: |
+          cat > scripts/tests/generate-logbook-filename-test.py <<'PY'
+          #!/usr/bin/env python3
+          import importlib.util
+          import pathlib
+          import unittest
+
+          SCRIPT = pathlib.Path(__file__).resolve().parents[1] / "generate_logbook.py"
+          spec = importlib.util.spec_from_file_location("generate_logbook", SCRIPT)
+          module = importlib.util.module_from_spec(spec)
+          assert spec.loader is not None
+          spec.loader.exec_module(module)
+
+
+          class FilenameFormatTest(unittest.TestCase):
+              def test_canonical_training_filename_is_accepted(self):
+                  match = module.FILENAME_RE.fullmatch("2026-08-25-Training")
+                  self.assertIsNotNone(match)
+                  self.assertEqual(match.groups()[:3], ("2026", "08", "25"))
+
+              def test_legacy_day_filename_remains_accepted(self):
+                  match = module.FILENAME_RE.fullmatch("2026-01-03-Day-2")
+                  self.assertIsNotNone(match)
+                  self.assertEqual(match.groups()[:3], ("2026", "01", "03"))
+
+              def test_arbitrary_suffix_is_rejected(self):
+                  self.assertIsNone(module.FILENAME_RE.fullmatch("2026-08-25-Rings"))
+
+
+          if __name__ == "__main__":
+              unittest.main()
+          PY
+
+      - name: Verify RED
+        shell: bash
+        run: |
+          set +e
+          python scripts/tests/generate-logbook-filename-test.py
+          status=$?
+          set -e
+          if [ "$status" -eq 0 ]; then
+            echo "Expected the new Training filename test to fail before the parser change."
+            exit 1
+          fi
+          echo "RED confirmed: current parser rejects -Training."
+
+      - name: Update parser and documentation
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          parser = Path("scripts/generate_logbook.py")
+          text = parser.read_text(encoding="utf-8")
+          old = 'FILENAME_RE = re.compile(r"^(\\d{4})-(\\d{2})-(\\d{2})-Day-\\d+$")'
+          new = 'FILENAME_RE = re.compile(r"^(\\d{4})-(\\d{2})-(\\d{2})-(?:Training|Day-\\d+)$")'
+          if old not in text:
+              raise SystemExit("Expected FILENAME_RE definition not found")
+          parser.write_text(text.replace(old, new, 1), encoding="utf-8")
+
+          docs = Path("wiki/scripts-logbook.md")
+          doc = docs.read_text(encoding="utf-8")
+          anchor = "Key decisions (from git evolution):\n\n"
+          addition = (
+              "- **Session filenames**: canonical session files use `YYYY-MM-DD-Training.md`. "
+              "Legacy `YYYY-MM-DD-Day-N.md` files remain accepted for backward compatibility; "
+              "new files should not encode weekly workout order in the filename.\n"
+          )
+          if addition not in doc:
+              if anchor not in doc:
+                  raise SystemExit("Documentation anchor not found")
+              doc = doc.replace(anchor, anchor + addition, 1)
+              docs.write_text(doc, encoding="utf-8")
+          PY
+
+      - name: Verify GREEN
+        shell: bash
+        run: |
+          python scripts/tests/generate-logbook-filename-test.py
+          python -m py_compile scripts/generate_logbook.py
+
+      - name: Commit migration
+        shell: bash
+        run: |
+          rm .github/workflows/migrate-logbook-training-filename.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/generate_logbook.py scripts/tests/generate-logbook-filename-test.py wiki/scripts-logbook.md .github/workflows/migrate-logbook-training-filename.yml
+          git commit -m "Adopt Training session filenames"
+          git push

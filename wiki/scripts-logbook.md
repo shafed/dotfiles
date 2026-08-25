@@ -25,6 +25,7 @@ minimal markdown→HTML → render → assemble the page (`main`).
 
 Key decisions (from git evolution):
 
+- **Session filenames**: canonical session files use `YYYY-MM-DD-Training.md`. Legacy `YYYY-MM-DD-Day-N.md` files remain accepted for backward compatibility; new files should not encode weekly workout order in the filename.
 - **Mood via session YAML frontmatter** (`mood: bad|mid|great`), not an inline
   tag in the body — commit "Add session-level mood via YAML frontmatter." Mood
   is a property of the whole session, so it lives in the file header; parsed by

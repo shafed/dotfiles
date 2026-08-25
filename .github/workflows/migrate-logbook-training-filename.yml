@@ -21,11 +21,13 @@ jobs:
           #!/usr/bin/env python3
           import importlib.util
           import pathlib
+          import sys
           import unittest
 
           SCRIPT = pathlib.Path(__file__).resolve().parents[1] / "generate_logbook.py"
           spec = importlib.util.spec_from_file_location("generate_logbook", SCRIPT)
           module = importlib.util.module_from_spec(spec)
+          sys.modules[spec.name] = module
           assert spec.loader is not None
           spec.loader.exec_module(module)
 
@@ -46,21 +48,31 @@ jobs:
 
 
           if __name__ == "__main__":
-              unittest.main()
+              unittest.main(verbosity=2)
           PY
 
       - name: Verify RED
         shell: bash
         run: |
           set +e
-          python scripts/tests/generate-logbook-filename-test.py
+          output="$(python scripts/tests/generate-logbook-filename-test.py 2>&1)"
           status=$?
           set -e
+          printf '%s\n' "$output"
           if [ "$status" -eq 0 ]; then
             echo "Expected the new Training filename test to fail before the parser change."
             exit 1
           fi
-          echo "RED confirmed: current parser rejects -Training."
+          if ! grep -q 'FAIL: test_canonical_training_filename_is_accepted' <<<"$output"; then
+            echo "RED failed for an unexpected reason."
+            exit 1
+          fi
+          if grep -q 'FAIL: test_legacy_day_filename_remains_accepted' <<<"$output" || \
+             grep -q 'FAIL: test_arbitrary_suffix_is_rejected' <<<"$output"; then
+            echo "Existing filename behavior regressed before the intended change."
+            exit 1
+          fi
+          echo "RED confirmed: only the canonical -Training case is missing."
 
       - name: Update parser and documentation
         shell: bash

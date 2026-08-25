@@ -27,7 +27,7 @@ OUTPUT = (
     / "logbook.html"
 )
 
-FILENAME_RE = re.compile(r"^(\d{4})-(\d{2})-(\d{2})-Day-\d+$")
+FILENAME_RE = re.compile(r"^(\d{4})-(\d{2})-(\d{2})-(?:Training|Day-\d+)$")
 EVENT_LINE_RE = re.compile(
     r"^(?:[-*]\s+)?(\d{4}-\d{2}-\d{2}):\s*#(bad|neutral|good)\b\s*(.*)$", re.I
 )

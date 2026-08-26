@@ -1,7 +1,7 @@
 ---
 title: scripts-pickers
 type: component
-updated: 2026-08-22
+updated: 2026-08-26
 covers:
   - scripts/lib.sh
   - scripts/apps.sh
@@ -104,13 +104,27 @@ address back via the global `rule_browser_addr`. Callers that see it set reuse
 that window (a plain tab open) instead of also forcing their own.
 `open_in_new_browser_window` and both `cold`-start call sites use it instead of
 the bare `switch_to_workspace`. The rule's own blank tab (`chrome://newtab/`) no
-longer lingers alongside the opened URL: `open_browser_url` (`lib.sh`) now
-checks `empty_browser_tab_id` first and, when an empty tab is open, navigates it
-in place via `bruvtab navigate` + `bruvtab activate --focused` instead of
-opening a new one — so the rule's blank tab gets filled in rather than sitting
-next to a second tab. Matches `chrome://newtab/`, `chrome://new-tab-page/`,
+longer lingers alongside the opened URL: `open_browser_url` (`lib.sh`) checks
+`empty_browser_tab_id` first and, when an empty tab is open, navigates it in
+place via `bruvtab navigate` + `bruvtab activate --focused` instead of opening a
+new one — so the rule's blank tab gets filled in rather than sitting next to a
+second tab. Matches `chrome://newtab/`, `chrome://new-tab-page/`,
 `edge://newtab/`, and `about:blank`; falls back to the old plain-launch behavior
 when `bruvtab` is unavailable or no empty tab is found.
+
+⚠️ Gotcha (bruvtab discovery lags the rule's own window): a single
+`empty_browser_tab_id` check right after the rule creates its window can still
+race — `bruvtab list` needs a moment to index the brand-new window before the
+blank tab shows up in it. A check that fires too early finds nothing and falls
+through to the plain-launch fallback, which opens a **second**, redundant tab
+next to the rule's blank one (the exact symptom `switch_to_workspace_for_browser`
+was written to prevent, just one layer down). Fixed by giving `open_browser_url`
+an `await_cold_tab` flag (`open_browser_url "$url" 1`): when the caller has just
+seen `rule_browser_addr` set (i.e. it knows the empty tab exists but may not be
+indexed yet), it polls `empty_browser_tab_id` for up to ~1.2s instead of
+checking once. Only the two rule-aware call sites (`open_in_new_browser_window`,
+`open_or_focus_url`'s `cold` branch) pass `1`; other callers keep the single
+check so they don't pay that wait when there's genuinely no empty tab to find.
 
 ⚠️ Gotcha: all external process launches go with `</dev/null` and `disown`. QAT
 keeps the panel open as long as some process holds its tty

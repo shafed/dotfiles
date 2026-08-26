@@ -276,19 +276,35 @@ browser_window_off_workspace() {
   ' 2>/dev/null | head -n1
 }
 
-# open_browser_url <url> — open a URL in the configured browser without giving
-# the browser the caller's tty. Used for normal "new tab" delivery.
+# open_browser_url <url> [await_cold_tab] — open a URL in the configured
+# browser without giving the browser the caller's tty. Used for normal "new
+# tab" delivery.
 #
 # Prefers reusing an already-open empty tab (a fresh "New Tab" page) over
 # spawning a genuinely new one: cold-starting via a Hyprland on-created-empty
 # workspace rule (see switch_to_workspace_for_browser) leaves exactly such an
 # empty tab behind, and shelling out to $browser_bin would otherwise add a
 # second tab next to it instead of filling it in.
+#
+# await_cold_tab (default 0): pass 1 when the caller just triggered such a
+# cold start (rule_browser_addr is set) and knows the empty tab exists but
+# bruvtab hasn't indexed the brand-new window yet — a single check right after
+# that can race the discovery and miss it, so poll briefly instead. Regular
+# callers leave this off so they don't pay that wait when there's genuinely no
+# empty tab to find.
 open_browser_url() {
-  local url="$1" empty_tab
+  local url="$1" await_cold_tab="${2:-0}" empty_tab i
 
   if [[ -x "$bruvtab_bin" ]]; then
-    empty_tab="$(empty_browser_tab_id)"
+    if [[ "$await_cold_tab" == 1 ]]; then
+      for i in {1..8}; do
+        empty_tab="$(empty_browser_tab_id)"
+        [[ -n "$empty_tab" ]] && break
+        sleep 0.15
+      done
+    else
+      empty_tab="$(empty_browser_tab_id)"
+    fi
     if [[ -n "$empty_tab" ]] && "$bruvtab_bin" navigate "$empty_tab" "$url" >/dev/null 2>&1; then
       "$bruvtab_bin" activate --focused "$empty_tab" >/dev/null 2>&1 || true
       return 0
@@ -317,7 +333,7 @@ open_in_new_browser_window() {
     # rule already landed a bare browser window there — reuse it (a plain tab
     # open) instead of ALSO forcing --new-window below, which would spawn a
     # redundant second window racing the rule's.
-    open_browser_url "$url"
+    open_browser_url "$url" 1
     hyprctl dispatch "hl.dsp.focus({ window = \"address:${rule_browser_addr}\" })" >/dev/null 2>&1 || true
     return 0
   fi
@@ -370,7 +386,6 @@ move_browser_when_up() {
 # window to <workspace>; an already-running browser is focused wherever it lives.
 focus_browser() {
   local workspace="$1" i cold_start=false
-  sleep 0.15
 
   if ! browser_running; then
     cold_start=true
@@ -422,7 +437,6 @@ focus_browser_for_title() {
 #   "cold"      - no browser window yet.
 prepare_browser_for_new_tab() {
   local avoid_workspace="$1" addr
-  sleep 0.15
 
   addr="$(browser_window_off_workspace "$avoid_workspace")"
   if [[ -n "$addr" ]]; then
@@ -591,7 +605,7 @@ open_or_focus_url() {
     # detects a workspace rule like ws2's on-created-empty=browser beating us
     # to it so we don't ALSO spawn our own on top of it).
     switch_to_workspace_for_browser "$target_workspace"
-    open_browser_url "$url"
+    open_browser_url "$url" "$([[ -n "$rule_browser_addr" ]] && echo 1 || echo 0)"
     move_browser_when_up "$target_workspace"
     ;;
   *)

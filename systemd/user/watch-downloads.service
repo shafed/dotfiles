@@ -4,7 +4,7 @@ After=graphical-session.target
 
 [Service]
 Type=simple
-ExecStart=%h/dotfiles/scripts/watch-downloads.sh
+ExecStart=%h/github/dotfiles/scripts/watch-downloads.sh
 Restart=on-failure
 Environment=DISPLAY=:0
 Environment=WAYLAND_DISPLAY=wayland-1

@@ -276,7 +276,7 @@ return {
     image = {
       enabled = true,
       doc = {
-        inline = false,
+        inline = true,
         float = true,
         max_width = 60,
         max_height = 30,

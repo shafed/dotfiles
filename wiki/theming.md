@@ -41,10 +41,15 @@ The main generator writes the tracked format-specific surfaces:
 - `yazi/flavors/gruvbox-dark.yazi/flavor.toml`.
 
 Telegram Desktop is user-imported rather than symlinked by bootstrap, so its
-surface is generated separately by `telegram/generate-theme.py`. It writes
-`telegram/gruvbox-material-dark-medium.tdesktop-theme`; open that file in
-Telegram Desktop and choose **Apply this theme**. The file is a plain Telegram
-palette, so no separate archive or wallpaper asset is required.
+surface is generated separately by `telegram/generate-theme.py`. The tracked
+`telegram/colors.tdesktop-theme` contains the palette and
+`telegram/background.jpg` contains the low-contrast Gruvbox wallpaper. Running
+the generator packages both as
+`telegram/gruvbox-material-dark-medium.tdesktop-theme`; the archive is a local
+build artifact and is ignored by git. Open that file in Telegram Desktop and
+choose **Apply this theme**. The bundled file contains `colors.tdesktop-theme`
+and `background.jpg`, which are the names Telegram Desktop expects inside a
+`.tdesktop-theme` ZIP.
 
 Do not hand-edit color values in generated files. Configs listed above consume
 generated palette surfaces rather than maintaining independent values. Yazi's

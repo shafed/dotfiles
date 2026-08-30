@@ -58,6 +58,14 @@ gate, then a bounded logarithmic usage bonus is added among plausible matches.
 Enter focuses an existing matching toplevel when possible; Alt+Enter always
 executes a new instance. `RUNNING` uses the same matching path.
 
+Matching runs entirely in QML (no helper process), so highlighting is computed
+locally too: `DesktopLauncher.qml` re-derives the fuzzy character positions
+against the displayed name/subtitle text and renders only those characters in
+the Gruvbox accent/bold style, same visual language as Bookmarks/Projects/
+Sessions/YouTube. A match found only through the id, keywords or the
+first-letter acronym (not a substring of the visible text) highlights nothing
+— there is no position in the shown text to point at.
+
 ## Bookmarks
 
 Bookmarks also remains separate because it has browser-specific data and icon
@@ -71,6 +79,15 @@ temporary snapshot; extracted PNGs are cached under
 `~/.cache/bookmarks-fzf/favicons/`. Missing favicons fall back to the first
 letter and never trigger a network request. This SQLite/binary extraction is
 intentionally still a bounded Python helper rather than QML shell state.
+
+`palette-helper.py` also returns the character positions its own greedy scan
+found in `name`/`url` (`nameMatches`/`urlMatches`) — the same best-effort
+scheme as `youtube-helper.py`/`picker-helper.py`, not a literal readout of
+fzf's internal match. Since fzf scores the whole `name<TAB>url` line as one
+string, a row can match (and rank) via characters that only line up once the
+two fields are joined, in which case neither field highlights anything on its
+own — a known, accepted gap. `BookmarksPicker.qml` renders both in the
+Gruvbox accent/bold style.
 
 ## Projects and Sessions
 
@@ -94,6 +111,17 @@ session action actually needs one.
 Sessions reads `kitty @ ls`, deduplicates by `session_name`, sorts by recent
 focus and marks the active session `CURRENT`. Opening uses the named/transient
 session file when available. Closing a row uses Kitty's `close_session` action.
+
+Typing also applies the same frequency-weighted ranking as Bookmarks/YouTube:
+`picker-helper.py` persists open counts in `~/.cache/quickpicker/usage.tsv`,
+keyed `<provider>:<row id>` (`projects`/`sessions` share the file but not the
+namespace, so a project and a session can't collide on the same key) and
+bumped from `open`. The bonus (`0.65 * log2(count + 1)`, scaled up to be
+comparable to the fuzzy scorer's own ~10-unit position deltas) only applies
+once a query is typed — the empty-query order is untouched. It also returns
+`titleMatches`/`subtitleMatches`, the character positions its greedy fuzzy
+scan found, which `QuickPicker.qml` renders in the Gruvbox accent/bold style
+like the other pickers.
 
 ## YouTube
 
@@ -179,3 +207,29 @@ Tracked QML is run directly; there is no `prepare.py` runtime-copy step.
 IPC target; Projects and Sessions continue through `quickpicker`. The wrapper
 closes competing IPC targets before opening the requested surface, preserving
 the single-overlay contract.
+
+⚠️ Gotcha (`dots-shell`'s IPC target must self-locate, not default to the old
+runtime-copy path): `quickshell ipc -p <path>` matches the literal _resolved_
+`shell.qml` path of a running instance, not just wherever `<path>` eventually
+leads — so it does not transparently follow `~/.config/quickshell` if that
+symlink is itself the `-p` argument passed straight through. `start.sh` runs
+`quickshell -p "$root"` where `$root` is `dots-shell`'s own directory
+(`readlink -f` of its own `${BASH_SOURCE[0]}`, so it works the same whether
+invoked directly or through the `~/.config/quickshell` symlink). Before this,
+`dots-shell` defaulted to `${XDG_CACHE_HOME:-~/.cache}/dots-shell/quickshell`
+— correct back when `start.sh` still ran `prepare.py` into that path, but
+stale once "quickshell: run tracked qml tree directly" removed that copy step
+without updating `dots-shell`'s default to match. Symptom: every hotkey
+(`apps+a/b/e/c/u`, clipboard, scratch, panels — all of them, not just one)
+silently failed with `No running instances for ".../shell.qml"` even though
+`quickshell.service` was up and reloading cleanly. `QUICKSHELL_CONFIG_DIR`
+still overrides both when set, e.g. to point at an isolated worktree.
+
+⚠️ Gotcha (`~/.config/quickshell` is a movable symlink, not a fixed target):
+it's meant to point at whichever checkout is "active" — normally this repo,
+but it can be repointed at an isolated worktree for live-testing a picker
+change in isolation. If a prior session leaves it pointed at a stale worktree
+and never restores it, every hotkey routes to that worktree's (possibly much
+older) QML and `dots-shell` instead of this repo's — `./dots apply
+--links-only` re-links it back to `$ROOT/quickshell` (refuses to touch it only
+if something replaced it with a real, non-symlink directory).

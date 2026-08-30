@@ -31,7 +31,8 @@ PanelWindow {
   Rectangle {
     id: panelCard
     width: Math.min(panel.ui.panelWidth, parent.width - 2 * panel.ui.panelRightMargin)
-    height: Math.min(panel.ui.panelHeight, parent.height - panel.ui.panelTopMargin - panel.ui.panelOuterGap)
+    height: Math.min(panel.shell.openPanel === "system" ? panel.ui.systemOverviewHeight : panel.ui.panelHeight,
+                     parent.height - panel.ui.panelTopMargin - panel.ui.panelOuterGap)
     anchors.top: parent.top
     anchors.right: parent.right
     anchors.topMargin: panel.ui.panelTopMargin
@@ -66,7 +67,8 @@ PanelWindow {
       Loader {
         Layout.fillWidth: true
         Layout.fillHeight: true
-        sourceComponent: panel.shell.openPanel === "audio" ? audioPanel :
+        sourceComponent: panel.shell.openPanel === "system" ? systemOverview :
+                         panel.shell.openPanel === "audio" ? audioPanel :
                          panel.shell.openPanel === "network" ? networkPanel :
                          panel.shell.openPanel === "bluetooth" ? bluetoothPanel :
                          panel.shell.openPanel === "power" ? powerPanel :
@@ -79,6 +81,7 @@ PanelWindow {
   }
 }
 
+Component { id: systemOverview; SystemOverview { shell: panel.shell; services: panel.services; colors: panel.colors; ui: panel.ui } }
 Component { id: audioPanel; AudioPanel { shell: panel.shell; services: panel.services; colors: panel.colors; ui: panel.ui } }
 Component { id: networkPanel; NetworkPanel { shell: panel.shell; colors: panel.colors; ui: panel.ui } }
 Component { id: bluetoothPanel; BluetoothPanel { shell: panel.shell; colors: panel.colors; ui: panel.ui } }

@@ -16,11 +16,11 @@ GridLayout {
 
   readonly property var entries: [
     { key: "audio", label: "Audio", status: services.muted ? "muted" : String(services.volume) + "%" },
-    { key: "network", label: "Network / Wi-Fi", status: shell.state.network && shell.state.network.enabled ? String(shell.state.network.active || "on") : "off" },
+    { key: "network", label: "Network / Wi-Fi", status: system.network.enabled ? String(system.network.active || "on") : "off" },
     { key: "bluetooth", label: "Bluetooth", status: system.bluetoothPowered ? "on" : "off" },
     { key: "power", label: "Power", status: shell.laptop ? String(system.batteryPercent) + "%" : String(system.powerProfile || "power") },
     { key: "agents", label: "AI limits", status: String((shell.state.agents || []).length) + " accounts" },
-    { key: "updates", label: "Updates", status: String(shell.state.updates ? shell.state.updates.count || 0 : 0) },
+    { key: "updates", label: "Updates", status: String(system.updates.count) },
     { key: "notifications", label: "Notifications", status: notifications.dnd ? "DND" : String((notifications.history || []).length) },
     { key: "calendar", label: "Calendar", status: Qt.formatDate(shell.clockNow, "ddd d MMM") }
   ]

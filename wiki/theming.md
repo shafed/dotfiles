@@ -1,11 +1,12 @@
 ---
 title: theming
 type: topic
-updated: 2026-08-14
+updated: 2026-08-30
 covers:
   - darkman/
   - hypr/hyprsunset.conf
   - kitty/current-theme.conf
+  - helium/
   - .claude/themes/gruvbox-material.json
 ---
 
@@ -16,19 +17,36 @@ Everything is **Gruvbox Material Dark Medium**, anchored to `background #282828`
 to match it, not the other way round.
 
 ⚠️ Gotcha: **there is no source-of-truth color file.** The palette is
-hand-duplicated in seven places, and changing a shade means editing all of them:
+hand-duplicated in eight places, and changing a shade means editing all of them:
 
 - `kitty/current-theme.conf`, plus a second copy in
   `quick-access-terminal-center.conf` via `kitty_override`
 - `waybar/style.css` (`@define-color gb_*`)
 - `yazi/flavors/gruvbox-dark.yazi` + `theme.toml`
 - nvim's own gruvbox-material plugin
+- `helium/gruvbox-material/manifest.json`
 - `.claude/themes/gruvbox-material.json`
 - hyprland/hyprlock — raw hex in the configs for borders and lock fields
 
 The Claude Code theme deliberately leaves `claudeShimmer` at its built-in color:
 overriding it made the thinking animation harder to pick out. The base `claude`
 accent and the rest of that UI are gruvbox.
+
+## Helium — local Chromium theme
+
+`helium/gruvbox-material/manifest.json` is an unpacked Manifest V3 Chromium theme
+using the same Gruvbox Material Dark Medium palette as kitty/nvim. It keeps the
+browser chrome dark regardless of darkman's GTK/Qt sunrise/sundown switch.
+
+Install it once from `helium://extensions`: enable **Developer mode**, choose
+**Load unpacked**, and select `~/github/dotfiles/helium/gruvbox-material/`.
+After later palette edits, use **Reload** on that extension/theme entry.
+
+⚠️ Helium currently does not expose a stable local config/CLI for setting its
+colour theme programmatically, so the one-time profile install is intentional.
+Also, some Chromium internal pages (Settings, Extensions, Downloads, etc.) may
+still retain Helium/Chromium's own dark colours even while the browser chrome is
+gruvbox; upstream tracks consistent internal-page theming separately.
 
 ## Light/dark: darkman toggles the system color-scheme, not kitty
 
@@ -40,11 +58,11 @@ which is why no per-app theme files exist for them.
   scans `$XDG_DATA_HOME/darkman/` (+ `XDG_DATA_DIRS`) for transition scripts,
   hence the `~/.local/share/darkman → ~/github/dotfiles/darkman/scripts` symlink from
   `bootstrap.sh`. A hook placed in `~/.config` is silently never run.
-- **kitty is intentionally NOT toggled** — it keeps its single gruvbox-dark
-  `current-theme.conf`.
-- ⚠️ **Gaps**: waybar/yazi/nvim are static gruvbox dark and don't follow the
-  color-scheme; only GTK/Qt apps do. To widen the switch, add per-app hooks to
-  `darkman/scripts/`.
+- **kitty and Helium are intentionally NOT toggled** — both keep their single
+  gruvbox-dark themes.
+- ⚠️ **Gaps**: waybar/yazi/nvim/Helium are static gruvbox dark and don't follow
+  the color-scheme; only GTK/Qt apps do. To widen the switch, add per-app hooks
+  to `darkman/scripts/`.
 
 ## hyprsunset — screen gamma/temperature only
 

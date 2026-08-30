@@ -103,9 +103,10 @@ only a fallback because it can differ substantially from what the website
 labels as Weekly limits. If a live request fails, the last cached limits remain
 visible and are marked `cached` rather than silently pretending to be fresh.
 
-The top-bar `AI` label stays neutral. Warning color belongs to each utilization
-percentage/bar inside the panel: under 70% used is green, 70–89% amber, and 90%+
-red. This keeps the warning attached to the limit that caused it.
+The top-bar `AI` label reflects the most constrained current account limit: it
+stays neutral while more than 30% remains, turns amber at 30% remaining or less,
+and red at 10% remaining or less. The per-limit percentages/bars inside the
+panel keep their own green/amber/red utilization colors as well.
 
 ## Clock and power
 

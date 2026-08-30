@@ -48,7 +48,10 @@ the generator packages those as
 `telegram/gruvbox-material-dark-medium.tdesktop-theme`; the archive is a local
 build artifact and is ignored by git. It contains `colors.tdesktop-theme` and
 `background.jpg`, which Telegram Desktop reads as the palette and theme
-wallpaper. Import the final archive, not the standalone palette file.
+wallpaper. Import the final archive, not the standalone palette file. The
+tracked JPEG is passed through as opaque binary data; Telegram Desktop performs
+the image decoding, so the generator does not impose its own JPEG-container
+validation.
 
 The alternate procedural wallpaper is intentionally retained as a backup. Each
 Telegram generation writes it to `telegram/background-backup.png`; that file is

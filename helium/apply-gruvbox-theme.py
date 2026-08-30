@@ -72,38 +72,34 @@ def rgb(value: str) -> list[int]:
 
 
 def theme_payload(colors: dict[str, str]) -> dict[str, object]:
-    # Keep the chrome hierarchy simple: all passive/background surfaces use the
-    # darkest Gruvbox background, while the active tab gets the lighter surface.
-    # For a third-party theme Chromium's generic tab mixer maps toolbar to the
-    # active tab and background_tab to inactive tabs/New Tab.
+    # Keep the original Helium Gruvbox mapping from the first local theme:
+    # #282828 for the main frame/omnibox/NTP background, #32302f for toolbar,
+    # inactive frame and buttons, and #3c3836 only for the NTP header surface.
+    # Do not add explicit background_tab overrides here; the first theme relied
+    # on Chromium's native tab-state fallbacks.
     theme_colors = {
-        "frame": rgb(colors["bg_hard"]),
-        "frame_inactive": rgb(colors["bg_hard"]),
-        "toolbar": rgb(colors["bg_soft"]),
-        "background_tab": rgb(colors["bg_hard"]),
-        "background_tab_inactive": rgb(colors["bg_hard"]),
+        "frame": rgb(colors["bg"]),
+        "frame_inactive": rgb(colors["bg_alt"]),
+        "frame_incognito": rgb(colors["bg"]),
+        "frame_incognito_inactive": rgb(colors["bg_alt"]),
+        "toolbar": rgb(colors["bg_alt"]),
         "tab_text": rgb(colors["fg"]),
-        "tab_background_text": rgb(colors["gray_dim"]),
-        "tab_background_text_inactive": rgb(colors["gray"]),
+        "tab_background_text": rgb(colors["gray"]),
+        "tab_background_text_inactive": rgb(colors["gray_dim"]),
         "bookmark_text": rgb(colors["fg"]),
-        "toolbar_text": rgb(colors["fg"]),
         "toolbar_button_icon": rgb(colors["fg"]),
-        "button_background": rgb(colors["bg_hard"]),
-        "omnibox_background": rgb(colors["bg_hard"]),
+        "omnibox_background": rgb(colors["bg"]),
         "omnibox_text": rgb(colors["fg"]),
-        "ntp_background": rgb(colors["bg_hard"]),
-        "ntp_header": rgb(colors["bg_alt"]),
+        "ntp_background": rgb(colors["bg"]),
         "ntp_text": rgb(colors["fg"]),
         "ntp_link": rgb(colors["blue"]),
+        "ntp_header": rgb(colors["bg_soft"]),
+        "button_background": rgb(colors["bg_alt"]),
     }
-    # Identity tints keep Chromium from hue-shifting any fallback surfaces. In
-    # particular, background_tab must stay the exact frame color when a fallback
-    # path is used rather than a generated Material shade.
     identity_tint = [-1, -1, -1]
     return {
         "colors": theme_colors,
         "tints": {
-            "background_tab": identity_tint,
             "buttons": identity_tint,
             "frame": identity_tint,
             "frame_inactive": identity_tint,

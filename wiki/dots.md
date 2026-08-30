@@ -47,7 +47,7 @@ service so `start.sh` regenerates it from tracked sources; it never copies a
 "default" config over the repository.
 
 Manual desktop-shell control should go through `dots shell` / `dots panel`.
-Those commands deliberately whitelist the stable actions already implemented by
+Those commands deliberately whitelist stable actions already implemented by
 `quickshell/dots-shell` instead of exposing raw arbitrary IPC as part of the
 public CLI. `dots shell refresh` refreshes live shell data through IPC, while
 `dots refresh quickshell` rebuilds the generated runtime; the similar names have
@@ -70,15 +70,14 @@ and symlink identity preserved into a lazily-created run directory under
 are only reported do not create backups. There is no automatic rollback layer;
 a backup is just a transparent copy to restore manually if needed.
 
-Waybar is the first such migration. Quickshell owns the bar, so a running or
-enabled Waybar, `~/.config/waybar`, or Waybar cache is stale state. The retired
-managed `~/.config/waybar` symlink is backed up before removal; stale Waybar
-cache is removed without backup because it is derived state. An unmanaged real
-Waybar config is still reported for manual archival instead of being touched.
-The old tracked `waybar/` directory was removed as part of introducing this
-contract. The Quickshell startup kill remains as compatibility insurance for
-machines that have not migrated yet; it is not evidence that Waybar is still a
-supported component.
+Waybar is the first such migration. Quickshell owns the active bar, so a running
+or enabled Waybar, an old bootstrap-managed `~/.config/waybar` symlink, or
+Waybar cache is stale machine state. The symlink is backed up before removal;
+stale cache is removed without backup because it is derived state. An unmanaged
+real Waybar config is reported for manual archival instead of being touched.
+The repository can still retain generated Waybar palette/style artifacts for the
+shared theme generator; bootstrap no longer manages the Waybar config directory,
+so those tracked artifacts are not evidence that Waybar is an active component.
 
 ⚠️ Gotcha: `dots doctor` treats missing required commands and broken managed
 links as errors, while developer-only tools such as `luac` and `pre-commit` are

@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
-"""Show the Quickshell OSD and refresh the bar on keyboard layout changes."""
+"""Push keyboard layout changes directly into the Quickshell bar and OSD."""
 
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import time
 from pathlib import Path
 
 HOME = Path.home()
-SHELL_PATH = HOME / "github/dotfiles/quickshell"
+CACHE_HOME = Path(os.environ.get("XDG_CACHE_HOME", HOME / ".cache"))
+SHELL_PATH = CACHE_HOME / "dots-shell/quickshell"
 
 
 def layout_label(layout: str) -> str:
@@ -45,12 +47,15 @@ def current_layout() -> str:
     return ""
 
 
-def ipc_call(*args: str) -> bool:
+def publish_layout(layout: str) -> None:
+    label = layout_label(layout)
+    if label == "--":
+        return
     try:
         result = subprocess.run(
             [
                 "quickshell", "ipc", "-p", str(SHELL_PATH),
-                "call", "dots", *args,
+                "call", "dots", "layoutChanged", label,
             ],
             text=True,
             capture_output=True,
@@ -59,23 +64,9 @@ def ipc_call(*args: str) -> bool:
         )
     except subprocess.SubprocessError as exc:
         print(f"layout-osd: IPC failed: {exc}", flush=True)
-        return False
-
+        return
     if result.returncode != 0:
         print(f"layout-osd: IPC failed: {result.stderr.strip()}", flush=True)
-        return False
-    return True
-
-
-def publish_layout(layout: str) -> None:
-    label = layout_label(layout)
-    if label == "--":
-        return
-
-    # Do not wait for the shell's regular 800 ms fast-snapshot timer. Trigger
-    # the same fast refresh immediately so the bar follows the real layout.
-    ipc_call("refresh")
-    ipc_call("showOsd", "LANG", label, "0")
 
 
 def main() -> None:
@@ -86,8 +77,6 @@ def main() -> None:
             if last and layout != last:
                 publish_layout(layout)
             last = layout
-        # A short fallback poll keeps this independent of Hyprland socket path
-        # changes while remaining effectively instantaneous to the user.
         time.sleep(0.05)
 
 

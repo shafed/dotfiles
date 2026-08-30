@@ -1,7 +1,7 @@
 ---
 title: kanata
 type: component
-updated: 2026-08-17
+updated: 2026-08-30
 covers:
   - kanata/config.kbd
   - kanata/switchApp.sh
@@ -102,6 +102,22 @@ on purpose. Tuned empirically — change with care.
 - `all-released` holds modifiers until both keys come up, letting a third key
   join (e.g. `C-S-tab`).
 
+`defchordsv2` is global and its layer argument is an exclusion list only. More
+importantly, Kanata rejects duplicate participating-key sets even when their
+disabled-layer lists differ. Therefore the existing global `j+k` (Ctrl+Shift),
+`k+l` (numplain) and `w+e` (Tab) cannot also mean something else only on
+`apps`. System controls use the nearest free apps-only pairs instead: `u+i`
+volume down, `i+o` volume up, `o+p` mute, `h+j` brightness down, `l+;`
+brightness up and `e+r` the Quickshell system overview. Every non-`apps` layer
+is in those chords' disabled list, so normal typing and the existing layers do
+not see them.
+
+Volume/brightness chords emit Kanata's standard `vold`/`volu`/`mute` and
+`brdn`/`brup` keycodes. They do **not** call `wpctl` or `brightnessctl`; the
+existing Hyprland XF86 bindings remain the single owner of those actions and of
+repeat behavior. Because chord participants are physical keycodes, these
+apps-layer gestures are the same under US and RU xkb layouts.
+
 ⚠️ Related trade-off: press-decided layer-holds on frequent letters (`n`, `e`,
 `r`, `w`) are instant, but "letter + bigram" can misfire. Deliberate, in
 exchange for fast layer entry.
@@ -168,6 +184,11 @@ Holding the thumb key gives the `apps` launcher layer. ⚠️ The layer itself d
 **not** touch the layout — force-English is attached to the _actions_
 (`(on-press tap-vkey apps-us)` → `symlayout-watch.sh app`), so fzf pickers and
 rofimoji always start in English while a bare hold/release stays harmless.
+
+The apps-only system chords are deliberately different: they operate on
+physical keycodes and do not need the force-English helper. `e+r` invokes
+`dots-shell system`; the media/backlight pairs emit XF86-equivalent keycodes for
+Hyprland to handle.
 
 ## Screenshots
 

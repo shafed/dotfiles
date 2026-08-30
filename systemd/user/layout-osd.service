@@ -1,7 +1,7 @@
 [Unit]
 Description=Keyboard layout OSD watcher
-PartOf=graphical-session.target
-After=graphical-session.target quickshell.service
+PartOf=quickshell.service graphical-session.target
+After=quickshell.service
 
 [Service]
 Type=simple

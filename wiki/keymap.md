@@ -1,7 +1,7 @@
 ---
 title: keymap
 type: topic
-updated: 2026-08-17
+updated: 2026-08-30
 covers:
   - kanata/config.kbd
   - hypr/hyprland.lua
@@ -12,7 +12,8 @@ covers:
 # keymap — end-to-end key map
 
 Single source of truth for how the layers divide the keyboard. Component detail:
-[kanata](kanata.md), [hypr](hypr.md), [kitty](kitty.md).
+[kanata](kanata.md), [hypr](hypr.md), [kitty](kitty.md). Quickshell picker
+behaviour is in [quickshell-pickers](quickshell-pickers.md).
 
 ## Three levels and why they don't collide
 
@@ -33,10 +34,12 @@ combos when focused, whereas hypr catches Super globally.
 - **base** — letters + HRM + functional thumb/letter holds.
 - **normal** — a "safe" layer (letters as-is, `lsft` = switch language), entered
   by holding Enter.
-- **apps** (hold thumb) — launcher: applications, kitty sessions, fzf pickers,
-  and a browser sub-layer on hold `s`. ⚠️ `q` here runs
-  [close-window.sh](kanata.md), which is `hl.dsp.window.close()` for most apps —
-  **not** kill, so tray apps minimize instead of being SIGKILL'd — except
+- **apps** (hold thumb) — launcher layer. `a` opens the Quickshell Applications
+  picker and `b` opens the separate Quickshell Bookmarks picker; projects,
+  YouTube and kitty-session pickers remain QAT/fzf where the terminal is still
+  the better frontend. The browser sub-layer remains on hold `s`. ⚠️ `q` here
+  runs [close-window.sh](kanata.md), which is `hl.dsp.window.close()` for most
+  apps — **not** kill, so tray apps minimize instead of being SIGKILL'd — except
   Telegram, which is force-killed since a graceful close just minimizes it to
   tray instead of quitting.
 - **symbols / symbols2** (hold `e`/`r`, or chords `s+d` / `s+d+f`) — programmer
@@ -47,6 +50,18 @@ combos when focused, whereas hypr catches Super globally.
   symbols on the left hand.
 - **numws / movews** (apps hold `l`, or chord `j+l`) — `Super+digit` /
   `Super+Shift+digit`, i.e. hypr workspace switch and move-to-workspace.
+
+## Quickshell desktop bindings
+
+Hyprland owns the direct desktop-shell bindings while kanata provides the
+thumb-layer routes above. `Super+Space` opens Applications and `Super+V` opens
+Clipboard. `Super+Shift+A/W/B/P/I/U/N` open Audio, Network, Bluetooth, Power,
+Agents, Updates and Notifications respectively.
+
+These system panels are mutually exclusive popovers: opening one closes other
+overlays; `Esc` or the first click outside closes the active panel. This is a UI
+contract rather than a kanata-layer rule, so its implementation belongs to
+[quickshell](quickshell.md).
 
 ## Collisions that had to be resolved
 
@@ -67,8 +82,8 @@ global layout), through
 
 - **symbol layers** switch to US for as long as the layer is held, then restore
   the remembered index — so `S-...` yields the same symbols under RU and US.
-- **apps actions** hard-force US index 0 when launching a picker, so fzf starts
-  in English.
+- **apps actions** hard-force US index 0 before opening a picker. This remains
+  useful for both Quickshell text inputs and the QAT/fzf pickers that remain.
 - **nvim** does the same for normal mode on its own, with a `langmap` covering
   the async gap ([nvim-layout](nvim-layout.md)).
 

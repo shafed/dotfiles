@@ -243,14 +243,6 @@ hl.bind(mainMod .. " + SHIFT + I", hl.dsp.exec_cmd(shellCtl .. " panel agents"))
 hl.bind(mainMod .. " + SHIFT + U", hl.dsp.exec_cmd(shellCtl .. " panel updates"))
 hl.bind(mainMod .. " + SHIFT + N", hl.dsp.exec_cmd(shellCtl .. " panel notifications"))
 
--- Physical volume/brightness controls in addition to the XF86 keys below.
--- Quickshell observes these direct system changes and renders the OSD.
-hl.bind(mainMod .. " + equal", hl.dsp.exec_cmd("wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+"), { repeating = true })
-hl.bind(mainMod .. " + minus", hl.dsp.exec_cmd("wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"), { repeating = true })
-hl.bind(mainMod .. " + M", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"))
-hl.bind(mainMod .. " + bracketright", hl.dsp.exec_cmd("brightnessctl -e4 -n2 set 5%+"), { repeating = true })
-hl.bind(mainMod .. " + bracketleft", hl.dsp.exec_cmd("brightnessctl -e4 -n2 set 5%-"), { repeating = true })
-
 hl.bind("SUPER + Home", hl.dsp.exec_cmd("systemctl suspend && hyprlock"))
 hl.bind(mainMod .. " + N", hl.dsp.exec_cmd("~/github/dotfiles/scripts/nvim-scratch-toggle.sh"))
 

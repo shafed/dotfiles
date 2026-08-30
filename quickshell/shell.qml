@@ -15,13 +15,10 @@ ShellRoot {
   Config.UiConfig { id: ui }
 
   readonly property string home: Quickshell.env("HOME")
-  readonly property string backend: home + "/github/dotfiles/quickshell/backend.py"
   readonly property bool laptop: system.hasBattery
 
   property var state: ({
-    audio: { volume: 0, muted: false, sinks: [], streams: [] },
-    network: { enabled: false, active: "", networks: [] },
-    updates: { count: 0 },
+    audio: { volume: 0, muted: false },
     agents: [],
     layout: ""
   })
@@ -165,32 +162,33 @@ ShellRoot {
     return "Resets " + Qt.formatDateTime(when, "ddd HH:mm")
   }
 
-  function backendAction(domain, action, arg) {
-    var argv = ["python3", backend, "action", domain, action]
-    if (arg !== undefined && arg !== null && String(arg) !== "") argv.push(String(arg))
-    run(argv)
-    fullRefreshDelay.restart()
-  }
-
   function togglePanel(name) {
     if (!laptop && (name === "network" || name === "bluetooth")) return
     desktopLauncher.close()
     bookmarksPicker.close()
     clipboardOpen = false
     openPanel = openPanel === name ? "" : name
-    if (openPanel !== "" && !fullProc.running) fullProc.running = true
-  }
-
-  function updateFull(next) {
-    if (state.layout) next.layout = state.layout
-    if (agentsLiveRefreshed && state.agents) next.agents = state.agents
-    state = next
+    if (openPanel === "network") system.network.refresh()
+    if (openPanel === "updates") system.updates.refresh()
   }
 
   function updateLayout(layout) {
     var merged = state
     merged.layout = layout
     state = Object.assign({}, merged)
+  }
+
+  function parseClipboardRows(text) {
+    var rows = []
+    var lines = String(text || "").split("\n")
+    for (var i = 0; i < lines.length && rows.length < 30; i++) {
+      var line = lines[i]
+      if (!line) continue
+      var tab = line.indexOf("\t")
+      if (tab < 0) continue
+      rows.push({ id: line.slice(0, tab), text: line.slice(tab + 1).replace(/\\n/g, " ").slice(0, 140) })
+    }
+    clipboardRows = rows
   }
 
   function refreshClipboard() {
@@ -253,7 +251,6 @@ ShellRoot {
   Component.onCompleted: {
     run(["pkill", "-x", "waybar"])
     hydrateNotifications()
-    fullProc.running = true
   }
 
   Services.DesktopServices {
@@ -275,24 +272,14 @@ ShellRoot {
   ListModel { id: toastModel }
 
   Process {
-    id: fullProc
-    command: ["python3", root.backend, "snapshot"]
-    stdout: StdioCollector {
-      waitForEnd: true
-      onStreamFinished: {
-        try { root.updateFull(JSON.parse(text)) } catch (e) { console.warn("dots-shell full snapshot:", e) }
-      }
-    }
-  }
-
-  Process {
     id: clipboardProc
-    command: ["python3", root.backend, "clipboard-list"]
+    command: ["bash", "-lc",
+      "if command -v cliphist >/dev/null; then cliphist list | head -n 30; " +
+      "elif command -v copyq >/dev/null; then for i in $(seq 0 29); do v=$(copyq read \"$i\" 2>/dev/null) || break; " +
+      "v=${v//$'\\n'/ }; printf 'copyq:%s\\t%.140s\\n' \"$i\" \"$v\"; done; fi"]
     stdout: StdioCollector {
       waitForEnd: true
-      onStreamFinished: {
-        try { root.clipboardRows = JSON.parse(text) } catch (e) { root.clipboardRows = [] }
-      }
+      onStreamFinished: root.parseClipboardRows(text)
     }
   }
 
@@ -326,19 +313,6 @@ ShellRoot {
         }
       }
     }
-  }
-
-  Timer {
-    interval: ui.fullRefreshMs
-    repeat: true
-    running: true
-    onTriggered: if (!fullProc.running) fullProc.running = true
-  }
-
-  Timer {
-    id: fullRefreshDelay
-    interval: 900
-    onTriggered: if (!fullProc.running) fullProc.running = true
   }
 
   Timer {
@@ -391,7 +365,9 @@ ShellRoot {
       return root.openPanel
     }
     function refresh(): string {
-      if (!root.fullProc.running) root.fullProc.running = true
+      system.network.refresh()
+      system.updates.refresh()
+      if (!agentsRefreshProc.running) agentsRefreshProc.running = true
       return "ok"
     }
     function showOsd(icon: string, label: string, value: string): string {

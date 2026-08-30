@@ -56,8 +56,8 @@ Variants {
         ClickButton { label: bars.shell.layoutLabel(bars.shell.state.layout) }
 
         ClickButton {
-          visible: Number(bars.shell.state.updates ? bars.shell.state.updates.count : 0) > 0
-          label: "↑" + String(bars.shell.state.updates ? bars.shell.state.updates.count : 0)
+          visible: bars.system.updates.count > 0
+          label: "↑" + String(bars.system.updates.count)
           onPressed: bars.shell.togglePanel("updates")
         }
 
@@ -78,7 +78,7 @@ Variants {
 
         ClickButton {
           visible: bars.shell.laptop
-          label: bars.shell.state.network && bars.shell.state.network.active ? "NET" : "NET!"
+          label: bars.system.network.connected ? "NET" : "NET!"
           active: bars.shell.openPanel === "network"
           onPressed: bars.shell.togglePanel("network")
         }

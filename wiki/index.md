@@ -1,7 +1,7 @@
 ---
 title: index
 type: index
-updated: 2026-08-14
+updated: 2026-08-30
 ---
 
 # Dotfiles wiki — index
@@ -23,11 +23,12 @@ rules: [../CLAUDE.md](../CLAUDE.md) (`AGENTS.md` symlinks to it).
   scratch note, training logbook, standalone helpers. The most active and
   gotcha-dense part of the repo.
 - **[hypr](hypr.md)** — Hyprland: bindings, monitors, idle/lock/gamma.
+- **[quickshell](quickshell.md)** — active top bar and desktop shell; why it
+  replaced Waybar and why the running QML is generated at startup.
 - **[kitty](kitty.md)** — terminal: QAT panels, custom kittens, remote control.
 - **[nvim](nvim.md)** — map of content: which LazyVim behavior was overridden
   and why — window UI, vault workflows, clipboard, Russian layout.
 - **[zsh](zsh.md)** — shell config, aliases, functions.
-- **[waybar](waybar.md)** — status bar; needs `waybar-git`, not the release.
 - **[yazi](yazi.md)** — file manager.
 - **[sioyek](sioyek.md)** — PDF viewer; why every launcher must go through the
   `~/.local/bin/sioyek` wrapper.

@@ -112,8 +112,8 @@
   r (t! kitty-send C-S-1)   ;; daily note
   y (cmd helium-browser --new-window https://www.youtube.com/playlist?list=WL)
   u (multi (on-press tap-vkey apps-us) (cmd zsh -lc "$HOME/github/dotfiles/scripts/youtube-qat.sh")) ;; youtube channel search QAT
-  b (multi (on-press tap-vkey apps-us) (cmd zsh -lc "$HOME/github/dotfiles/scripts/bookmarks.sh")) ;; bookmarks fzf QAT
-  a (multi (on-press tap-vkey apps-us) (cmd zsh -lc "$HOME/github/dotfiles/scripts/apps.sh")) ;; applications fzf QAT
+  b (multi (on-press tap-vkey apps-us) (cmd zsh -lc "$HOME/.config/quickshell/dots-shell bookmarks")) ;; bookmarks Quickshell + fzf
+  a (multi (on-press tap-vkey apps-us) (cmd zsh -lc "$HOME/.config/quickshell/dots-shell launcher")) ;; applications Quickshell launcher
   o (t! kitty-send C-S-o)   ;; obsidian session
   w (t! kitty-send C-S-w)   ;; downloads session
   h (t! kitty-send C-S-a)   ;; home session

@@ -81,7 +81,6 @@ replace_once(
     "      var merged = root.state\n"
     "      merged.layout = label\n"
     "      root.state = Object.assign({}, merged)\n"
-    "      root.showOsd(\"LANG\", label, 0, false)\n"
     "      return \"ok\"\n"
     "    }\n",
     "IPC showOsd",
@@ -117,9 +116,10 @@ replace_once(
     "          font.family: \"monospace\"\n"
     "          font.pixelSize: 12\n"
     "          elide: Text.ElideRight\n",
-    "          color: \"#ebdbb2\"\n"
+    "          color: \"#fbf1c7\"\n"
     "          font.family: \"monospace\"\n"
-    "          font.pixelSize: 13\n"
+    "          font.bold: true\n"
+    "          font.pixelSize: 14\n"
     "          elide: Text.ElideRight\n",
     "active window title font",
 )

@@ -1,7 +1,7 @@
 [Unit]
-Description=Brightness OSD watcher
-PartOf=quickshell.service graphical-session.target
-After=quickshell.service
+Description=Brightness watcher for Quickshell
+PartOf=graphical-session.target
+After=graphical-session.target
 
 [Service]
 Type=simple

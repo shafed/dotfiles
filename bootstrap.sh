@@ -34,7 +34,6 @@ REQUIRED_PKGS=(
   "checkupdates:pacman-contrib"
   "wl-paste:wl-clipboard"
   "cliphist:cliphist"
-  "waybar:waybar"
   "yazi:yazi"
   "nvim:neovim"
   "zsh:zsh"
@@ -47,14 +46,13 @@ REQUIRED_PKGS=(
   "yt-dlp:yt-dlp"
   "bruvtab:bruvtab (uv tool/pipx)"
   "task:taskwarrior"
-  "copyq:copyq"
   "python3:python"
 )
 
 # Sources this script links, relative to DOTFILES_DIR. CONFIG_DIRS become
 # whole-directory symlinks into ~/.config; LINK_FILES are individual symlinks.
 CONFIG_DIRS=(
-  hypr kitty nvim kanata waybar quickshell yazi darkman lazygit sioyek zathura systemd
+  hypr kitty nvim kanata quickshell yazi darkman lazygit sioyek zathura systemd
 )
 LINK_FILES=(
   zsh/zshrc
@@ -118,7 +116,7 @@ link_configs() {
   echo "== Linking configs into ~/.config =="
   mkdir -p "$HOME/.config"
 
-  # Whole-directory symlinks: ~/.config/<name> -> ~/github/dotfiles/<name>
+  # Whole-directory symlinks: ~/.config/<name> -> this worktree/repo.
   for name in "${CONFIG_DIRS[@]}"; do
     ln -sfvn "$DOTFILES_DIR/$name" "$HOME/.config/$name"
   done
@@ -135,21 +133,11 @@ link_configs() {
   ln -sfv "$DOTFILES_DIR/instructions.md" "$HOME/.config/opencode/AGENTS.md"
   ln -sfv "$DOTFILES_DIR/instructions.md" "$HOME/.codex/AGENTS.md"
 
-  # no-coauthor.sh enforces the "no Co-Authored-By" rule from instructions.md in
-  # every project, so it is linked to $HOME rather than staying repo-scoped.
-  # Only the script is linked — the `hooks` block in ~/.claude/settings.json
-  # that registers it is machine state this repo does not track.
   mkdir -p "$HOME/.claude/hooks"
   ln -sfv "$DOTFILES_DIR/.claude/hooks/no-coauthor.sh" "$HOME/.claude/hooks/no-coauthor.sh"
-
-  # This repo's own rules live in CLAUDE.md; AGENTS.md is a symlink to it, so
-  # Codex and opencode (which read AGENTS.md by convention) get the same file.
   ln -sfvn CLAUDE.md "$DOTFILES_DIR/AGENTS.md"
-
-  # One real /commit skill serves Claude Code, opencode and Codex.
   ln -sfvn ../../.claude/skills/commit "$DOTFILES_DIR/.agents/skills/commit"
 
-  # The gruvbox-material Claude Code theme.
   mkdir -p "$HOME/.claude/themes"
   ln -sfvn "$DOTFILES_DIR/.claude/themes/gruvbox-material.json" \
     "$HOME/.claude/themes/gruvbox-material.json"
@@ -170,20 +158,6 @@ EOF
   chmod +x "$HOME/.local/bin/sudo"
   echo "  wrote $HOME/.local/bin/sudo"
 
-  # Keep the existing Super+V / CopyQ call sites intact while routing the
-  # historical `copyq toggle` action to the Quickshell clipboard overlay.
-  # Every other CopyQ invocation still reaches the real binary, which also
-  # remains the clipboard-history fallback when cliphist is unavailable.
-  cat >"$HOME/.local/bin/copyq" <<EOF
-#!/usr/bin/env bash
-if [ "\${1:-}" = "toggle" ] && command -v quickshell >/dev/null 2>&1; then
-  exec quickshell ipc -p "$DOTFILES_DIR/quickshell" call dots toggleClipboard
-fi
-exec /usr/bin/copyq "\$@"
-EOF
-  chmod +x "$HOME/.local/bin/copyq"
-  echo "  wrote $HOME/.local/bin/copyq"
-
   # sioyek can't create a Qt6 EGL context on nvidia under Wayland, so force it
   # onto XWayland. This is a wrapper rather than an alias so every caller gets it.
   cat >"$HOME/.local/bin/sioyek" <<EOF
@@ -192,6 +166,16 @@ exec env -u LIBGL_ALWAYS_SOFTWARE QT_QPA_PLATFORM=xcb /usr/bin/sioyek "\$@"
 EOF
   chmod +x "$HOME/.local/bin/sioyek"
   echo "  wrote $HOME/.local/bin/sioyek"
+
+  # Quickshell owns org.freedesktop.Notifications. Dunst is D-Bus-activatable,
+  # so disabling it is insufficient: mask it to prevent it from stealing the
+  # notification name after a notify-send.
+  if systemctl --user list-unit-files dunst.service >/dev/null 2>&1; then
+    systemctl --user mask --now dunst.service >/dev/null 2>&1 || true
+    echo "  masked dunst.service (Quickshell notifications)"
+  fi
+
+  systemctl --user daemon-reload >/dev/null 2>&1 || true
 }
 
 [ "$DO_CHECK" -eq 1 ] && check_requirements

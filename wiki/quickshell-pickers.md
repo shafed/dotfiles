@@ -8,7 +8,6 @@ covers:
   - quickshell/components/QuickPicker.qml
   - quickshell/components/ClipboardOverlay.qml
   - quickshell/picker-helper.py
-  - quickshell/launcher-usage.py
   - quickshell/palette-helper.py
   - quickshell/dots-shell
   - kanata/config.kbd
@@ -43,11 +42,15 @@ desktop-entry icons, running-window detection and `Alt+Enter` new-instance
 behavior stay native to the application model.
 
 The empty query is usage-oriented; counts are shared with the old fzf picker
-through `~/.cache/apps-fzf/usage.tsv`. Typing keeps usage weighting: the
-launcher's fuzzy score remains the relevance gate, then a bounded logarithmic
-usage bonus is added among plausible matches. Enter focuses an existing matching
-toplevel when possible; Alt+Enter always executes a new instance. `RUNNING` uses
-the same matching path.
+through `~/.cache/apps-fzf/usage.tsv`. `DesktopLauncher.qml` now owns that TSV
+with `FileView` instead of invoking a Python read/write helper. Writes remain
+atomic and keep the historical `<desktop-id>.desktop<TAB><count>` format, so
+switching to the fallback picker remains lossless.
+
+Typing keeps usage weighting: the launcher's fuzzy score remains the relevance
+gate, then a bounded logarithmic usage bonus is added among plausible matches.
+Enter focuses an existing matching toplevel when possible; Alt+Enter always
+executes a new instance. `RUNNING` uses the same matching path.
 
 ## Bookmarks
 
@@ -60,7 +63,8 @@ handling. Quickshell owns the window, input and row rendering;
 Favicons come from Helium's local Chromium `Favicons` SQLite database via a
 temporary snapshot; extracted PNGs are cached under
 `~/.cache/bookmarks-fzf/favicons/`. Missing favicons fall back to the first
-letter and never trigger a network request.
+letter and never trigger a network request. This SQLite/binary extraction is
+intentionally still a bounded Python helper rather than QML shell state.
 
 ## Projects, Sessions and YouTube
 
@@ -115,8 +119,8 @@ provider list.
 
 ## Runtime integration
 
-`prepare.py` copies the modular QML tree into the runtime cache. `dots-shell`
-centralizes overlay routing and exposes `launcher`, `bookmarks`, `projects`,
-`sessions`, `youtube`, `clipboard` and `scratch`. The wrapper closes competing
-IPC targets before opening the requested surface, preserving the single-overlay
-contract.
+Tracked QML is run directly; there is no `prepare.py` runtime-copy step.
+`dots-shell` centralizes overlay routing and exposes `launcher`, `bookmarks`,
+`projects`, `sessions`, `youtube`, `clipboard` and `scratch`. The wrapper closes
+competing IPC targets before opening the requested surface, preserving the
+single-overlay contract.

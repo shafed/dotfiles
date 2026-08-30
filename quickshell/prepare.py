@@ -76,8 +76,27 @@ replace_once(
     "    }\n"
     "    togglePanel(\"calendar\")\n"
     "  }\n\n"
+    "  function aiLimitColor() {\n"
+    "    var rows = state.agents || []\n"
+    "    var lowestRemaining = 1.0\n"
+    "    var found = false\n"
+    "    for (var i = 0; i < rows.length; i++) {\n"
+    "      var limits = rows[i].limits || []\n"
+    "      for (var j = 0; j < limits.length; j++) {\n"
+    "        var used = Number(limits[j].percent)\n"
+    "        if (isNaN(used)) continue\n"
+    "        found = true\n"
+    "        used = Math.max(0, Math.min(1, used))\n"
+    "        lowestRemaining = Math.min(lowestRemaining, 1 - used)\n"
+    "      }\n"
+    "    }\n"
+    "    if (!found) return \"#fbf1c7\"\n"
+    "    if (lowestRemaining <= 0.10) return \"#ea6962\"\n"
+    "    if (lowestRemaining <= 0.30) return \"#d8a657\"\n"
+    "    return \"#fbf1c7\"\n"
+    "  }\n\n"
     "  function backendAction(domain, action, arg) {\n",
-    "calendar helpers",
+    "calendar and AI helpers",
 )
 
 replace_once(
@@ -148,6 +167,7 @@ replace_once(
     "          ClickButton {\n"
     "            visible: root.state.agents && root.state.agents.length > 0\n"
     "            label: \"AI\"\n"
+    "            textColor: root.aiLimitColor()\n"
     "            active: root.openPanel === \"agents\"\n"
     "            onPressed: root.togglePanel(\"agents\")\n"
     "          }\n",
@@ -278,12 +298,23 @@ replace_once(
 # shell.qml already uses a 30 px bar and 28 px buttons, so no geometry rewrite
 # is needed here.
 
+# Let individual top-bar buttons override their text color (AI uses this for
+# low remaining rate-limit warnings).
+replace_once(
+    "    property bool active: false\n"
+    "    signal pressed()\n",
+    "    property bool active: false\n"
+    "    property string textColor: \"#fbf1c7\"\n"
+    "    signal pressed()\n",
+    "ClickButton text color property",
+)
+
 # Use Inter for the top bar at 14 px normal weight.
 replace_once(
     "      color: \"#ebdbb2\"\n"
     "      font.family: \"monospace\"\n"
     "      font.pixelSize: 12\n",
-    "      color: \"#fbf1c7\"\n"
+    "      color: button.textColor\n"
     "      font.family: \"Inter\"\n"
     "      font.pixelSize: 14\n",
     "ClickButton font",

@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+set -euo pipefail
+exec quickshell ipc -p "$HOME/github/dotfiles/quickshell" call dots "$@"

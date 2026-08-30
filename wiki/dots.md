@@ -77,16 +77,25 @@ default recent Quickshell journal lines. It is observational only; use
 text.
 
 `migrate` is intentionally idempotent and has no migration database. A migration
-exists only while obsolete state can be detected directly. Destructive cleanup
-is limited to safe state such as cache or an old managed symlink; unmanaged real
-configs are reported rather than deleted.
+exists only while obsolete state can be detected directly. Before a migration
+changes or removes an existing user file/config, that path is copied with
+metadata and symlink identity preserved into a lazily-created run directory
+under `$XDG_STATE_HOME/dotfiles/backups/`, or
+`~/.local/state/dotfiles/backups/` when `XDG_STATE_HOME` is unset. The command
+prints the exact source and backup paths. `--check`, no-op runs, cache cleanup,
+service changes, and unmanaged configs that are only reported do not create a
+backup directory. There is deliberately no snapshot/rollback framework: these
+are transparent copies for manual recovery if needed. `dots apply` uses the
+same migration path and therefore gets the same protection.
 
 Waybar is the first migration. Quickshell owns the active bar, so a running or
 enabled Waybar, `~/.config/waybar`, Waybar cache, or the old tracked
-`waybar/config.jsonc` is stale runtime state. `waybar/colors.css` and
-`waybar/style.css` may remain tracked because the shared palette generator still
-owns them as generated compatibility/theme surfaces; they are not linked by
-`dots apply` and do not make Waybar an active component.
+`waybar/config.jsonc` is stale runtime state. An old managed Waybar symlink is
+backed up before removal; stale cache is removed without backup because it is
+derived state, while an unmanaged real config is reported and left untouched.
+`waybar/colors.css` and `waybar/style.css` may remain tracked because the shared
+palette generator still owns them as generated compatibility/theme surfaces;
+they are not linked by `dots apply` and do not make Waybar an active component.
 
 ⚠️ `dots doctor` treats missing required commands and broken managed links as
 errors, while developer-only tools such as `luac` and `pre-commit` are warnings.

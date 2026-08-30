@@ -1,7 +1,6 @@
 [Unit]
 Description=Personal Quickshell desktop shell
 PartOf=graphical-session.target
-Wants=layout-osd.service brightness-osd.service audio-osd.service
 After=graphical-session.target
 ConditionPathExists=%h/github/dotfiles/quickshell/shell.qml
 

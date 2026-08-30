@@ -7,6 +7,8 @@ covers:
   - quickshell/prepare.py
   - quickshell/start.sh
   - quickshell/backend.py
+  - quickshell/agents-panel.py
+  - quickshell/agents-refresh.py
   - systemd/user/quickshell.service
 ---
 
@@ -25,9 +27,13 @@ shim, not a realtime backend. The eventual cleanup target is to fold stable
 transformations back into QML and remove the shim rather than grow another
 runtime layer.
 
+`center-title.py` and `agents-panel.py` then post-process that generated QML.
+The latter keeps AI rate-limit UI out of the old local token-statistics block
+without making the base shell another migration target.
+
 ⚠️ Gotcha: the running QML is the generated copy, not `shell.qml` directly.
-Changing a source block that `prepare.py` expects can make startup fail with the
-missing block name.
+Changing a source block that `prepare.py` or a post-processor expects can make
+startup fail with the missing block name.
 
 ## Realtime state
 
@@ -44,6 +50,22 @@ There is no 800 ms fast snapshot and no audio/layout/brightness watcher service.
 Python remains for slow or integration-heavy data such as AI usage, package
 updates, network/Bluetooth discovery, notification persistence and clipboard
 operations.
+
+## AI limits
+
+The AI panel intentionally shows account rate limits only: **Current session**
+and **Weekly limits**, with utilization bars and reset times. Local token totals,
+sessions and per-model history are not part of this UI.
+
+Opening the AI panel runs `agents-refresh.py`; the Refresh button runs it again.
+That path bypasses the five-minute `agents` snapshot cache and updates both the
+panel and the top-bar warning color immediately.
+
+For Claude, the weekly value follows the web Usage page's **All models** bucket:
+`seven_day` is preferred over `seven_day_oauth_apps`. The OAuth-app bucket is
+only a fallback because it can differ substantially from what the website
+labels as Weekly limits. If a live request fails, the last cached limits remain
+visible and are marked `cached` rather than silently pretending to be fresh.
 
 ## Clock and power
 

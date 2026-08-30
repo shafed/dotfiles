@@ -68,7 +68,7 @@ replace_once(
       if (hours > 0) return "Resets in " + hours + "h " + minutes + "m"
       return "Resets in " + minutes + "m"
     }
-    return "Resets " + Qt.formatDateTime(when, "MMM d, HH:mm")
+    return "Resets " + Qt.formatDateTime(when, "ddd HH:mm")
   }
 
   function syncNativeAudio() {
@@ -165,13 +165,17 @@ new_panel = '''  Component {
       contentWidth: width
       contentHeight: agentsColumn.implicitHeight
       clip: true
+      Component.onCompleted: {
+        if (!agentsRefreshProc.running) agentsRefreshProc.running = true
+      }
+
       ColumnLayout {
         id: agentsColumn
         width: parent.width
         spacing: 10
 
         PanelButton {
-          label: agentsRefreshProc.running ? "Refreshing limits..." : "Refresh limits"
+          label: agentsRefreshProc.running ? "Refreshing..." : "Refresh"
           onPressed: if (!agentsRefreshProc.running) agentsRefreshProc.running = true
         }
 
@@ -193,9 +197,22 @@ new_panel = '''  Component {
               anchors.right: parent.right
               anchors.top: parent.top
               anchors.margins: 10
-              spacing: 8
+              spacing: 10
 
-              Heading { text: root.agentTitle(modelData) }
+              RowLayout {
+                Layout.fillWidth: true
+                Heading {
+                  Layout.fillWidth: true
+                  text: root.agentTitle(modelData)
+                }
+                Text {
+                  visible: !!modelData.stale
+                  text: "cached"
+                  color: "#d8a657"
+                  font.family: "monospace"
+                  font.pixelSize: 10
+                }
+              }
 
               ColumnLayout {
                 Layout.fillWidth: true

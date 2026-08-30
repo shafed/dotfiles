@@ -17,6 +17,9 @@ esac
 
 config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
 cache_home="${XDG_CACHE_HOME:-$HOME/.cache}"
+state_home="${XDG_STATE_HOME:-$HOME/.local/state}"
+backup_root="$state_home/dotfiles/backups"
+backup_run_dir=""
 pending=0
 unresolved=0
 
@@ -25,10 +28,34 @@ note_pending() {
   printf 'PENDING %s\n' "$1"
 }
 
+backup_path() {
+  local source="$1" rel dest stamp
+
+  if [ ! -e "$source" ] && [ ! -L "$source" ]; then
+    return 0
+  fi
+
+  if [ -z "$backup_run_dir" ]; then
+    mkdir -p -m 700 "$backup_root"
+    stamp="$(date -u +%Y%m%dT%H%M%SZ)"
+    backup_run_dir="$(mktemp -d "$backup_root/$stamp-XXXXXX")"
+  fi
+
+  case "$source" in
+    "$HOME"/*) rel="${source#"$HOME"/}" ;;
+    *) rel="${source#/}" ;;
+  esac
+  dest="$backup_run_dir/$rel"
+  mkdir -p "$(dirname "$dest")"
+  cp -a -- "$source" "$dest"
+  printf '  backup: %s -> %s\n' "$source" "$dest"
+}
+
 waybar_config="$config_home/waybar"
 if [ -L "$waybar_config" ]; then
   note_pending "$waybar_config is a retired Waybar symlink"
   if [ "$CHECK_ONLY" -eq 0 ]; then
+    backup_path "$waybar_config"
     rm "$waybar_config"
     echo "  removed retired Waybar symlink"
   fi

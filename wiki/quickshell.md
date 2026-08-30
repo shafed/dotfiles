@@ -126,7 +126,9 @@ running QML process. The real keymap source of truth remains
 [keymap](keymap.md).
 
 The active-window title remains geometrically centered against the physical bar
-width, now in `components/TopBar.qml`.
+width, now in `components/TopBar.qml`. The workspace strip keeps the focused
+positive-ID workspace visible even when it has no windows; inactive empty
+workspaces remain hidden.
 
 ## AI limits
 

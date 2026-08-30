@@ -37,7 +37,7 @@ Variants {
           model: Hyprland.workspaces
           ClickButton {
             required property var modelData
-            visible: modelData.id > 0 && modelData.toplevels.values.length > 0
+            visible: modelData.id > 0 && (modelData.focused || modelData.toplevels.values.length > 0)
             label: String(modelData.id)
             active: modelData.focused
             onPressed: modelData.activate()

@@ -1,4 +1,4 @@
-import QtQml
+import QtQuick
 
 QtObject {
   readonly property string barFont: "Inter"

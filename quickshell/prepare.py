@@ -133,14 +133,14 @@ replace_once(
     "ClickButton size",
 )
 
+# Match the old Waybar typography: Roboto, 13 px, normal weight.
 replace_once(
     "      color: \"#ebdbb2\"\n"
     "      font.family: \"monospace\"\n"
     "      font.pixelSize: 12\n",
     "      color: \"#fbf1c7\"\n"
-    "      font.family: \"monospace\"\n"
-    "      font.bold: true\n"
-    "      font.pixelSize: 14\n",
+    "      font.family: \"Roboto\"\n"
+    "      font.pixelSize: 13\n",
     "ClickButton font",
 )
 
@@ -150,9 +150,8 @@ replace_once(
     "          font.pixelSize: 12\n"
     "          elide: Text.ElideRight\n",
     "          color: \"#fbf1c7\"\n"
-    "          font.family: \"monospace\"\n"
-    "          font.bold: true\n"
-    "          font.pixelSize: 14\n"
+    "          font.family: \"Roboto\"\n"
+    "          font.pixelSize: 13\n"
     "          elide: Text.ElideRight\n",
     "active window title font",
 )

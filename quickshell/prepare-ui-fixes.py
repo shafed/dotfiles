@@ -20,9 +20,6 @@ def replace_once(text: str, old: str, new: str, label: str) -> str:
 
 shell = shell_path.read_text()
 
-# Keep the AI label itself neutral; per-limit percentages/bars carry warning color.
-shell = shell.replace('            textColor: root.aiLimitColor()\n', '', 1)
-
 # A single fullscreen layer-shell surface gives reliable Escape/outside-click
 # dismissal. The visible card stays top-right and consumes clicks inside it.
 shell = replace_once(

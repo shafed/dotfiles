@@ -124,7 +124,7 @@ fi
 [ ! -e "$configured_home/.local/state/dotfiles/backups" ]
 
 HOME="$configured_home" XDG_CONFIG_HOME="$configured_home/.config" XDG_CACHE_HOME="$configured_home/.cache" "$configured_home/.local/bin/dots" migrate >"$tmp/migrate.out"
-[ ! -e "$configured_home/.config/waybar" ]
+[ ! -L "$configured_home/.config/waybar" ]
 [ ! -e "$configured_home/.cache/waybar" ]
 mapfile -t backup_runs < <(find "$configured_home/.local/state/dotfiles/backups" -mindepth 1 -maxdepth 1 -type d -print)
 [ "${#backup_runs[@]}" -eq 1 ]

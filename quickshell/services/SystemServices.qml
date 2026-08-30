@@ -7,6 +7,9 @@ import Quickshell.Services.UPower
 Item {
   id: service
 
+  readonly property var network: networkService
+  readonly property var updates: updatesService
+
   readonly property var bluetoothAdapter: Bluetooth.defaultAdapter
   readonly property bool bluetoothPowered: !!bluetoothAdapter && bluetoothAdapter.enabled
   readonly property var bluetoothDevices: bluetoothAdapter && bluetoothAdapter.devices
@@ -35,6 +38,9 @@ Item {
                                        ? ["power-saver", "balanced", "performance"]
                                        : ["power-saver", "balanced"]
   property string uptime: ""
+
+  NetworkService { id: networkService }
+  UpdatesService { id: updatesService }
 
   function setBluetoothPowered(enabled) {
     if (bluetoothAdapter) bluetoothAdapter.enabled = !!enabled

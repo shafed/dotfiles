@@ -17,8 +17,8 @@ from _palette_renderer import load_colors, render
 ROOT = Path(__file__).resolve().parents[1]
 HERE = Path(__file__).resolve().parent
 PALETTE_OUTPUT = HERE / "colors.tdesktop-theme"
-BACKGROUND_SOURCE = HERE / "background.jpg.b64"
-BACKGROUND_PRIMARY_OUTPUT = HERE / "background-primary.jpg"
+BACKGROUND_SOURCE = HERE / "background.png.b64"
+BACKGROUND_PRIMARY_OUTPUT = HERE / "background-primary.png"
 BACKGROUND_BACKUP_OUTPUT = HERE / "background-backup.png"
 OUTPUT = HERE / "gruvbox-material-dark-medium.tdesktop-theme"
 
@@ -132,7 +132,7 @@ def render_backup_background(colors: dict[str, str], width: int = 1600, height: 
 
 
 def read_primary_background() -> bytes:
-    """Decode the tracked, text-safe botanical wallpaper source."""
+    """Decode the tracked, text-safe botanical wallpaper source (PNG, base64)."""
     if not BACKGROUND_SOURCE.is_file():
         raise FileNotFoundError(f"Telegram background source not found: {BACKGROUND_SOURCE}")
 
@@ -142,8 +142,8 @@ def read_primary_background() -> bytes:
     except (ValueError, base64.binascii.Error) as exc:
         raise ValueError(f"Invalid base64 Telegram background source: {BACKGROUND_SOURCE}") from exc
 
-    if not data.startswith(b"\xff\xd8"):
-        raise ValueError(f"Decoded Telegram background is not JPEG: {BACKGROUND_SOURCE}")
+    if not data.startswith(b"\x89PNG\r\n\x1a\n"):
+        raise ValueError(f"Decoded Telegram background is not PNG: {BACKGROUND_SOURCE}")
     return data
 
 
@@ -151,7 +151,7 @@ def build_archive(palette: str, background: bytes) -> bytes:
     buffer = BytesIO()
     with zipfile.ZipFile(buffer, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
         archive.writestr(zip_entry("colors.tdesktop-theme"), palette.encode())
-        archive.writestr(zip_entry("background.jpg"), background)
+        archive.writestr(zip_entry("background.png"), background)
     return buffer.getvalue()
 
 

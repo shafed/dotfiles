@@ -144,6 +144,70 @@ Item {
     return out
   }
 
+  function escapeStyled(value) {
+    return String(value || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+  }
+
+  // Character indices in `text` that satisfy `rawQuery`, for highlighting.
+  // Same scheme as the picker-helper.py/youtube-helper.py fuzzy_positions:
+  // a full substring match highlights contiguously, else each query
+  // character highlights the first place found scanning left to right. Run
+  // directly against the displayed name/subtitle, so a match found only via
+  // the id/keywords/acronym (see score()) highlights nothing — there is no
+  // substring of the visible text to point at.
+  function fuzzyPositions(text, rawQuery) {
+    var hay = String(text || "").toLowerCase()
+    var positions = ({})
+    var terms = String(rawQuery || "").trim().toLowerCase().split(/\s+/)
+    for (var t = 0; t < terms.length; t++) {
+      var term = terms[t]
+      if (!term) continue
+      var direct = hay.indexOf(term)
+      if (direct >= 0) {
+        for (var k = 0; k < term.length; k++) positions[direct + k] = true
+        continue
+      }
+      var pos = -1
+      var matched = []
+      var ok = true
+      for (var c = 0; c < term.length; c++) {
+        var nxt = hay.indexOf(term.charAt(c), pos + 1)
+        if (nxt < 0) { ok = false; break }
+        matched.push(nxt)
+        pos = nxt
+      }
+      if (ok) for (var m = 0; m < matched.length; m++) positions[matched[m]] = true
+    }
+    var result = []
+    for (var key in positions) result.push(Number(key))
+    result.sort(function(a, b) { return a - b })
+    return result
+  }
+
+  function highlightedText(value, matches) {
+    var text = String(value || "")
+    if (!matches || matches.length === 0) return escapeStyled(text)
+    var marked = ({})
+    for (var i = 0; i < matches.length; i++)
+      marked[Number(matches[i])] = true
+    var accent = String(launcher.colors.yellow)
+    var out = ""
+    var active = false
+    for (var j = 0; j < text.length; j++) {
+      var shouldHighlight = marked[j] === true
+      if (shouldHighlight !== active) {
+        out += shouldHighlight ? '<font color="' + accent + '"><b>' : "</b></font>"
+        active = shouldHighlight
+      }
+      out += escapeStyled(text.charAt(j))
+    }
+    if (active) out += "</b></font>"
+    return out
+  }
+
   function score(entry, rawQuery) {
     var q = String(rawQuery || "").trim().toLowerCase()
     if (!q) return 0
@@ -185,12 +249,15 @@ Item {
       if (rank < 0) continue
       var used = usageCount(entry)
       if (used > 0) haveRecent = true
+      var subtitle = String(entry.genericName || entry.comment || "")
       result.push({
         entry: entry,
         rank: rank,
         weightedRank: rank + usageBonus(entry),
         used: used,
-        name: String(entry.name || entry.id).toLowerCase()
+        name: String(entry.name || entry.id).toLowerCase(),
+        nameMatches: fuzzyPositions(entry.name || entry.id || "", q),
+        subtitleMatches: fuzzyPositions(subtitle, q)
       })
     }
 
@@ -451,7 +518,8 @@ Item {
 
                 Text {
                   Layout.fillWidth: true
-                  text: String(modelData.entry.name || modelData.entry.id || "")
+                  text: launcher.highlightedText(modelData.entry.name || modelData.entry.id || "", modelData.nameMatches || [])
+                  textFormat: Text.StyledText
                   color: colors.fgUi
                   font.family: ui.sansFont
                   font.bold: index === launcher.selectedIndex
@@ -462,7 +530,8 @@ Item {
                 Text {
                   Layout.fillWidth: true
                   visible: String(modelData.entry.genericName || modelData.entry.comment || "").length > 0
-                  text: String(modelData.entry.genericName || modelData.entry.comment || "")
+                  text: launcher.highlightedText(modelData.entry.genericName || modelData.entry.comment || "", modelData.subtitleMatches || [])
+                  textFormat: Text.StyledText
                   color: colors.grayDim
                   font.family: ui.sansFont
                   font.pixelSize: ui.pickerRowSubtitleSize

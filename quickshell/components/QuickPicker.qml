@@ -22,14 +22,43 @@ Item {
 
   function titleForMode() {
     if (mode === "sessions") return "Sessions"
-    if (mode === "youtube") return "YouTube"
     return "Projects"
   }
 
   function hintForMode() {
     if (mode === "sessions") return "Filter open kitty sessions…"
-    if (mode === "youtube") return "Type to search YouTube…"
     return "Named sessions, zoxide directories, SSH hosts…"
+  }
+
+  function escapeStyled(value) {
+    return String(value || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+  }
+
+  // Same scheme as YoutubePicker.qml: picker-helper.py returns the character
+  // indices its fuzzy matcher actually used, so highlighting here always
+  // agrees with why a row ranked where it did.
+  function highlightedText(value, matches) {
+    var text = String(value || "")
+    if (!matches || matches.length === 0) return escapeStyled(text)
+    var marked = ({})
+    for (var i = 0; i < matches.length; i++)
+      marked[Number(matches[i])] = true
+    var accent = String(picker.colors.yellow)
+    var out = ""
+    var active = false
+    for (var j = 0; j < text.length; j++) {
+      var shouldHighlight = marked[j] === true
+      if (shouldHighlight !== active) {
+        out += shouldHighlight ? '<font color="' + accent + '"><b>' : "</b></font>"
+        active = shouldHighlight
+      }
+      out += escapeStyled(text.charAt(j))
+    }
+    if (active) out += "</b></font>"
+    return out
   }
 
   function close() {
@@ -96,7 +125,7 @@ Item {
 
   Timer {
     id: reloadTimer
-    interval: picker.mode === "youtube" ? 380 : 90
+    interval: 90
     repeat: false
     onTriggered: picker.refreshNow()
   }
@@ -264,6 +293,7 @@ Item {
           Layout.fillWidth: true
           Layout.fillHeight: true
           clip: true
+          interactive: false
           spacing: 4
           model: picker.rows
           currentIndex: picker.selectedIndex
@@ -279,16 +309,6 @@ Item {
             border.width: index === picker.selectedIndex ? 1 : 0
             border.color: picker.colors.bgMuted
 
-            MouseArea {
-              anchors.fill: parent
-              onEntered: picker.selectedIndex = index
-              hoverEnabled: true
-              onClicked: {
-                picker.selectedIndex = index
-                picker.activateSelected()
-              }
-            }
-
             RowLayout {
               anchors.fill: parent
               anchors.leftMargin: 12
@@ -301,7 +321,8 @@ Item {
 
                 Text {
                   Layout.fillWidth: true
-                  text: String(modelData.title || modelData.id || "")
+                  text: picker.highlightedText(modelData.title || modelData.id || "", modelData.titleMatches || [])
+                  textFormat: Text.StyledText
                   color: picker.colors.fgUi
                   font.family: picker.ui.sansFont
                   font.bold: index === picker.selectedIndex
@@ -312,7 +333,8 @@ Item {
                 Text {
                   Layout.fillWidth: true
                   visible: String(modelData.subtitle || "").length > 0
-                  text: String(modelData.subtitle || "")
+                  text: picker.highlightedText(modelData.subtitle || "", modelData.subtitleMatches || [])
+                  textFormat: Text.StyledText
                   color: picker.colors.grayDim
                   font.family: picker.ui.sansFont
                   font.pixelSize: picker.ui.pickerRowSubtitleSize

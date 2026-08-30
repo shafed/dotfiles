@@ -35,20 +35,36 @@ browser_workspace="2"
 # browser_workspace first. (Already-open tabs found via bruvtab are still
 # activated wherever they are, including here.)
 youtube_workspace="4"
+tab=$'\t'
 # Recently-opened log (most recent first), one "name<tab>url" row per opened
 # bookmark. Shown when the query is empty so the picker opens to "recents"
 # instead of the "type 3 chars" empty state — mirrors apps.sh's recent ordering.
 cache_dir="$HOME/.cache/bookmarks-fzf"
 recent_file="$cache_dir/recent.tsv"
 recent_max=50
+# Open tally (url<tab>count), same mechanism as apps.sh's usage_file. Feeds
+# all_bookmarks' pre-sort so frequently-opened bookmarks sit near the top of
+# what fzf then fuzzy-filters live as the user types.
+usage_file="$cache_dir/usage.tsv"
 
-# Print every bookmark row from all sources (the full search list). Used when a
-# query is typed. Kept as its own subcommand so fzf can reload it cheaply.
+# Print every bookmark row from all sources (the full search list), most-opened
+# first. Used when a query is typed. Kept as its own subcommand so fzf can
+# reload it cheaply. fzf still owns matching/highlighting on top of this order.
 all_bookmarks() {
   local bookmarks_file
-  for bookmarks_file in "${bookmarks_files[@]}"; do
-    [[ -s "$bookmarks_file" ]] && cat "$bookmarks_file"
-  done
+  {
+    for bookmarks_file in "${bookmarks_files[@]}"; do
+      [[ -s "$bookmarks_file" ]] && cat "$bookmarks_file"
+    done
+  } | awk -F'\t' -v usage="$usage_file" '
+    BEGIN {
+      while ((getline line < usage) > 0) {
+        split(line, u, "\t")
+        if (u[1] != "") count[u[1]] = u[2] + 0
+      }
+    }
+    !seen[$2]++ { c = (($2 in count) ? count[$2] : 0); print c "\t" $0 }
+  ' | sort -t"$tab" -k1,1nr | cut -f2-
 }
 
 # Print the recently-opened bookmarks, most recent first. Stale rows (a bookmark
@@ -72,11 +88,28 @@ recent_bookmarks() {
   ' <(all_bookmarks)
 }
 
+# Bump the open count for a url. Rewrites usage_file atomically. Same shape as
+# apps.sh's record_launch.
+record_use() {
+  local url="$1" tmp
+  [[ -n "$url" ]] || return 0
+  mkdir -p "$cache_dir"
+  [[ -f "$usage_file" ]] || : >"$usage_file"
+  tmp="$(mktemp "$cache_dir/usage.XXXXXX")" || return 0
+  awk -F'\t' -v url="$url" '
+    $1 == url { print $1 "\t" ($2 + 1); seen = 1; next }
+    NF { print }
+    END { if (!seen) print url "\t" 1 }
+  ' "$usage_file" >"$tmp"
+  mv "$tmp" "$usage_file"
+}
+
 # Record an opened bookmark at the top of the recents log, de-duplicating by url
 # and capping the file length. Rewrites recent_file atomically.
 record_open() {
   local name="$1" url="$2" tmp
   [[ -n "$url" ]] || return 0
+  record_use "$url"
   mkdir -p "$cache_dir"
   [[ -f "$recent_file" ]] || : >"$recent_file"
   tmp="$(mktemp "$cache_dir/recent.XXXXXX")" || return 0

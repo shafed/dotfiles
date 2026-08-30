@@ -1,7 +1,7 @@
 ---
 title: scripts-pickers
 type: component
-updated: 2026-08-26
+updated: 2026-08-30
 covers:
   - scripts/lib.sh
   - scripts/apps.sh
@@ -199,6 +199,12 @@ client cannot steal a migrated open.
 - New tabs are **never** opened on the YouTube workspace (ws4):
   `prepare_browser_for_new_tab` picks a `tab`/`newwindow`/`cold` strategy.
 - Recents log same as in apps.sh: empty query → recently opened.
+- Typing weights by open frequency too, same mechanism as apps.sh: `--all`
+  pre-sorts by an open tally (`~/.cache/bookmarks-fzf/usage.tsv`, keyed by url)
+  before fzf does its own live fuzzy filter/highlight on top. This is the
+  **same file** `palette-helper.py` (the native Quickshell picker) reads and
+  writes, so opens from either surface count toward the other's ranking — see
+  [quickshell-pickers](quickshell-pickers.md).
 
 ### search.sh — web search (split out of bookmarks.sh)
 
@@ -243,6 +249,16 @@ apps layer).
   shape — `IFS=$'\t' read` collapses _consecutive_ tab delimiters (tab is
   IFS-whitespace), so extra empty columns would swallow the payload into
   nothing.
+
+- Typing also weights by open frequency: `-s` search results, channel
+  tabs/deep-search, and the local `-H`/`-L` filter all pipe through
+  `weight_by_usage`/`weight_search_by_usage`, pre-sorting rows by an open
+  tally (`~/.cache/youtube-fzf/usage.tsv`, keyed `video:<id>`/`channel:<id>`)
+  before fzf's own live fuzzy filter/highlight runs on top — same division of
+  labor as apps.sh/bookmarks.sh. `open_video` records the open. This is the
+  **same file** `youtube-helper.py` (the native Quickshell YouTube picker)
+  reads and writes, so opens from either surface count toward the other's
+  ranking — see [quickshell-pickers](quickshell-pickers.md).
 
 ⚠️ Gotcha (cache/preview): the preview makes **no** network requests on hover —
 everything comes from the already-built TSV; the thumbnail is downloaded once

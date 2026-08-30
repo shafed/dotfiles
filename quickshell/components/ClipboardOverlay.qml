@@ -12,6 +12,10 @@ Item {
   property string query: ""
   property int selectedIndex: 0
   property string pendingPasteId: ""
+  property bool mouseNavigationArmed: false
+  property bool mousePositionSampled: false
+  property real mouseStartX: 0
+  property real mouseStartY: 0
   property var rows: {
     var source = overlay.shell.clipboardRows || []
     var needle = overlay.query.trim().toLowerCase()
@@ -34,6 +38,25 @@ Item {
     selectedIndex = Math.max(0, Math.min(rows.length - 1, selectedIndex + delta))
     clipList.currentIndex = selectedIndex
     clipList.positionViewAtIndex(selectedIndex, ListView.Contain)
+  }
+
+  function handleMouseMove(area, mouse, index) {
+    var point = area.mapToItem(clipList, mouse.x, mouse.y)
+    if (!mousePositionSampled) {
+      mouseStartX = point.x
+      mouseStartY = point.y
+      mousePositionSampled = true
+      return
+    }
+
+    if (!mouseNavigationArmed) {
+      var dx = point.x - mouseStartX
+      var dy = point.y - mouseStartY
+      if (dx * dx + dy * dy < 16) return
+      mouseNavigationArmed = true
+    }
+
+    selectedIndex = index
   }
 
   function pasteSelected() {
@@ -77,6 +100,13 @@ Item {
     ui: overlay.ui
   }
 
+  YoutubePicker {
+    id: youtubePicker
+    shell: overlay.shell
+    colors: overlay.colors
+    ui: overlay.ui
+  }
+
   ScratchOverlay {
     id: scratchOverlay
     shell: overlay.shell
@@ -90,9 +120,12 @@ Item {
     function onClipboardOpenChanged() {
       if (overlay.shell.clipboardOpen) {
         quickPicker.close()
+        youtubePicker.close()
         scratchOverlay.close()
         overlay.query = ""
         overlay.selectedIndex = 0
+        overlay.mouseNavigationArmed = false
+        overlay.mousePositionSampled = false
         Qt.callLater(function() { searchInput.forceActiveFocus() })
       }
     }
@@ -100,6 +133,7 @@ Item {
     function onOpenPanelChanged() {
       if (overlay.shell.openPanel !== "") {
         quickPicker.close()
+        youtubePicker.close()
         scratchOverlay.close()
       }
     }
@@ -241,10 +275,18 @@ Item {
             }
 
             MouseArea {
+              id: rowMouse
               anchors.fill: parent
               hoverEnabled: true
-              onEntered: overlay.selectedIndex = index
+              onEntered: {
+                if (overlay.mouseNavigationArmed)
+                  overlay.selectedIndex = index
+              }
+              onPositionChanged: function(mouse) {
+                overlay.handleMouseMove(rowMouse, mouse, index)
+              }
               onClicked: {
+                overlay.mouseNavigationArmed = true
                 overlay.selectedIndex = index
                 overlay.pasteSelected()
               }

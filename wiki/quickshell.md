@@ -8,6 +8,7 @@ covers:
   - quickshell/services/
   - quickshell/config/
   - quickshell/picker-helper.py
+  - quickshell/youtube-helper.py
   - quickshell/palette-helper.py
   - quickshell/start.sh
   - quickshell/dots-shell
@@ -34,8 +35,8 @@ Tracked QML is the runtime source and `start.sh` runs that tree directly with
 - `shell.qml` — orchestration, notifications, process lifetimes and IPC;
 - `components/` — top bar, system panel, compact system overview, searchable
   hotkeys cheat sheet, clipboard/toast/OSD overlays, shared controls,
-  Applications, Bookmarks, the shared Projects/Sessions/YouTube picker and the
-  scratch editor;
+  Applications, Bookmarks, the shared Projects/Sessions picker, the dedicated
+  YouTube picker and the scratch editor;
 - `services/DesktopServices.qml` — PipeWire outputs/streams/volume/mute,
   Hyprland keyboard layout events and sysfs backlight sampling;
 - `services/SystemServices.qml` — composition of native UPower/Bluetooth plus
@@ -96,7 +97,9 @@ Quickshell services observe the resulting state.
 Python remains only for picker integrations where it still buys meaningful
 integration value rather than acting as shell plumbing:
 
-- `picker-helper.py` handles zoxide/SSH/Kitty/YouTube provider integrations;
+- `picker-helper.py` handles zoxide/SSH/Kitty provider integrations;
+- `youtube-helper.py` adapts the existing yt-dlp/cookie/cache YouTube commands,
+  usage weighting and fuzzy-match metadata for the native YouTube picker;
 - `palette-helper.py` keeps the browser-specific bookmark catalog/fzf path and
   Chromium `Favicons` SQLite snapshot/extraction.
 
@@ -127,17 +130,27 @@ YouTube, Clipboard, Scratch and Hotkeys are mutually exclusive with system
 panels and with one another. `dots-shell` closes the competing IPC targets before
 opening the requested surface.
 
-`components/QuickPicker.qml` is the shared UI for Projects, Sessions and
-YouTube. Its `TextInput` gets focus on show; arrows/`Ctrl-J/K` navigate, Enter
-opens and Esc closes. Sessions also support `Ctrl-D`/Delete. Provider rows and
-actions are supplied as JSON by `picker-helper.py`; see
+`components/QuickPicker.qml` is the shared UI for Projects and Sessions. Its
+`TextInput` gets focus on show; arrows/`Ctrl-J/K` navigate, Enter opens and Esc
+closes. Sessions also support `Ctrl-D`/Delete. Both lists are intentionally
+keyboard-only: row click/hover and pointer scrolling are disabled. Provider rows
+and actions are supplied as JSON by `picker-helper.py`; see
 [quickshell-pickers](quickshell-pickers.md).
+
+`components/YoutubePicker.qml` owns YouTube's richer UI: videos/channels,
+signed-in History and Watch Later, channel drill-down, videos/streams, deep
+channel loading and a right-side thumbnail preview. Search ranking keeps
+provider/fuzzy relevance primary and adds a bounded logarithmic usage bonus;
+matched query characters are rendered with the generated Gruvbox accent. The
+picker has its own `youtube` IPC target.
 
 `components/ClipboardOverlay.qml` uses the same keyboard contract and adds
 inline filtering. Clipboard paste is scheduled shortly after hiding the
 exclusive layer-shell surface so the synthetic `Ctrl+V` reaches the previously
 focused application rather than racing the overlay teardown. `cliphist` is the
-preferred source; CopyQ remains a fallback.
+preferred source; CopyQ remains a fallback. A pointer already under the centered
+surface does not steal the initial first-row selection; mouse hover is armed only
+after at least 4 px of actual movement.
 
 `components/ScratchOverlay.qml` is a focused multiline editor. `Esc` hides while
 preserving the draft and `Ctrl+Enter` closes, copies and pastes back into the

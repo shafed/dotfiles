@@ -1,7 +1,20 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-config="${QUICKSHELL_CONFIG_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/dots-shell/quickshell}"
+# start.sh launches `quickshell -p "$root"` where $root is this file's own
+# directory (the tracked QML tree runs directly — no more prepare.py runtime
+# copy under ~/.cache/dots-shell/quickshell, see "quickshell: run tracked qml
+# tree directly"). IPC has to target that same path or every call here fails
+# with "No running instances" even though quickshell is up. Self-locating
+# keeps this correct regardless of which checkout ~/.config/quickshell points
+# at (main or an isolated worktree), same as start.sh's own $root. `quickshell
+# ipc -p` matches the literal resolved shell.qml path, not just wherever it
+# leads, so this must follow readlink -f itself rather than only `cd` into the
+# symlinked ~/.config/quickshell dir (which keeps the symlink name in $PWD) —
+# otherwise IPC calls made through the ~/.config/quickshell symlink miss the
+# instance started via start.sh's own (already-real) path.
+script_dir="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+config="${QUICKSHELL_CONFIG_DIR:-$script_dir}"
 
 ipc() {
   quickshell ipc -p "$config" call "$@"
@@ -15,6 +28,7 @@ close_pickers() {
   ipc launcher close >/dev/null 2>&1 || true
   ipc bookmarks close >/dev/null 2>&1 || true
   ipc quickpicker close >/dev/null 2>&1 || true
+  ipc youtube close >/dev/null 2>&1 || true
   ipc scratch close >/dev/null 2>&1 || true
 }
 
@@ -24,6 +38,7 @@ case "${1:-}" in
     ipc dots closeOverlays >/dev/null 2>&1 || true
     ipc bookmarks close >/dev/null 2>&1 || true
     ipc quickpicker close >/dev/null 2>&1 || true
+    ipc youtube close >/dev/null 2>&1 || true
     ipc scratch close >/dev/null 2>&1 || true
     ipc launcher toggle
     ;;
@@ -32,6 +47,7 @@ case "${1:-}" in
     ipc dots closeOverlays >/dev/null 2>&1 || true
     ipc launcher close >/dev/null 2>&1 || true
     ipc quickpicker close >/dev/null 2>&1 || true
+    ipc youtube close >/dev/null 2>&1 || true
     ipc scratch close >/dev/null 2>&1 || true
     ipc bookmarks toggle
     ;;
@@ -40,13 +56,23 @@ case "${1:-}" in
     close_pickers
     ipc dots toggleClipboard
     ;;
-  projects|sessions|youtube)
+  projects|sessions)
     close_hotkeys
     ipc dots closeOverlays >/dev/null 2>&1 || true
     ipc launcher close >/dev/null 2>&1 || true
     ipc bookmarks close >/dev/null 2>&1 || true
+    ipc youtube close >/dev/null 2>&1 || true
     ipc scratch close >/dev/null 2>&1 || true
     ipc quickpicker toggle "$1"
+    ;;
+  youtube)
+    close_hotkeys
+    ipc dots closeOverlays >/dev/null 2>&1 || true
+    ipc launcher close >/dev/null 2>&1 || true
+    ipc bookmarks close >/dev/null 2>&1 || true
+    ipc quickpicker close >/dev/null 2>&1 || true
+    ipc scratch close >/dev/null 2>&1 || true
+    ipc youtube toggle
     ;;
   scratch)
     target="none"
@@ -59,6 +85,7 @@ case "${1:-}" in
     ipc launcher close >/dev/null 2>&1 || true
     ipc bookmarks close >/dev/null 2>&1 || true
     ipc quickpicker close >/dev/null 2>&1 || true
+    ipc youtube close >/dev/null 2>&1 || true
     ipc scratch toggle "$target"
     ;;
   hotkeys)

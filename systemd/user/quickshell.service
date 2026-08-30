@@ -6,7 +6,8 @@ ConditionPathExists=%h/github/dotfiles/quickshell/shell.qml
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/env quickshell -p %h/github/dotfiles/quickshell
+ExecStartPre=/usr/bin/python3 %h/github/dotfiles/quickshell/prepare.py
+ExecStart=/usr/bin/env quickshell -p %h/.cache/dots-shell/quickshell
 Restart=on-failure
 RestartSec=1
 

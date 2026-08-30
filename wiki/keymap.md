@@ -39,8 +39,8 @@ keys go to Hyprland, and workspace chords arrive as normal Super+digit events.
   picker and `b` opens the separate Quickshell Bookmarks picker; projects,
   YouTube and kitty-session pickers remain QAT/fzf where the terminal is still
   the better frontend. The browser sub-layer remains on hold `s`. System chords
-  are `u+i` volume down, `i+o` volume up, `o+p` mute, `h+j` brightness down,
-  `l+;` brightness up, and `e+r` the compact Quickshell system overview. The
+  are `u+i` volume down, `i+o` volume up, `o+p` mute, `j+k` brightness down,
+  `k+l` brightness up, and `w+e` the compact Quickshell system overview. The
   volume/brightness chords emit standard XF86 keycodes instead of running
   system commands themselves. ⚠️ `q` here runs [close-window.sh](kanata.md),
   which is `hl.dsp.window.close()` for most apps — **not** kill, so tray apps
@@ -50,8 +50,8 @@ keys go to Hyprland, and workspace chords arrive as normal Super+digit events.
   symbols on the right hand, with xkb forced to US ([kanata](kanata.md)).
 - **navi** (hold `w`, or toggle via caps-hold) — arrows and navigation on the
   right hand, left-hand mods free.
-- **numplain / numplain2** (chords `k+l` / `j+k+l`) — digits and their shifted
-  symbols on the left hand.
+- **numplain / numplain2** — outside `apps`, chords `k+l` / `j+k+l` give digits
+  and their shifted symbols on the left hand. Inside `apps`, `k+l` is brightness up.
 - **numws / movews** (apps hold `l`, or chord `j+l`) — `Super+digit` /
   `Super+Shift+digit`, i.e. hypr workspace switch and move-to-workspace.
 
@@ -60,8 +60,13 @@ keys go to Hyprland, and workspace chords arrive as normal Super+digit events.
 Hyprland owns the direct desktop-shell bindings while kanata provides the
 thumb-layer routes above. `Super+Space` opens Applications and `Super+V` opens
 Clipboard. `Super+Shift+A/W/B/P/I/U/N` open Audio, Network, Bluetooth, Power,
-Agents, Updates and Notifications respectively. `apps+e+r` toggles the compact
+Agents, Updates and Notifications respectively. `apps+w+e` toggles the compact
 system overview through `dots-shell system`.
+
+The old direct `Super+=`, `Super+-`, `Super+M`, `Super+]` and `Super+[` system
+control shortcuts are removed. Volume/mute/brightness actions now have one
+Hyprland source of truth: the standard XF86 bindings, reached either by real
+multimedia keys or by Kanata's emitted keycodes.
 
 These system panels are mutually exclusive popovers: opening one closes other
 overlays; `Esc` or the first click outside closes the active panel. Applications,
@@ -71,15 +76,16 @@ contract rather than a kanata-layer rule, so its implementation belongs to
 
 ## Collisions that had to be resolved
 
-| Keys                | Contenders                                      | Resolution                                                                                     |
-| ------------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| `h j k l`           | kanata HRM / navi / hypr `Super+hjkl`           | HRM fires only on opposite-hand hold; kanata never consumes a real Super                       |
-| digits `1-0`        | numplain / hypr `Super+N`                       | numplain emits **plain** digits; workspace switching only via numws                            |
-| `C-tab` / `C-S-tab` | navi (browser tabs) / kitty                     | kitty only catches `C-S-*` while focused                                                       |
-| one-handed `C-S`    | HRM can't (same-hand = tap)                     | moved to the `d+f` / `j+k` chords                                                              |
-| `w+e`               | letter roll vs. Tab chord                       | `mod-chord-time 35` + `chords-v2-min-idle 80` separate a roll from a chord                     |
-| `j+k/k+l/w+e`       | existing global chords / requested apps actions | `defchordsv2` forbids duplicate participating-key sets; apps uses `h+j`, `l+;`, `e+r` instead  |
-| `Alt-t` / `^[t`     | kitty / zsh / nvim companion toggle             | zsh needs three zsh-vi-mode settings before this fires reliably — [zsh](zsh.md)                |
+| Keys                | Contenders                                      | Resolution                                                                                           |
+| ------------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `h j k l`           | kanata HRM / navi / hypr `Super+hjkl`           | HRM fires only on opposite-hand hold; kanata never consumes a real Super                             |
+| digits `1-0`        | numplain / hypr `Super+N`                       | numplain emits **plain** digits; workspace switching only via numws                                  |
+| `C-tab` / `C-S-tab` | navi (browser tabs) / kitty                     | kitty only catches `C-S-*` while focused                                                             |
+| one-handed `C-S`    | HRM can't (same-hand = tap)                     | `j+k` keeps its Enter/C-S behavior outside `apps`; inside `apps` it is brightness down                |
+| `w+e`               | Tab chord / requested system overview           | one chord uses `switch` on active layer: `apps` = system overview, otherwise Tab                     |
+| `k+l`               | numplain / requested brightness up              | one chord uses `switch` on active layer: `apps` = brightness up, otherwise `numplain`                |
+| `j+k/k+l/w+e`       | global chords / apps actions                    | duplicate chord sets are forbidden, so each pair has one definition with an active-layer branch     |
+| `Alt-t` / `^[t`     | kitty / zsh / nvim companion toggle             | zsh needs three zsh-vi-mode settings before this fires reliably — [zsh](zsh.md)                      |
 
 ## Forcing the US layout
 

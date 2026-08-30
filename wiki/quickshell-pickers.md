@@ -95,7 +95,8 @@ still available manually for its deeper channel/history/watch-later fzf modes.
 
 `Super+V` opens `components/ClipboardOverlay.qml`. The input receives active
 focus as soon as the layer-shell surface opens, so the clipboard is fully usable
-without a mouse:
+without a mouse. Selection starts on the first row and a stationary pointer does
+not steal it; hover selection is armed only after the pointer actually moves.
 
 - type to filter visible history rows;
 - arrows or `Ctrl-J/K` move selection;

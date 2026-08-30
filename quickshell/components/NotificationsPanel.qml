@@ -5,6 +5,7 @@ import Quickshell
 ColumnLayout {
   id: view
   required property var shell
+  required property var notifications
   required property var colors
   required property var ui
   required property var historyModel
@@ -13,22 +14,12 @@ ColumnLayout {
   RowLayout {
     Layout.fillWidth: true
     PanelButton {
-      label: view.shell.state.notifications && view.shell.state.notifications.dnd ? "Do Not Disturb: ON" : "Do Not Disturb: OFF"
-      onPressed: {
-        var next = !(view.shell.state.notifications && view.shell.state.notifications.dnd)
-        var n = view.shell.state.notifications || { history: [] }
-        n.dnd = next
-        view.shell.state.notifications = n
-        view.shell.state = Object.assign({}, view.shell.state)
-        view.shell.run(["python3", view.shell.backend, "notify", "dnd", next ? "true" : "false"])
-      }
+      label: view.notifications.dnd ? "Do Not Disturb: ON" : "Do Not Disturb: OFF"
+      onPressed: view.notifications.setDnd(!view.notifications.dnd)
     }
     PanelButton {
       label: "Clear"
-      onPressed: {
-        view.historyModel.clear()
-        view.shell.run(["python3", view.shell.backend, "notify", "clear"])
-      }
+      onPressed: view.notifications.clear()
     }
   }
   Flickable {

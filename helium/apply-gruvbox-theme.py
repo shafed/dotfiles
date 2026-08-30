@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parent.parent
 PALETTE = ROOT / "colors.toml"
 MANAGED_START = "# >>> dotfiles: helium gruvbox >>>"
 MANAGED_END = "# <<< dotfiles: helium gruvbox <<<"
+THEME_VERSION_MAJOR = 2
 OLD_THEME_MARKERS = (
     "helium-gruvbox-theme",
     "/helium/gruvbox-material",
@@ -70,10 +71,11 @@ def rgb(value: str) -> list[int]:
     return [int(value[index : index + 2], 16) for index in (0, 2, 4)]
 
 
-def render_manifest(colors: dict[str, str]) -> str:
-    # Chromium's non-Material theme mixer maps these independently:
-    # frame -> vertical sidebar, toolbar -> active tab, background_tab ->
-    # inactive tabs and the New Tab control. Keep those surfaces distinct.
+def theme_payload(colors: dict[str, str]) -> dict[str, object]:
+    # For a third-party theme Chromium's generic tab mixer keeps these surfaces
+    # independent: frame is the vertical strip, toolbar is the active tab, and
+    # background_tab is the inactive-tab/New Tab surface. Helium's Material
+    # mixer is intentionally skipped while a custom theme is active.
     theme_colors = {
         "frame": rgb(colors["bg_hard"]),
         "frame_inactive": rgb(colors["bg_hard"]),
@@ -94,12 +96,85 @@ def render_manifest(colors: dict[str, str]) -> str:
         "ntp_text": rgb(colors["fg"]),
         "ntp_link": rgb(colors["blue"]),
     }
+    # Identity tints keep Chromium from hue-shifting any fallback surfaces. In
+    # particular, background_tab must stay the exact frame color when a fallback
+    # path is used rather than a generated Material shade.
+    identity_tint = [-1, -1, -1]
+    return {
+        "colors": theme_colors,
+        "tints": {
+            "background_tab": identity_tint,
+            "buttons": identity_tint,
+            "frame": identity_tint,
+            "frame_inactive": identity_tint,
+            "frame_incognito": identity_tint,
+            "frame_incognito_inactive": identity_tint,
+        },
+        "properties": {"ntp_logo_alternate": 1},
+    }
+
+
+def parse_managed_version(value: object) -> tuple[int, int, int, int] | None:
+    if not isinstance(value, str):
+        return None
+    parts = value.split(".")
+    if not 1 <= len(parts) <= 4:
+        return None
+    try:
+        numbers = [int(part) for part in parts]
+    except ValueError:
+        return None
+    if any(number < 0 or number > 65535 for number in numbers):
+        return None
+    numbers.extend([0] * (4 - len(numbers)))
+    return tuple(numbers)  # type: ignore[return-value]
+
+
+def bump_managed_version(version: tuple[int, int, int, int] | None) -> str:
+    if version is None or version[0] != THEME_VERSION_MAJOR:
+        return f"{THEME_VERSION_MAJOR}.0.0.1"
+
+    major, high, middle, low = version
+    low += 1
+    if low > 65535:
+        low = 0
+        middle += 1
+    if middle > 65535:
+        middle = 0
+        high += 1
+    if high > 65535:
+        raise ValueError("Helium theme version counter exhausted")
+    return f"{major}.{high}.{middle}.{low}"
+
+
+def choose_manifest_version(manifest_path: Path, theme: dict[str, object]) -> str:
+    # ThemeService does not re-apply a loaded theme when the same extension ID is
+    # already current. A real extension update does, so bump the unpacked theme
+    # version only when its generated theme payload changes. This is the
+    # programmatic equivalent of pressing Reload on chrome://extensions.
+    if not manifest_path.exists():
+        return f"{THEME_VERSION_MAJOR}.0.0.1"
+
+    try:
+        previous = json.loads(manifest_path.read_text())
+    except (OSError, json.JSONDecodeError):
+        return f"{THEME_VERSION_MAJOR}.0.0.1"
+
+    previous_version = parse_managed_version(previous.get("version"))
+    if previous.get("theme") == theme and previous_version is not None:
+        if previous_version[0] == THEME_VERSION_MAJOR:
+            return ".".join(str(part) for part in previous_version)
+    return bump_managed_version(previous_version)
+
+
+def render_manifest(colors: dict[str, str], manifest_path: Path) -> str:
+    theme = theme_payload(colors)
     manifest = {
         "manifest_version": 3,
         "name": "Gruvbox Material Dark Medium — dotfiles",
-        "version": "1.0.0",
+        "version": choose_manifest_version(manifest_path, theme),
         "description": "Generated from dotfiles/colors.toml for Helium.",
-        "theme": {"colors": theme_colors},
+        "theme": theme,
     }
     return json.dumps(manifest, indent=2) + "\n"
 
@@ -221,7 +296,7 @@ def main() -> int:
         colors = load_colors()
         theme_dir.mkdir(parents=True, exist_ok=True)
         manifest_path = theme_dir / "manifest.json"
-        manifest_path.write_text(render_manifest(colors))
+        manifest_path.write_text(render_manifest(colors, manifest_path))
         # Read it back so a partial/corrupt write is caught before touching the
         # browser flags file.
         manifest = json.loads(manifest_path.read_text())
@@ -234,6 +309,7 @@ def main() -> int:
         return 1
 
     print(f"Helium Gruvbox theme: {theme_dir}")
+    print(f"Helium theme version: {manifest['version']}")
     print(f"Helium flags: {flags_path}")
     for entry in dropped:
         print(f"Dropped stale --load-extension entry: {entry}")

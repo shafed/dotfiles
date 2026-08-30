@@ -5,6 +5,7 @@ import Quickshell
 Flickable {
   id: view
   required property var shell
+  required property var system
   required property var colors
   required property var ui
 
@@ -16,18 +17,18 @@ Flickable {
     width: parent.width
     spacing: 7
     PanelButton {
-      label: view.shell.state.bluetooth && view.shell.state.bluetooth.powered ? "Bluetooth: on" : "Bluetooth: off"
-      onPressed: view.shell.backendAction("bluetooth", "toggle", "")
+      label: view.system.bluetoothPowered ? "Bluetooth: on" : "Bluetooth: off"
+      onPressed: view.system.toggleBluetooth()
     }
     Heading { text: "Paired devices" }
     Repeater {
-      model: view.shell.state.bluetooth ? view.shell.state.bluetooth.devices : []
+      model: view.system.bluetoothDevices
       PanelButton {
         required property var modelData
         label: (modelData.connected ? "● " : "") + modelData.name +
-               (Number(modelData.battery) >= 0 ? "  " + modelData.battery + "%" : "")
+               (modelData.batteryAvailable ? "  " + Math.round(modelData.battery * 100) + "%" : "")
         selected: modelData.connected
-        onPressed: view.shell.backendAction("bluetooth", modelData.connected ? "disconnect" : "connect", modelData.mac)
+        onPressed: view.system.toggleBluetoothDevice(modelData)
       }
     }
   }

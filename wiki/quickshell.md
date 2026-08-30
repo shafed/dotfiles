@@ -8,6 +8,7 @@ covers:
   - quickshell/center-title.py
   - quickshell/agents-panel.py
   - quickshell/agents-refresh.py
+  - quickshell/prepare-agents-refresh-ui.py
   - quickshell/prepare-launcher.py
   - quickshell/prepare-ui-fixes.py
   - quickshell/start.sh
@@ -36,9 +37,10 @@ transformations back into QML and remove shims rather than grow another runtime
 layer.
 
 `start.sh` applies post-processors in order: `center-title.py`,
-`agents-panel.py`, `prepare-launcher.py`, then `prepare-ui-fixes.py`.
-`center-title.py` and `agents-panel.py` own the top-bar title/AI presentation;
-the picker stages do not replace those blocks. `prepare-launcher.py` only
+`agents-panel.py`, `prepare-agents-refresh-ui.py`, `prepare-launcher.py`, then
+`prepare-ui-fixes.py`. `center-title.py` and `agents-panel.py` own the top-bar
+title/AI presentation; `prepare-agents-refresh-ui.py` only refines the AI refresh
+header. The picker stages do not replace those blocks. `prepare-launcher.py` only
 inserts the standalone picker components and overlay IPC, while
 `prepare-ui-fixes.py` owns popover dismissal plus application usage weighting.
 
@@ -85,10 +87,15 @@ and **Weekly limits**, with utilization bars and reset times. Local token totals
 sessions and per-model history are not part of this UI.
 
 `agents-refresh.py` runs once when Quickshell starts, again when the AI panel is
-opened, and on the Refresh button. That direct path bypasses the five-minute
-`agents` snapshot cache and updates the panel. Once a direct refresh has produced
-rows, later slow snapshots preserve them instead of replacing them with the
-legacy cached AI state.
+opened, and when the compact refresh icon is clicked. That direct path bypasses
+the five-minute `agents` snapshot cache and updates the panel. Once a direct
+refresh has produced rows, later slow snapshots preserve them instead of
+replacing them with the legacy cached AI state.
+
+The AI panel header shows `Last updated: just now`, then minute/hour/day-relative
+age as the data gets older, with a small `↻` control at the right. The timestamp
+changes only after the refresh process returns parsable rows; while a refresh is
+running the control is disabled and visually dimmed.
 
 For Claude, the weekly value follows the web Usage page's **All models** bucket:
 `seven_day` is preferred over `seven_day_oauth_apps`. The OAuth-app bucket is

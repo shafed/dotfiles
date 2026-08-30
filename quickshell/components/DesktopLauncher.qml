@@ -11,13 +11,16 @@ Item {
   Config.Colors { id: colors }
   Config.UiConfig { id: ui }
 
-  readonly property string usageHelper: Quickshell.env("HOME") + "/.config/quickshell/launcher-usage.py"
+  readonly property string usageDir: String(Quickshell.env("XDG_CACHE_HOME") || (Quickshell.env("HOME") + "/.cache")) + "/apps-fzf"
+  readonly property string usagePath: usageDir + "/usage.tsv"
 
   property bool open: false
   property string query: ""
   property int selectedIndex: 0
   property int appRevision: 0
   property var usage: ({})
+  property bool usageReady: false
+  property var pendingUsageDeltas: ({})
   property var rows: {
     appRevision
     usage
@@ -31,8 +34,12 @@ Item {
       .replace(/[._\-\s]/g, "")
   }
 
+  function usageStorageKey(value) {
+    return String(value || "").trim().toLowerCase().replace(/\.desktop$/, "")
+  }
+
   function usageKey(entry) {
-    return String((entry && entry.id) || "").toLowerCase().replace(/\.desktop$/, "")
+    return usageStorageKey((entry && entry.id) || "")
   }
 
   function usageCount(entry) {
@@ -45,13 +52,67 @@ Item {
     return Math.min(3600, Math.log(count + 1) / Math.LN2 * 1200)
   }
 
+  function parseUsageText(text) {
+    var result = ({})
+    var lines = String(text || "").split("\n")
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i]
+      var tab = line.indexOf("\t")
+      if (tab < 0) continue
+      var key = usageStorageKey(line.slice(0, tab))
+      var count = parseInt(line.slice(tab + 1), 10)
+      if (!key || isNaN(count)) continue
+      result[key] = Math.max(Number(result[key] || 0), count)
+    }
+    return result
+  }
+
+  function serializeUsage(values) {
+    var keys = Object.keys(values || {}).filter(function(key) { return !!key }).sort()
+    var lines = []
+    for (var i = 0; i < keys.length; i++)
+      lines.push(keys[i] + ".desktop\t" + String(Math.max(0, Math.floor(Number(values[keys[i]]) || 0))))
+    return lines.length ? lines.join("\n") + "\n" : ""
+  }
+
+  function loadUsage() {
+    try { usage = parseUsageText(usageFile.text()) } catch (e) { usage = ({}) }
+  }
+
+  function saveUsage() {
+    if (!usageReady) return
+    usageFile.setText(serializeUsage(usage))
+  }
+
+  function finishUsageInit() {
+    var disk = ({})
+    try { disk = parseUsageText(usageFile.text()) } catch (e) {}
+    var pending = pendingUsageDeltas || ({})
+    var keys = Object.keys(pending)
+    for (var i = 0; i < keys.length; i++) {
+      var key = keys[i]
+      disk[key] = Number(disk[key] || 0) + Number(pending[key] || 0)
+    }
+    usageReady = true
+    usage = disk
+    pendingUsageDeltas = ({})
+    if (keys.length > 0) saveUsage()
+  }
+
   function recordUse(entry) {
     var key = usageKey(entry)
     if (!key) return
     var next = Object.assign({}, usage)
     next[key] = Number(next[key] || 0) + 1
     usage = next
-    Quickshell.execDetached(["python3", usageHelper, "record", String(entry.id || key)])
+
+    if (!usageReady) {
+      var pending = Object.assign({}, pendingUsageDeltas)
+      pending[key] = Number(pending[key] || 0) + 1
+      pendingUsageDeltas = pending
+      return
+    }
+    saveUsage()
   }
 
   function shortId(entry) {
@@ -181,7 +242,6 @@ Item {
     query = ""
     selectedIndex = 0
     open = true
-    if (!usageProc.running) usageProc.running = true
     Qt.callLater(function() { searchInput.forceActiveFocus() })
   }
 
@@ -227,17 +287,24 @@ Item {
   }
 
   Process {
-    id: usageProc
-    command: ["python3", launcher.usageHelper]
-    stdout: StdioCollector {
-      waitForEnd: true
-      onStreamFinished: {
-        try { launcher.usage = JSON.parse(text) } catch (e) { launcher.usage = ({}) }
-      }
-    }
+    id: usageInitProc
+    running: true
+    command: ["mkdir", "-p", launcher.usageDir]
+    onExited: launcher.finishUsageInit()
   }
 
-  Component.onCompleted: usageProc.running = true
+  FileView {
+    id: usageFile
+    path: launcher.usagePath
+    blockLoading: true
+    atomicWrites: true
+    watchChanges: true
+    printErrors: false
+    onFileChanged: reload()
+    onTextChanged: {
+      if (launcher.usageReady) launcher.loadUsage()
+    }
+  }
 
   IpcHandler {
     target: "launcher"

@@ -43,17 +43,31 @@ The main generator writes the tracked format-specific surfaces:
 Telegram Desktop is user-imported rather than symlinked by bootstrap, so its
 surface is generated separately by `telegram/generate-theme.py`. The tracked
 `telegram/colors.tdesktop-theme` contains the palette. The preferred botanical
-wallpaper is stored as text-safe `telegram/background.jpg.b64`; the generator
-decodes it to local `telegram/background-primary.jpg` and embeds the decoded
+wallpaper is stored as text-safe `telegram/background.png.b64`; the generator
+decodes it to local `telegram/background-primary.png` and embeds the decoded
 bytes in `telegram/gruvbox-material-dark-medium.tdesktop-theme` as
-`background.jpg`. Storing the source as base64 avoids binary corruption when the
+`background.png`. Storing the source as base64 avoids binary corruption when the
 repository is updated through APIs that primarily handle UTF-8 text.
+
+The wallpaper is PNG, not JPEG: an earlier JPEG source got silently bit-corrupted
+somewhere in git history (mid-stream, not just a truncated tail — every JPEG
+blob across that history failed independent decode with `djpeg`/`jpegtran`/
+ImageMagick, each erroring at the same offset). The generator's own validation
+only checked for a JPEG start-of-image marker, so the corruption shipped for
+several commits and silently failed to apply in Telegram, which uses a strict
+decoder. PNG's checksummed chunks make that class of silent corruption far less
+likely to reoccur unnoticed.
 
 The artwork itself is inset on a taller dark canvas so Telegram's cover-style
 wallpaper scaling crops and zooms it less in a narrow chat pane. The final theme
 archive is a local build artifact and is ignored by git. Import the final
 `telegram/gruvbox-material-dark-medium.tdesktop-theme`, not the standalone
 palette file or the `.b64` source.
+
+Regardless of source format, verify a new wallpaper source decodes with a real
+decoder (`python3 -c "from PIL import Image; Image.open(...).load()"` or
+`magick identify`) before committing it — `generate-theme.py` only checks the
+container's magic bytes, not that the pixel data is intact.
 
 The alternate procedural wallpaper is intentionally retained as a backup. Each
 Telegram generation writes it to `telegram/background-backup.png`; that file is

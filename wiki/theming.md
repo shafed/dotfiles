@@ -42,14 +42,19 @@ The main generator writes the tracked format-specific surfaces:
 
 Telegram Desktop is user-imported rather than symlinked by bootstrap, so its
 surface is generated separately by `telegram/generate-theme.py`. The tracked
-`telegram/colors.tdesktop-theme` contains the palette. The wallpaper is rendered
-deterministically from `colors.toml` by the same script as
-`telegram/background.png`, using only Python's standard library; both that PNG
-and the final `telegram/gruvbox-material-dark-medium.tdesktop-theme` archive are
-local build artifacts and are ignored by git. The archive contains
-`colors.tdesktop-theme` and `background.png`, which Telegram Desktop reads as the
-palette and theme wallpaper. Import the final archive, not the standalone
-`colors.tdesktop-theme` file.
+`telegram/colors.tdesktop-theme` contains the palette and tracked
+`telegram/background.jpg` is the preferred botanical Gruvbox wallpaper. Running
+the generator packages those as
+`telegram/gruvbox-material-dark-medium.tdesktop-theme`; the archive is a local
+build artifact and is ignored by git. It contains `colors.tdesktop-theme` and
+`background.jpg`, which Telegram Desktop reads as the palette and theme
+wallpaper. Import the final archive, not the standalone palette file.
+
+The alternate procedural wallpaper is intentionally retained as a backup. Each
+Telegram generation writes it to `telegram/background-backup.png`; that file is
+also a local build artifact. The implementation stays in
+`telegram/generate-theme.py`, so the backup is reproducible from `colors.toml`
+without storing a second large binary in git.
 
 Telegram-specific semantic overrides live in `telegram/generate-theme.py` when
 a palette surface has no useful cross-application equivalent. The vertical chat

@@ -1,9 +1,11 @@
 ---
 title: bootstrap
 type: topic
-updated: 2026-08-15
+updated: 2026-08-30
 covers:
   - bootstrap.sh
+  - scripts/dots-lib.sh
+  - dots
   - zsh/zprofile
 ---
 
@@ -11,7 +13,14 @@ covers:
 
 Arch Linux + Hyprland. Run `./bootstrap.sh` from the repo root; it reports
 missing packages (never installs them — [decisions](decisions.md)) and
-whole-directory-symlinks each config into `~/.config/<name>`. Idempotent.
+whole-directory-symlinks each config into `~/.config/<name>`. Idempotent. It
+also links the repository's `dots` executable into `~/.local/bin`; after the
+first bootstrap, routine diagnostics and maintenance go through
+[dots](dots.md), not direct helper scripts.
+
+The required-package and managed-link manifests are shared with `dots doctor`.
+This is intentional: adding a bootstrap-managed component in one place must not
+leave diagnostics describing a different machine.
 
 Session autostart is `../zsh/zprofile`: on tty1 with no `$DISPLAY` it runs
 `exec uwsm start hyprland-uwsm.desktop` rather than the raw `start-hyprland`
@@ -30,10 +39,11 @@ from reading the script:
   untracked, a real file rather than a symlink. A fresh machine gets the script
   and no registration, so the guard silently never fires ([global](global.md)).
 - ⚠️ **`~/.local/bin` is on the interactive shell's `PATH` but not the systemd
-  user session's.** `bootstrap.sh` generates two wrappers there — `sudo`
-  (notifies on a background password prompt) and `sioyek` (pins the viewer to
-  XWayland, [sioyek](sioyek.md)). Anything launched from a `.desktop` entry must
-  call them by absolute path or it silently gets the unwrapped binary.
+  user session's.** `bootstrap.sh` installs `dots` there and generates two
+  wrappers — `sudo` (notifies on a background password prompt) and `sioyek`
+  (pins the viewer to XWayland, [sioyek](sioyek.md)). Anything launched from a
+  `.desktop` entry must call wrappers by absolute path or it silently gets the
+  unwrapped binary.
 - oh-my-zsh and its plugins are **not** checked or installed here — zshrc clones
   them on first run ([zsh](zsh.md)).
 
@@ -72,8 +82,11 @@ These do not survive a fresh machine and nothing in `bootstrap.sh` covers them:
   Helium likely needs `bruvtab_mediator.json` copied into
   `~/.config/net.imput.helium/NativeMessagingHosts/`.
 - XDG default browser — set `helium.desktop` for `http`, `https`, `text/html`.
-- systemd user services from `~/.config/systemd`.
 - The `hooks` block in `~/.claude/settings.json` (see above).
+
+Tracked systemd wants are deployed with the `systemd/` config directory;
+`dots doctor` verifies the core user units and the Quickshell/Dunst ownership
+contract after bootstrap.
 
 TODO: exact pacman vs AUR package names and versions are not fully recorded —
 confirm during the next real deployment.

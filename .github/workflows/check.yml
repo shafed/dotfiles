@@ -1,0 +1,15 @@
+name: check
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  dots-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Lua parser
+        run: sudo apt-get update && sudo apt-get install -y lua5.4
+      - name: Run checks
+        run: ./dots check

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Bootstrap this dotfiles repo on a new Arch Linux + Hyprland machine.
-# Symlinks configs into ~/.config and reports missing packages.
+# Symlinks configs into ~/.config, installs the dots entrypoint, and reports
+# missing packages.
 #
 # Usage:
 #   ./bootstrap.sh            # check requirements, then link everything
@@ -9,6 +10,9 @@
 set -euo pipefail
 
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DOTS_ROOT="$DOTFILES_DIR"
+# shellcheck source=scripts/dots-lib.sh
+source "$DOTFILES_DIR/scripts/dots-lib.sh"
 cd "$DOTFILES_DIR"
 
 DO_CHECK=1
@@ -17,49 +21,6 @@ case "${1:-}" in
 --check) DO_LINK=0 ;;
 --link) DO_CHECK=0 ;;
 esac
-
-# Required commands, and the pacman/AUR package that provides them.
-REQUIRED_PKGS=(
-  "hyprland:hyprland"
-  "uwsm:uwsm"
-  "kanata:kanata-bin (AUR)"
-  "kitty:kitty"
-  "helium-browser:helium-browser-bin (AUR)"
-  "quickshell:quickshell"
-  "wpctl:wireplumber"
-  "nmcli:networkmanager"
-  "bluetoothctl:bluez-utils"
-  "powerprofilesctl:power-profiles-daemon"
-  "brightnessctl:brightnessctl"
-  "checkupdates:pacman-contrib"
-  "wl-paste:wl-clipboard"
-  "cliphist:cliphist"
-  "yazi:yazi"
-  "nvim:neovim"
-  "zsh:zsh"
-  "zoxide:zoxide"
-  "fzf:fzf"
-  "jq:jq"
-  "darkman:darkman (AUR)"
-  "lazygit:lazygit"
-  "sioyek:sioyek"
-  "yt-dlp:yt-dlp"
-  "bruvtab:bruvtab (uv tool/pipx)"
-  "task:taskwarrior"
-  "python3:python"
-)
-
-# Sources this script links, relative to DOTFILES_DIR. CONFIG_DIRS become
-# whole-directory symlinks into ~/.config; LINK_FILES are individual symlinks.
-CONFIG_DIRS=(
-  hypr kitty nvim kanata quickshell yazi darkman lazygit sioyek zathura systemd
-)
-LINK_FILES=(
-  zsh/zshrc
-  zsh/zprofile
-  instructions.md
-  scripts/sudo-notify.sh
-)
 
 check_requirements() {
   echo "== Checking required commands =="
@@ -150,20 +111,22 @@ link_configs() {
   echo
   echo "== Installing ~/.local/bin wrappers =="
   mkdir -p "$HOME/.local/bin"
+  ln -sfvn "$DOTFILES_DIR/dots" "$HOME/.local/bin/dots"
+  echo "  linked $HOME/.local/bin/dots"
 
-  cat >"$HOME/.local/bin/sudo" <<EOF
+  cat >"$HOME/.local/bin/sudo" <<EOF_WRAPPER
 #!/usr/bin/env bash
 exec "$DOTFILES_DIR/scripts/sudo-notify.sh" "\$@"
-EOF
+EOF_WRAPPER
   chmod +x "$HOME/.local/bin/sudo"
   echo "  wrote $HOME/.local/bin/sudo"
 
   # sioyek can't create a Qt6 EGL context on nvidia under Wayland, so force it
   # onto XWayland. This is a wrapper rather than an alias so every caller gets it.
-  cat >"$HOME/.local/bin/sioyek" <<EOF
+  cat >"$HOME/.local/bin/sioyek" <<EOF_WRAPPER
 #!/usr/bin/env bash
 exec env -u LIBGL_ALWAYS_SOFTWARE QT_QPA_PLATFORM=xcb /usr/bin/sioyek "\$@"
-EOF
+EOF_WRAPPER
   chmod +x "$HOME/.local/bin/sioyek"
   echo "  wrote $HOME/.local/bin/sioyek"
 

@@ -17,16 +17,21 @@ Everything is **Gruvbox Material Dark Medium**, anchored to `background #282828`
 to match it, not the other way round.
 
 ⚠️ Gotcha: **there is no source-of-truth color file.** The palette is
-hand-duplicated in eight places, and changing a shade means editing all of them:
+hand-duplicated in the active components, and changing a shade means editing all
+of them:
 
 - `kitty/current-theme.conf`, plus a second copy in
   `quick-access-terminal-center.conf` via `kitty_override`
-- `waybar/style.css` (`@define-color gb_*`)
 - `yazi/flavors/gruvbox-dark.yazi` + `theme.toml`
 - nvim's own gruvbox-material plugin
 - `helium/gruvbox-material/manifest.json`
 - `.claude/themes/gruvbox-material.json`
 - hyprland/hyprlock — raw hex in the configs for borders and lock fields
+
+The old `waybar/` palette copy was removed when Waybar was retired in favor of
+Quickshell. Keeping it made palette edits look like they still had to update an
+inactive component; stale installed Waybar state is now handled by
+[dots](dots.md).
 
 The Claude Code theme deliberately leaves `claudeShimmer` at its built-in color:
 overriding it made the thinking animation harder to pick out. The base `claude`
@@ -60,9 +65,9 @@ which is why no per-app theme files exist for them.
   `bootstrap.sh`. A hook placed in `~/.config` is silently never run.
 - **kitty and Helium are intentionally NOT toggled** — both keep their single
   gruvbox-dark themes.
-- ⚠️ **Gaps**: waybar/yazi/nvim/Helium are static gruvbox dark and don't follow
-  the color-scheme; only GTK/Qt apps do. To widen the switch, add per-app hooks
-  to `darkman/scripts/`.
+- ⚠️ **Gaps**: yazi/nvim/Helium are static gruvbox dark and don't follow the
+  color-scheme; only GTK/Qt apps do. To widen the switch, add per-app hooks to
+  `darkman/scripts/`.
 
 ## hyprsunset — screen gamma/temperature only
 

@@ -58,8 +58,7 @@ the Material color generator and cannot preserve all exact Gruvbox surfaces.
 `$XDG_DATA_HOME/dotfiles/helium-gruvbox/manifest.json` directly from
 `colors.toml`. Its exact target surfaces are:
 
-- sidebar/inactive: `bg_hard (#1d2021)`;
-- main/omnibox: `bg (#282828)`;
+- passive background/sidebar/inactive/omnibox: `bg_hard (#1d2021)`;
 - active-tab surface: `bg_soft (#3c3836)`;
 - text: `fg (#d4be98)`.
 

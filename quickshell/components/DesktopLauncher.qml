@@ -3,9 +3,13 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
+import "../config" as Config
 
 Item {
   id: launcher
+
+  Config.Colors { id: colors }
+  Config.UiConfig { id: ui }
 
   readonly property string usageHelper: Quickshell.env("HOME") + "/.config/quickshell/launcher-usage.py"
 
@@ -33,6 +37,12 @@ Item {
 
   function usageCount(entry) {
     return Number(usage[usageKey(entry)] || 0)
+  }
+
+  function usageBonus(entry) {
+    var count = usageCount(entry)
+    if (count <= 0) return 0
+    return Math.min(3600, Math.log(count + 1) / Math.LN2 * 1200)
   }
 
   function recordUse(entry) {
@@ -117,6 +127,7 @@ Item {
       result.push({
         entry: entry,
         rank: rank,
+        weightedRank: rank + usageBonus(entry),
         used: used,
         name: String(entry.name || entry.id).toLowerCase()
       })
@@ -126,7 +137,7 @@ Item {
       result = result.filter(function(row) { return row.used > 0 })
 
     result.sort(function(a, b) {
-      if (q && a.rank !== b.rank) return b.rank - a.rank
+      if (q && a.weightedRank !== b.weightedRank) return b.weightedRank - a.weightedRank
       if (!q && a.used !== b.used) return b.used - a.used
       if (a.name < b.name) return -1
       if (a.name > b.name) return 1
@@ -245,47 +256,46 @@ Item {
   }
 
   PanelWindow {
-    id: launcherWindow
     visible: launcher.open
     anchors { top: true; bottom: true; left: true; right: true }
-    color: "#99000000"
+    color: ui.overlayColor
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.namespace: "dots-launcher"
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
 
     Rectangle {
-      width: Math.min(720, parent.width - 80)
-      height: Math.min(600, parent.height - 100)
+      width: Math.min(ui.pickerMaxWidth, parent.width - ui.pickerHorizontalInset)
+      height: Math.min(ui.pickerMaxHeight, parent.height - ui.pickerVerticalInset)
       anchors.centerIn: parent
-      color: "#1d2021"
-      border.color: "#504945"
+      color: colors.bgHard
+      border.color: colors.bgHover
       border.width: 1
-      radius: 10
+      radius: ui.pickerRadius
 
       ColumnLayout {
         anchors.fill: parent
-        anchors.margins: 16
-        spacing: 10
+        anchors.margins: ui.pickerPadding
+        spacing: ui.pickerSpacing
 
         RowLayout {
           Layout.fillWidth: true
-          spacing: 10
+          spacing: ui.pickerSpacing
 
           Text {
             text: "Apps"
-            color: "#d8a657"
-            font.family: "monospace"
+            color: colors.yellow
+            font.family: ui.bodyFont
             font.bold: true
-            font.pixelSize: 15
+            font.pixelSize: ui.pickerTitleSize
           }
 
           Rectangle {
             Layout.fillWidth: true
-            implicitHeight: 38
-            radius: 6
-            color: "#282828"
-            border.color: searchInput.activeFocus ? "#d8a657" : "#504945"
+            implicitHeight: ui.pickerInputHeight
+            radius: ui.pickerInputRadius
+            color: colors.bg
+            border.color: searchInput.activeFocus ? colors.yellow : colors.bgHover
             border.width: 1
 
             Text {
@@ -294,9 +304,9 @@ Item {
               anchors.verticalCenter: parent.verticalCenter
               visible: searchInput.text.length === 0
               text: "Recent apps — type to search all…"
-              color: "#928374"
-              font.family: "sans-serif"
-              font.pixelSize: 12
+              color: colors.gray
+              font.family: ui.sansFont
+              font.pixelSize: ui.pickerHintSize
             }
 
             TextInput {
@@ -306,11 +316,11 @@ Item {
               anchors.rightMargin: 12
               verticalAlignment: TextInput.AlignVCenter
               text: launcher.query
-              color: "#ebdbb2"
-              selectionColor: "#504945"
-              selectedTextColor: "#ebdbb2"
-              font.family: "sans-serif"
-              font.pixelSize: 13
+              color: colors.fgUi
+              selectionColor: colors.bgHover
+              selectedTextColor: colors.fgUi
+              font.family: ui.sansFont
+              font.pixelSize: ui.pickerInputTextSize
               selectByMouse: false
               onTextChanged: launcher.query = text
 
@@ -348,11 +358,11 @@ Item {
             required property var modelData
             required property int index
             width: appList.width
-            height: 54
-            radius: 7
-            color: index === launcher.selectedIndex ? "#3c3836" : "transparent"
+            height: ui.pickerRowHeight
+            radius: ui.pickerRowRadius
+            color: index === launcher.selectedIndex ? colors.bgSoft : "transparent"
             border.width: index === launcher.selectedIndex ? 1 : 0
-            border.color: "#665c54"
+            border.color: colors.bgMuted
 
             RowLayout {
               anchors.fill: parent
@@ -375,10 +385,10 @@ Item {
                 Text {
                   Layout.fillWidth: true
                   text: String(modelData.entry.name || modelData.entry.id || "")
-                  color: "#ebdbb2"
-                  font.family: "sans-serif"
+                  color: colors.fgUi
+                  font.family: ui.sansFont
                   font.bold: index === launcher.selectedIndex
-                  font.pixelSize: 13
+                  font.pixelSize: ui.pickerRowTitleSize
                   elide: Text.ElideRight
                 }
 
@@ -386,9 +396,9 @@ Item {
                   Layout.fillWidth: true
                   visible: String(modelData.entry.genericName || modelData.entry.comment || "").length > 0
                   text: String(modelData.entry.genericName || modelData.entry.comment || "")
-                  color: "#a89984"
-                  font.family: "sans-serif"
-                  font.pixelSize: 11
+                  color: colors.grayDim
+                  font.family: ui.sansFont
+                  font.pixelSize: ui.pickerRowSubtitleSize
                   elide: Text.ElideRight
                 }
               }
@@ -396,8 +406,8 @@ Item {
               Text {
                 visible: launcher.matchingToplevel(modelData.entry) !== null
                 text: "RUNNING"
-                color: "#a9b665"
-                font.family: "monospace"
+                color: colors.green
+                font.family: ui.bodyFont
                 font.pixelSize: 9
                 font.bold: true
               }
@@ -410,15 +420,15 @@ Item {
           Text {
             Layout.fillWidth: true
             text: launcher.rows.length + (launcher.query.trim() ? " matches" : " recent")
-            color: "#928374"
-            font.family: "monospace"
-            font.pixelSize: 10
+            color: colors.gray
+            font.family: ui.bodyFont
+            font.pixelSize: ui.pickerFooterSize
           }
           Text {
             text: "↑↓ / Ctrl-JK  select   Enter  focus/open   Alt-Enter  new   Esc  close"
-            color: "#928374"
-            font.family: "monospace"
-            font.pixelSize: 10
+            color: colors.gray
+            font.family: ui.bodyFont
+            font.pixelSize: ui.pickerFooterSize
           }
         }
       }

@@ -1,16 +1,4 @@
-@define-color gb_bg #282828;
-@define-color gb_bg_alt #32302f;
-@define-color gb_bg_soft #3c3836;
-@define-color gb_fg #d4be98;
-@define-color gb_gray #928374;
-@define-color gb_gray_dim #a89984;
-@define-color gb_red #ea6962;
-@define-color gb_green #a9b665;
-@define-color gb_yellow #d8a657;
-@define-color gb_orange #e78a4e;
-@define-color gb_blue #7daea3;
-@define-color gb_purple #d3869b;
-@define-color gb_aqua #89b482;
+@import "colors.css";
 
 * {
     /* `otf-font-awesome` is required to be installed for icons */
@@ -19,8 +7,8 @@
 }
 
 window#waybar {
-    background-color: rgba(40, 40, 40, 0.88);
-    border-bottom: 3px solid rgba(60, 56, 54, 0.85);
+    background-color: alpha(@gb_bg, 0.88);
+    border-bottom: 3px solid alpha(@gb_bg_soft, 0.85);
     color: @gb_fg;
     transition-property: background-color;
     transition-duration: .5s;
@@ -74,7 +62,7 @@ button:hover {
 }
 
 #workspaces button:hover {
-    background: rgba(60, 56, 54, 0.6);
+    background: alpha(@gb_bg_soft, 0.6);
 }
 
 #workspaces button.focused {
@@ -310,7 +298,7 @@ label:focus {
 }
 
 #keyboard-state > label.locked {
-    background: rgba(40, 40, 40, 0.35);
+    background: alpha(@gb_bg, 0.35);
 }
 
 #privacy {

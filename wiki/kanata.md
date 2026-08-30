@@ -102,20 +102,22 @@ on purpose. Tuned empirically — change with care.
 - `all-released` holds modifiers until both keys come up, letting a third key
   join (e.g. `C-S-tab`).
 
-`defchordsv2` is global and its layer argument is an exclusion list only. More
-importantly, Kanata rejects duplicate participating-key sets even when their
-disabled-layer lists differ. Therefore the existing global `j+k` (Ctrl+Shift),
-`k+l` (numplain) and `w+e` (Tab) cannot also mean something else only on
-`apps`. System controls use the nearest free apps-only pairs instead: `u+i`
-volume down, `i+o` volume up, `o+p` mute, `h+j` brightness down, `l+;`
-brightness up and `e+r` the Quickshell system overview. Every non-`apps` layer
-is in those chords' disabled list, so normal typing and the existing layers do
-not see them.
+`defchordsv2` is global and Kanata rejects duplicate participating-key sets.
+The requested reuse of existing `j+k`, `k+l` and `w+e` is therefore implemented
+with one definition per pair and a `switch` on the active layer:
+
+- `j+k`: on `apps` → brightness down; elsewhere → the existing Enter/C-S action;
+- `k+l`: on `apps` → brightness up; elsewhere → the existing `numplain` layer;
+- `w+e`: on `apps` → `dots-shell system`; elsewhere → the existing Tab chord.
+
+The remaining free apps-only pairs are `u+i` volume down, `i+o` volume up and
+`o+p` mute. Their disabled-layer lists include every non-`apps` layer, so normal
+typing and the existing base/navi/symbol/number behavior do not see them.
 
 Volume/brightness chords emit Kanata's standard `vold`/`volu`/`mute` and
 `brdn`/`brup` keycodes. They do **not** call `wpctl` or `brightnessctl`; the
-existing Hyprland XF86 bindings remain the single owner of those actions and of
-repeat behavior. Because chord participants are physical keycodes, these
+Hyprland XF86 bindings are the single owner of those actions and of repeat
+behavior. The old direct `Super+=`, `Super+-`, `Super+M`, `Super+]` and `Super+[` shortcuts were removed. Because chord participants are physical keycodes, these
 apps-layer gestures are the same under US and RU xkb layouts.
 
 ⚠️ Related trade-off: press-decided layer-holds on frequent letters (`n`, `e`,
@@ -186,7 +188,7 @@ Holding the thumb key gives the `apps` launcher layer. ⚠️ The layer itself d
 rofimoji always start in English while a bare hold/release stays harmless.
 
 The apps-only system chords are deliberately different: they operate on
-physical keycodes and do not need the force-English helper. `e+r` invokes
+physical keycodes and do not need the force-English helper. `w+e` invokes
 `dots-shell system`; the media/backlight pairs emit XF86-equivalent keycodes for
 Hyprland to handle.
 

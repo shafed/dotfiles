@@ -14,8 +14,8 @@ rules: [../CLAUDE.md](../CLAUDE.md) (`AGENTS.md` symlinks to it).
 
 - **[bootstrap](bootstrap.md)** — deploying on a new machine; what gets
   symlinked where, and what `bootstrap.sh` deliberately won't do for you.
-- **[dots](dots.md)** — the installed CLI entrypoint; why doctor/check/migrate
-  are separate and what counts as stale machine state.
+- **[dots](dots.md)** — installed CLI for diagnostics, migrations, service
+  refresh/restart, Quickshell control and machine-readable command discovery.
 
 ## Components
 

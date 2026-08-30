@@ -5,6 +5,18 @@ DOTS_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # shellcheck source=scripts/dots-lib.sh
 source "$DOTS_ROOT/scripts/dots-lib.sh"
 
+case "${1:-}" in
+  "") ;;
+  help|-h|--help)
+    echo "Usage: dots doctor"
+    exit 0
+    ;;
+  *)
+    echo "Usage: dots doctor" >&2
+    exit 2
+    ;;
+esac
+
 errors=0
 warnings=0
 
@@ -140,7 +152,7 @@ if [ -d "$qs_cache" ] && ! same_link "$DOTS_ROOT/quickshell" "${XDG_CONFIG_HOME:
   warn "$qs_cache exists without the expected Quickshell config link"
 elif [ -f "$qs_cache/shell.qml" ]; then
   if find "$DOTS_ROOT/quickshell" -maxdepth 1 \( -name '*.qml' -o -name '*.py' -o -name '*.sh' \) -newer "$qs_cache/shell.qml" -print -quit | grep -q .; then
-    warn "generated Quickshell cache is older than tracked sources; restart quickshell.service"
+    warn "generated Quickshell cache is older than tracked sources; run: dots refresh quickshell"
   else
     ok "generated Quickshell cache is current enough"
   fi

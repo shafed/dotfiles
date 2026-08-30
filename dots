@@ -3,18 +3,17 @@ set -euo pipefail
 
 SELF="$(readlink -f "${BASH_SOURCE[0]}")"
 ROOT="$(cd "$(dirname "$SELF")" && pwd)"
+DOTS_ROOT="$ROOT"
+# shellcheck source=scripts/dots-lib.sh
+source "$ROOT/scripts/dots-lib.sh"
 
 usage() {
   cat <<'USAGE'
 Usage: dots <command> [args]
 
 Commands:
-  doctor    Check the installed dotfiles state
-  check     Run repository syntax checks and tests
-  migrate   Apply safe dotfiles migrations
-  theme     Show or switch the darkman theme
-  help      Show this help
 USAGE
+  dots_print_commands
 }
 
 command_name="${1:-help}"
@@ -27,7 +26,18 @@ case "$command_name" in
   check) exec "$ROOT/scripts/dots-check.sh" "$@" ;;
   migrate) exec "$ROOT/scripts/dots-migrate.sh" "$@" ;;
   theme) exec "$ROOT/scripts/dots-theme.sh" "$@" ;;
-  help|-h|--help) usage ;;
+  restart) exec "$ROOT/scripts/dots-restart.sh" "$@" ;;
+  refresh) exec "$ROOT/scripts/dots-refresh.sh" "$@" ;;
+  shell) exec "$ROOT/scripts/dots-shell.sh" shell "$@" ;;
+  panel) exec "$ROOT/scripts/dots-shell.sh" panel "$@" ;;
+  debug) exec "$ROOT/scripts/dots-debug.sh" "$@" ;;
+  commands) exec "$ROOT/scripts/dots-commands.sh" "$@" ;;
+  help|-h|--help)
+    if [ "$#" -gt 0 ]; then
+      exec "$SELF" "$1" --help
+    fi
+    usage
+    ;;
   *)
     printf 'dots: unknown command: %s\n\n' "$command_name" >&2
     usage >&2

@@ -9,6 +9,11 @@ covers:
   - scripts/dots-check.sh
   - scripts/dots-migrate.sh
   - scripts/dots-theme.sh
+  - scripts/dots-commands.sh
+  - scripts/dots-restart.sh
+  - scripts/dots-refresh.sh
+  - scripts/dots-shell.sh
+  - scripts/dots-debug.sh
   - tests/dots.sh
   - .pre-commit-config.yaml
   - .github/workflows/check.yml
@@ -28,6 +33,31 @@ separate matters on a fresh machine: missing desktop packages are a useful
 `doctor` failure but should not make a source-tree syntax check depend on a full
 Hyprland installation. The local pre-commit hooks and CI therefore run the same
 `dots check` primitives for Shell, Lua, Python and the CLI's own tests.
+
+The command catalog is also data: `dots commands --json` exposes the same names,
+usage strings and descriptions used by human help. This is intentionally much
+smaller than discovering arbitrary executable files — agents can inspect the
+supported surface without turning every helper script into public API.
+
+`restart` owns the routine systemd-user restart spelling for Quickshell, Kanata
+and darkman. `refresh` is narrower: it rebuilds derived state rather than
+restoring tracked configs. In particular, `dots refresh quickshell` removes the
+generated runtime under `$XDG_CACHE_HOME/dots-shell/quickshell` and restarts the
+service so `start.sh` regenerates it from tracked sources; it never copies a
+"default" config over the repository.
+
+Manual desktop-shell control should go through `dots shell` / `dots panel`.
+Those commands deliberately whitelist the stable actions already implemented by
+`quickshell/dots-shell` instead of exposing raw arbitrary IPC as part of the
+public CLI. `dots shell refresh` refreshes live shell data through IPC, while
+`dots refresh quickshell` rebuilds the generated runtime; the similar names have
+different scopes on purpose.
+
+`debug` is a compact support bundle: repository revision, session information,
+component versions, managed service state, doctor failures/warnings, and by
+default the last Quickshell journal lines. It is observational only. Use
+`--no-logs` when output will be pasted somewhere that should not receive recent
+journal text.
 
 `migrate` is intentionally idempotent and has no migration database. A migration
 exists only while an obsolete state can be detected directly. This avoids a

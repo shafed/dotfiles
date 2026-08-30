@@ -80,6 +80,19 @@ The active-window title remains geometrically centered by `center-title.py`, so
 unequal left/right status blocks cannot move it away from the physical center of
 the monitor.
 
+## CLI control
+
+`quickshell/dots-shell` remains the low-level IPC adapter used by bindings and
+internal integrations. For manual or agent-driven control, use `dots shell` and
+`dots panel`: they whitelist the supported launcher, clipboard, refresh and
+panel actions instead of making raw IPC part of the public dotfiles interface.
+See [dots](dots.md).
+
+A live IPC refresh and a generated-runtime rebuild are intentionally different:
+`dots shell refresh` asks the running shell to refresh its data, while
+`dots refresh quickshell` removes the generated cache and restarts the service.
+Use the latter after changing source QML or a prepare/post-processing script.
+
 ## AI limits
 
 The AI panel intentionally shows account rate limits only: **Current session**
@@ -115,15 +128,20 @@ entry on laptops.
 
 ## Maintenance
 
-After changing Quickshell code:
+After changing Quickshell code, prefer the repository entrypoint:
 
 ```sh
-systemctl --user daemon-reload
-systemctl --user reset-failed
-systemctl --user restart quickshell.service
+dots refresh quickshell
 ```
 
-If startup fails:
+For a plain process restart without rebuilding generated state:
+
+```sh
+dots restart quickshell
+```
+
+If startup fails, `dots debug` includes the recent Quickshell journal; the raw
+fallback remains:
 
 ```sh
 journalctl --user -u quickshell.service -n 100 --no-pager -o cat

@@ -9,10 +9,12 @@ tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 fake_bin="$tmp/bin"
 mkdir -p "$fake_bin"
+export DOTS_TEST_LOG="$tmp/calls.log"
+: >"$DOTS_TEST_LOG"
 
 for entry in "${REQUIRED_PKGS[@]}"; do
   cmd="${entry%%:*}"
-  if [ "$cmd" = "darkman" ]; then
+  if [ "$cmd" = "darkman" ] || [ "$cmd" = "quickshell" ]; then
     continue
   fi
   cat > "$fake_bin/$cmd" <<'SH'
@@ -27,13 +29,22 @@ cat > "$fake_bin/darkman" <<'SH'
 case "${1:-get}" in
   get) echo dark ;;
   set) exit 0 ;;
+  *) exit 0 ;;
 esac
 SH
 chmod +x "$fake_bin/darkman"
 
+cat > "$fake_bin/quickshell" <<'SH'
+#!/usr/bin/env bash
+printf 'quickshell %s\n' "$*" >>"${DOTS_TEST_LOG:-/dev/null}"
+exit 0
+SH
+chmod +x "$fake_bin/quickshell"
+
 cat > "$fake_bin/systemctl" <<'SH'
 #!/usr/bin/env bash
 args="$*"
+printf 'systemctl %s\n' "$args" >>"${DOTS_TEST_LOG:-/dev/null}"
 case "$args" in
   "--user show-environment") exit 0 ;;
   "--user is-enabled dunst.service") echo masked; exit 0 ;;
@@ -49,7 +60,35 @@ chmod +x "$fake_bin/systemctl"
 export PATH="$fake_bin:$PATH"
 
 "$ROOT/dots" help | grep -q '^  doctor'
+"$ROOT/dots" help restart | grep -q '^Usage: dots restart'
+"$ROOT/dots" commands | grep -q '^  restart'
+"$ROOT/dots" commands --json | python3 -c '
+import json, sys
+commands = json.load(sys.stdin)
+names = {item["name"] for item in commands}
+assert {"doctor", "restart", "refresh", "shell", "panel", "debug"} <= names
+'
 "$ROOT/dots" theme | grep -q '^dark$'
+
+: >"$DOTS_TEST_LOG"
+"$ROOT/dots" restart quickshell >/dev/null
+grep -q '^systemctl --user restart quickshell.service$' "$DOTS_TEST_LOG"
+
+refresh_home="$tmp/refresh"
+mkdir -p "$refresh_home/.cache/dots-shell/quickshell"
+touch "$refresh_home/.cache/dots-shell/quickshell/shell.qml"
+: >"$DOTS_TEST_LOG"
+HOME="$refresh_home" XDG_CACHE_HOME="$refresh_home/.cache" "$ROOT/dots" refresh quickshell >/dev/null
+[ ! -e "$refresh_home/.cache/dots-shell/quickshell" ]
+grep -q '^systemctl --user restart quickshell.service$' "$DOTS_TEST_LOG"
+
+: >"$DOTS_TEST_LOG"
+HOME="$refresh_home" XDG_CACHE_HOME="$refresh_home/.cache" "$ROOT/dots" shell apps >/dev/null
+grep -q 'quickshell .*call launcher toggle$' "$DOTS_TEST_LOG"
+
+: >"$DOTS_TEST_LOG"
+HOME="$refresh_home" XDG_CACHE_HOME="$refresh_home/.cache" "$ROOT/dots" panel agents >/dev/null
+grep -q 'quickshell .*call dots panel agents$' "$DOTS_TEST_LOG"
 
 fresh_home="$tmp/fresh"
 mkdir -p "$fresh_home"
@@ -64,6 +103,10 @@ mkdir -p "$configured_home"
 HOME="$configured_home" XDG_CONFIG_HOME="$configured_home/.config" XDG_CACHE_HOME="$configured_home/.cache" "$ROOT/bootstrap.sh" --link >"$tmp/bootstrap.out"
 HOME="$configured_home" XDG_CONFIG_HOME="$configured_home/.config" XDG_CACHE_HOME="$configured_home/.cache" "$configured_home/.local/bin/dots" doctor >"$tmp/configured.out"
 grep -q 'Doctor: 0 error(s)' "$tmp/configured.out"
+
+HOME="$configured_home" XDG_CONFIG_HOME="$configured_home/.config" XDG_CACHE_HOME="$configured_home/.cache" "$configured_home/.local/bin/dots" debug --no-logs >"$tmp/debug.out"
+grep -q '^== repository ==$' "$tmp/debug.out"
+grep -q '^== doctor summary ==$' "$tmp/debug.out"
 
 mkdir -p "$configured_home/.cache/waybar"
 ln -s "$ROOT/waybar" "$configured_home/.config/waybar"

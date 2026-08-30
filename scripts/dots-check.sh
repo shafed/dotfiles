@@ -4,6 +4,10 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
+usage() {
+  echo "Usage: dots check [all|shell|lua|python|tests]"
+}
+
 check_shell() {
   echo "== shell =="
   while IFS= read -r -d '' file; do
@@ -51,8 +55,9 @@ case "${1:-all}" in
   lua) check_lua ;;
   python) check_python ;;
   tests) check_tests ;;
+  help|-h|--help) usage ;;
   *)
-    echo "Usage: dots check [all|shell|lua|python|tests]" >&2
+    usage >&2
     exit 2
     ;;
 esac

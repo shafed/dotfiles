@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the runtime Quickshell config with event-driven Hyprland bar state."""
+"""Build the runtime Quickshell config from the tracked base shell."""
 
 from pathlib import Path
 import os
@@ -21,41 +21,57 @@ def replace_once(old: str, new: str, label: str) -> None:
     text = text.replace(old, new, 1)
 
 
+# Native Quickshell services own realtime desktop state.
 replace_once(
     "import Quickshell.Wayland\n",
-    "import Quickshell.Wayland\nimport Quickshell.Hyprland\n",
-    "Hyprland import",
+    "import Quickshell.Wayland\n"
+    "import Quickshell.Hyprland\n"
+    "import Quickshell.Services.Pipewire\n",
+    "native service imports",
 )
 
-# Layout changes are pushed by layout-watch.py. Do not let an older in-flight
-# fast snapshot overwrite a freshly received keyboard-layout event.
+# The old Python workspace helper is no longer part of the runtime shell.
 replace_once(
-    "    if (next.layout !== undefined) merged.layout = next.layout\n",
+    '  readonly property string workspacesBackend: home + "/github/dotfiles/quickshell/workspaces.py"\n',
     "",
-    "fast layout assignment",
+    "workspace backend property",
 )
-
-# Keep the event-driven layout value when the slower full snapshot refreshes
-# unrelated state. The first full snapshot still initializes it at startup.
 replace_once(
-    "  function updateFull(next) {\n    state = next\n",
-    "  function updateFull(next) {\n"
-    "    if (state.layout) next.layout = state.layout\n"
-    "    state = next\n",
-    "full snapshot layout preservation",
+    "  property var occupiedWorkspaces: []\n",
+    "",
+    "occupied workspace state",
 )
 
-# Calendar and reactive clock state.
+# Calendar, native audio state, and lightweight in-shell brightness sampling.
 replace_once(
     "  property bool osdOpen: false\n",
     "  property bool osdOpen: false\n"
     "  property date clockNow: new Date()\n"
-    "  property date calendarMonth: new Date(new Date().getFullYear(), new Date().getMonth(), 1)\n",
-    "calendar state",
+    "  property date calendarMonth: new Date(new Date().getFullYear(), new Date().getMonth(), 1)\n"
+    "  readonly property var audioSink: Pipewire.defaultAudioSink\n"
+    "  readonly property int nativeVolume: audioSink && audioSink.ready && audioSink.audio\n"
+    "                                      ? Math.round(audioSink.audio.volume * 100)\n"
+    "                                      : Number(state.audio ? state.audio.volume : 0)\n"
+    "  readonly property bool nativeMuted: audioSink && audioSink.ready && audioSink.audio\n"
+    "                                      ? audioSink.audio.muted\n"
+    "                                      : !!(state.audio && state.audio.muted)\n"
+    "  property bool nativeAudioInitialized: false\n"
+    "  property int lastNativeVolume: -1\n"
+    "  property bool lastNativeMuted: false\n"
+    "  property string backlightPath: \"\"\n"
+    "  property int backlightMax: 0\n",
+    "native shell state",
 )
 
 replace_once(
-    "  function backendAction(domain, action, arg) {\n",
+    "  function backendAction(domain, action, arg) {\n"
+    "    var argv = [\"python3\", backend, \"action\", domain, action]\n"
+    "    if (arg !== undefined && arg !== null && String(arg) !== \"\") argv.push(String(arg))\n"
+    "    run(argv)\n"
+    "    fastRefreshDelay.restart()\n"
+    "    fullRefreshDelay.restart()\n"
+    "    if (domain === \"workspace\") workspaceRefreshDelay.restart()\n"
+    "  }\n",
     "  function calendarCellDate(index) {\n"
     "    var first = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), 1)\n"
     "    var mondayOffset = (first.getDay() + 6) % 7\n"
@@ -95,10 +111,242 @@ replace_once(
     "    if (lowestRemaining <= 0.30) return \"#d8a657\"\n"
     "    return \"#fbf1c7\"\n"
     "  }\n\n"
-    "  function backendAction(domain, action, arg) {\n",
-    "calendar and AI helpers",
+    "  function syncNativeAudio() {\n"
+    "    if (!audioSink || !audioSink.ready || !audioSink.audio) return\n"
+    "    var volume = Math.max(0, Math.min(150, nativeVolume))\n"
+    "    var muted = nativeMuted\n"
+    "    if (!nativeAudioInitialized) {\n"
+    "      lastNativeVolume = volume\n"
+    "      lastNativeMuted = muted\n"
+    "      nativeAudioInitialized = true\n"
+    "      return\n"
+    "    }\n"
+    "    if (volume !== lastNativeVolume || muted !== lastNativeMuted)\n"
+    "      showOsd(muted ? \"MUTE\" : \"VOL\", String(volume) + \"%\", volume, true)\n"
+    "    lastNativeVolume = volume\n"
+    "    lastNativeMuted = muted\n"
+    "  }\n\n"
+    "  function adjustNativeVolume(delta) {\n"
+    "    if (!audioSink || !audioSink.ready || !audioSink.audio) return\n"
+    "    audioSink.audio.volume = Math.max(0, Math.min(1.5, audioSink.audio.volume + delta))\n"
+    "  }\n\n"
+    "  function toggleNativeMute() {\n"
+    "    if (!audioSink || !audioSink.ready || !audioSink.audio) return\n"
+    "    audioSink.audio.muted = !audioSink.audio.muted\n"
+    "  }\n\n"
+    "  function applyLayoutEvent(event) {\n"
+    "    if (!event || String(event.name || \"\") !== \"activelayout\") return\n"
+    "    var parts = null\n"
+    "    try { if (event.parse) parts = event.parse(2) } catch (e) {}\n"
+    "    if (!parts || parts.length < 2) {\n"
+    "      var raw = String(event.data || \"\")\n"
+    "      var comma = raw.indexOf(\",\")\n"
+    "      if (comma >= 0) parts = [raw.slice(0, comma), raw.slice(comma + 1)]\n"
+    "    }\n"
+    "    if (!parts || parts.length < 2) return\n"
+    "    var keyboard = String(parts[0] || \"\")\n"
+    "    if (keyboard.indexOf(\"hl-virtual-keyboard\") === 0) return\n"
+    "    var layout = String(parts[1] || \"\")\n"
+    "    if (!layout) return\n"
+    "    var merged = state\n"
+    "    merged.layout = layout\n"
+    "    state = Object.assign({}, merged)\n"
+    "  }\n\n"
+    "  function handleBrightness(value) {\n"
+    "    var nextValue = Number(value)\n"
+    "    if (isNaN(nextValue) || backlightMax <= 0) return\n"
+    "    var percent = Math.max(0, Math.min(100, Math.round(nextValue * 100 / backlightMax)))\n"
+    "    if (lastBrightness < 0) {\n"
+    "      lastBrightness = percent\n"
+    "      return\n"
+    "    }\n"
+    "    if (percent !== lastBrightness) {\n"
+    "      lastBrightness = percent\n"
+    "      showOsd(\"SUN\", String(percent) + \"%\", percent, true)\n"
+    "    }\n"
+    "  }\n\n"
+    "  function backendAction(domain, action, arg) {\n"
+    "    var argv = [\"python3\", backend, \"action\", domain, action]\n"
+    "    if (arg !== undefined && arg !== null && String(arg) !== \"\") argv.push(String(arg))\n"
+    "    run(argv)\n"
+    "    fullRefreshDelay.restart()\n"
+    "  }\n",
+    "native helpers and backend action",
 )
 
+# Full snapshots initialize slow data, but must not overwrite the layout event
+# that may have arrived more recently.
+replace_once(
+    "  function updateFull(next) {\n    state = next\n",
+    "  function updateFull(next) {\n"
+    "    if (state.layout) next.layout = state.layout\n"
+    "    state = next\n",
+    "full snapshot layout preservation",
+)
+
+# The old fast snapshot is no longer used for realtime UI. Remove its delayed
+# OSD side effects so a manual invocation cannot produce stale duplicate OSDs.
+replace_once(
+    "\n    if (next.audio && lastVolume >= 0 && Number(next.audio.volume) !== lastVolume) {\n"
+    "      showOsd(next.audio.muted ? \"MUTE\" : \"VOL\", Number(next.audio.volume) + \"%\", Number(next.audio.volume), true)\n"
+    "    }\n"
+    "    if (next.audio) lastVolume = Number(next.audio.volume)\n\n"
+    "    if (laptop && next.brightness !== undefined && Number(next.brightness) >= 0 &&\n"
+    "        lastBrightness >= 0 && Number(next.brightness) !== lastBrightness) {\n"
+    "      showOsd(\"SUN\", Number(next.brightness) + \"%\", Number(next.brightness), true)\n"
+    "    }\n"
+    "    if (next.brightness !== undefined && Number(next.brightness) >= 0)\n"
+    "      lastBrightness = Number(next.brightness)\n",
+    "",
+    "polling OSD logic",
+)
+
+# Startup only needs the slow snapshot; workspaces, layout, volume and brightness
+# are owned by native Quickshell state.
+replace_once(
+    "  Component.onCompleted: {\n"
+    "    run([\"pkill\", \"-x\", \"waybar\"])\n"
+    "    fullProc.running = true\n"
+    "    fastProc.running = true\n"
+    "    workspaceProc.running = true\n"
+    "  }\n",
+    "  Component.onCompleted: {\n"
+    "    run([\"pkill\", \"-x\", \"waybar\"])\n"
+    "    fullProc.running = true\n"
+    "  }\n",
+    "startup polling",
+)
+
+# Delete the now-unused fast/workspace processes and timers from the generated QML.
+replace_once(
+    "  Process {\n"
+    "    id: fastProc\n"
+    "    command: [\"python3\", root.backend, \"fast\"]\n"
+    "    stdout: StdioCollector {\n"
+    "      waitForEnd: true\n"
+    "      onStreamFinished: {\n"
+    "        try { root.updateFast(JSON.parse(text)) } catch (e) { console.warn(\"dots-shell fast snapshot:\", e) }\n"
+    "      }\n"
+    "    }\n"
+    "  }\n\n",
+    "",
+    "fast process",
+)
+replace_once(
+    "  Process {\n"
+    "    id: workspaceProc\n"
+    "    command: [\"python3\", root.workspacesBackend]\n"
+    "    stdout: StdioCollector {\n"
+    "      waitForEnd: true\n"
+    "      onStreamFinished: {\n"
+    "        try { root.occupiedWorkspaces = JSON.parse(text) } catch (e) { root.occupiedWorkspaces = [] }\n"
+    "      }\n"
+    "    }\n"
+    "  }\n\n",
+    "",
+    "workspace process",
+)
+replace_once(
+    "  Timer {\n"
+    "    interval: 800\n"
+    "    repeat: true\n"
+    "    running: true\n"
+    "    onTriggered: {\n"
+    "      if (!fastProc.running) fastProc.running = true\n"
+    "      if (!workspaceProc.running) workspaceProc.running = true\n"
+    "    }\n"
+    "  }\n\n",
+    "",
+    "800ms polling timer",
+)
+replace_once(
+    "  Timer {\n"
+    "    id: fastRefreshDelay\n"
+    "    interval: 250\n"
+    "    onTriggered: if (!fastProc.running) fastProc.running = true\n"
+    "  }\n\n",
+    "",
+    "fast refresh timer",
+)
+replace_once(
+    "  Timer {\n"
+    "    id: workspaceRefreshDelay\n"
+    "    interval: 180\n"
+    "    onTriggered: if (!workspaceProc.running) workspaceProc.running = true\n"
+    "  }\n\n",
+    "",
+    "workspace refresh timer",
+)
+
+# Bind the default PipeWire sink so its volume/mute properties are valid.
+replace_once(
+    "  ListModel { id: historyModel }\n",
+    "  PwObjectTracker { objects: [root.audioSink] }\n\n"
+    "  Connections {\n"
+    "    target: Hyprland\n"
+    "    function onRawEvent(event) { root.applyLayoutEvent(event) }\n"
+    "  }\n\n"
+    "  Process {\n"
+    "    id: backlightDiscoverProc\n"
+    "    running: true\n"
+    "    command: [\"bash\", \"-lc\", \"for d in /sys/class/backlight/*; do [ -r \\\"$d/brightness\\\" ] && [ -r \\\"$d/max_brightness\\\" ] && { printf '%s\\\\n' \\\"$d\\\"; break; }; done\"]\n"
+    "    stdout: StdioCollector {\n"
+    "      waitForEnd: true\n"
+    "      onStreamFinished: root.backlightPath = text.trim()\n"
+    "    }\n"
+    "  }\n\n"
+    "  FileView {\n"
+    "    id: backlightMaxFile\n"
+    "    path: root.backlightPath ? root.backlightPath + \"/max_brightness\" : \"\"\n"
+    "    onTextChanged: {\n"
+    "      var value = Number(text().trim())\n"
+    "      if (!isNaN(value) && value > 0) root.backlightMax = value\n"
+    "    }\n"
+    "  }\n\n"
+    "  FileView {\n"
+    "    id: backlightValueFile\n"
+    "    path: root.backlightPath ? root.backlightPath + \"/brightness\" : \"\"\n"
+    "    onTextChanged: root.handleBrightness(text().trim())\n"
+    "  }\n\n"
+    "  Timer {\n"
+    "    interval: 150\n"
+    "    repeat: true\n"
+    "    running: root.backlightPath !== \"\"\n"
+    "    onTriggered: backlightValueFile.reload()\n"
+    "  }\n\n"
+    "  ListModel { id: historyModel }\n",
+    "native trackers",
+)
+
+# Volume properties become live once the sink is bound.
+replace_once(
+    "  NotificationServer {\n",
+    "  onNativeVolumeChanged: syncNativeAudio()\n"
+    "  onNativeMutedChanged: syncNativeAudio()\n"
+    "  onAudioSinkChanged: {\n"
+    "    nativeAudioInitialized = false\n"
+    "    Qt.callLater(syncNativeAudio)\n"
+    "  }\n\n"
+    "  NotificationServer {\n",
+    "native audio handlers",
+)
+
+# IPC remains for deliberate shell actions only.
+replace_once(
+    "    function refresh(): string {\n"
+    "      if (!root.fullProc.running) root.fullProc.running = true\n"
+    "      if (!root.fastProc.running) root.fastProc.running = true\n"
+    "      if (!root.workspaceProc.running) root.workspaceProc.running = true\n"
+    "      return \"ok\"\n"
+    "    }\n",
+    "    function refresh(): string {\n"
+    "      if (!root.fullProc.running) root.fullProc.running = true\n"
+    "      return \"ok\"\n"
+    "    }\n",
+    "IPC refresh",
+)
+
+# Workspaces use the native reactive Hyprland model.
 replace_once(
     "          Repeater {\n"
     "            model: root.occupiedWorkspaces\n"
@@ -122,25 +370,7 @@ replace_once(
     "workspace repeater",
 )
 
-replace_once(
-    "    function showOsd(icon: string, label: string, value: string): string {\n"
-    "      root.showOsd(icon, label, Number(value), true)\n"
-    "      return \"ok\"\n"
-    "    }\n",
-    "    function showOsd(icon: string, label: string, value: string): string {\n"
-    "      root.showOsd(icon, label, Number(value), true)\n"
-    "      return \"ok\"\n"
-    "    }\n"
-    "    function layoutChanged(label: string): string {\n"
-    "      var merged = root.state\n"
-    "      merged.layout = label\n"
-    "      root.state = Object.assign({}, merged)\n"
-    "      return \"ok\"\n"
-    "    }\n",
-    "IPC showOsd",
-)
-
-# Keyboard layout is the first item in the right-side status block.
+# Keyboard layout first; warning-aware AI indicator follows updates.
 replace_once(
     "          ClickButton {\n"
     "            visible: Number(root.state.updates ? root.state.updates.count : 0) > 0\n"
@@ -174,7 +404,53 @@ replace_once(
     "right-side status order",
 )
 
-# Move the clock directly before the system tray and open a calendar from it.
+# Master audio is entirely native: no Python round trip for bar state or controls.
+replace_once(
+    "          ClickButton {\n"
+    "            label: root.state.audio && root.state.audio.muted\n"
+    "                   ? \"MUTE\"\n"
+    "                   : \"VOL \" + String(root.state.audio ? root.state.audio.volume : 0) + \"%\"\n"
+    "            active: root.openPanel === \"audio\"\n",
+    "          ClickButton {\n"
+    "            label: root.nativeMuted ? \"MUTE\" : \"VOL \" + String(root.nativeVolume) + \"%\"\n"
+    "            active: root.openPanel === \"audio\"\n",
+    "top bar audio",
+)
+replace_once(
+    "          PanelButton {\n"
+    "            Layout.fillWidth: true\n"
+    "            label: root.state.audio && root.state.audio.muted ? \"Unmute\" : \"Mute\"\n"
+    "            onPressed: root.backendAction(\"audio\", \"mute\", \"\")\n"
+    "          }\n"
+    "          PanelButton {\n"
+    "            Layout.preferredWidth: 74\n"
+    "            label: \"-5%\"\n"
+    "            onPressed: root.backendAction(\"audio\", \"delta\", \"-5\")\n"
+    "          }\n"
+    "          PanelButton {\n"
+    "            Layout.preferredWidth: 74\n"
+    "            label: \"+5%\"\n"
+    "            onPressed: root.backendAction(\"audio\", \"delta\", \"5\")\n"
+    "          }\n",
+    "          PanelButton {\n"
+    "            Layout.fillWidth: true\n"
+    "            label: root.nativeMuted ? \"Unmute\" : \"Mute\"\n"
+    "            onPressed: root.toggleNativeMute()\n"
+    "          }\n"
+    "          PanelButton {\n"
+    "            Layout.preferredWidth: 74\n"
+    "            label: \"-5%\"\n"
+    "            onPressed: root.adjustNativeVolume(-0.05)\n"
+    "          }\n"
+    "          PanelButton {\n"
+    "            Layout.preferredWidth: 74\n"
+    "            label: \"+5%\"\n"
+    "            onPressed: root.adjustNativeVolume(0.05)\n"
+    "          }\n",
+    "native audio controls",
+)
+
+# Move the clock directly before the system tray and make it a calendar button.
 replace_once(
     "          ClickButton {\n"
     "            label: Qt.formatDateTime(new Date(), \"ddd HH:mm\")\n"
@@ -183,7 +459,6 @@ replace_once(
     "",
     "old clock position",
 )
-
 replace_once(
     "          Repeater {\n"
     "            model: SystemTray.items\n",
@@ -196,8 +471,6 @@ replace_once(
     "            model: SystemTray.items\n",
     "clock before tray",
 )
-
-# Keep the clock current without using the backend snapshot loop.
 replace_once(
     "  Timer {\n"
     "    id: osdTimer\n",
@@ -211,8 +484,6 @@ replace_once(
     "    id: osdTimer\n",
     "clock timer",
 )
-
-# Route the generic popup to the calendar component.
 replace_once(
     "                           root.openPanel === \"power\" ? powerPanel :\n"
     "                           root.openPanel === \"agents\" ? agentsPanel :\n",
@@ -221,8 +492,6 @@ replace_once(
     "                           root.openPanel === \"agents\" ? agentsPanel :\n",
     "calendar loader",
 )
-
-# Native month view: Monday-first, six-week grid, today highlighted.
 replace_once(
     "  Component {\n"
     "    id: powerPanel\n",
@@ -294,12 +563,7 @@ replace_once(
     "calendar component",
 )
 
-# Match the old compact 30 px bar geometry.
-# shell.qml already uses a 30 px bar and 28 px buttons, so no geometry rewrite
-# is needed here.
-
-# Let individual top-bar buttons override their text color (AI uses this for
-# low remaining rate-limit warnings).
+# Compact 30px geometry remains from shell.qml. Top-bar typography is Inter 14.
 replace_once(
     "    property bool active: false\n"
     "    signal pressed()\n",
@@ -308,8 +572,6 @@ replace_once(
     "    signal pressed()\n",
     "ClickButton text color property",
 )
-
-# Use Inter for the top bar at 14 px normal weight.
 replace_once(
     "      color: \"#ebdbb2\"\n"
     "      font.family: \"monospace\"\n"
@@ -319,7 +581,6 @@ replace_once(
     "      font.pixelSize: 14\n",
     "ClickButton font",
 )
-
 replace_once(
     "          color: \"#d5c4a1\"\n"
     "          font.family: \"monospace\"\n"

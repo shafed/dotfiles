@@ -1,4 +1,36 @@
 #!/usr/bin/env bash
 set -euo pipefail
-runtime="${XDG_CACHE_HOME:-$HOME/.cache}/dots-shell/quickshell"
-exec quickshell ipc -p "$runtime" call dots "$@"
+
+config="${QUICKSHELL_CONFIG_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/dots-shell/quickshell}"
+
+case "${1:-}" in
+  launcher|apps)
+    quickshell ipc -p "$config" call dots closeOverlays >/dev/null 2>&1 || true
+    quickshell ipc -p "$config" call bookmarks close >/dev/null 2>&1 || true
+    exec quickshell ipc -p "$config" call launcher toggle
+    ;;
+  bookmarks)
+    quickshell ipc -p "$config" call dots closeOverlays >/dev/null 2>&1 || true
+    quickshell ipc -p "$config" call launcher close >/dev/null 2>&1 || true
+    exec quickshell ipc -p "$config" call bookmarks toggle
+    ;;
+  clipboard)
+    quickshell ipc -p "$config" call dots closeOverlays >/dev/null 2>&1 || true
+    exec quickshell ipc -p "$config" call dots toggleClipboard
+    ;;
+  panel)
+    [[ $# -ge 2 ]] || { echo "usage: dots-shell panel <audio|network|bluetooth|power|agents|updates|notifications>" >&2; exit 2; }
+    quickshell ipc -p "$config" call dots closeOverlays >/dev/null 2>&1 || true
+    exec quickshell ipc -p "$config" call dots panel "$2"
+    ;;
+  refresh)
+    exec quickshell ipc -p "$config" call dots refresh
+    ;;
+  osd)
+    [[ $# -ge 4 ]] || { echo "usage: dots-shell osd <icon> <label> <value>" >&2; exit 2; }
+    exec quickshell ipc -p "$config" call dots showOsd "$2" "$3" "$4"
+    ;;
+  *)
+    exec quickshell ipc -p "$config" call dots "$@"
+    ;;
+esac

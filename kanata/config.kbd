@@ -201,24 +201,20 @@
   ;; down until both keys lift, so you can add a third key (e.g. C-S-tab).
   (lsft rsft) (multi (layer-switch base) (cmd notify-send -t 1000 "⌨ base layer")) $chord-time first-release ()
   (d f) (tap-hold $tap-time $hold-time esc (multi lctl lsft)) $mod-chord-time all-released () ;; tap=esc hold=C-S
-  (j k) (tap-hold $tap-time $hold-time ret (multi lctl lsft)) $mod-chord-time all-released () ;; enter
+  (j k) (switch ((layer apps)) brdn break () (tap-hold $tap-time $hold-time ret (multi lctl lsft)) break) $mod-chord-time all-released () ;; apps=brightness -, otherwise enter/C-S
   (s f) (multi lmet lsft) $mod-chord-time all-released () ;; Super+Shift
-  (k l) (layer-while-held numplain) $mod-chord-time all-released () ;; number layer
+  (k l) (switch ((layer apps)) brup break () (layer-while-held numplain) break) $mod-chord-time all-released () ;; apps=brightness +, otherwise number layer
   (j k l) (layer-while-held numplain2) $mod-chord-time all-released () ;; shifted numbers
   (s d) @sym-enter $mod-chord-time all-released () ;; symbol layer
   (s d f) @sym-enter2 $mod-chord-time all-released () ;; symbol layer 2
   (j l) (layer-while-held movews) $mod-chord-time all-released () ;; move window to workspace
-  (w e) tab $mod-chord-time all-released () ;; tab
+  (w e) (switch ((layer apps)) (cmd zsh -lc "$HOME/.config/quickshell/dots-shell system") break () tab break) $mod-chord-time all-released () ;; apps=system popover, otherwise tab
 
-  ;; system controls are intentionally apps-only. defchordsv2 has only a
-  ;; disabled-layer filter, so list every other layer rather than duplicating
-  ;; globally-used pairs such as j+k, k+l and w+e.
+  ;; system controls are intentionally apps-only. Free pairs are disabled on
+  ;; every other layer; globally-used j+k, k+l and w+e branch on active layer.
   (u i) vold $mod-chord-time all-released (base normal browser symbols symbols2 numws movews numplain numplain2 navi) ;; volume -
   (i o) volu $mod-chord-time all-released (base normal browser symbols symbols2 numws movews numplain numplain2 navi) ;; volume +
   (o p) mute $mod-chord-time all-released (base normal browser symbols symbols2 numws movews numplain numplain2 navi) ;; mute
-  (h j) brdn $mod-chord-time all-released (base normal browser symbols symbols2 numws movews numplain numplain2 navi) ;; brightness -
-  (l ;) brup $mod-chord-time all-released (base normal browser symbols symbols2 numws movews numplain numplain2 navi) ;; brightness +
-  (e r) (cmd zsh -lc "$HOME/.config/quickshell/dots-shell system") $mod-chord-time all-released (base normal browser symbols symbols2 numws movews numplain numplain2 navi) ;; system popover toggle
 )
 
 (deflayermap (normal)

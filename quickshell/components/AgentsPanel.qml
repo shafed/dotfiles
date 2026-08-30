@@ -5,14 +5,14 @@ import Quickshell
 Flickable {
   id: view
   required property var shell
+  required property var agents
   required property var colors
   required property var ui
-  required property var agentsRefreshProc
 
   contentWidth: width
   contentHeight: agentsColumn.implicitHeight
   clip: true
-  Component.onCompleted: if (!view.agentsRefreshProc.running) view.agentsRefreshProc.running = true
+  Component.onCompleted: view.agents.refresh()
   ColumnLayout {
     id: agentsColumn
     width: parent.width
@@ -35,7 +35,7 @@ Flickable {
         Layout.preferredHeight: view.ui.barButtonHeight
         radius: view.ui.barButtonRadius
         color: refreshMouse.containsMouse ? view.colors.bgHover : "transparent"
-        opacity: view.agentsRefreshProc.running ? 0.55 : 1.0
+        opacity: view.agents.refreshing ? 0.55 : 1.0
 
         Text {
           anchors.centerIn: parent
@@ -49,9 +49,9 @@ Flickable {
           id: refreshMouse
           anchors.fill: parent
           hoverEnabled: true
-          enabled: !view.agentsRefreshProc.running
+          enabled: !view.agents.refreshing
           cursorShape: Qt.PointingHandCursor
-          onClicked: view.agentsRefreshProc.running = true
+          onClicked: view.agents.refresh()
         }
       }
     }

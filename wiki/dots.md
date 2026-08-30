@@ -4,7 +4,9 @@ type: topic
 updated: 2026-08-30
 covers:
   - dots
+  - bootstrap.sh
   - scripts/dots-lib.sh
+  - scripts/dots-apply.sh
   - scripts/dots-doctor.sh
   - scripts/dots-check.sh
   - scripts/dots-migrate.sh
@@ -21,12 +23,30 @@ covers:
 
 # dots — one entrypoint for repository operations
 
-`dots` is deliberately a thin dispatcher rather than a second configuration
-system. `bootstrap.sh` remains the installer because it has to work before the
-CLI is installed; bootstrap then links the repository's `dots` into
-`~/.local/bin`. Package and link manifests live in `scripts/dots-lib.sh` so
-bootstrap and diagnostics cannot silently disagree about what a valid install
-looks like.
+`dots` is executable directly from the checkout, so there is no bootstrap
+chicken-and-egg problem. `./dots apply` is the deployment entrypoint on a fresh
+machine and also the convergence command on an existing one. It installs the
+managed links (including `~/.local/bin/dots`), applies migrations, invalidates
+derived Quickshell state, refreshes already-running managed user services, then
+finishes with `doctor`. `bootstrap.sh` is only a compatibility wrapper around
+that command.
+
+Package installation deliberately remains outside `apply`. Missing required
+commands are reported before changes and remain `doctor` errors at the end; this
+keeps a personal dotfiles checkout from becoming a second package manager while
+still allowing links to be installed before every desktop package is present.
+
+`apply` does not replace an existing real file or directory at a managed link
+path. It may repair or replace a symlink, but an unmanaged path is a hard stop
+with a request to move/archive it first. This makes repeated convergence safe on
+an existing machine instead of making "make it look like the repo" permission
+to delete local state.
+
+Service refresh during `apply` uses `systemctl --user try-restart`, not
+`restart`. That distinction matters on a newly provisioned TTY: Quickshell must
+not be started before the graphical session has exported its Wayland/session
+environment. The generated Quickshell cache is still removed, so the next
+legitimate start rebuilds it from tracked sources.
 
 `doctor` checks machine state; `check` checks repository state. Keeping those
 separate matters on a fresh machine: missing desktop packages are a useful

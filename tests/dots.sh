@@ -61,10 +61,14 @@ chmod +x "$fake_bin/systemctl"
 export PATH="$fake_bin:$PATH"
 
 "$ROOT/dots" help >"$tmp/help.out"
+grep -q '^  apply' "$tmp/help.out"
 grep -q '^  doctor' "$tmp/help.out"
+"$ROOT/dots" help apply >"$tmp/apply-help.out"
+grep -q '^Usage: dots apply' "$tmp/apply-help.out"
 "$ROOT/dots" help restart >"$tmp/restart-help.out"
 grep -q '^Usage: dots restart' "$tmp/restart-help.out"
 "$ROOT/dots" commands >"$tmp/commands.out"
+grep -q '^  apply' "$tmp/commands.out"
 grep -q '^  restart' "$tmp/commands.out"
 "$ROOT/dots" commands --json >"$tmp/commands.json"
 "$REAL_PYTHON" -c '
@@ -72,7 +76,7 @@ import json, sys
 with open(sys.argv[1], encoding="utf-8") as f:
     commands = json.load(f)
 names = {item["name"] for item in commands}
-assert {"doctor", "restart", "refresh", "shell", "panel", "debug"} <= names
+assert {"apply", "doctor", "restart", "refresh", "shell", "panel", "debug"} <= names
 ' "$tmp/commands.json"
 "$ROOT/dots" theme >"$tmp/theme.out"
 grep -q '^dark$' "$tmp/theme.out"
@@ -105,24 +109,41 @@ if HOME="$fresh_home" XDG_CONFIG_HOME="$fresh_home/.config" XDG_CACHE_HOME="$fre
 fi
 grep -q 'is missing' "$tmp/fresh.out"
 
+conflict_home="$tmp/conflict"
+mkdir -p "$conflict_home/.config/hypr"
+echo keep >"$conflict_home/.config/hypr/local.conf"
+if HOME="$conflict_home" XDG_CONFIG_HOME="$conflict_home/.config" "$ROOT/dots" apply --links-only >"$tmp/conflict.out" 2>&1; then
+  echo "apply unexpectedly replaced an unmanaged config directory" >&2
+  exit 1
+fi
+[ -f "$conflict_home/.config/hypr/local.conf" ]
+grep -q 'REFUSE.*hypr' "$tmp/conflict.out"
+
 configured_home="$tmp/configured"
 mkdir -p "$configured_home"
-HOME="$configured_home" XDG_CONFIG_HOME="$configured_home/.config" XDG_CACHE_HOME="$configured_home/.cache" "$ROOT/bootstrap.sh" --link >"$tmp/bootstrap.out"
+HOME="$configured_home" XDG_CONFIG_HOME="$configured_home/.config" XDG_CACHE_HOME="$configured_home/.cache" "$ROOT/dots" apply --links-only >"$tmp/apply-links.out"
 HOME="$configured_home" XDG_CONFIG_HOME="$configured_home/.config" XDG_CACHE_HOME="$configured_home/.cache" "$configured_home/.local/bin/dots" doctor >"$tmp/configured.out"
 grep -q 'Doctor: 0 error(s)' "$tmp/configured.out"
+
+mkdir -p "$configured_home/.cache/waybar" "$configured_home/.cache/dots-shell/quickshell"
+touch "$configured_home/.cache/dots-shell/quickshell/shell.qml"
+ln -s "$ROOT/waybar" "$configured_home/.config/waybar"
+: >"$DOTS_TEST_LOG"
+HOME="$configured_home" XDG_CONFIG_HOME="$configured_home/.config" XDG_CACHE_HOME="$configured_home/.cache" "$configured_home/.local/bin/dots" apply >"$tmp/apply.out"
+[ ! -e "$configured_home/.config/waybar" ]
+[ ! -e "$configured_home/.cache/waybar" ]
+[ ! -e "$configured_home/.cache/dots-shell/quickshell" ]
+grep -q '^systemctl --user try-restart quickshell.service$' "$DOTS_TEST_LOG"
+grep -q 'Doctor: 0 error(s)' "$tmp/apply.out"
 
 HOME="$configured_home" XDG_CONFIG_HOME="$configured_home/.config" XDG_CACHE_HOME="$configured_home/.cache" "$configured_home/.local/bin/dots" debug --no-logs >"$tmp/debug.out"
 grep -q '^== repository ==$' "$tmp/debug.out"
 grep -q '^== doctor summary ==$' "$tmp/debug.out"
 
-mkdir -p "$configured_home/.cache/waybar"
-ln -s "$ROOT/waybar" "$configured_home/.config/waybar"
-if HOME="$configured_home" XDG_CONFIG_HOME="$configured_home/.config" XDG_CACHE_HOME="$configured_home/.cache" "$configured_home/.local/bin/dots" migrate --check >/dev/null 2>&1; then
-  echo "migration check unexpectedly reported clean" >&2
-  exit 1
-fi
-HOME="$configured_home" XDG_CONFIG_HOME="$configured_home/.config" XDG_CACHE_HOME="$configured_home/.cache" "$configured_home/.local/bin/dots" migrate >/dev/null
-[ ! -e "$configured_home/.config/waybar" ]
-[ ! -e "$configured_home/.cache/waybar" ]
+legacy_home="$tmp/legacy"
+mkdir -p "$legacy_home"
+HOME="$legacy_home" XDG_CONFIG_HOME="$legacy_home/.config" "$ROOT/bootstrap.sh" --link >"$tmp/bootstrap.out"
+[ -L "$legacy_home/.local/bin/dots" ]
+[ -L "$legacy_home/.config/quickshell" ]
 
 echo "dots tests: ok"

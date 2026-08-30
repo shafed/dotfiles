@@ -51,6 +51,12 @@ choose **Apply this theme**. The bundled file contains `colors.tdesktop-theme`
 and `background.jpg`, which are the names Telegram Desktop expects inside a
 `.tdesktop-theme` ZIP.
 
+Telegram-specific semantic overrides live in `telegram/generate-theme.py` when
+a shared accent would be too strong for that UI. In particular, the active
+navigation/sidebar state uses muted Gruvbox blue and the selected chat row uses
+a neutral dark Gruvbox surface instead of the yellow accent. Yellow remains
+reserved for unread and attention states.
+
 Do not hand-edit color values in generated files. Configs listed above consume
 generated palette surfaces rather than maintaining independent values. Yazi's
 existing classic-Gruvbox accents are intentionally preserved as compatibility

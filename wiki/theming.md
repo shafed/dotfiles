@@ -58,6 +58,14 @@ rail and active item, muted foreground for inactive folders, and yellow only for
 the active folder and unread badges. This prevents Telegram's built-in blue
 sidebar defaults from leaking through the custom theme.
 
+Voice messages also have Telegram-specific overrides. The idle waveform is kept
+neutral Gruvbox rather than being used as an unread/read signal. Telegram's
+theme API does not expose separate colors for an unread idle voice message and
+a listened-but-stopped one: unread media is represented by the small dot after
+the duration. That dot shares `msgFileInBg` with the incoming play button, so the
+theme makes both yellow to keep the unread marker obvious. Exact whole-message
+unread/read recoloring would require patching Telegram Desktop itself.
+
 Do not hand-edit color values in generated files. Configs listed above consume
 generated palette surfaces rather than maintaining independent values. Yazi's
 existing classic-Gruvbox accents are intentionally preserved as compatibility

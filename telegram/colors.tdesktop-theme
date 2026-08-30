@@ -31,7 +31,7 @@ windowSubTextFg: GB_GRAY_DIM;
 windowSubTextFgOver: GB_FG_SOFT;
 windowBoldFg: GB_FG_UI;
 windowBoldFgOver: GB_FG_BRIGHT;
-windowBgActive: GB_BLUE;
+windowBgActive: GB_YELLOW;
 windowFgActive: GB_BG_HARD;
 windowActiveTextFg: GB_YELLOW;
 windowShadowFg: #00000066;
@@ -71,7 +71,7 @@ inputPlaceholderFgActive: GB_GRAY_DIM;
 // Lists, chats and unread state.
 dialogsBg: GB_BG;
 dialogsBgOver: GB_BG_ALT;
-dialogsBgActive: GB_BG_SOFT;
+dialogsBgActive: GB_BG_HOVER;
 dialogsNameFg: GB_FG_UI;
 dialogsNameFgOver: GB_FG_BRIGHT;
 dialogsNameFgActive: GB_FG_BRIGHT;
@@ -283,6 +283,18 @@ overviewCheckFg: GB_FG_UI;
 overviewCheckBgActive: GB_YELLOW;
 overviewCheckFgActive: GB_BG_HARD;
 overviewPhotoSelectOverlay: #d8a65740;
+
+// Telegram folder sidebar.
+sideBarBg: GB_BG;
+sideBarBgActive: GB_BG_SOFT;
+sideBarBgRipple: GB_BG_HOVER;
+sideBarTextFg: GB_GRAY_DIM;
+sideBarTextFgActive: GB_YELLOW;
+sideBarIconFg: GB_GRAY_DIM;
+sideBarIconFgActive: GB_YELLOW;
+sideBarBadgeBg: GB_YELLOW;
+sideBarBadgeBgMuted: GB_BG_MUTED;
+sideBarBadgeFg: GB_BG_HARD;
 
 // Generic scrollbars.
 scrollBarBg: #a8998466;

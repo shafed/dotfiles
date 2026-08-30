@@ -39,25 +39,23 @@ Flickable {
 
     Heading { text: "Outputs" }
     Repeater {
-      model: view.shell.state.audio ? view.shell.state.audio.sinks : []
+      model: view.services.outputs
       PanelButton {
         required property var modelData
-        label: (modelData.default ? "● " : "  ") + modelData.name
-        selected: modelData.default
-        onPressed: view.shell.backendAction("audio", "sink", modelData.id)
+        label: (modelData === view.services.audioSink ? "● " : "  ") + view.services.nodeLabel(modelData)
+        selected: modelData === view.services.audioSink
+        onPressed: view.services.setDefaultOutput(modelData)
       }
     }
 
     Heading { text: "Application streams" }
     Repeater {
-      model: view.shell.state.audio ? view.shell.state.audio.streams : []
+      model: view.services.streams
       PanelButton {
         required property var modelData
-        label: modelData.name + "  " + modelData.volume + "%"
-        onPressed: {
-          var next = modelData.volume >= 90 ? 50 : modelData.volume + 10
-          view.shell.backendAction("audio", "stream:" + modelData.id, next)
-        }
+        label: view.services.nodeLabel(modelData) + "  " +
+               (modelData.ready && modelData.audio ? Math.round(modelData.audio.volume * 100) : 0) + "%"
+        onPressed: view.services.adjustStream(modelData)
       }
     }
   }

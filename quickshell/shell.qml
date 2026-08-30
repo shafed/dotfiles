@@ -941,10 +941,10 @@ ShellRoot {
   PanelWindow {
     visible: toastModel.count > 0
     anchors { top: true; right: true }
-    margins.top: 36
-    margins.right: 8
-    implicitWidth: 390
-    implicitHeight: Math.min(520, toastColumn.implicitHeight)
+    margins.top: 42
+    margins.right: 14
+    implicitWidth: 368
+    implicitHeight: Math.min(560, toastColumn.implicitHeight)
     color: "transparent"
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.namespace: "dots-notifications"
@@ -953,39 +953,119 @@ ShellRoot {
     ColumnLayout {
       id: toastColumn
       width: parent.width
-      spacing: 6
+      spacing: 9
 
       Repeater {
         model: toastModel
-        Rectangle {
+        Item {
+          id: toastDelegate
           required property int index
           required property string summary
           required property string body
           required property string app
           Layout.fillWidth: true
-          implicitHeight: toastText.implicitHeight + 24
-          color: "#1d2021"
-          border.color: "#504945"
-          border.width: 1
-          radius: 7
+          implicitHeight: toastCard.implicitHeight + 4
+          opacity: 0
+          scale: 0.985
 
-          Text {
-            id: toastText
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.margins: 12
-            anchors.verticalCenter: parent.verticalCenter
-            text: (app ? app + " · " : "") + summary + (body ? "\n" + body : "")
-            textFormat: Text.PlainText
-            color: "#ebdbb2"
-            font.family: "monospace"
-            font.pixelSize: 11
-            wrapMode: Text.WordWrap
+          Component.onCompleted: {
+            opacity = 1
+            scale = 1
           }
 
-          MouseArea {
-            anchors.fill: parent
-            onClicked: root.releaseToast(index, false)
+          Behavior on opacity {
+            NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
+          }
+          Behavior on scale {
+            NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
+          }
+
+          Rectangle {
+            anchors.fill: toastCard
+            anchors.topMargin: 3
+            anchors.leftMargin: 2
+            anchors.rightMargin: -2
+            color: "#66000000"
+            radius: 10
+          }
+
+          Rectangle {
+            id: toastCard
+            width: parent.width - 4
+            implicitHeight: toastContent.implicitHeight + 26
+            anchors.top: parent.top
+            anchors.horizontalCenter: parent.horizontalCenter
+            color: toastMouse.containsMouse ? "#32302f" : "#282828"
+            border.color: toastMouse.containsMouse ? "#665c54" : "#504945"
+            border.width: 1
+            radius: 10
+
+            Rectangle {
+              width: 4
+              anchors.left: parent.left
+              anchors.top: parent.top
+              anchors.bottom: parent.bottom
+              anchors.topMargin: 8
+              anchors.bottomMargin: 8
+              color: "#458588"
+              radius: 2
+            }
+
+            ColumnLayout {
+              id: toastContent
+              anchors.left: parent.left
+              anchors.right: parent.right
+              anchors.top: parent.top
+              anchors.leftMargin: 17
+              anchors.rightMargin: 16
+              anchors.topMargin: 12
+              spacing: 4
+
+              Text {
+                visible: app.length > 0
+                Layout.fillWidth: true
+                text: app.toUpperCase()
+                textFormat: Text.PlainText
+                color: "#928374"
+                font.family: "monospace"
+                font.pixelSize: 9
+                font.letterSpacing: 0.6
+                elide: Text.ElideRight
+              }
+
+              Text {
+                Layout.fillWidth: true
+                text: summary
+                textFormat: Text.PlainText
+                color: "#ebdbb2"
+                font.family: "sans-serif"
+                font.bold: true
+                font.pixelSize: 13
+                wrapMode: Text.WordWrap
+              }
+
+              Text {
+                visible: body.length > 0
+                Layout.fillWidth: true
+                text: body
+                textFormat: Text.PlainText
+                color: "#d5c4a1"
+                font.family: "sans-serif"
+                font.pixelSize: 12
+                lineHeight: 1.15
+                wrapMode: Text.WordWrap
+              }
+            }
+
+            MouseArea {
+              id: toastMouse
+              anchors.fill: parent
+              hoverEnabled: true
+              cursorShape: Qt.PointingHandCursor
+              onEntered: toastTimer.stop()
+              onExited: if (toastModel.count > 0) toastTimer.restart()
+              onClicked: root.releaseToast(index, false)
+            }
           }
         }
       }

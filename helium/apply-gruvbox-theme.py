@@ -114,9 +114,7 @@ def strip_quotes(value: str) -> str:
 def update_flags(flags_path: Path, theme_dir: Path) -> None:
     if flags_path.is_symlink():
         target = os.readlink(flags_path)
-        if target.endswith("/helium/helium-browser-flags.conf") or target.endswith(
-            "helium-browser-flags.conf"
-        ):
+        if "/helium/helium-browser-flags.conf" in target:
             flags_path.unlink()
         else:
             raise RuntimeError(
@@ -124,11 +122,9 @@ def update_flags(flags_path: Path, theme_dir: Path) -> None:
             )
 
     original = flags_path.read_text() if flags_path.exists() else ""
-    if original and not flags_path.with_suffix(flags_path.suffix + ".gruvbox-backup").exists():
-        shutil.copy2(
-            flags_path,
-            flags_path.with_suffix(flags_path.suffix + ".gruvbox-backup"),
-        )
+    backup = flags_path.with_suffix(flags_path.suffix + ".gruvbox-backup")
+    if original and not backup.exists():
+        shutil.copy2(flags_path, backup)
 
     output: list[str] = []
     load_extensions: list[str] = []

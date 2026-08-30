@@ -57,9 +57,11 @@ The AI panel intentionally shows account rate limits only: **Current session**
 and **Weekly limits**, with utilization bars and reset times. Local token totals,
 sessions and per-model history are not part of this UI.
 
-Opening the AI panel runs `agents-refresh.py`; the Refresh button runs it again.
-That path bypasses the five-minute `agents` snapshot cache and updates both the
-panel and the top-bar warning color immediately.
+`agents-refresh.py` runs once when Quickshell starts, again when the AI panel is
+opened, and on the Refresh button. That direct path bypasses the five-minute
+`agents` snapshot cache and updates both the panel and the top-bar warning color.
+Once a direct refresh has produced rows, later slow snapshots preserve them
+instead of replacing them with the legacy cached AI state.
 
 For Claude, the weekly value follows the web Usage page's **All models** bucket:
 `seven_day` is preferred over `seven_day_oauth_apps`. The OAuth-app bucket is

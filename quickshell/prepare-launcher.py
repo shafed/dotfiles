@@ -51,8 +51,6 @@ replace_once(
     "  IpcHandler {\n"
     "    target: \"dots\"\n"
     "    function closeOverlays(): string {\n"
-    "      desktopLauncher.close()\n"
-    "      bookmarksPicker.close()\n"
     "      root.openPanel = \"\"\n"
     "      root.clipboardOpen = false\n"
     "      return \"ok\"\n"

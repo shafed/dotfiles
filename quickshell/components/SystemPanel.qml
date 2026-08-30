@@ -81,6 +81,8 @@ PanelWindow {
   }
 }
 
+HotkeysPanel { shell: panel.shell; colors: panel.colors; ui: panel.ui }
+
 Component { id: systemOverview; SystemOverview { shell: panel.shell; services: panel.services; colors: panel.colors; ui: panel.ui } }
 Component { id: audioPanel; AudioPanel { shell: panel.shell; services: panel.services; colors: panel.colors; ui: panel.ui } }
 Component { id: networkPanel; NetworkPanel { shell: panel.shell; colors: panel.colors; ui: panel.ui } }

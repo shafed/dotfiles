@@ -8,6 +8,7 @@ local shellCtl = home .. "/.config/quickshell/dots-shell"
 -- still used for bookmarks, search, sessions and other text-heavy pickers.
 hl.bind(mainMod .. " + Space", hl.dsp.exec_cmd(shellCtl .. " launcher"))
 hl.bind(mainMod .. " + V", hl.dsp.exec_cmd(shellCtl .. " clipboard"))
+hl.bind(mainMod .. " + F1", hl.dsp.exec_cmd(shellCtl .. " hotkeys"))
 hl.bind(mainMod .. " + SHIFT + A", hl.dsp.exec_cmd(shellCtl .. " panel audio"))
 hl.bind(mainMod .. " + SHIFT + W", hl.dsp.exec_cmd(shellCtl .. " panel network"))
 hl.bind(mainMod .. " + SHIFT + B", hl.dsp.exec_cmd(shellCtl .. " panel bluetooth"))

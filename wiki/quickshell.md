@@ -32,8 +32,9 @@ post-processors:
 
 - `shell.qml` — orchestration, slow backend state, notifications, process lifetimes
   and IPC;
-- `components/` — top bar, system panel, compact system overview,
-  clipboard/toast/OSD overlays, shared controls, Applications and Bookmarks;
+- `components/` — top bar, system panel, compact system overview, searchable
+  hotkeys cheat sheet, clipboard/toast/OSD overlays, shared controls,
+  Applications and Bookmarks;
 - `services/DesktopServices.qml` — realtime PipeWire volume/mute, Hyprland
   keyboard layout events and sysfs backlight sampling;
 - `config/UiConfig.qml` — declarative fonts, geometry, sizing and timers;
@@ -88,6 +89,21 @@ Its height is declared in `config/UiConfig.qml`.
 Repeated `dots-shell system` closes the overview because it uses the existing
 `dots panel system` toggle. Applications, Bookmarks and Clipboard close an open
 system panel/overview, and opening any system panel closes those overlays.
+
+`Super+F1` runs `dots-shell hotkeys`, which toggles
+`components/HotkeysPanel.qml`. It is a centered fullscreen overlay using the
+same generated Gruvbox colors and declarative UI sizing as the rest of the
+shell. `Esc`, the first outside click, or another `Super+F1` closes it. The
+`dots-shell` routes close Hotkeys before opening Applications, Bookmarks,
+Clipboard or a system panel, while Hotkeys closes those overlays before it
+opens.
+
+The Hotkeys component keeps only a small static searchable presentation index of
+the main Hyprland, Kanata and active custom Kitty shortcuts. It does not parse
+configs or start a process when opening, so toggle latency stays local to the
+running QML process. The real keymap source of truth remains
+`hypr/hyprland.lua`, `kanata/config.kbd` and `kitty/kitty.conf`; see
+[keymap](keymap.md).
 
 The active-window title remains geometrically centered against the physical bar
 width, now in `components/TopBar.qml`.

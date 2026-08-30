@@ -15,6 +15,10 @@ Single source of truth for how the layers divide the keyboard. Component detail:
 [kanata](kanata.md), [hypr](hypr.md), [kitty](kitty.md). Quickshell picker
 behaviour is in [quickshell-pickers](quickshell-pickers.md).
 
+The searchable `Super+F1` cheat sheet is a presentation index, not a fourth
+keymap source: canonical bindings remain in `hypr/hyprland.lua`,
+`kanata/config.kbd` and `kitty/kitty.conf`.
+
 ## Three levels and why they don't collide
 
 1. **kanata** (`process-unmapped-keys (all-except lctl ralt)`) intercepts nearly
@@ -58,10 +62,16 @@ keys go to Hyprland, and workspace chords arrive as normal Super+digit events.
 ## Quickshell desktop bindings
 
 Hyprland owns the direct desktop-shell bindings while kanata provides the
-thumb-layer routes above. `Super+Space` opens Applications and `Super+V` opens
-Clipboard. `Super+Shift+A/W/B/P/I/U/N` open Audio, Network, Bluetooth, Power,
-Agents, Updates and Notifications respectively. `apps+w+e` toggles the compact
-system overview through `dots-shell system`.
+thumb-layer routes above. `Super+F1` toggles the searchable Hotkeys panel,
+`Super+Space` opens Applications and `Super+V` opens Clipboard.
+`Super+Shift+A/W/B/P/I/U/N` open Audio, Network, Bluetooth, Power, Agents,
+Updates and Notifications respectively. `apps+w+e` toggles the compact system
+overview through `dots-shell system`.
+
+The Hotkeys panel includes the main Hyprland, Kanata and active custom Kitty
+maps with filtering by key or action. It is intentionally curated rather than
+parsing or duplicating every commented/default Kitty mapping; changes to actual
+bindings still belong in their owning config first.
 
 The old direct `Super+=`, `Super+-`, `Super+M`, `Super+]` and `Super+[` system
 control shortcuts are removed. Volume/mute/brightness actions now have one
@@ -70,9 +80,9 @@ multimedia keys or by Kanata's emitted keycodes.
 
 These system panels are mutually exclusive popovers: opening one closes other
 overlays; `Esc` or the first click outside closes the active panel. Applications,
-Bookmarks and Clipboard close the system overview and vice versa. This is a UI
-contract rather than a kanata-layer rule, so its implementation belongs to
-[quickshell](quickshell.md).
+Bookmarks, Clipboard and Hotkeys close the system overview and vice versa.
+Hotkeys also closes on a repeated `Super+F1`. This is a UI contract rather than
+a kanata-layer rule, so its implementation belongs to [quickshell](quickshell.md).
 
 ## Collisions that had to be resolved
 

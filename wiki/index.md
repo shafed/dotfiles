@@ -12,8 +12,10 @@ rules: [../CLAUDE.md](../CLAUDE.md) (`AGENTS.md` symlinks to it).
 
 ## Setup
 
-- **[bootstrap](bootstrap.md)** — deploying on a new machine; what gets
-  symlinked where, and what `bootstrap.sh` deliberately won't do for you.
+- **[bootstrap](bootstrap.md)** — deploying on a new machine; `./dots apply` is
+  the primary entrypoint and `bootstrap.sh` is only a compatibility wrapper.
+- **[dots](dots.md)** — installed CLI for apply/doctor/check, migrations,
+  desktop controls and diagnostics.
 
 ## Components
 

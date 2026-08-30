@@ -1,0 +1,23 @@
+repos:
+  - repo: local
+    hooks:
+      - id: dots-shell
+        name: dots shell syntax
+        entry: scripts/dots-check.sh shell
+        language: system
+        pass_filenames: false
+      - id: dots-lua
+        name: dots lua syntax
+        entry: scripts/dots-check.sh lua
+        language: system
+        pass_filenames: false
+      - id: dots-python
+        name: dots python syntax
+        entry: scripts/dots-check.sh python
+        language: system
+        pass_filenames: false
+      - id: dots-tests
+        name: dots tests
+        entry: scripts/dots-check.sh tests
+        language: system
+        pass_filenames: false

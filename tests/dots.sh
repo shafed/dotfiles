@@ -59,16 +59,20 @@ chmod +x "$fake_bin/systemctl"
 
 export PATH="$fake_bin:$PATH"
 
-"$ROOT/dots" help | grep -q '^  doctor'
-"$ROOT/dots" help restart | grep -q '^Usage: dots restart'
-"$ROOT/dots" commands | grep -q '^  restart'
+"$ROOT/dots" help >"$tmp/help.out"
+grep -q '^  doctor' "$tmp/help.out"
+"$ROOT/dots" help restart >"$tmp/restart-help.out"
+grep -q '^Usage: dots restart' "$tmp/restart-help.out"
+"$ROOT/dots" commands >"$tmp/commands.out"
+grep -q '^  restart' "$tmp/commands.out"
 "$ROOT/dots" commands --json | python3 -c '
 import json, sys
 commands = json.load(sys.stdin)
 names = {item["name"] for item in commands}
 assert {"doctor", "restart", "refresh", "shell", "panel", "debug"} <= names
 '
-"$ROOT/dots" theme | grep -q '^dark$'
+"$ROOT/dots" theme >"$tmp/theme.out"
+grep -q '^dark$' "$tmp/theme.out"
 
 : >"$DOTS_TEST_LOG"
 "$ROOT/dots" restart quickshell >/dev/null

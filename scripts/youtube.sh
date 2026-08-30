@@ -30,6 +30,10 @@ source "$script_dir/lib.sh"
 
 cache_dir="$HOME/.cache/youtube-fzf"
 thumb_dir="$cache_dir/thumbs"
+# Open tally ("video:<id>"/"channel:<id>"<tab>count). Same path AND key format
+# as quickshell/youtube-helper.py's usage.tsv, so opens from the native
+# picker and this QAT fallback accumulate into one shared counter.
+usage_file="$cache_dir/usage.tsv"
 limit=40
 refresh=false
 mode="channel"
@@ -38,6 +42,61 @@ cookies_browser="$browser_cookies_from_browser"
 # Workspace the opened video should land on. Intentionally differs from
 # bookmarks.sh (which uses 2): videos go to workspace 4.
 browser_workspace="4"
+
+# Bump the open count for a "video:<id>"/"channel:<id>" usage key. Rewrites
+# usage_file atomically. Same shape as apps.sh's record_launch and
+# bookmarks.sh's record_use. Defined this early (before the --ytsearch/etc.
+# dispatch blocks below, which the script re-enters as a subcommand of
+# itself) so every dispatch branch can call it and the usage helpers below.
+record_video_use() {
+  local key="$1" tmp
+  [[ -n "$key" ]] || return 0
+  mkdir -p "$cache_dir"
+  [[ -f "$usage_file" ]] || : >"$usage_file"
+  tmp="$(mktemp "$cache_dir/usage.XXXXXX")" || return 0
+  awk -F'\t' -v key="$key" '
+    $1 == key { print $1 "\t" ($2 + 1); seen = 1; next }
+    NF { print }
+    END { if (!seen) print key "\t" 1 }
+  ' "$usage_file" >"$tmp"
+  mv "$tmp" "$usage_file"
+}
+
+# Read a TSV stream on stdin and print it back with rows that have been opened
+# more often bubbled toward the top — a stable sort, so YouTube's own
+# relevance/recency order still decides ties. $1 is the 1-based column holding
+# the id, $2 the usage-key prefix ("video:" or "channel:"). fzf still owns the
+# actual matching/highlighting on top of this order (same division of labor as
+# bookmarks.sh's all_bookmarks and apps.sh's sorted_apps).
+weight_by_usage() {
+  local id_col="$1" prefix="$2"
+  awk -F'\t' -v OFS='\t' -v usage="$usage_file" -v col="$id_col" -v prefix="$prefix" '
+    BEGIN {
+      while ((getline line < usage) > 0) {
+        n = split(line, u, "\t")
+        if (n == 2 && u[1] != "") count[u[1]] = u[2] + 0
+      }
+    }
+    { key = prefix $(col); c = (key in count) ? count[key] : 0; print c "\t" $0 }
+  ' | sort -t$'\t' -k1,1nr -s | cut -f2-
+}
+
+# Like weight_by_usage, but for the search_live/--ytsearch stream that mixes
+# "channel" and "video" rows (column 1 = kind, column 2 = id) in one TSV, so
+# the prefix has to be picked per row instead of fixed for the whole stream.
+weight_search_by_usage() {
+  awk -F'\t' -v OFS='\t' -v usage="$usage_file" '
+    BEGIN {
+      while ((getline line < usage) > 0) {
+        n = split(line, u, "\t")
+        if (n == 2 && u[1] != "") count[u[1]] = u[2] + 0
+      }
+    }
+    { key = ($1 == "channel" ? "channel:" : "video:") $2
+      c = (key in count) ? count[key] : 0
+      print c "\t" $0 }
+  ' | sort -t$'\t' -k1,1nr -s | cut -f2-
+}
 
 # Render the fzf preview for a single video: thumbnail (kitty graphics) on top,
 # then title + duration. Everything comes from the id and the already-built TSV
@@ -180,11 +239,11 @@ if [[ "${1:-}" == "--ytsearch" ]]; then
     [[ -n "$enc" ]] || exit 0
     yt-dlp --flat-playlist --no-warnings --playlist-end 20 --print "$print_tmpl" \
       "https://www.youtube.com/results?search_query=${enc}&sp=EgIQAg%3D%3D" 2>/dev/null |
-      awk "$render"
+      awk "$render" | weight_search_by_usage
   else
     yt-dlp --flat-playlist --no-warnings --playlist-end 30 --print "$print_tmpl" \
       "ytsearch30:$query" 2>/dev/null |
-      awk "$render"
+      awk "$render" | weight_search_by_usage
   fi
   exit 0
 fi
@@ -348,9 +407,10 @@ if [[ "${1:-}" == "--ythistory" || "${1:-}" == "--ytwatchlater" ]]; then
       # (so e.g. typing a channel name filters to that channel's videos).
       # fzf --filter exits 1 on no match; that just means "no rows" to the
       # picker, so don't let set -e treat an empty result as a failure.
-      fzf --ansi --filter="$query" --delimiter=$'\t' --with-nth=6 <"$cache_file" || true
+      weight_by_usage 2 "video:" <"$cache_file" |
+        fzf --ansi --filter="$query" --delimiter=$'\t' --with-nth=6 || true
     else
-      cat "$cache_file"
+      weight_by_usage 2 "video:" <"$cache_file"
     fi
   else
     emit_feed
@@ -494,6 +554,7 @@ tab=$'\t'
 # cold-started browser would inherit that stdin too, tying it to the panel — so
 # force-closing the panel would then kill the browser (and the just-opened tab).
 open_video() {
+  record_video_use "video:$1"
   open_url "https://www.youtube.com/watch?v=$1"
 }
 
@@ -975,7 +1036,7 @@ if [[ -n "${channel_base:-}" ]]; then
 fi
 trap 'rm -f "$vi_file" "$header_file" "${tab_file:-}"' EXIT
 
-selected="$(fzf "${fzf_args[@]}" <"$cache_file")" || exit 0
+selected="$(weight_by_usage 1 "video:" <"$cache_file" | fzf "${fzf_args[@]}")" || exit 0
 
 IFS=$'\t' read -r id _title <<<"$selected"
 if [[ -z "${id:-}" ]]; then

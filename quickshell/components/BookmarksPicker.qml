@@ -19,6 +19,37 @@ Item {
   property int selectedIndex: 0
   property var rows: []
 
+  function escapeStyled(value) {
+    return String(value || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+  }
+
+  // Same scheme as YoutubePicker.qml/QuickPicker.qml: palette-helper.py
+  // returns the character indices its fuzzy matcher actually used, so
+  // highlighting here always agrees with why a row ranked where it did.
+  function highlightedText(value, matches) {
+    var text = String(value || "")
+    if (!matches || matches.length === 0) return escapeStyled(text)
+    var marked = ({})
+    for (var i = 0; i < matches.length; i++)
+      marked[Number(matches[i])] = true
+    var accent = String(picker.colors.yellow)
+    var out = ""
+    var active = false
+    for (var j = 0; j < text.length; j++) {
+      var shouldHighlight = marked[j] === true
+      if (shouldHighlight !== active) {
+        out += shouldHighlight ? '<font color="' + accent + '"><b>' : "</b></font>"
+        active = shouldHighlight
+      }
+      out += escapeStyled(text.charAt(j))
+    }
+    if (active) out += "</b></font>"
+    return out
+  }
+
   function requestSearch(immediate) {
     if (immediate) {
       searchDelay.stop()
@@ -287,7 +318,8 @@ Item {
 
                 Text {
                   Layout.fillWidth: true
-                  text: String(modelData.name || modelData.url || "")
+                  text: picker.highlightedText(modelData.name || modelData.url || "", modelData.nameMatches || [])
+                  textFormat: Text.StyledText
                   color: colors.fgUi
                   font.family: ui.sansFont
                   font.bold: index === picker.selectedIndex
@@ -297,7 +329,8 @@ Item {
 
                 Text {
                   Layout.fillWidth: true
-                  text: String(modelData.url || "")
+                  text: picker.highlightedText(modelData.url || "", modelData.urlMatches || [])
+                  textFormat: Text.StyledText
                   color: colors.grayDim
                   font.family: ui.sansFont
                   font.pixelSize: ui.pickerRowSubtitleSize

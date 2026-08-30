@@ -100,7 +100,38 @@ def favicon_path(url: str):
     return FAVICON_DIR / (hashlib.sha1(url.encode("utf-8")).hexdigest() + ".png")
 
 
-def decorate_rows(rows, usage=None):
+def fuzzy_positions(text, query):
+    """Character indices in `text` that satisfied `query`, for highlighting.
+
+    Same scheme as quickshell/youtube-helper.py and picker-helper.py: a full
+    substring match highlights contiguously, else each query character
+    highlights the first place found scanning left to right.
+    """
+    value = str(text or "")
+    hay = value.casefold()
+    positions = set()
+    for raw_term in str(query or "").casefold().split():
+        term = raw_term.strip()
+        if not term:
+            continue
+        direct = hay.find(term)
+        if direct >= 0:
+            positions.update(range(direct, direct + len(term)))
+            continue
+        pos = -1
+        matched = []
+        for char in term:
+            nxt = hay.find(char, pos + 1)
+            if nxt < 0:
+                matched = []
+                break
+            matched.append(nxt)
+            pos = nxt
+        positions.update(matched)
+    return sorted(positions)
+
+
+def decorate_rows(rows, usage=None, query=""):
     usage = load_usage() if usage is None else usage
     decorated = []
     for row in rows:
@@ -108,6 +139,8 @@ def decorate_rows(rows, usage=None):
         item["usage"] = usage.get(item.get("url", ""), 0)
         icon = favicon_path(item.get("url", ""))
         item["icon"] = icon.as_uri() if icon and icon.exists() else ""
+        item["nameMatches"] = fuzzy_positions(item.get("name", ""), query)
+        item["urlMatches"] = fuzzy_positions(item.get("url", ""), query)
         decorated.append(item)
     return decorated
 
@@ -301,7 +334,7 @@ def search_bookmarks(query: str):
         return
 
     matched = weighted_fzf_rows(rows, query, usage)
-    print_rows(decorate_rows(matched, usage))
+    print_rows(decorate_rows(matched, usage, query))
 
 
 def record_recent(name: str, url: str):

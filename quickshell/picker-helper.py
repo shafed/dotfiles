@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import glob
 import json
+import math
 import os
 import re
 import shlex
@@ -22,6 +23,14 @@ TRANSIENT_SESSIONS = Path(os.environ.get("XDG_CACHE_HOME", HOME / ".cache")) / "
 YOUTUBE = ROOT / "scripts/youtube.sh"
 LIB = ROOT / "scripts/lib.sh"
 ANSI_RE = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
+
+# Search-frequency ranking + fuzzy-match highlighting, same approach as
+# quickshell/youtube-helper.py: a picked row's key gets one count bumped in
+# usage.tsv, and a log2 bonus nudges it up on later searches without letting a
+# frequently-opened row outrank a genuinely better match.
+CACHE_DIR = Path(os.environ.get("XDG_CACHE_HOME", HOME / ".cache")) / "quickpicker"
+USAGE_FILE = CACHE_DIR / "usage.tsv"
+FREQUENCY_WEIGHT = float(os.environ.get("DOTFILES_QUICKPICKER_FREQUENCY_WEIGHT", "0.65"))
 
 
 def run(args, timeout=8, env=None):
@@ -63,15 +72,92 @@ def fuzzy_score(text, query):
     return 5000 - gap * 8 - pos
 
 
-def filter_rows(rows, query):
+def fuzzy_positions(text, query):
+    """Character indices in `text` that satisfied `query`, for highlighting.
+
+    Mirrors youtube-helper.py's fuzzy_positions: a full substring match
+    highlights contiguously, otherwise each query character highlights the
+    first place it was found scanning left to right (the same greedy walk
+    fuzzy_score uses, so highlights always match what actually scored).
+    """
+    value = str(text or "")
+    hay = value.lower()
+    positions = set()
+    for raw_term in str(query or "").strip().lower().split():
+        term = raw_term.strip()
+        if not term:
+            continue
+        direct = hay.find(term)
+        if direct >= 0:
+            positions.update(range(direct, direct + len(term)))
+            continue
+        pos = -1
+        matched = []
+        for char in term:
+            nxt = hay.find(char, pos + 1)
+            if nxt < 0:
+                matched = []
+                break
+            matched.append(nxt)
+            pos = nxt
+        positions.update(matched)
+    return sorted(positions)
+
+
+def load_usage():
+    counts = {}
+    if not USAGE_FILE.exists():
+        return counts
+    try:
+        for line in USAGE_FILE.read_text(errors="ignore").splitlines():
+            parts = line.rsplit("\t", 1)
+            if len(parts) != 2:
+                continue
+            ident, raw_count = parts
+            try:
+                counts[ident] = max(0, int(raw_count))
+            except ValueError:
+                pass
+    except OSError:
+        pass
+    return counts
+
+
+def record_usage(key):
+    if not key:
+        return
+    counts = load_usage()
+    counts[key] = counts.get(key, 0) + 1
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    ordered = sorted(counts.items(), key=lambda item: (-item[1], item[0]))
+    USAGE_FILE.write_text("".join(f"{item_key}\t{count}\n" for item_key, count in ordered))
+
+
+def filter_rows(rows, query, provider):
+    query = query.strip()
+    usage = load_usage()
     ranked = []
     for index, row in enumerate(rows):
         text = " ".join(str(row.get(key, "")) for key in ("title", "subtitle", "badge", "id"))
         score = fuzzy_score(text, query)
-        if score >= 0:
-            ranked.append((score, -index, row))
+        if score < 0:
+            continue
+        count = usage.get(f"{provider}:{row.get('id', '')}", 0)
+        # Scaled to sit alongside fuzzy_score's ~10-unit position penalties: a
+        # frequently-picked row can leapfrog near-ties but never a stronger
+        # positional match.
+        bonus = FREQUENCY_WEIGHT * math.log2(count + 1) * 50 if query and count > 0 else 0
+        ranked.append((score + bonus, -index, count, row))
     ranked.sort(key=lambda item: (item[0], item[1]), reverse=True)
-    return [row for _, _, row in ranked]
+
+    result = []
+    for _, _, count, row in ranked:
+        item = dict(row)
+        item["usage"] = count
+        item["titleMatches"] = fuzzy_positions(item.get("title", ""), query)
+        item["subtitleMatches"] = fuzzy_positions(item.get("subtitle", ""), query)
+        result.append(item)
+    return result
 
 
 def main_kitty_socket():
@@ -166,7 +252,7 @@ def session_rows(query=""):
     values = sorted(rows.values(), key=lambda row: (-row["_stamp"], row["title"].lower()))
     for row in values:
         row.pop("_stamp", None)
-    return filter_rows(values, query)
+    return filter_rows(values, query, "sessions")
 
 
 def ssh_hosts():
@@ -246,7 +332,7 @@ def project_rows(query=""):
             "subtitle": host,
             "badge": "SSH",
         })
-    return filter_rows(rows, query)
+    return filter_rows(rows, query, "projects")
 
 
 def session_exists(state, name):
@@ -544,10 +630,11 @@ def main():
             sys.argv[3] if len(sys.argv) > 3 else "",
         ))
     elif command == "open":
-        emit({"ok": bool(open_provider(
-            sys.argv[2] if len(sys.argv) > 2 else "",
-            sys.argv[3] if len(sys.argv) > 3 else "",
-        ))})
+        provider = sys.argv[2] if len(sys.argv) > 2 else ""
+        ident = sys.argv[3] if len(sys.argv) > 3 else ""
+        if provider in ("projects", "sessions"):
+            record_usage(f"{provider}:{ident}")
+        emit({"ok": bool(open_provider(provider, ident))})
     elif command == "delete":
         name = sys.argv[3] if len(sys.argv) > 3 and sys.argv[2] == "sessions" else ""
         emit({"ok": bool(delete_session(name))})

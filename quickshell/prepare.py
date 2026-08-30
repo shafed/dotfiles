@@ -86,6 +86,39 @@ replace_once(
     "IPC showOsd",
 )
 
+# Keyboard layout is the first item in the right-side status block.
+replace_once(
+    "          ClickButton {\n"
+    "            visible: Number(root.state.updates ? root.state.updates.count : 0) > 0\n"
+    "            label: \"↑\" + String(root.state.updates ? root.state.updates.count : 0)\n"
+    "            onPressed: root.togglePanel(\"updates\")\n"
+    "          }\n\n"
+    "          ClickButton {\n"
+    "            visible: root.state.agents && root.state.agents.length > 0\n"
+    "            label: \"AI\"\n"
+    "            active: root.openPanel === \"agents\"\n"
+    "            onPressed: root.togglePanel(\"agents\")\n"
+    "          }\n\n"
+    "          ClickButton {\n"
+    "            label: root.layoutLabel(root.state.layout)\n"
+    "          }\n",
+    "          ClickButton {\n"
+    "            label: root.layoutLabel(root.state.layout)\n"
+    "          }\n\n"
+    "          ClickButton {\n"
+    "            visible: Number(root.state.updates ? root.state.updates.count : 0) > 0\n"
+    "            label: \"↑\" + String(root.state.updates ? root.state.updates.count : 0)\n"
+    "            onPressed: root.togglePanel(\"updates\")\n"
+    "          }\n\n"
+    "          ClickButton {\n"
+    "            visible: root.state.agents && root.state.agents.length > 0\n"
+    "            label: \"AI\"\n"
+    "            active: root.openPanel === \"agents\"\n"
+    "            onPressed: root.togglePanel(\"agents\")\n"
+    "          }\n",
+    "right-side status order",
+)
+
 replace_once(
     "      implicitHeight: 30\n",
     "      implicitHeight: 34\n",

@@ -162,12 +162,14 @@ functional. Re-derive from the actual key codes when auditing.
 session action ([sessions](sessions.md)). ⚠️ Gotcha: without the settle delay
 the hotkey goes out before kitty has focus and the session doesn't switch.
 
-⚠️ **`switchApp.sh`'s else-branch also now `pkill -x`s the app before launching
-it** (2026-08-15): a windowless-but-running process (e.g. one stuck retrying a
-failed EGL context) blocks `hyprctl clients | grep -q "class: ..."` forever and,
-for single-instance apps, absorbs every further launch attempt via IPC without
-ever showing a window — so the key silently does nothing. Killing whatever's
-already running by that name before relaunching clears that stuck state.
+⚠️ **`switchApp.sh`'s else-branch retries twice (100 ms each) before killing**
+(2026-08-30): during kanata restart the virtual keyboard device is briefly
+destroyed and re-created, which can make kitty's window temporarily invisible to
+`hyprctl clients`. The retries give it time to re-register, preventing a false
+`pkill -x kitty` that would kill and relaunch the terminal. Without the retries,
+the same windowless-but-running stuck-process problem
+(e.g. sioyek looping on an EGL context failure) still gets cleared by the
+`pkill`.
 
 ⚠️ **Gotcha — `cmd`'s `zsh -lc` is a login shell but not an _interactive_ one,
 so `.zshrc` never sources**, only `.zshenv`/`.zprofile`. Any `PATH` prepend that

@@ -159,6 +159,8 @@ def choose_manifest_version(manifest_path: Path, theme: dict[str, object]) -> st
         previous = json.loads(manifest_path.read_text())
     except (OSError, json.JSONDecodeError):
         return f"{THEME_VERSION_MAJOR}.0.0.1"
+    if not isinstance(previous, dict):
+        return f"{THEME_VERSION_MAJOR}.0.0.1"
 
     previous_version = parse_managed_version(previous.get("version"))
     if previous.get("theme") == theme and previous_version is not None:

@@ -7,8 +7,8 @@ covers:
   - quickshell/components/
   - quickshell/services/
   - quickshell/config/
-  - quickshell/agents-refresh.py
   - quickshell/picker-helper.py
+  - quickshell/palette-helper.py
   - quickshell/start.sh
   - quickshell/dots-shell
   - systemd/user/quickshell.service
@@ -46,12 +46,14 @@ Tracked QML is the runtime source and `start.sh` runs that tree directly with
   Quickshell processes;
 - `services/NotificationStore.qml` — DND and notification history persisted by
   `FileView`/`JsonAdapter`;
+- `services/AgentsService.qml` — Claude usage HTTP plus Codex app-server
+  JSON-RPC, cache fallback and refresh lifecycle;
 - `config/UiConfig.qml` — declarative fonts, geometry, sizing and timers;
 - `config/Colors.qml` — generated from repository-level `colors.toml`.
 
-The former `backend.py` general snapshot/action layer was removed. Python is no
-longer in the normal audio/network/Bluetooth/power/updates/notifications/
-clipboard path.
+The former `backend.py` general snapshot/action layer, `prepare.py`,
+`agents-refresh.py` and `launcher-usage.py` were removed. Python is no longer in
+the normal bar/system-panel/Applications runtime path.
 
 ## Desktop state
 
@@ -71,7 +73,9 @@ Latency-sensitive state stays inside Quickshell:
 - uptime is read from `/proc/uptime` with `FileView`;
 - notification history/DND is stored atomically by `JsonAdapter` rather than a
   Python state writer;
-- clipboard history is read/pasted with Quickshell `Process`/`execDetached`.
+- clipboard history is read/pasted with Quickshell `Process`/`execDetached`;
+- Applications usage counts are read and atomically written by `FileView` while
+  retaining the historical `~/.cache/apps-fzf/usage.tsv` format.
 
 Network intentionally does **not** use `Quickshell.Networking` yet. Quickshell
 0.3.x has had reconnect/disconnect and NetworkManager-restart reliability issues;
@@ -89,18 +93,17 @@ Quickshell services observe the resulting state.
 
 ## Remaining helpers
 
-Python is retained only where it still buys meaningful integration value rather
-than acting as shell plumbing:
+Python remains only for picker integrations where it still buys meaningful
+integration value rather than acting as shell plumbing:
 
-- `agents-refresh.py` — Claude HTTP usage and Codex app-server JSON-RPC. It is
-  standalone and no longer imports a general backend;
-- picker helpers — zoxide/SSH/Kitty/YouTube integrations and Chromium bookmark
-  favicon extraction where external-process/SQLite work is clearer outside QML;
-- `launcher-usage.py` remains the compatibility writer for the shared
-  Applications usage TSV used by the legacy fallback picker.
+- `picker-helper.py` handles zoxide/SSH/Kitty/YouTube provider integrations;
+- `palette-helper.py` keeps the browser-specific bookmark catalog/fzf path and
+  Chromium `Favicons` SQLite snapshot/extraction.
 
-These helpers run on explicit refresh/open/use paths; none is a permanent
-watcher or general desktop-state snapshot.
+The Chromium favicon helper stays outside QML deliberately: SQLite snapshot/WAL
+handling and binary PNG extraction are clearer and safer as a bounded helper
+than as shell state. These helpers run only for explicit picker work; none is a
+permanent watcher or general desktop-state snapshot.
 
 ## Desktop popovers and pickers
 
@@ -161,28 +164,36 @@ workspaces remain hidden.
 ## AI limits
 
 The AI panel shows account rate limits only: **Current session** and **Weekly
-limits**, with utilization bars and reset times. `agents-refresh.py` runs at
-startup, when the panel is opened and from the compact `↻` control. The header
-shows `Last updated: just now` and then minute/hour/day-relative age; the
-refresh control is disabled and dimmed while a refresh is running. The
-timestamp advances only after parsable rows return.
+limits**, with utilization bars and reset times. `services/AgentsService.qml`
+refreshes at shell startup, when the panel is opened, from the compact `↻`
+control and from the shell refresh IPC. The header shows `Last updated: just
+now` and then minute/hour/day-relative age; the refresh control is disabled and
+dimmed while a refresh is running.
 
-For Claude, Weekly follows the web Usage page's **All models** bucket:
-`seven_day` is preferred over `seven_day_oauth_apps`; the OAuth-app bucket is a
-fallback. Failed live refreshes leave cached limits visible and marked `cached`.
+Claude credentials are read from `CLAUDE_CONFIG_DIR` or `~/.claude`; the OAuth
+usage endpoint is requested directly from QML. Weekly follows the web Usage
+page's **All models** bucket: `seven_day` is preferred over
+`seven_day_oauth_apps`, with the OAuth-app bucket only as a fallback.
 
-The top-bar `AI` label reflects the most constrained current account limit: it
-stays neutral while more than 30% remains, turns amber at 30% remaining or less,
-and red at 10% remaining or less. Per-limit percentages/bars inside the panel
-keep their own green/amber/red utilization colors as well.
+Codex runs `codex ... app-server` as a Quickshell `Process` with stdin enabled.
+The service performs `initialize`, `account/read` and
+`account/rateLimits/read` as line-delimited JSON-RPC and bounds every phase with
+a timeout. There is no intermediary Python subprocess.
+
+Rows are cached at `~/.cache/dots-shell/agents.json`. Failed live refreshes keep
+previous limits visible and mark them `cached`; a successful refresh atomically
+replaces the cache. The top-bar `AI` label reflects the most constrained current
+account limit: it stays neutral while more than 30% remains, turns amber at 30%
+remaining or less, and red at 10% remaining or less. Per-limit bars retain their
+own green/amber/red utilization colors.
 
 ## Maintenance
 
 `config/Colors.qml` and `config/UiConfig.qml` both declare QML `color`
 properties, so they must import `QtQuick`; importing only `QtQml` makes shell
 loading fail with `color is not a type` before any component is created.
-Components that declare `IpcHandler` must import `Quickshell.Io`; the generic
-`import Quickshell` does not expose that type.
+Components that declare `IpcHandler`, `Process` or `FileView` must import
+`Quickshell.Io`; the generic `import Quickshell` does not expose those types.
 
 After changing Quickshell code:
 

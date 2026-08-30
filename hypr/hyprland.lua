@@ -16,7 +16,8 @@ hl.monitor({ output = "eDP-1", mode = "preferred", position = "auto", scale = 1.
 local terminal = "kitty"
 local browser = "helium-browser"
 local fileManager = "dolphin"
-local menu = "hyprlauncher"
+local home = os.getenv("HOME") or "~"
+local shellCtl = home .. "/.config/quickshell/dots-shell"
 
 -------------------
 ---- AUTOSTART ----
@@ -24,7 +25,7 @@ local menu = "hyprlauncher"
 
 hl.on("hyprland.start", function()
   hl.exec_cmd(terminal)
-  hl.exec_cmd("waybar & hyprpaper")
+  hl.exec_cmd("hyprpaper")
   hl.exec_cmd("hyprland-per-window-layout")
   -- OpenWhispr keeps its session token encrypted with a master key in the OS
   -- keyring (KWallet here), so Secret Service must be up before it starts, or
@@ -230,7 +231,26 @@ hl.device({ name = "epic-mouse-v1", sensitivity = -0.5 })
 local mainMod = "SUPER" -- Sets "Windows" key as main modifier
 local secondaryMod = "ALT"
 
-hl.bind("SUPER + V", hl.dsp.exec_cmd("copyq toggle"))
+-- Quickshell owns the desktop-facing launchers and system panels. QAT/fzf is
+-- still used for bookmarks, search, sessions and other text-heavy pickers.
+hl.bind(mainMod .. " + Space", hl.dsp.exec_cmd(shellCtl .. " launcher"))
+hl.bind(mainMod .. " + V", hl.dsp.exec_cmd(shellCtl .. " clipboard"))
+hl.bind(mainMod .. " + SHIFT + A", hl.dsp.exec_cmd(shellCtl .. " panel audio"))
+hl.bind(mainMod .. " + SHIFT + W", hl.dsp.exec_cmd(shellCtl .. " panel network"))
+hl.bind(mainMod .. " + SHIFT + B", hl.dsp.exec_cmd(shellCtl .. " panel bluetooth"))
+hl.bind(mainMod .. " + SHIFT + P", hl.dsp.exec_cmd(shellCtl .. " panel power"))
+hl.bind(mainMod .. " + SHIFT + I", hl.dsp.exec_cmd(shellCtl .. " panel agents"))
+hl.bind(mainMod .. " + SHIFT + U", hl.dsp.exec_cmd(shellCtl .. " panel updates"))
+hl.bind(mainMod .. " + SHIFT + N", hl.dsp.exec_cmd(shellCtl .. " panel notifications"))
+
+-- Physical volume/brightness controls in addition to the XF86 keys below.
+-- Quickshell observes these direct system changes and renders the OSD.
+hl.bind(mainMod .. " + equal", hl.dsp.exec_cmd("wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+"), { repeating = true })
+hl.bind(mainMod .. " + minus", hl.dsp.exec_cmd("wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"), { repeating = true })
+hl.bind(mainMod .. " + M", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"))
+hl.bind(mainMod .. " + bracketright", hl.dsp.exec_cmd("brightnessctl -e4 -n2 set 5%+"), { repeating = true })
+hl.bind(mainMod .. " + bracketleft", hl.dsp.exec_cmd("brightnessctl -e4 -n2 set 5%-"), { repeating = true })
+
 hl.bind("SUPER + Home", hl.dsp.exec_cmd("systemctl suspend && hyprlock"))
 hl.bind(mainMod .. " + N", hl.dsp.exec_cmd("~/github/dotfiles/scripts/nvim-scratch-toggle.sh"))
 
@@ -249,7 +269,6 @@ hl.bind(
 hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(fileManager))
 hl.bind(mainMod .. " + Y", hl.dsp.window.float({ action = "toggle" }))
 hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen())
-hl.bind(mainMod .. " + Space", hl.dsp.exec_cmd(menu))
 hl.bind(mainMod .. " + P", hl.dsp.window.pseudo()) -- dwindle
 -- hl.bind(mainMod .. " + T", hl.dsp.layout("togglesplit")) -- dwindle
 
@@ -337,14 +356,8 @@ hl.bind(
 ---- WINDOWS AND WORKSPACES ----
 --------------------------------
 
--- See https://wiki.hypr.land/Configuring/Basics/Window-Rules/
--- and https://wiki.hypr.land/Configuring/Basics/Workspace-Rules/
-
-hl.window_rule({
-  name = "copyq",
-  match = { title = ".*CopyQ" },
-  float = true,
-})
+-- See https://wiki.hypr.land/Configuring/Window-Rules/
+-- and https://wiki.hypr.land/Configuring/Workspace-Rules/
 
 hl.window_rule({
   -- Ignore maximize requests from all apps. You'll probably like this.

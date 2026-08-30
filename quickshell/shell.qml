@@ -11,6 +11,8 @@ ShellRoot {
 
   readonly property string home: Quickshell.env("HOME")
   readonly property string backend: home + "/github/dotfiles/quickshell/backend.py"
+  readonly property string workspacesBackend: home + "/github/dotfiles/quickshell/workspaces.py"
+  readonly property bool laptop: state.power && Number(state.power.battery) >= 0
 
   property var state: ({
     audio: { volume: 0, muted: false, sinks: [], streams: [] },
@@ -24,6 +26,7 @@ ShellRoot {
     layout: "",
     notifications: { dnd: false, history: [] }
   })
+  property var occupiedWorkspaces: []
   property string openPanel: ""
   property bool clipboardOpen: false
   property var clipboardRows: []
@@ -41,15 +44,25 @@ ShellRoot {
     Quickshell.execDetached(args)
   }
 
+  function layoutLabel(raw) {
+    var value = String(raw || "")
+    var lower = value.toLowerCase()
+    if (lower.indexOf("russian") >= 0 || lower === "ru") return "RU"
+    if (lower.indexOf("english") >= 0 || lower === "us" || lower === "en") return "EN"
+    return value ? value.slice(0, 2).toUpperCase() : "--"
+  }
+
   function backendAction(domain, action, arg) {
     var argv = ["python3", backend, "action", domain, action]
     if (arg !== undefined && arg !== null && String(arg) !== "") argv.push(String(arg))
     run(argv)
     fastRefreshDelay.restart()
     fullRefreshDelay.restart()
+    if (domain === "workspace") workspaceRefreshDelay.restart()
   }
 
   function togglePanel(name) {
+    if (!laptop && (name === "network" || name === "bluetooth")) return
     openPanel = openPanel === name ? "" : name
     if (openPanel !== "" && !fullProc.running) fullProc.running = true
   }
@@ -67,7 +80,7 @@ ShellRoot {
     }
     if (next.audio) lastVolume = Number(next.audio.volume)
 
-    if (next.brightness !== undefined && Number(next.brightness) >= 0 &&
+    if (laptop && next.brightness !== undefined && Number(next.brightness) >= 0 &&
         lastBrightness >= 0 && Number(next.brightness) !== lastBrightness) {
       showOsd("SUN", Number(next.brightness) + "%", Number(next.brightness), true)
     }
@@ -152,6 +165,7 @@ ShellRoot {
     run(["pkill", "-x", "waybar"])
     fullProc.running = true
     fastProc.running = true
+    workspaceProc.running = true
   }
 
   ListModel { id: historyModel }
@@ -175,6 +189,17 @@ ShellRoot {
       waitForEnd: true
       onStreamFinished: {
         try { root.updateFast(JSON.parse(text)) } catch (e) { console.warn("dots-shell fast snapshot:", e) }
+      }
+    }
+  }
+
+  Process {
+    id: workspaceProc
+    command: ["python3", root.workspacesBackend]
+    stdout: StdioCollector {
+      waitForEnd: true
+      onStreamFinished: {
+        try { root.occupiedWorkspaces = JSON.parse(text) } catch (e) { root.occupiedWorkspaces = [] }
       }
     }
   }
@@ -214,7 +239,10 @@ ShellRoot {
     interval: 800
     repeat: true
     running: true
-    onTriggered: if (!fastProc.running) fastProc.running = true
+    onTriggered: {
+      if (!fastProc.running) fastProc.running = true
+      if (!workspaceProc.running) workspaceProc.running = true
+    }
   }
 
   Timer {
@@ -227,6 +255,12 @@ ShellRoot {
     id: fullRefreshDelay
     interval: 900
     onTriggered: if (!fullProc.running) fullProc.running = true
+  }
+
+  Timer {
+    id: workspaceRefreshDelay
+    interval: 180
+    onTriggered: if (!workspaceProc.running) workspaceProc.running = true
   }
 
   Timer {
@@ -267,6 +301,7 @@ ShellRoot {
     function refresh(): string {
       if (!root.fullProc.running) root.fullProc.running = true
       if (!root.fastProc.running) root.fastProc.running = true
+      if (!root.workspaceProc.running) root.workspaceProc.running = true
       return "ok"
     }
     function showOsd(icon: string, label: string, value: string): string {
@@ -367,12 +402,12 @@ ShellRoot {
           Layout.alignment: Qt.AlignLeft
           spacing: 1
           Repeater {
-            model: 10
+            model: root.occupiedWorkspaces
             ClickButton {
-              required property int index
-              label: String(index + 1)
-              active: Number(root.state.workspace || 1) === index + 1
-              onPressed: root.backendAction("workspace", "focus", index + 1)
+              required property var modelData
+              label: String(modelData)
+              active: Number(root.state.workspace || 1) === Number(modelData)
+              onPressed: root.backendAction("workspace", "focus", modelData)
             }
           }
         }
@@ -411,16 +446,18 @@ ShellRoot {
           }
 
           ClickButton {
-            label: root.state.layout ? String(root.state.layout).replace("English (US)", "US").replace("Russian", "RU") : "--"
+            label: root.layoutLabel(root.state.layout)
           }
 
           ClickButton {
+            visible: root.laptop
             label: "BT"
             active: root.openPanel === "bluetooth"
             onPressed: root.togglePanel("bluetooth")
           }
 
           ClickButton {
+            visible: root.laptop
             label: root.state.network && root.state.network.active ? "NET" : "NET!"
             active: root.openPanel === "network"
             onPressed: root.togglePanel("network")
@@ -435,7 +472,7 @@ ShellRoot {
           }
 
           ClickButton {
-            visible: root.state.power && Number(root.state.power.battery) >= 0
+            visible: root.laptop
             label: "BAT " + String(root.state.power ? root.state.power.battery : "") + "%"
             active: root.openPanel === "power"
             onPressed: root.togglePanel("power")
@@ -941,10 +978,10 @@ ShellRoot {
   PanelWindow {
     visible: toastModel.count > 0
     anchors { top: true; right: true }
-    margins.top: 42
-    margins.right: 14
-    implicitWidth: 368
-    implicitHeight: Math.min(560, toastColumn.implicitHeight)
+    margins.top: 36
+    margins.right: 8
+    implicitWidth: 390
+    implicitHeight: Math.min(520, toastColumn.implicitHeight)
     color: "transparent"
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.namespace: "dots-notifications"
@@ -953,119 +990,39 @@ ShellRoot {
     ColumnLayout {
       id: toastColumn
       width: parent.width
-      spacing: 9
+      spacing: 6
 
       Repeater {
         model: toastModel
-        Item {
-          id: toastDelegate
+        Rectangle {
           required property int index
           required property string summary
           required property string body
           required property string app
           Layout.fillWidth: true
-          implicitHeight: toastCard.implicitHeight + 4
-          opacity: 0
-          scale: 0.985
+          implicitHeight: toastText.implicitHeight + 24
+          color: "#1d2021"
+          border.color: "#504945"
+          border.width: 1
+          radius: 7
 
-          Component.onCompleted: {
-            opacity = 1
-            scale = 1
+          Text {
+            id: toastText
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.margins: 12
+            anchors.verticalCenter: parent.verticalCenter
+            text: (app ? app + " · " : "") + summary + (body ? "\n" + body : "")
+            textFormat: Text.PlainText
+            color: "#ebdbb2"
+            font.family: "monospace"
+            font.pixelSize: 11
+            wrapMode: Text.WordWrap
           }
 
-          Behavior on opacity {
-            NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
-          }
-          Behavior on scale {
-            NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
-          }
-
-          Rectangle {
-            anchors.fill: toastCard
-            anchors.topMargin: 3
-            anchors.leftMargin: 2
-            anchors.rightMargin: -2
-            color: "#66000000"
-            radius: 10
-          }
-
-          Rectangle {
-            id: toastCard
-            width: parent.width - 4
-            implicitHeight: toastContent.implicitHeight + 26
-            anchors.top: parent.top
-            anchors.horizontalCenter: parent.horizontalCenter
-            color: toastMouse.containsMouse ? "#32302f" : "#282828"
-            border.color: toastMouse.containsMouse ? "#665c54" : "#504945"
-            border.width: 1
-            radius: 10
-
-            Rectangle {
-              width: 4
-              anchors.left: parent.left
-              anchors.top: parent.top
-              anchors.bottom: parent.bottom
-              anchors.topMargin: 8
-              anchors.bottomMargin: 8
-              color: "#458588"
-              radius: 2
-            }
-
-            ColumnLayout {
-              id: toastContent
-              anchors.left: parent.left
-              anchors.right: parent.right
-              anchors.top: parent.top
-              anchors.leftMargin: 17
-              anchors.rightMargin: 16
-              anchors.topMargin: 12
-              spacing: 4
-
-              Text {
-                visible: app.length > 0
-                Layout.fillWidth: true
-                text: app.toUpperCase()
-                textFormat: Text.PlainText
-                color: "#928374"
-                font.family: "monospace"
-                font.pixelSize: 9
-                font.letterSpacing: 0.6
-                elide: Text.ElideRight
-              }
-
-              Text {
-                Layout.fillWidth: true
-                text: summary
-                textFormat: Text.PlainText
-                color: "#ebdbb2"
-                font.family: "sans-serif"
-                font.bold: true
-                font.pixelSize: 13
-                wrapMode: Text.WordWrap
-              }
-
-              Text {
-                visible: body.length > 0
-                Layout.fillWidth: true
-                text: body
-                textFormat: Text.PlainText
-                color: "#d5c4a1"
-                font.family: "sans-serif"
-                font.pixelSize: 12
-                lineHeight: 1.15
-                wrapMode: Text.WordWrap
-              }
-            }
-
-            MouseArea {
-              id: toastMouse
-              anchors.fill: parent
-              hoverEnabled: true
-              cursorShape: Qt.PointingHandCursor
-              onEntered: toastTimer.stop()
-              onExited: if (toastModel.count > 0) toastTimer.restart()
-              onClicked: root.releaseToast(index, false)
-            }
+          MouseArea {
+            anchors.fill: parent
+            onClicked: root.releaseToast(index, false)
           }
         }
       }

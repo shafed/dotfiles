@@ -40,9 +40,10 @@ layer.
 `agents-panel.py`, `prepare-agents-refresh-ui.py`, `prepare-launcher.py`, then
 `prepare-ui-fixes.py`. `center-title.py` and `agents-panel.py` own the top-bar
 title/AI presentation; `prepare-agents-refresh-ui.py` only refines the AI refresh
-header. The picker stages do not replace those blocks. `prepare-launcher.py` only
-inserts the standalone picker components and overlay IPC, while
-`prepare-ui-fixes.py` owns popover dismissal plus application usage weighting.
+header. The picker stages do not replace those blocks. `prepare-launcher.py`
+inserts the standalone picker components, overlay IPC and the compact system
+overview; `prepare-ui-fixes.py` owns popover dismissal plus application usage
+weighting.
 
 ⚠️ Gotcha: the running QML is the generated copy, not `shell.qml` directly.
 Changing a source block that a post-processor expects can make startup fail with
@@ -63,7 +64,9 @@ Latency-sensitive state stays inside Quickshell:
 There is no 800 ms fast snapshot and no audio/layout/brightness watcher service.
 Python remains for slow or integration-heavy data such as AI usage, package
 updates, network/Bluetooth discovery, notification persistence, clipboard
-operations and bookmark catalog/fzf integration.
+operations and bookmark catalog/fzf integration. The apps-layer media and
+brightness chords do not add another backend: Kanata emits XF86 keys, Hyprland
+performs the action, and these existing native Quickshell paths observe it.
 
 ## Desktop popovers
 
@@ -72,9 +75,17 @@ anchored at the top-right. The rest of the surface is the dismiss area. This
 replaces the two-surface "panel + transparent dismiss window" approach, whose
 focus/pointer ordering was unreliable under layer-shell.
 
-The contract is the normal popover one: `Esc` closes; the first click outside
-closes and is consumed; clicks inside remain inside the panel; opening another
-shell overlay closes the previous one.
+`dots-shell system` toggles a compact overview in that same surface. It exposes
+Audio, Network/Wi-Fi, Bluetooth, Power, AI limits, Updates, Notifications and
+Calendar, but does not duplicate those panels: each overview entry switches the
+existing `openPanel` state to the corresponding existing panel. The overview is
+shorter than the detailed panels and adds no realtime polling or Python control
+path.
+
+The contract is the normal popover one: a repeated system toggle closes it;
+`Esc` closes; the first click outside closes and is consumed; clicks inside
+remain inside the panel. Applications, Bookmarks and Clipboard close the active
+system panel/overview, while opening any system panel closes those overlays.
 
 The active-window title remains geometrically centered by `center-title.py`, so
 unequal left/right status blocks cannot move it away from the physical center of

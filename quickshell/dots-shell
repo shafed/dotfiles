@@ -1,3 +1,4 @@
 #!/usr/bin/env bash
 set -euo pipefail
-exec quickshell ipc -p "$HOME/github/dotfiles/quickshell" call dots "$@"
+runtime="${XDG_CACHE_HOME:-$HOME/.cache}/dots-shell/quickshell"
+exec quickshell ipc -p "$runtime" call dots "$@"

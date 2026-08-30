@@ -5,6 +5,7 @@ updated: 2026-08-30
 covers:
   - colors.toml
   - scripts/generate-theme.py
+  - telegram/
   - darkman/
   - hypr/hyprsunset.conf
   - kitty/current-theme.conf
@@ -25,9 +26,11 @@ visual reference.
 ```sh
 python3 scripts/generate-theme.py
 python3 scripts/generate-theme.py --check
+python3 telegram/generate-theme.py
+python3 telegram/generate-theme.py --check
 ```
 
-The generator writes the tracked format-specific surfaces:
+The main generator writes the tracked format-specific surfaces:
 
 - `kitty/current-theme.conf` and `kitty/quick-access-terminal-center.conf`;
 - `waybar/colors.css` (imported by `style.css`);
@@ -37,13 +40,62 @@ The generator writes the tracked format-specific surfaces:
 - `.claude/themes/gruvbox-material.json`;
 - `yazi/flavors/gruvbox-dark.yazi/flavor.toml`.
 
-Do not hand-edit color values in those generated files. Configs listed above
-consume generated palette surfaces rather than maintaining independent values.
-Yazi's existing
-classic-Gruvbox accents are intentionally preserved as compatibility entries in
-`colors.toml`; regeneration therefore does not restyle Yazi. Its vendored
-`tmtheme.xml` is syntax-highlighting metadata from the upstream flavor and is
-not used as the desktop palette source.
+Telegram Desktop is user-imported rather than symlinked by bootstrap, so its
+surface is generated separately by `telegram/generate-theme.py`. The tracked
+`telegram/colors.tdesktop-theme` contains the palette. The preferred botanical
+wallpaper is stored as text-safe `telegram/background.png.b64`; the generator
+decodes it to local `telegram/background-primary.png` and embeds the decoded
+bytes in `telegram/gruvbox-material-dark-medium.tdesktop-theme` as
+`background.png`. Storing the source as base64 avoids binary corruption when the
+repository is updated through APIs that primarily handle UTF-8 text.
+
+The wallpaper is PNG, not JPEG: an earlier JPEG source got silently bit-corrupted
+somewhere in git history (mid-stream, not just a truncated tail — every JPEG
+blob across that history failed independent decode with `djpeg`/`jpegtran`/
+ImageMagick, each erroring at the same offset). The generator's own validation
+only checked for a JPEG start-of-image marker, so the corruption shipped for
+several commits and silently failed to apply in Telegram, which uses a strict
+decoder. PNG's checksummed chunks make that class of silent corruption far less
+likely to reoccur unnoticed.
+
+The artwork itself is inset on a taller dark canvas so Telegram's cover-style
+wallpaper scaling crops and zooms it less in a narrow chat pane. The final theme
+archive is a local build artifact and is ignored by git. Import the final
+`telegram/gruvbox-material-dark-medium.tdesktop-theme`, not the standalone
+palette file or the `.b64` source.
+
+Regardless of source format, verify a new wallpaper source decodes with a real
+decoder (`python3 -c "from PIL import Image; Image.open(...).load()"` or
+`magick identify`) before committing it — `generate-theme.py` only checks the
+container's magic bytes, not that the pixel data is intact.
+
+The alternate procedural wallpaper is intentionally retained as a backup. Each
+Telegram generation writes it to `telegram/background-backup.png`; that file is
+also a local build artifact. The implementation stays in
+`telegram/generate-theme.py`, so the backup is reproducible from `colors.toml`
+without storing a second large binary in git.
+
+Telegram-specific semantic overrides live in `telegram/generate-theme.py` when
+a palette surface has no useful cross-application equivalent. The vertical chat
+folder sidebar uses Telegram's `sideBar*` keys explicitly: dark Gruvbox for the
+rail and active item, muted foreground for inactive folders, and yellow only for
+the active folder and unread badges. This prevents Telegram's built-in blue
+sidebar defaults from leaking through the custom theme.
+
+Voice messages also have Telegram-specific overrides. The idle waveform is kept
+neutral Gruvbox rather than being used as an unread/read signal. Telegram's
+theme API does not expose separate colors for an unread idle voice message and
+a listened-but-stopped one: unread media is represented by the small dot after
+the duration. That dot shares `msgFileInBg` with the incoming play button, so the
+theme makes both yellow to keep the unread marker obvious. Exact whole-message
+unread/read recoloring would require patching Telegram Desktop itself.
+
+Do not hand-edit color values in generated files. Configs listed above consume
+generated palette surfaces rather than maintaining independent values. Yazi's
+existing classic-Gruvbox accents are intentionally preserved as compatibility
+entries in `colors.toml`; regeneration therefore does not restyle Yazi. Its
+vendored `tmtheme.xml` is syntax-highlighting metadata from the upstream flavor
+and is not used as the desktop palette source.
 
 The Claude Code theme deliberately leaves `claudeShimmer` at its built-in color;
 overriding it made the thinking animation harder to distinguish.

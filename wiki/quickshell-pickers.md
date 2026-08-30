@@ -178,9 +178,12 @@ fzf/QAT frontend for search, history, Watch later or channel browsing.
 
 `Super+V` opens `components/ClipboardOverlay.qml`. The input receives active
 focus as soon as the layer-shell surface opens, so the clipboard is fully usable
-without a mouse. Selection starts on the first row even when the pointer is
-already over the centered panel; hover navigation is armed only after at least
-4 px of actual pointer movement.
+without a mouse. Selection starts on the first row and a stationary pointer does
+not steal it. The first pointer-position event after the surface appears is used
+only as the baseline because Qt may synthesize it when a new surface opens under
+the cursor; hover selection is enabled only after the pointer moves at least four
+pixels from that baseline. A direct click still activates the clicked row
+immediately.
 
 - type to filter visible history rows;
 - arrows or `Ctrl-J/K` move selection;

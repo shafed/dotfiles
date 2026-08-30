@@ -26,17 +26,25 @@ def zip_entry(name: str) -> zipfile.ZipInfo:
 
 
 def apply_telegram_overrides(palette: str) -> str:
-    """Map shared Gruvbox colors to Telegram-specific UI semantics."""
-    replacements = {
-        # Keep the navigation/sidebar selection muted instead of bright yellow.
-        "windowBgActive: GB_YELLOW;": "windowBgActive: GB_BLUE;",
-        "dialogsBgActive: GB_BG_HOVER;": "dialogsBgActive: GB_BG_SOFT;",
-    }
-    for old, new in replacements.items():
-        if old not in palette:
-            raise ValueError(f"Telegram palette anchor not found: {old}")
-        palette = palette.replace(old, new, 1)
-    return palette
+    """Add Telegram-only colors that are not part of the shared surfaces."""
+    sidebar = """
+
+// Telegram folder sidebar.
+sideBarBg: GB_BG;
+sideBarBgActive: GB_BG_SOFT;
+sideBarBgRipple: GB_BG_HOVER;
+sideBarTextFg: GB_GRAY_DIM;
+sideBarTextFgActive: GB_YELLOW;
+sideBarIconFg: GB_GRAY_DIM;
+sideBarIconFgActive: GB_YELLOW;
+sideBarBadgeBg: GB_YELLOW;
+sideBarBadgeBgMuted: GB_BG_MUTED;
+sideBarBadgeFg: GB_BG_HARD;
+"""
+    marker = '\n// Generic scrollbars.\n'
+    if marker not in palette:
+        raise ValueError("Telegram palette insertion anchor not found")
+    return palette.replace(marker, sidebar + marker, 1)
 
 
 def build_archive(palette: str) -> bytes:

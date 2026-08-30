@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # shellcheck source=scripts/dots-lib.sh
 source "$ROOT/scripts/dots-lib.sh"
+REAL_PYTHON="$(command -v python3)"
 
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
@@ -65,12 +66,14 @@ grep -q '^  doctor' "$tmp/help.out"
 grep -q '^Usage: dots restart' "$tmp/restart-help.out"
 "$ROOT/dots" commands >"$tmp/commands.out"
 grep -q '^  restart' "$tmp/commands.out"
-"$ROOT/dots" commands --json | python3 -c '
+"$ROOT/dots" commands --json >"$tmp/commands.json"
+"$REAL_PYTHON" -c '
 import json, sys
-commands = json.load(sys.stdin)
+with open(sys.argv[1], encoding="utf-8") as f:
+    commands = json.load(f)
 names = {item["name"] for item in commands}
 assert {"doctor", "restart", "refresh", "shell", "panel", "debug"} <= names
-'
+' "$tmp/commands.json"
 "$ROOT/dots" theme >"$tmp/theme.out"
 grep -q '^dark$' "$tmp/theme.out"
 

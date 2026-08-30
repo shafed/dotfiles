@@ -4,3 +4,6 @@ bookmarks/helium-bookmarks.tsv
 
 # Python bytecode cache (kitty/ and scripts/ ship .py helpers)
 __pycache__/
+
+# Built locally from telegram/colors.tdesktop-theme + telegram/background.jpg
+telegram/gruvbox-material-dark-medium.tdesktop-theme

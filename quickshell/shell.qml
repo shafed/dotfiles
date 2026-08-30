@@ -33,8 +33,6 @@ ShellRoot {
   property int osdValue: 0
   property bool osdHasValue: true
   property var notificationRefs: ({})
-  property bool agentsLiveRefreshed: false
-  property double agentsLastUpdatedMs: 0
 
   Components.DesktopLauncher { id: desktopLauncher }
   Components.BookmarksPicker { id: bookmarksPicker }
@@ -96,10 +94,10 @@ ShellRoot {
   }
 
   function formatAgentsLastUpdated() {
-    if (agentsLastUpdatedMs <= 0)
-      return agentsRefreshProc.running ? "updating..." : "never"
+    if (agents.lastUpdatedMs <= 0)
+      return agents.refreshing ? "updating..." : "never"
     var nowMs = clockNow ? clockNow.getTime() : Date.now()
-    var seconds = Math.max(0, Math.floor((nowMs - agentsLastUpdatedMs) / 1000))
+    var seconds = Math.max(0, Math.floor((nowMs - agents.lastUpdatedMs) / 1000))
     if (seconds < 60) return "just now"
     var minutes = Math.floor(seconds / 60)
     if (minutes < 60) return minutes + "m ago"
@@ -170,6 +168,7 @@ ShellRoot {
     openPanel = openPanel === name ? "" : name
     if (openPanel === "network") system.network.refresh()
     if (openPanel === "updates") system.updates.refresh()
+    if (openPanel === "agents") agents.refresh()
   }
 
   function updateLayout(layout) {
@@ -262,10 +261,20 @@ ShellRoot {
 
   Services.SystemServices { id: system }
   Services.NotificationStore { id: notifications }
+  Services.AgentsService { id: agents }
 
   Connections {
     target: notifications
     function onHistoryChanged() { root.hydrateNotifications() }
+  }
+
+  Connections {
+    target: agents
+    function onRowsChanged() {
+      var merged = Object.assign({}, root.state)
+      merged.agents = agents.rows || []
+      root.state = merged
+    }
   }
 
   ListModel { id: historyModel }
@@ -292,27 +301,6 @@ ShellRoot {
     running: true
     command: ["bash", "-lc",
       "if command -v cliphist >/dev/null && command -v wl-paste >/dev/null; then exec wl-paste --type text --watch cliphist store; else exec sleep infinity; fi"]
-  }
-
-  Process {
-    id: agentsRefreshProc
-    running: true
-    command: ["python3", root.home + "/github/dotfiles/quickshell/agents-refresh.py"]
-    stdout: StdioCollector {
-      waitForEnd: true
-      onStreamFinished: {
-        try {
-          var rows = JSON.parse(text)
-          var merged = root.state
-          merged.agents = rows
-          root.state = Object.assign({}, merged)
-          root.agentsLiveRefreshed = true
-          root.agentsLastUpdatedMs = Date.now()
-        } catch (e) {
-          console.warn("dots-shell agents refresh:", e)
-        }
-      }
-    }
   }
 
   Timer {
@@ -367,7 +355,7 @@ ShellRoot {
     function refresh(): string {
       system.network.refresh()
       system.updates.refresh()
-      if (!agentsRefreshProc.running) agentsRefreshProc.running = true
+      agents.refresh()
       return "ok"
     }
     function showOsd(icon: string, label: string, value: string): string {
@@ -390,10 +378,10 @@ ShellRoot {
     services: desktop
     system: system
     notifications: notifications
+    agents: agents
     colors: colors
     ui: ui
     historyModel: historyModel
-    agentsRefreshProc: agentsRefreshProc
   }
 
   Components.ClipboardOverlay { shell: root; colors: colors; ui: ui }

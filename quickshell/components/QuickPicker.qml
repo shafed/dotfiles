@@ -22,13 +22,11 @@ Item {
 
   function titleForMode() {
     if (mode === "sessions") return "Sessions"
-    if (mode === "youtube") return "YouTube"
     return "Projects"
   }
 
   function hintForMode() {
     if (mode === "sessions") return "Filter open kitty sessions…"
-    if (mode === "youtube") return "Type to search YouTube…"
     return "Named sessions, zoxide directories, SSH hosts…"
   }
 
@@ -96,7 +94,7 @@ Item {
 
   Timer {
     id: reloadTimer
-    interval: picker.mode === "youtube" ? 380 : 90
+    interval: 90
     repeat: false
     onTriggered: picker.refreshNow()
   }
@@ -264,6 +262,7 @@ Item {
           Layout.fillWidth: true
           Layout.fillHeight: true
           clip: true
+          interactive: false
           spacing: 4
           model: picker.rows
           currentIndex: picker.selectedIndex
@@ -278,16 +277,6 @@ Item {
             color: index === picker.selectedIndex ? picker.colors.bgSoft : "transparent"
             border.width: index === picker.selectedIndex ? 1 : 0
             border.color: picker.colors.bgMuted
-
-            MouseArea {
-              anchors.fill: parent
-              onEntered: picker.selectedIndex = index
-              hoverEnabled: true
-              onClicked: {
-                picker.selectedIndex = index
-                picker.activateSelected()
-              }
-            }
 
             RowLayout {
               anchors.fill: parent

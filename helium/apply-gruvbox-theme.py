@@ -111,7 +111,15 @@ def strip_quotes(value: str) -> str:
     return value
 
 
-def update_flags(flags_path: Path, theme_dir: Path) -> None:
+def valid_extension_dir(value: str) -> bool:
+    # Relative paths are resolved from Helium's launcher working directory and
+    # can become '.', producing the misleading "Manifest missing" startup
+    # dialog. Persistent flags should only contain real absolute extension dirs.
+    path = Path(value)
+    return path.is_absolute() and path.is_dir() and (path / "manifest.json").is_file()
+
+
+def update_flags(flags_path: Path, theme_dir: Path) -> list[str]:
     if flags_path.is_symlink():
         target = os.readlink(flags_path)
         if "/helium/helium-browser-flags.conf" in target:
@@ -128,6 +136,7 @@ def update_flags(flags_path: Path, theme_dir: Path) -> None:
 
     output: list[str] = []
     load_extensions: list[str] = []
+    dropped: list[str] = []
     in_managed_block = False
 
     for line in original.splitlines():
@@ -144,8 +153,13 @@ def update_flags(flags_path: Path, theme_dir: Path) -> None:
         if stripped.startswith("--load-extension="):
             value = strip_quotes(stripped.split("=", 1)[1])
             for entry in value.split(","):
-                entry = entry.strip()
-                if not entry or any(marker in entry for marker in OLD_THEME_MARKERS):
+                entry = strip_quotes(entry.strip())
+                if not entry:
+                    continue
+                if any(marker in entry for marker in OLD_THEME_MARKERS):
+                    continue
+                if not valid_extension_dir(entry):
+                    dropped.append(entry)
                     continue
                 if entry not in load_extensions:
                     load_extensions.append(entry)
@@ -154,6 +168,8 @@ def update_flags(flags_path: Path, theme_dir: Path) -> None:
         output.append(line)
 
     theme_path = str(theme_dir.resolve())
+    if not valid_extension_dir(theme_path):
+        raise RuntimeError(f"generated theme is missing a readable manifest: {theme_path}")
     if theme_path not in load_extensions:
         load_extensions.append(theme_path)
 
@@ -164,7 +180,9 @@ def update_flags(flags_path: Path, theme_dir: Path) -> None:
     output.extend(
         [
             MANAGED_START,
-            f'--load-extension="{",".join(load_extensions)}"',
+            # helium-browser-bin's Arch wrapper parses one argument per line.
+            # The managed data path has no shell expansion and is absolute.
+            f'--load-extension={",".join(load_extensions)}',
             MANAGED_END,
             "",
         ]
@@ -172,6 +190,7 @@ def update_flags(flags_path: Path, theme_dir: Path) -> None:
 
     flags_path.parent.mkdir(parents=True, exist_ok=True)
     flags_path.write_text("\n".join(output))
+    return dropped
 
 
 def cleanup_old_theme_link(config_home: Path) -> None:
@@ -201,15 +220,23 @@ def main() -> int:
     try:
         colors = load_colors()
         theme_dir.mkdir(parents=True, exist_ok=True)
-        (theme_dir / "manifest.json").write_text(render_manifest(colors))
+        manifest_path = theme_dir / "manifest.json"
+        manifest_path.write_text(render_manifest(colors))
+        # Read it back so a partial/corrupt write is caught before touching the
+        # browser flags file.
+        manifest = json.loads(manifest_path.read_text())
+        if not isinstance(manifest.get("theme", {}).get("colors"), dict):
+            raise ValueError(f"generated manifest has no theme colors: {manifest_path}")
         cleanup_old_theme_link(config_home)
-        update_flags(flags_path, theme_dir)
-    except (OSError, ValueError, RuntimeError) as error:
+        dropped = update_flags(flags_path, theme_dir)
+    except (OSError, json.JSONDecodeError, ValueError, RuntimeError) as error:
         print(f"helium-gruvbox-theme: {error}")
         return 1
 
     print(f"Helium Gruvbox theme: {theme_dir}")
     print(f"Helium flags: {flags_path}")
+    for entry in dropped:
+        print(f"Dropped stale --load-extension entry: {entry}")
     print("Restart Helium completely to load the updated theme.")
     return 0
 

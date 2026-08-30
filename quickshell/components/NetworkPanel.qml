@@ -5,6 +5,7 @@ import Quickshell
 Flickable {
   id: view
   required property var shell
+  required property var system
   required property var colors
   required property var ui
 
@@ -18,22 +19,22 @@ Flickable {
     RowLayout {
       Layout.fillWidth: true
       PanelButton {
-        label: view.shell.state.network && view.shell.state.network.enabled ? "Wi-Fi: on" : "Wi-Fi: off"
-        onPressed: view.shell.backendAction("network", "toggle", "")
+        label: view.system.network.enabled ? "Wi-Fi: on" : "Wi-Fi: off"
+        onPressed: view.system.network.toggle()
       }
       PanelButton {
         label: "nmtui"
-        onPressed: view.shell.backendAction("network", "settings", "")
+        onPressed: view.system.network.openSettings()
       }
     }
     Heading { text: "Networks" }
     Repeater {
-      model: view.shell.state.network ? view.shell.state.network.networks : []
+      model: view.system.network.networks
       PanelButton {
         required property var modelData
         label: (modelData.active ? "● " : "") + modelData.ssid + "  " + modelData.signal + "%  " + modelData.security
         selected: modelData.active
-        onPressed: view.shell.backendAction("network", "connect", modelData.ssid)
+        onPressed: view.system.network.connectNetwork(modelData.ssid)
       }
     }
   }

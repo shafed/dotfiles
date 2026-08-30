@@ -27,15 +27,13 @@ replace_once(
 
   function agentLimit(agent, weekly) {
     var limits = agent && agent.limits ? agent.limits : []
-    var fallback = null
     for (var i = 0; i < limits.length; i++) {
       var limit = limits[i]
       var label = String(limit && limit.label ? limit.label : "").toLowerCase()
       if (weekly && label === "7d") return limit
       if (!weekly && label !== "7d") return limit
-      if (fallback === null) fallback = limit
     }
-    return fallback
+    return null
   }
 
   function limitUsed(limit) {
@@ -46,6 +44,7 @@ replace_once(
   }
 
   function limitColor(limit) {
+    if (!limit) return "#a89984"
     var remaining = 1 - limitUsed(limit)
     if (remaining <= 0.10) return "#ea6962"
     if (remaining <= 0.30) return "#d8a657"

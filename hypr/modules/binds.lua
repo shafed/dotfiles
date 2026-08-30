@@ -6,7 +6,6 @@ local shellCtl = home .. "/.config/quickshell/dots-shell"
 
 -- Quickshell owns desktop-facing launchers, pickers, scratch and system panels.
 -- The old terminal/fzf QAT scripts remain only as standalone fallbacks.
-hl.bind(mainMod .. " + Space", hl.dsp.exec_cmd(shellCtl .. " launcher"))
 hl.bind(mainMod .. " + V", hl.dsp.exec_cmd(shellCtl .. " clipboard"))
 hl.bind(mainMod .. " + F1", hl.dsp.exec_cmd(shellCtl .. " hotkeys"))
 hl.bind(mainMod .. " + SHIFT + A", hl.dsp.exec_cmd(shellCtl .. " panel audio"))
@@ -76,29 +75,12 @@ hl.bind(mainMod .. " + mouse_up", hl.dsp.focus({ workspace = "e-1" }))
 hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(), { mouse = true })
 hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
 
--- Laptop multimedia keys for volume and LCD brightness
-hl.bind(
-  "XF86AudioRaiseVolume",
-  hl.dsp.exec_cmd("wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+"),
-  { locked = true, repeating = true }
-)
-hl.bind(
-  "XF86AudioLowerVolume",
-  hl.dsp.exec_cmd("wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"),
-  { locked = true, repeating = true }
-)
-hl.bind(
-  "XF86AudioMute",
-  hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"),
-  { locked = true, repeating = true }
-)
+-- Mic mute (no kanata equivalent)
 hl.bind(
   "XF86AudioMicMute",
   hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"),
   { locked = true, repeating = true }
 )
-hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd("brightnessctl -e4 -n2 set 5%+"), { locked = true, repeating = true })
-hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightnessctl -e4 -n2 set 5%-"), { locked = true, repeating = true })
 
 -- Requires playerctl
 hl.bind("XF86AudioNext", hl.dsp.exec_cmd("playerctl next"), { locked = true })

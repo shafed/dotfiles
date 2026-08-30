@@ -66,7 +66,7 @@ shell = replace_once(
     Rectangle {
       id: panelCard
       width: Math.min(430, parent.width - 12)
-      height: Math.min(560, parent.height - 46)
+      height: Math.min(root.openPanel === "system" ? 250 : 560, parent.height - 46)
       anchors.top: parent.top
       anchors.right: parent.right
       anchors.topMargin: 34

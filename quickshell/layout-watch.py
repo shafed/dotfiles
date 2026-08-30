@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Show the Quickshell OSD when Hyprland changes keyboard layout."""
+"""Show the Quickshell OSD and refresh the bar on keyboard layout changes."""
 
 from __future__ import annotations
 
@@ -28,7 +28,7 @@ def current_layout() -> str:
             ["hyprctl", "-j", "devices"],
             text=True,
             capture_output=True,
-            timeout=2,
+            timeout=1,
             check=False,
         )
         if result.returncode != 0:
@@ -45,22 +45,37 @@ def current_layout() -> str:
     return ""
 
 
-def show_layout(layout: str) -> None:
+def ipc_call(*args: str) -> bool:
+    try:
+        result = subprocess.run(
+            [
+                "quickshell", "ipc", "-p", str(SHELL_PATH),
+                "call", "dots", *args,
+            ],
+            text=True,
+            capture_output=True,
+            timeout=1,
+            check=False,
+        )
+    except subprocess.SubprocessError as exc:
+        print(f"layout-osd: IPC failed: {exc}", flush=True)
+        return False
+
+    if result.returncode != 0:
+        print(f"layout-osd: IPC failed: {result.stderr.strip()}", flush=True)
+        return False
+    return True
+
+
+def publish_layout(layout: str) -> None:
     label = layout_label(layout)
     if label == "--":
         return
-    result = subprocess.run(
-        [
-            "quickshell", "ipc", "-p", str(SHELL_PATH),
-            "call", "dots", "showOsd", "LANG", label, "0",
-        ],
-        text=True,
-        capture_output=True,
-        timeout=2,
-        check=False,
-    )
-    if result.returncode != 0:
-        print(f"layout-osd: IPC failed: {result.stderr.strip()}", flush=True)
+
+    # Do not wait for the shell's regular 800 ms fast-snapshot timer. Trigger
+    # the same fast refresh immediately so the bar follows the real layout.
+    ipc_call("refresh")
+    ipc_call("showOsd", "LANG", label, "0")
 
 
 def main() -> None:
@@ -69,9 +84,11 @@ def main() -> None:
         layout = current_layout()
         if layout:
             if last and layout != last:
-                show_layout(layout)
+                publish_layout(layout)
             last = layout
-        time.sleep(0.20)
+        # A short fallback poll keeps this independent of Hyprland socket path
+        # changes while remaining effectively instantaneous to the user.
+        time.sleep(0.05)
 
 
 if __name__ == "__main__":

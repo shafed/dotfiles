@@ -32,8 +32,8 @@ post-processors:
 
 - `shell.qml` — orchestration, slow backend state, notifications, process lifetimes
   and IPC;
-- `components/` — top bar, system panel, clipboard/toast/OSD overlays, shared
-  controls, Applications and Bookmarks;
+- `components/` — top bar, system panel, compact system overview,
+  clipboard/toast/OSD overlays, shared controls, Applications and Bookmarks;
 - `services/DesktopServices.qml` — realtime PipeWire volume/mute, Hyprland
   keyboard layout events and sysfs backlight sampling;
 - `config/UiConfig.qml` — declarative fonts, geometry, sizing and timers;
@@ -64,13 +64,30 @@ updates, network/Bluetooth discovery, notification persistence, clipboard and
 bookmark catalog/fzf integration. The full backend snapshot runs every 15 s and
 after actions.
 
+Kanata's apps-layer volume, mute and brightness chords do not add another
+control backend: Kanata emits the standard XF86 media/backlight key events,
+Hyprland owns the corresponding `wpctl`/`brightnessctl` commands, and the native
+Quickshell services observe the resulting state.
+
 ## Desktop popovers
 
 System panels use one fullscreen layer-shell surface with the visible card
 anchored at the top-right. The rest is the dismiss area: `Esc` closes; the first
 outside click closes and is consumed; clicks inside remain inside the card;
-opening another shell overlay closes the previous one. This behavior is now in
-`components/SystemPanel.qml`, not a runtime patch.
+opening another shell overlay closes the previous one. This behavior is in
+`components/SystemPanel.qml`.
+
+`dots-shell system` toggles the compact `components/SystemOverview.qml` in that
+same surface. It exposes Audio, Network/Wi-Fi, Bluetooth, Power, AI limits,
+Updates, Notifications and Calendar. The overview is only navigation and state
+presentation: selecting an entry switches to the existing detailed panel rather
+than duplicating its controls or backend. Network and Bluetooth remain reachable
+from the overview even when their top-bar buttons are hidden on a non-laptop.
+Its height is declared in `config/UiConfig.qml`.
+
+Repeated `dots-shell system` closes the overview because it uses the existing
+`dots panel system` toggle. Applications, Bookmarks and Clipboard close an open
+system panel/overview, and opening any system panel closes those overlays.
 
 The active-window title remains geometrically centered against the physical bar
 width, now in `components/TopBar.qml`.

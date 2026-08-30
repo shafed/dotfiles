@@ -3,9 +3,7 @@
 
 from __future__ import annotations
 
-import glob
-import os
-import socket
+import json
 import subprocess
 import time
 from pathlib import Path
@@ -24,80 +22,56 @@ def layout_label(layout: str) -> str:
     return value[:2].upper() if value else "--"
 
 
-def socket_candidates() -> list[Path]:
-    signature = os.environ.get("HYPRLAND_INSTANCE_SIGNATURE", "")
-    runtime = Path(os.environ.get("XDG_RUNTIME_DIR", f"/run/user/{os.getuid()}"))
-    candidates: list[Path] = []
-
-    if signature:
-        candidates.extend([
-            runtime / "hypr" / signature / ".socket2.sock",
-            Path("/tmp/hypr") / signature / ".socket2.sock",
-        ])
-
-    for pattern in (
-        str(runtime / "hypr" / "*" / ".socket2.sock"),
-        "/tmp/hypr/*/.socket2.sock",
-    ):
-        candidates.extend(Path(path) for path in glob.glob(pattern))
-
-    seen: set[Path] = set()
-    return [path for path in candidates if not (path in seen or seen.add(path))]
-
-
-def find_socket() -> Path | None:
-    existing = [path for path in socket_candidates() if path.exists()]
-    if not existing:
-        return None
-    return max(existing, key=lambda path: path.stat().st_mtime)
+def current_layout() -> str:
+    try:
+        result = subprocess.run(
+            ["hyprctl", "-j", "devices"],
+            text=True,
+            capture_output=True,
+            timeout=2,
+            check=False,
+        )
+        if result.returncode != 0:
+            return ""
+        payload = json.loads(result.stdout)
+        keyboards = payload.get("keyboards", [])
+        for keyboard in keyboards:
+            if keyboard.get("main"):
+                return str(keyboard.get("active_keymap", ""))
+        if keyboards:
+            return str(keyboards[0].get("active_keymap", ""))
+    except Exception:
+        pass
+    return ""
 
 
 def show_layout(layout: str) -> None:
     label = layout_label(layout)
     if label == "--":
         return
-    subprocess.run(
+    result = subprocess.run(
         [
             "quickshell", "ipc", "-p", str(SHELL_PATH),
             "call", "dots", "showOsd", "LANG", label, "0",
         ],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
+        text=True,
+        capture_output=True,
         timeout=2,
         check=False,
     )
-
-
-def watch(path: Path) -> None:
-    with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as sock:
-        sock.connect(str(path))
-        buffer = b""
-        while True:
-            chunk = sock.recv(4096)
-            if not chunk:
-                return
-            buffer += chunk
-            while b"\n" in buffer:
-                raw, buffer = buffer.split(b"\n", 1)
-                line = raw.decode("utf-8", errors="replace")
-                if not line.startswith("activelayout>>"):
-                    continue
-                payload = line.split(">>", 1)[1]
-                _, separator, layout = payload.partition(",")
-                if separator and layout:
-                    show_layout(layout)
+    if result.returncode != 0:
+        print(f"layout-osd: IPC failed: {result.stderr.strip()}", flush=True)
 
 
 def main() -> None:
+    last = ""
     while True:
-        path = find_socket()
-        if path is None:
-            time.sleep(1)
-            continue
-        try:
-            watch(path)
-        except (OSError, subprocess.SubprocessError):
-            time.sleep(0.5)
+        layout = current_layout()
+        if layout:
+            if last and layout != last:
+                show_layout(layout)
+            last = layout
+        time.sleep(0.20)
 
 
 if __name__ == "__main__":

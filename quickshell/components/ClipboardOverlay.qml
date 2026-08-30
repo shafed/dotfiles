@@ -58,7 +58,15 @@ Item {
       if (!overlay.pendingPasteId.length) return
       var ident = overlay.pendingPasteId
       overlay.pendingPasteId = ""
-      overlay.shell.run(["python3", overlay.shell.backend, "clipboard-paste", ident])
+      if (ident.indexOf("copyq:") === 0) {
+        overlay.shell.run(["bash", "-lc",
+          "copyq read \"$1\" | wl-copy && hyprctl dispatch sendshortcut CTRL V activewindow",
+          "clipboard", ident.slice(6)])
+      } else {
+        overlay.shell.run(["bash", "-lc",
+          "printf '%s' \"$1\" | cliphist decode | wl-copy && hyprctl dispatch sendshortcut CTRL V activewindow",
+          "clipboard", ident])
+      }
     }
   }
 

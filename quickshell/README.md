@@ -12,14 +12,16 @@ Standalone Quickshell desktop layer inspired by Omarchy's single-shell design. I
 - network popup: Wi-Fi state, scan/list, saved-network connection and `nmtui`
 - Bluetooth popup: radio toggle and paired-device connect/disconnect/battery
 - power popup: battery, power profiles, lock/suspend/reboot/shutdown
-- Claude Code / Codex usage panel with local token/session statistics
+- Claude Code / Codex panel with local token/session statistics and account rate-limit usage when available
 - Arch + AUR update indicator
 
 ## Runtime dependencies
 
 Required core: `quickshell`, `python`, `wireplumber` (`wpctl`), `hyprland`.
 
-Feature dependencies: `networkmanager`, `bluez-utils`, `power-profiles-daemon`, `brightnessctl`, `pacman-contrib`, `wl-clipboard`, `cliphist`. `yay` or `paru` adds AUR update counting; CopyQ is used as clipboard-history fallback when `cliphist` is absent.
+Feature dependencies: `networkmanager`, `bluez-utils`, `power-profiles-daemon`, `brightnessctl`, `pacman-contrib`, `wl-clipboard`, `cliphist`. `yay` or `paru` adds AUR update counting; CopyQ remains a clipboard-history fallback.
+
+`bootstrap.sh` checks these packages and links this directory as `~/.config/quickshell`. It also installs a small `~/.local/bin/copyq` compatibility wrapper: the existing `copyq toggle` / Super+V path now opens this Quickshell clipboard overlay, while every other CopyQ command still reaches `/usr/bin/copyq`.
 
 The tracked `systemd/user/graphical-session.target.wants/quickshell.service` symlink starts the shell with the graphical session. The shell retires the old Waybar after startup, so `hypr/hyprland.lua` can stay untouched during the migration.
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Publish brightness changes to the Quickshell OSD without subprocess polling."""
+"""Push backlight changes directly into Quickshell."""
 
 from __future__ import annotations
 
@@ -30,12 +30,12 @@ def brightness_percent() -> int | None:
     return None
 
 
-def publish(value: int) -> None:
+def publish(value: int, notify: bool) -> None:
     try:
         subprocess.run(
             [
                 "quickshell", "ipc", "-p", str(SHELL_PATH),
-                "call", "dots", "showOsd", "SUN", f"{value}%", str(value),
+                "call", "dots", "brightnessChanged", str(value), "1" if notify else "0",
             ],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
@@ -48,11 +48,13 @@ def publish(value: int) -> None:
 
 def main() -> None:
     last = brightness_percent()
+    if last is not None:
+        publish(last, False)
     while True:
         time.sleep(0.1 if last is not None else 2.0)
         value = brightness_percent()
-        if value is not None and last is not None and value != last:
-            publish(value)
+        if value is not None and value != last:
+            publish(value, last is not None)
         last = value
 
 

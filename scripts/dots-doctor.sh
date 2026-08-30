@@ -134,10 +134,10 @@ else
 fi
 
 section "stale config and cache"
-if [ -d "$DOTS_ROOT/waybar" ]; then
-  fail "retired waybar/ config is still tracked in the repository"
+if [ -e "$DOTS_ROOT/waybar/config.jsonc" ] || [ -L "$DOTS_ROOT/waybar/config.jsonc" ]; then
+  fail "retired Waybar runtime config is still tracked: waybar/config.jsonc"
 else
-  ok "retired waybar/ config is not tracked"
+  ok "retired Waybar runtime config is not tracked"
 fi
 
 if command -v pgrep >/dev/null 2>&1 && pgrep -x waybar >/dev/null 2>&1; then
@@ -151,7 +151,7 @@ qs_cache="$cache_home/dots-shell/quickshell"
 if [ -d "$qs_cache" ] && ! same_link "$DOTS_ROOT/quickshell" "${XDG_CONFIG_HOME:-$HOME/.config}/quickshell"; then
   warn "$qs_cache exists without the expected Quickshell config link"
 elif [ -f "$qs_cache/shell.qml" ]; then
-  if find "$DOTS_ROOT/quickshell" -maxdepth 1 \( -name '*.qml' -o -name '*.py' -o -name '*.sh' \) -newer "$qs_cache/shell.qml" -print -quit | grep -q .; then
+  if find "$DOTS_ROOT/quickshell" -type f \( -name '*.qml' -o -name '*.py' -o -name '*.sh' \) -newer "$qs_cache/shell.qml" -print -quit | grep -q .; then
     warn "generated Quickshell cache is older than tracked sources; run: dots refresh quickshell"
   else
     ok "generated Quickshell cache is current enough"

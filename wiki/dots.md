@@ -38,62 +38,57 @@ still allowing links to be installed before every desktop package is present.
 
 `apply` does not replace an existing real file or directory at a managed link
 path. It may repair or replace a symlink, but an unmanaged path is a hard stop
-with a request to move/archive it first. This makes repeated convergence safe on
-an existing machine instead of making "make it look like the repo" permission
-to delete local state.
+with a request to move/archive it first. Repeated convergence therefore does not
+turn "make it look like the repo" into permission to delete local state.
 
 Service refresh during `apply` uses `systemctl --user try-restart`, not
-`restart`. That distinction matters on a newly provisioned TTY: Quickshell must
-not be started before the graphical session has exported its Wayland/session
-environment. The generated Quickshell cache is still removed, so the next
-legitimate start rebuilds it from tracked sources.
+`restart`. On a newly provisioned TTY this avoids starting Quickshell before the
+graphical session has exported its Wayland/session environment. The generated
+Quickshell cache is still removed, so the next legitimate start rebuilds the
+current modular QML tree from tracked sources.
 
-`doctor` checks machine state; `check` checks repository state. Keeping those
-separate matters on a fresh machine: missing desktop packages are a useful
-`doctor` failure but should not make a source-tree syntax check depend on a full
-Hyprland installation. The local pre-commit hooks and CI therefore run the same
-`dots check` primitives for Shell, Lua, Python and the CLI's own tests.
+`doctor` checks machine state; `check` checks repository state. Missing desktop
+packages are a useful `doctor` failure but should not make source-tree syntax
+checks depend on a complete Hyprland installation. Pre-commit and CI therefore
+run the same Shell, Lua, Python and CLI-test primitives through `dots check`.
 
 The command catalog is also data: `dots commands --json` exposes the same names,
 usage strings and descriptions used by human help. This is intentionally much
-smaller than discovering arbitrary executable files — agents can inspect the
-supported surface without turning every helper script into public API.
+smaller than discovering arbitrary executable files, so agents can inspect the
+supported surface without turning every helper into public API.
 
-`restart` owns the routine systemd-user restart spelling for Quickshell, Kanata
-and darkman. `refresh` is narrower: it rebuilds derived state rather than
-restoring tracked configs. In particular, `dots refresh quickshell` removes the
-generated runtime under `$XDG_CACHE_HOME/dots-shell/quickshell` and restarts the
-service so `start.sh` regenerates it from tracked sources; it never copies a
-"default" config over the repository.
+`restart` owns routine user-service restarts for Quickshell, Kanata and darkman.
+`refresh` rebuilds derived state instead of restoring tracked configs. In
+particular, `dots refresh quickshell` removes
+`$XDG_CACHE_HOME/dots-shell/quickshell` and restarts the service so the runtime
+is copied again from the tracked modular Quickshell source.
 
-Manual desktop-shell control should go through `dots shell` / `dots panel`.
-Those commands deliberately whitelist the stable actions already implemented by
-`quickshell/dots-shell` instead of exposing raw arbitrary IPC as part of the
-public CLI. `dots shell refresh` refreshes live shell data through IPC, while
-`dots refresh quickshell` rebuilds the generated runtime; the similar names have
-different scopes on purpose.
+Manual shell control goes through `dots shell` / `dots panel`. These commands
+whitelist stable actions from `quickshell/dots-shell`, including Applications,
+Bookmarks, Clipboard, Hotkeys, the compact System overview and the detailed
+system panels. Raw arbitrary Quickshell IPC is not part of the public `dots`
+contract. `dots shell refresh` refreshes live shell data; `dots refresh
+quickshell` rebuilds the generated runtime.
 
 `debug` is a compact support bundle: repository revision, session information,
 component versions, managed service state, doctor failures/warnings, and by
-default the last Quickshell journal lines. It is observational only. Use
-`--no-logs` when output will be pasted somewhere that should not receive recent
-journal text.
+default recent Quickshell journal lines. It is observational only; use
+`--no-logs` before pasting output somewhere that should not receive journal
+text.
 
 `migrate` is intentionally idempotent and has no migration database. A migration
-exists only while an obsolete state can be detected directly. This avoids a
-second source of truth for machine history. Destructive cleanup is limited to
-safe state such as cache or an old managed symlink; an unmanaged real config is
-reported for manual archival instead of being deleted.
+exists only while obsolete state can be detected directly. Destructive cleanup
+is limited to safe state such as cache or an old managed symlink; unmanaged real
+configs are reported rather than deleted.
 
-Waybar is the first such migration. Quickshell owns the bar, so a running or
-enabled Waybar, `~/.config/waybar`, or Waybar cache is stale state. The old
-tracked `waybar/` directory was removed as part of introducing this contract.
-The Quickshell startup kill remains as compatibility insurance for machines that
-have not migrated yet; it is not evidence that Waybar is still a supported
-component.
+Waybar is the first migration. Quickshell owns the active bar, so a running or
+enabled Waybar, `~/.config/waybar`, Waybar cache, or the old tracked
+`waybar/config.jsonc` is stale runtime state. `waybar/colors.css` and
+`waybar/style.css` may remain tracked because the shared palette generator still
+owns them as generated compatibility/theme surfaces; they are not linked by
+`dots apply` and do not make Waybar an active component.
 
-⚠️ Gotcha: `dots doctor` treats missing required commands and broken managed
-links as errors, while developer-only tools such as `luac` and `pre-commit` are
-warnings. `dots check` is stricter: if the tool needed for a requested source
-check is absent, that check fails rather than pretending the source was
-validated.
+⚠️ `dots doctor` treats missing required commands and broken managed links as
+errors, while developer-only tools such as `luac` and `pre-commit` are warnings.
+`dots check` is stricter: if the tool needed for a requested source check is
+absent, that check fails rather than pretending the source was validated.

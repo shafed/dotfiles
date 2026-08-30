@@ -13,9 +13,9 @@ rules: [../CLAUDE.md](../CLAUDE.md) (`AGENTS.md` symlinks to it).
 ## Setup
 
 - **[bootstrap](bootstrap.md)** — deploying on a new machine; `./dots apply` is
-  the primary path and `bootstrap.sh` is only a compatibility wrapper.
-- **[dots](dots.md)** — the installed/repo-local CLI entrypoint; apply,
-  doctor/check/migrate, desktop refresh/control, and stale-state contracts.
+  the primary entrypoint and `bootstrap.sh` is only a compatibility wrapper.
+- **[dots](dots.md)** — installed CLI for apply/doctor/check, migrations,
+  desktop controls and diagnostics.
 
 ## Components
 
@@ -25,8 +25,8 @@ rules: [../CLAUDE.md](../CLAUDE.md) (`AGENTS.md` symlinks to it).
   scratch note, training logbook, standalone helpers. The most active and
   gotcha-dense part of the repo.
 - **[hypr](hypr.md)** — Hyprland: bindings, monitors, idle/lock/gamma.
-- **[quickshell](quickshell.md)** — active top bar and desktop shell; why it
-  replaced Waybar and why the running QML is generated at startup.
+- **[quickshell](quickshell.md)** — active top bar and desktop shell; modular
+  QML, realtime services, picker integration and runtime-cache layout.
 - **[kitty](kitty.md)** — terminal: QAT panels, custom kittens, remote control.
 - **[nvim](nvim.md)** — map of content: which LazyVim behavior was overridden
   and why — window UI, vault workflows, clipboard, Russian layout.
@@ -40,8 +40,8 @@ rules: [../CLAUDE.md](../CLAUDE.md) (`AGENTS.md` symlinks to it).
 - **[keymap](keymap.md)** — single source of truth for hotkeys: how kanata,
   hypr, and kitty divide the keyboard without colliding.
 - **[sessions](sessions.md)** — native kitty sessions after the tmux removal.
-- **[theming](theming.md)** — gruvbox everywhere; what darkman does and does not
-  switch.
+- **[theming](theming.md)** — `colors.toml` source-of-truth, generated Gruvbox
+  surfaces, and what darkman does and does not switch.
 
 ## Global
 

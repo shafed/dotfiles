@@ -8,6 +8,7 @@ Item {
   property bool enabled: false
   property string active: ""
   property var networks: []
+  property string pendingSsid: ""
   readonly property bool connected: active !== ""
 
   function splitEscaped(line) {
@@ -86,10 +87,8 @@ Item {
 
   function connectNetwork(ssid) {
     if (!ssid) return
-    Quickshell.execDetached(["nmcli", "connection", "up", "id", String(ssid)])
-    fallbackConnect.ssid = String(ssid)
-    fallbackConnect.restart()
-    refreshDelay.restart()
+    pendingSsid = String(ssid)
+    connectProc.exec(["nmcli", "connection", "up", "id", pendingSsid])
   }
 
   function openSettings() {
@@ -108,14 +107,19 @@ Item {
     }
   }
 
-  Timer {
-    id: fallbackConnect
-    property string ssid: ""
-    interval: 900
-    onTriggered: {
-      if (!ssid || service.active === ssid) return
-      Quickshell.execDetached(["nmcli", "device", "wifi", "connect", ssid])
+  Process {
+    id: connectProc
+    onExited: function(exitCode, exitStatus) {
+      if (exitCode !== 0 && service.pendingSsid)
+        fallbackConnectProc.exec(["nmcli", "device", "wifi", "connect", service.pendingSsid])
+      else
+        refreshDelay.restart()
     }
+  }
+
+  Process {
+    id: fallbackConnectProc
+    onExited: function(exitCode, exitStatus) { refreshDelay.restart() }
   }
 
   Timer {

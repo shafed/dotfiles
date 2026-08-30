@@ -16,24 +16,18 @@ ShellRoot {
 
   readonly property string home: Quickshell.env("HOME")
   readonly property string backend: home + "/github/dotfiles/quickshell/backend.py"
-  readonly property bool laptop: state.power && Number(state.power.battery) >= 0
+  readonly property bool laptop: system.hasBattery
 
   property var state: ({
     audio: { volume: 0, muted: false, sinks: [], streams: [] },
     network: { enabled: false, active: "", networks: [] },
-    bluetooth: { powered: false, devices: [] },
-    power: { profile: "", profiles: [], battery: -1, status: "", uptime: "" },
-    brightness: -1,
     updates: { count: 0 },
     agents: [],
-    workspace: 1,
-    layout: "",
-    notifications: { dnd: false, history: [] }
+    layout: ""
   })
   property string openPanel: ""
   property bool clipboardOpen: false
   property var clipboardRows: []
-  property bool historyHydrated: false
   property date clockNow: new Date()
   property date calendarMonth: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
   property bool osdOpen: false
@@ -191,12 +185,6 @@ ShellRoot {
     if (state.layout) next.layout = state.layout
     if (agentsLiveRefreshed && state.agents) next.agents = state.agents
     state = next
-    if (!historyHydrated && next.notifications && next.notifications.history) {
-      historyModel.clear()
-      for (var i = 0; i < next.notifications.history.length; i++)
-        historyModel.append(next.notifications.history[i])
-      historyHydrated = true
-    }
   }
 
   function updateLayout(layout) {
@@ -218,6 +206,12 @@ ShellRoot {
     osdTimer.restart()
   }
 
+  function hydrateNotifications() {
+    historyModel.clear()
+    var rows = notifications.history || []
+    for (var i = 0; i < rows.length; i++) historyModel.append(rows[i])
+  }
+
   function receiveNotification(notification) {
     notification.tracked = true
     var stamp = Date.now()
@@ -228,12 +222,9 @@ ShellRoot {
       body: String(notification.body || ""),
       timestamp: stamp
     }
-    historyModel.insert(0, item)
-    while (historyModel.count > 50) historyModel.remove(historyModel.count - 1)
+    notifications.add(item)
 
-    run(["python3", backend, "notify", "add", JSON.stringify(item)])
-
-    if (state.notifications && state.notifications.dnd) {
+    if (notifications.dnd) {
       notification.tracked = false
       return
     }
@@ -261,6 +252,7 @@ ShellRoot {
 
   Component.onCompleted: {
     run(["pkill", "-x", "waybar"])
+    hydrateNotifications()
     fullProc.running = true
   }
 
@@ -269,6 +261,14 @@ ShellRoot {
     state: root.state
     onOsdRequested: (icon, label, value, hasValue) => root.showOsd(icon, label, value, hasValue)
     onLayoutChanged: layout => root.updateLayout(layout)
+  }
+
+  Services.SystemServices { id: system }
+  Services.NotificationStore { id: notifications }
+
+  Connections {
+    target: notifications
+    function onHistoryChanged() { root.hydrateNotifications() }
   }
 
   ListModel { id: historyModel }
@@ -400,11 +400,20 @@ ShellRoot {
     }
   }
 
-  Components.TopBar { shell: root; services: desktop; colors: colors; ui: ui }
+  Components.TopBar {
+    shell: root
+    services: desktop
+    system: system
+    notifications: notifications
+    colors: colors
+    ui: ui
+  }
 
   Components.SystemPanel {
     shell: root
     services: desktop
+    system: system
+    notifications: notifications
     colors: colors
     ui: ui
     historyModel: historyModel

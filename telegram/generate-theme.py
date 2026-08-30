@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import base64
 from io import BytesIO
 from pathlib import Path
 import struct
@@ -17,6 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 HERE = Path(__file__).resolve().parent
 PALETTE_OUTPUT = HERE / "colors.tdesktop-theme"
 BACKGROUND_SOURCE = HERE / "background.jpg"
+BACKGROUND_PRIMARY_OUTPUT = HERE / "background-primary.jpg"
 BACKGROUND_BACKUP_OUTPUT = HERE / "background-backup.png"
 OUTPUT = HERE / "gruvbox-material-dark-medium.tdesktop-theme"
 
@@ -129,13 +131,29 @@ def render_backup_background(colors: dict[str, str], width: int = 1600, height: 
     )
 
 
+def is_jpeg(data: bytes) -> bool:
+    return data.startswith(b"\xff\xd8") and data.endswith(b"\xff\xd9")
+
+
 def read_primary_background() -> bytes:
+    """Read either a real JPEG or the base64 transport form committed via GitHub."""
     if not BACKGROUND_SOURCE.is_file():
         raise FileNotFoundError(f"Telegram background not found: {BACKGROUND_SOURCE}")
+
     data = BACKGROUND_SOURCE.read_bytes()
-    if not data.startswith(b"\xff\xd8") or not data.endswith(b"\xff\xd9"):
-        raise ValueError(f"Telegram background is not a valid JPEG container: {BACKGROUND_SOURCE}")
-    return data
+    if is_jpeg(data):
+        return data
+
+    try:
+        decoded = base64.b64decode(b"".join(data.split()), validate=True)
+    except (ValueError, base64.binascii.Error) as exc:
+        raise ValueError(
+            f"Telegram background is neither JPEG nor base64-encoded JPEG: {BACKGROUND_SOURCE}"
+        ) from exc
+
+    if not is_jpeg(decoded):
+        raise ValueError(f"Decoded Telegram background is not a valid JPEG container: {BACKGROUND_SOURCE}")
+    return decoded
 
 
 def build_archive(palette: str, background: bytes) -> bytes:
@@ -167,6 +185,9 @@ def main() -> int:
         if not PALETTE_OUTPUT.exists() or PALETTE_OUTPUT.read_text() != palette:
             print(f"stale generated Telegram palette: {PALETTE_OUTPUT.relative_to(ROOT)}", file=sys.stderr)
             stale = True
+        if not BACKGROUND_PRIMARY_OUTPUT.exists() or BACKGROUND_PRIMARY_OUTPUT.read_bytes() != primary_background:
+            print(f"stale generated Telegram primary wallpaper: {BACKGROUND_PRIMARY_OUTPUT.relative_to(ROOT)}", file=sys.stderr)
+            stale = True
         if not BACKGROUND_BACKUP_OUTPUT.exists() or BACKGROUND_BACKUP_OUTPUT.read_bytes() != backup_background:
             print(f"stale generated Telegram backup wallpaper: {BACKGROUND_BACKUP_OUTPUT.relative_to(ROOT)}", file=sys.stderr)
             stale = True
@@ -176,6 +197,7 @@ def main() -> int:
         return 1 if stale else 0
 
     PALETTE_OUTPUT.write_text(palette)
+    BACKGROUND_PRIMARY_OUTPUT.write_bytes(primary_background)
     BACKGROUND_BACKUP_OUTPUT.write_bytes(backup_background)
     OUTPUT.write_bytes(archive)
     print(OUTPUT.relative_to(ROOT))

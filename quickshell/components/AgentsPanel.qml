@@ -38,11 +38,20 @@ Flickable {
         opacity: view.agents.refreshing ? 0.55 : 1.0
 
         Text {
+          id: refreshIcon
           anchors.centerIn: parent
           text: "↻"
           color: view.colors.fgSoft
           font.family: view.ui.barFont
           font.pixelSize: 17
+
+          RotationAnimation on rotation {
+            from: 0
+            to: 360
+            duration: 1000
+            loops: Animation.Infinite
+            running: view.agents.refreshing
+          }
         }
 
         MouseArea {

@@ -77,10 +77,14 @@ Item {
     codexFresh = ({ plan: "", limits: [] })
     codexAccount = ({})
     codexRateLimits = ({})
-    if (!probeProc.running) probeProc.running = true
+    if (!probeProc.running) {
+      probeTimeout.restart()
+      probeProc.running = true
+    }
   }
 
   function parseProbe(text) {
+    probeTimeout.stop()
     claudeInstalled = false
     codexInstalled = false
     var lines = String(text || "").split("\n")
@@ -189,6 +193,7 @@ Item {
 
   function startCodex() {
     codexTimeout.interval = 6000
+    codexTimeout.restart()
     codexProc.running = true
   }
 
@@ -320,7 +325,7 @@ Item {
 
   Process {
     id: codexProc
-    command: ["codex", "-s", "read-only", "-a", "on-request", "app-server"]
+    command: [service.home + "/.local/bin/codex", "-s", "read-only", "-a", "on-request", "app-server"]
     stdinEnabled: true
     stdout: SplitParser {
       onRead: data => service.handleCodexLine(data)
@@ -345,6 +350,15 @@ Item {
     id: codexTimeout
     interval: 4000
     onTriggered: service.finishCodex()
+  }
+
+  Timer {
+    id: probeTimeout
+    interval: 10000
+    onTriggered: {
+      if (probeProc.running) probeProc.running = false
+      service.parseProbe("")
+    }
   }
 
   Component.onCompleted: {

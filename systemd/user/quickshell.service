@@ -6,7 +6,7 @@ ConditionPathExists=%h/github/dotfiles/quickshell/shell.qml
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/env quickshell -p %h/github/dotfiles/quickshell
+ExecStart=/usr/bin/env bash %h/github/dotfiles/quickshell/start.sh
 Restart=on-failure
 RestartSec=1
 

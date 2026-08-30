@@ -73,9 +73,13 @@ why this preserves the desired active-tab pill without highlighting `New Tab`.
 
 On Arch, `helium-browser-bin` reads `$XDG_CONFIG_HOME/helium-browser-flags.conf`.
 Its launcher deliberately does not expand `~` or `$HOME`, so the helper writes a
-managed `--load-extension=<absolute path>` block while preserving unrelated
-flags and other loaded extensions. `dots apply` runs the helper automatically;
-restart Helium completely after applying changes.
+managed `--load-extension=<absolute path>` block while preserving valid unrelated
+loaded extensions. It removes stale/relative/nonexistent extension entries such
+as `.` before writing the managed block; otherwise Chromium resolves them from
+its launch directory and shows a misleading "Manifest file is missing or
+unreadable" dialog. The generated theme directory is validated for a readable
+`manifest.json` before the flags file is changed. `dots apply` runs the helper
+automatically; restart Helium completely after applying changes.
 
 ## Light/dark
 

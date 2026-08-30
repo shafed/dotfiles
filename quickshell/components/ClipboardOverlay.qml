@@ -12,6 +12,7 @@ Item {
   property string query: ""
   property int selectedIndex: 0
   property string pendingPasteId: ""
+  property bool mouseNavigationArmed: false
   property var rows: {
     var source = overlay.shell.clipboardRows || []
     var needle = overlay.query.trim().toLowerCase()
@@ -85,6 +86,7 @@ Item {
         scratchOverlay.close()
         overlay.query = ""
         overlay.selectedIndex = 0
+        overlay.mouseNavigationArmed = false
         Qt.callLater(function() { searchInput.forceActiveFocus() })
       }
     }
@@ -235,8 +237,16 @@ Item {
             MouseArea {
               anchors.fill: parent
               hoverEnabled: true
-              onEntered: overlay.selectedIndex = index
+              onEntered: {
+                if (overlay.mouseNavigationArmed)
+                  overlay.selectedIndex = index
+              }
+              onPositionChanged: {
+                overlay.mouseNavigationArmed = true
+                overlay.selectedIndex = index
+              }
               onClicked: {
+                overlay.mouseNavigationArmed = true
                 overlay.selectedIndex = index
                 overlay.pasteSelected()
               }

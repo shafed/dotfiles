@@ -1,26 +1,33 @@
 --- a/chrome/browser/ui/color/material_tab_strip_color_mixer.cc
 +++ b/chrome/browser/ui/color/material_tab_strip_color_mixer.cc
-@@ -3,6 +3,7 @@
+@@ -3,6 +3,9 @@
  
  #include "chrome/browser/ui/color/material_tab_strip_color_mixer.h"
  
++#include <string>
++
 +#include "base/command_line.h"
  #include "chrome/browser/ui/color/chrome_color_id.h"
  #include "chrome/browser/ui/color/chrome_color_provider_utils.h"
  #include "third_party/skia/include/core/SkColor.h"
-@@ -84,6 +85,21 @@ void AddMaterialTabStripColorMixer(ui::ColorProvider* provider,
+@@ -84,6 +87,25 @@ void AddMaterialTabStripColorMixer(ui::ColorProvider* provider,
    mixer[kColorNewTabButtonCRBackgroundFrameActive] = {kColorToolbar};
    mixer[kColorNewTabButtonCRBackgroundFrameInactive] = {kColorToolbar};
  
 +  // Helium's normal Material mapping intentionally uses the location-bar
 +  // surface for the active vertical tab and the toolbar surface for New Tab.
 +  // That is a good native hierarchy, but it couples those controls to surfaces
-+  // an extension theme also needs to color independently.  The dotfiles theme
++  // an extension theme also needs to color independently. The dotfiles theme
 +  // opts into the generic tab ColorIds instead: toolbar for the active tab and
-+  // inactive-tab background for New Tab.  The unpacked theme can then provide
++  // inactive-tab background for New Tab. The unpacked theme can then provide
 +  // exact colors without changing Helium's default behavior for other users.
-+  if (base::CommandLine::ForCurrentProcess()->HasSwitch(
-+          "helium-gruvbox-exact-tabs")) {
++  //
++  // The existing helper already owns this exact absolute load-extension path,
++  // so no extra browser flag or preference is needed for the source patch.
++  const std::string loaded_extensions =
++      base::CommandLine::ForCurrentProcess()->GetSwitchValueASCII(
++          "load-extension");
++  if (loaded_extensions.find("dotfiles/helium-gruvbox") != std::string::npos) {
 +    mixer[kColorTabBackgroundActiveFrameActive] = {kColorToolbar};
 +    mixer[kColorTabBackgroundActiveFrameInactive] = {kColorToolbar};
 +    mixer[kColorNewTabButtonCRBackgroundFrameActive] = {

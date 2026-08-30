@@ -134,17 +134,10 @@ else
 fi
 
 section "stale config and cache"
-waybar_managed=0
-for name in "${CONFIG_DIRS[@]}"; do
-  if [ "$name" = "waybar" ]; then
-    waybar_managed=1
-    break
-  fi
-done
-if [ "$waybar_managed" -eq 1 ]; then
-  fail "Waybar is retired but still managed by bootstrap"
+if [ -e "$DOTS_ROOT/waybar/config.jsonc" ] || [ -L "$DOTS_ROOT/waybar/config.jsonc" ]; then
+  fail "retired Waybar runtime config is still tracked: waybar/config.jsonc"
 else
-  ok "Waybar is not managed by bootstrap"
+  ok "retired Waybar runtime config is not tracked"
 fi
 
 if command -v pgrep >/dev/null 2>&1 && pgrep -x waybar >/dev/null 2>&1; then

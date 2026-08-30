@@ -3,14 +3,14 @@ set -euo pipefail
 
 DOTS_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 QS_WRAPPER="$DOTS_ROOT/quickshell/dots-shell"
-PANELS="audio network bluetooth power agents updates notifications calendar"
+PANELS="system audio network bluetooth power agents updates notifications calendar"
 
 shell_usage() {
-  echo "Usage: dots shell <apps|bookmarks|clipboard|refresh|panel NAME>"
+  echo "Usage: dots shell <apps|bookmarks|clipboard|hotkeys|system|refresh|panel NAME>"
 }
 
 panel_usage() {
-  echo "Usage: dots panel <audio|network|bluetooth|power|agents|updates|notifications|calendar>"
+  echo "Usage: dots panel <system|audio|network|bluetooth|power|agents|updates|notifications|calendar>"
 }
 
 valid_panel() {
@@ -52,7 +52,7 @@ case "$mode" in
         shell_usage
         [ -n "${1:-}" ] || exit 2
         ;;
-      apps|launcher|bookmarks|clipboard|refresh)
+      apps|launcher|bookmarks|clipboard|hotkeys|system|refresh)
         require_quickshell
         exec "$QS_WRAPPER" "$1"
         ;;

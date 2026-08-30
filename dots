@@ -22,6 +22,7 @@ if [ "$#" -gt 0 ]; then
 fi
 
 case "$command_name" in
+  apply) exec "$ROOT/scripts/dots-apply.sh" "$@" ;;
   doctor) exec "$ROOT/scripts/dots-doctor.sh" "$@" ;;
   check) exec "$ROOT/scripts/dots-check.sh" "$@" ;;
   migrate) exec "$ROOT/scripts/dots-migrate.sh" "$@" ;;

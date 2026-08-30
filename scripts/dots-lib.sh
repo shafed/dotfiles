@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
 DOTS_ROOT="${DOTS_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+DOTS_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
+DOTS_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
 
 REQUIRED_PKGS=(
   "hyprland:hyprland"
@@ -56,11 +58,11 @@ DOTS_MANAGED_LINKS=(
   "zsh/zshrc|$HOME/.zshrc"
   "zsh/zprofile|$HOME/.zprofile"
   "instructions.md|$HOME/.claude/CLAUDE.md"
-  "instructions.md|$HOME/.config/opencode/AGENTS.md"
+  "instructions.md|$DOTS_CONFIG_HOME/opencode/AGENTS.md"
   "instructions.md|$HOME/.codex/AGENTS.md"
   ".claude/hooks/no-coauthor.sh|$HOME/.claude/hooks/no-coauthor.sh"
   ".claude/themes/gruvbox-material.json|$HOME/.claude/themes/gruvbox-material.json"
-  "darkman/scripts|$HOME/.local/share/darkman"
+  "darkman/scripts|$DOTS_DATA_HOME/darkman"
   "dots|$HOME/.local/bin/dots"
 )
 
@@ -73,14 +75,15 @@ DOTS_CORE_USER_SERVICES=(
 # name|usage|description. Keep this small: it is both human help and the
 # machine-readable command catalog used by `dots commands --json`.
 DOTS_COMMANDS=(
+  "apply|dots apply [--check|--links-only]|Apply the current checkout to this machine"
   "doctor|dots doctor|Check installed dotfiles and machine state"
   "check|dots check [all|shell|lua|python|tests]|Run repository checks"
   "migrate|dots migrate [--check]|Detect or apply safe stale-state migrations"
   "theme|dots theme [status|light|dark|toggle]|Show or switch the darkman theme"
   "restart|dots restart <quickshell|kanata|darkman|all>|Restart managed user services"
   "refresh|dots refresh <quickshell|systemd|all>|Rebuild derived state and reload services"
-  "shell|dots shell <apps|bookmarks|clipboard|refresh|panel ...>|Control stable Quickshell actions"
-  "panel|dots panel <name>|Toggle a Quickshell panel"
+  "shell|dots shell <apps|bookmarks|clipboard|hotkeys|system|refresh|panel ...>|Control stable Quickshell actions"
+  "panel|dots panel <system|audio|network|bluetooth|power|agents|updates|notifications|calendar>|Toggle a Quickshell panel"
   "debug|dots debug [--no-logs]|Print a compact diagnostic bundle"
   "commands|dots commands [--json]|List commands and machine-readable metadata"
   "help|dots help [command]|Show CLI or command help"

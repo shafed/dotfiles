@@ -72,10 +72,10 @@ def rgb(value: str) -> list[int]:
 
 
 def theme_payload(colors: dict[str, str]) -> dict[str, object]:
-    # For a third-party theme Chromium's generic tab mixer keeps these surfaces
-    # independent: frame is the vertical strip, toolbar is the active tab, and
-    # background_tab is the inactive-tab/New Tab surface. Helium's Material
-    # mixer is intentionally skipped while a custom theme is active.
+    # Keep the chrome hierarchy simple: all passive/background surfaces use the
+    # darkest Gruvbox background, while the active tab gets the lighter surface.
+    # For a third-party theme Chromium's generic tab mixer maps toolbar to the
+    # active tab and background_tab to inactive tabs/New Tab.
     theme_colors = {
         "frame": rgb(colors["bg_hard"]),
         "frame_inactive": rgb(colors["bg_hard"]),
@@ -89,9 +89,9 @@ def theme_payload(colors: dict[str, str]) -> dict[str, object]:
         "toolbar_text": rgb(colors["fg"]),
         "toolbar_button_icon": rgb(colors["fg"]),
         "button_background": rgb(colors["bg_hard"]),
-        "omnibox_background": rgb(colors["bg"]),
+        "omnibox_background": rgb(colors["bg_hard"]),
         "omnibox_text": rgb(colors["fg"]),
-        "ntp_background": rgb(colors["bg"]),
+        "ntp_background": rgb(colors["bg_hard"]),
         "ntp_header": rgb(colors["bg_alt"]),
         "ntp_text": rgb(colors["fg"]),
         "ntp_link": rgb(colors["blue"]),

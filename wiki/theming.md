@@ -43,15 +43,16 @@ The main generator writes the tracked format-specific surfaces:
 Telegram Desktop is user-imported rather than symlinked by bootstrap, so its
 surface is generated separately by `telegram/generate-theme.py`. The tracked
 `telegram/colors.tdesktop-theme` contains the palette and tracked
-`telegram/background.jpg` is the preferred botanical Gruvbox wallpaper. Running
-the generator packages those as
-`telegram/gruvbox-material-dark-medium.tdesktop-theme`; the archive is a local
-build artifact and is ignored by git. It contains `colors.tdesktop-theme` and
-`background.jpg`, which Telegram Desktop reads as the palette and theme
-wallpaper. Import the final archive, not the standalone palette file. The
-tracked JPEG is passed through as opaque binary data; Telegram Desktop performs
-the image decoding, so the generator does not impose its own JPEG-container
-validation.
+`telegram/background.jpg` is the preferred botanical Gruvbox wallpaper. The
+artwork is inset on a taller dark canvas so Telegram's cover-style wallpaper
+scaling crops and zooms it less in a narrow chat pane. Running the generator
+packages those as `telegram/gruvbox-material-dark-medium.tdesktop-theme`; the
+archive is a local build artifact and is ignored by git. It contains
+`colors.tdesktop-theme` and `background.jpg`, which Telegram Desktop reads as the
+palette and theme wallpaper. Import the final archive, not the standalone
+palette file. The tracked JPEG is passed through as opaque binary data; Telegram
+Desktop performs the image decoding, so the generator does not impose its own
+JPEG-container validation.
 
 The alternate procedural wallpaper is intentionally retained as a backup. Each
 Telegram generation writes it to `telegram/background-backup.png`; that file is

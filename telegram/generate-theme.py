@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import argparse
-import base64
 from io import BytesIO
 from pathlib import Path
 import struct
@@ -131,35 +130,20 @@ def render_backup_background(colors: dict[str, str], width: int = 1600, height: 
     )
 
 
-def normalize_jpeg(data: bytes) -> bytes | None:
-    """Return the JPEG container, tolerating harmless bytes after its EOI marker."""
-    if not data.startswith(b"\xff\xd8"):
-        return None
-    end = data.rfind(b"\xff\xd9")
-    if end < 2:
-        return None
-    return data[: end + 2]
-
-
 def read_primary_background() -> bytes:
-    """Read either a real JPEG or the legacy base64 transport form."""
+    """Read the tracked wallpaper as opaque binary data.
+
+    Telegram Desktop performs the actual image decoding when it imports the
+    theme. Avoid reimplementing JPEG validation here: valid progressive JPEGs
+    and files with harmless metadata/trailing bytes must pass through unchanged.
+    """
     if not BACKGROUND_SOURCE.is_file():
         raise FileNotFoundError(f"Telegram background not found: {BACKGROUND_SOURCE}")
 
     data = BACKGROUND_SOURCE.read_bytes()
-    if jpeg := normalize_jpeg(data):
-        return jpeg
-
-    try:
-        decoded = base64.b64decode(b"".join(data.split()), validate=True)
-    except (ValueError, base64.binascii.Error) as exc:
-        raise ValueError(
-            f"Telegram background is neither JPEG nor base64-encoded JPEG: {BACKGROUND_SOURCE}"
-        ) from exc
-
-    if jpeg := normalize_jpeg(decoded):
-        return jpeg
-    raise ValueError(f"Decoded Telegram background is not a valid JPEG container: {BACKGROUND_SOURCE}")
+    if not data:
+        raise ValueError(f"Telegram background is empty: {BACKGROUND_SOURCE}")
+    return data
 
 
 def build_archive(palette: str, background: bytes) -> bytes:

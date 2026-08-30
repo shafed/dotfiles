@@ -5,6 +5,7 @@ updated: 2026-08-30
 covers:
   - colors.toml
   - scripts/generate-theme.py
+  - telegram/
   - darkman/
   - hypr/hyprsunset.conf
   - kitty/current-theme.conf
@@ -25,9 +26,11 @@ visual reference.
 ```sh
 python3 scripts/generate-theme.py
 python3 scripts/generate-theme.py --check
+python3 telegram/generate-theme.py
+python3 telegram/generate-theme.py --check
 ```
 
-The generator writes the tracked format-specific surfaces:
+The main generator writes the tracked format-specific surfaces:
 
 - `kitty/current-theme.conf` and `kitty/quick-access-terminal-center.conf`;
 - `waybar/colors.css` (imported by `style.css`);
@@ -37,13 +40,18 @@ The generator writes the tracked format-specific surfaces:
 - `.claude/themes/gruvbox-material.json`;
 - `yazi/flavors/gruvbox-dark.yazi/flavor.toml`.
 
-Do not hand-edit color values in those generated files. Configs listed above
-consume generated palette surfaces rather than maintaining independent values.
-Yazi's existing
-classic-Gruvbox accents are intentionally preserved as compatibility entries in
-`colors.toml`; regeneration therefore does not restyle Yazi. Its vendored
-`tmtheme.xml` is syntax-highlighting metadata from the upstream flavor and is
-not used as the desktop palette source.
+Telegram Desktop is user-imported rather than symlinked by bootstrap, so its
+surface is generated separately by `telegram/generate-theme.py`. It writes
+`telegram/gruvbox-material-dark-medium.tdesktop-theme`; open that file in
+Telegram Desktop and choose **Apply this theme**. The file is a plain Telegram
+palette, so no separate archive or wallpaper asset is required.
+
+Do not hand-edit color values in generated files. Configs listed above consume
+generated palette surfaces rather than maintaining independent values. Yazi's
+existing classic-Gruvbox accents are intentionally preserved as compatibility
+entries in `colors.toml`; regeneration therefore does not restyle Yazi. Its
+vendored `tmtheme.xml` is syntax-highlighting metadata from the upstream flavor
+and is not used as the desktop palette source.
 
 The Claude Code theme deliberately leaves `claudeShimmer` at its built-in color;
 overriding it made the thinking animation harder to distinguish.

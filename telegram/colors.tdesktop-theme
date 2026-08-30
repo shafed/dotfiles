@@ -31,7 +31,7 @@ windowSubTextFg: GB_GRAY_DIM;
 windowSubTextFgOver: GB_FG_SOFT;
 windowBoldFg: GB_FG_UI;
 windowBoldFgOver: GB_FG_BRIGHT;
-windowBgActive: GB_YELLOW;
+windowBgActive: GB_BLUE;
 windowFgActive: GB_BG_HARD;
 windowActiveTextFg: GB_YELLOW;
 windowShadowFg: #00000066;
@@ -71,7 +71,7 @@ inputPlaceholderFgActive: GB_GRAY_DIM;
 // Lists, chats and unread state.
 dialogsBg: GB_BG;
 dialogsBgOver: GB_BG_ALT;
-dialogsBgActive: GB_BG_HOVER;
+dialogsBgActive: GB_BG_SOFT;
 dialogsNameFg: GB_FG_UI;
 dialogsNameFgOver: GB_FG_BRIGHT;
 dialogsNameFgActive: GB_FG_BRIGHT;

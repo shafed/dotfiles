@@ -25,6 +25,15 @@ REQUIRED_PKGS=(
   "kanata:kanata-bin (AUR)"
   "kitty:kitty"
   "helium-browser:helium-browser-bin (AUR)"
+  "quickshell:quickshell"
+  "wpctl:wireplumber"
+  "nmcli:networkmanager"
+  "bluetoothctl:bluez-utils"
+  "powerprofilesctl:power-profiles-daemon"
+  "brightnessctl:brightnessctl"
+  "checkupdates:pacman-contrib"
+  "wl-paste:wl-clipboard"
+  "cliphist:cliphist"
   "waybar:waybar"
   "yazi:yazi"
   "nvim:neovim"
@@ -45,7 +54,7 @@ REQUIRED_PKGS=(
 # Sources this script links, relative to DOTFILES_DIR. CONFIG_DIRS become
 # whole-directory symlinks into ~/.config; LINK_FILES are individual symlinks.
 CONFIG_DIRS=(
-  hypr kitty nvim kanata waybar yazi darkman lazygit sioyek zathura systemd
+  hypr kitty nvim kanata waybar quickshell yazi darkman lazygit sioyek zathura systemd
 )
 LINK_FILES=(
   zsh/zshrc
@@ -135,40 +144,25 @@ link_configs() {
 
   # This repo's own rules live in CLAUDE.md; AGENTS.md is a symlink to it, so
   # Codex and opencode (which read AGENTS.md by convention) get the same file.
-  # Git tracks the symlink, so a fresh clone already has it — this line just
-  # repairs it if something replaces it with a regular file. Relative target,
-  # so it survives cloning to a different path.
   ln -sfvn CLAUDE.md "$DOTFILES_DIR/AGENTS.md"
 
-  # The /commit skill. Claude Code and opencode both scan the project's
-  # .claude/skills/ on their own; Codex reads .agents/skills/, so that path is
-  # a relative symlink to the single real copy under .claude/.
-  # Verified on Codex 0.147.0 (`codex debug prompt-input` in a probe repo):
-  # repo-level discovery works, and the Claude-only frontmatter keys
-  # (user-invocable, argument-hint, allowed-tools, model) are ignored rather
-  # than rejected — so one file serves both agents and cannot rot apart.
-  # Keeping it repo-scoped also stops the skill leaking into unrelated repos,
-  # which the old $CODEX_HOME/skills wiring did back when Codex had no
-  # project-level scope.
-  # Git tracks the symlink, so a fresh clone already has it — this line just
-  # repairs it if something replaces it with a regular file.
+  # One real /commit skill serves Claude Code, opencode and Codex.
   ln -sfvn ../../.claude/skills/commit "$DOTFILES_DIR/.agents/skills/commit"
 
-  # The gruvbox-material Claude Code theme (referenced by
-  # ~/.claude/settings.json as "theme": "custom:gruvbox-material").
+  # The gruvbox-material Claude Code theme.
   mkdir -p "$HOME/.claude/themes"
   ln -sfvn "$DOTFILES_DIR/.claude/themes/gruvbox-material.json" \
     "$HOME/.claude/themes/gruvbox-material.json"
 
   echo
   echo "== Linking darkman hook scripts into \$XDG_DATA_HOME =="
-  # darkman v2 reads transition scripts from the data dir (not ~/.config).
   mkdir -p "$HOME/.local/share"
   ln -sfvn "$DOTFILES_DIR/darkman/scripts" "$HOME/.local/share/darkman"
 
   echo
   echo "== Installing ~/.local/bin wrappers =="
   mkdir -p "$HOME/.local/bin"
+
   cat >"$HOME/.local/bin/sudo" <<EOF
 #!/usr/bin/env bash
 exec "$DOTFILES_DIR/scripts/sudo-notify.sh" "\$@"
@@ -176,12 +170,22 @@ EOF
   chmod +x "$HOME/.local/bin/sudo"
   echo "  wrote $HOME/.local/bin/sudo"
 
-  # sioyek can't create a Qt6 EGL context on nvidia under Wayland (the window
-  # never appears and the process hangs), so force it onto XWayland. The old
-  # LIBGL_ALWAYS_SOFTWARE=1 workaround made it worse: it routes GL to Mesa's
-  # llvmpipe while EGL still resolves to nvidia via libglvnd -> EGL_BAD_MATCH.
-  # A wrapper (not a shell alias) so yazi, kanata, vimtex and the .desktop
-  # entry all get it too.
+  # Keep the existing Super+V / CopyQ call sites intact while routing the
+  # historical `copyq toggle` action to the Quickshell clipboard overlay.
+  # Every other CopyQ invocation still reaches the real binary, which also
+  # remains the clipboard-history fallback when cliphist is unavailable.
+  cat >"$HOME/.local/bin/copyq" <<EOF
+#!/usr/bin/env bash
+if [ "\${1:-}" = "toggle" ] && command -v quickshell >/dev/null 2>&1; then
+  exec quickshell ipc -p "$DOTFILES_DIR/quickshell" call dots toggleClipboard
+fi
+exec /usr/bin/copyq "\$@"
+EOF
+  chmod +x "$HOME/.local/bin/copyq"
+  echo "  wrote $HOME/.local/bin/copyq"
+
+  # sioyek can't create a Qt6 EGL context on nvidia under Wayland, so force it
+  # onto XWayland. This is a wrapper rather than an alias so every caller gets it.
   cat >"$HOME/.local/bin/sioyek" <<EOF
 #!/usr/bin/env bash
 exec env -u LIBGL_ALWAYS_SOFTWARE QT_QPA_PLATFORM=xcb /usr/bin/sioyek "\$@"

@@ -17,7 +17,9 @@ def replace_once(old: str, new: str, label: str) -> None:
 
 replace_once(
     "  function syncNativeAudio() {\n",
-    '''  function agentTitle(agent) {
+    '''  property bool agentsLiveRefreshed: false
+
+  function agentTitle(agent) {
     var raw = String(agent && agent.name ? agent.name : "AI")
     var separator = raw.indexOf(" · ")
     if (separator >= 0) raw = raw.slice(0, separator)
@@ -76,10 +78,24 @@ replace_once(
     "AI limit helpers",
 )
 
+# Slow snapshots still contain the legacy five-minute AI cache. Once the direct
+# account refresh has succeeded, never let those snapshots overwrite live rows.
+replace_once(
+    "  function updateFull(next) {\n"
+    "    if (state.layout) next.layout = state.layout\n"
+    "    state = next\n",
+    "  function updateFull(next) {\n"
+    "    if (state.layout) next.layout = state.layout\n"
+    "    if (agentsLiveRefreshed && state.agents) next.agents = state.agents\n"
+    "    state = next\n",
+    "live AI snapshot preservation",
+)
+
 replace_once(
     "  NotificationServer {\n",
     '''  Process {
     id: agentsRefreshProc
+    running: true
     command: ["python3", root.home + "/github/dotfiles/quickshell/agents-refresh.py"]
     stdout: StdioCollector {
       waitForEnd: true
@@ -89,6 +105,7 @@ replace_once(
           var merged = root.state
           merged.agents = rows
           root.state = Object.assign({}, merged)
+          root.agentsLiveRefreshed = true
         } catch (e) {
           console.warn("dots-shell agents refresh:", e)
         }

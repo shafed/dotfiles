@@ -15,12 +15,14 @@ case "${1:-}" in
     exec quickshell ipc -p "$config" call bookmarks toggle
     ;;
   clipboard)
-    quickshell ipc -p "$config" call dots closeOverlays >/dev/null 2>&1 || true
+    quickshell ipc -p "$config" call launcher close >/dev/null 2>&1 || true
+    quickshell ipc -p "$config" call bookmarks close >/dev/null 2>&1 || true
     exec quickshell ipc -p "$config" call dots toggleClipboard
     ;;
   panel)
-    [[ $# -ge 2 ]] || { echo "usage: dots-shell panel <audio|network|bluetooth|power|agents|updates|notifications>" >&2; exit 2; }
-    quickshell ipc -p "$config" call dots closeOverlays >/dev/null 2>&1 || true
+    [[ $# -ge 2 ]] || { echo "usage: dots-shell panel <audio|network|bluetooth|power|agents|updates|notifications|calendar>" >&2; exit 2; }
+    quickshell ipc -p "$config" call launcher close >/dev/null 2>&1 || true
+    quickshell ipc -p "$config" call bookmarks close >/dev/null 2>&1 || true
     exec quickshell ipc -p "$config" call dots panel "$2"
     ;;
   refresh)

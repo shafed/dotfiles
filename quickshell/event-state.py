@@ -24,6 +24,14 @@ replace_once(
 )
 
 replace_once(
+    "    if (next.audio) merged.audio = next.audio\n"
+    "    if (next.brightness !== undefined) merged.brightness = next.brightness\n",
+    "    if (next.audio && !audioEventReady) merged.audio = next.audio\n"
+    "    if (next.brightness !== undefined && !brightnessEventReady) merged.brightness = next.brightness\n",
+    "fast snapshot event preservation",
+)
+
+replace_once(
     "  function updateFull(next) {\n"
     "    if (state.layout) next.layout = state.layout\n"
     "    state = next\n",

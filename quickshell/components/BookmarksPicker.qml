@@ -3,9 +3,13 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
+import "../config" as Config
 
 Item {
   id: picker
+
+  Config.Colors { id: colors }
+  Config.UiConfig { id: ui }
 
   readonly property string helper: Quickshell.env("HOME") + "/.config/quickshell/palette-helper.py"
 
@@ -128,44 +132,44 @@ Item {
   PanelWindow {
     visible: picker.open
     anchors { top: true; bottom: true; left: true; right: true }
-    color: "#99000000"
+    color: ui.overlayColor
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.namespace: "dots-bookmarks"
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
 
     Rectangle {
-      width: Math.min(720, parent.width - 80)
-      height: Math.min(600, parent.height - 100)
+      width: Math.min(ui.pickerMaxWidth, parent.width - ui.pickerHorizontalInset)
+      height: Math.min(ui.pickerMaxHeight, parent.height - ui.pickerVerticalInset)
       anchors.centerIn: parent
-      color: "#1d2021"
-      border.color: "#504945"
+      color: colors.bgHard
+      border.color: colors.bgHover
       border.width: 1
-      radius: 10
+      radius: ui.pickerRadius
 
       ColumnLayout {
         anchors.fill: parent
-        anchors.margins: 16
-        spacing: 10
+        anchors.margins: ui.pickerPadding
+        spacing: ui.pickerSpacing
 
         RowLayout {
           Layout.fillWidth: true
-          spacing: 10
+          spacing: ui.pickerSpacing
 
           Text {
             text: "Bookmarks"
-            color: "#d8a657"
-            font.family: "monospace"
+            color: colors.yellow
+            font.family: ui.bodyFont
             font.bold: true
-            font.pixelSize: 15
+            font.pixelSize: ui.pickerTitleSize
           }
 
           Rectangle {
             Layout.fillWidth: true
-            implicitHeight: 38
-            radius: 6
-            color: "#282828"
-            border.color: searchInput.activeFocus ? "#d8a657" : "#504945"
+            implicitHeight: ui.pickerInputHeight
+            radius: ui.pickerInputRadius
+            color: colors.bg
+            border.color: searchInput.activeFocus ? colors.yellow : colors.bgHover
             border.width: 1
 
             Text {
@@ -174,9 +178,9 @@ Item {
               anchors.verticalCenter: parent.verticalCenter
               visible: searchInput.text.length === 0
               text: "Recent bookmarks — type for fzf search…"
-              color: "#928374"
-              font.family: "sans-serif"
-              font.pixelSize: 12
+              color: colors.gray
+              font.family: ui.sansFont
+              font.pixelSize: ui.pickerHintSize
             }
 
             TextInput {
@@ -186,11 +190,11 @@ Item {
               anchors.rightMargin: 12
               verticalAlignment: TextInput.AlignVCenter
               text: picker.query
-              color: "#ebdbb2"
-              selectionColor: "#504945"
-              selectedTextColor: "#ebdbb2"
-              font.family: "sans-serif"
-              font.pixelSize: 13
+              color: colors.fgUi
+              selectionColor: colors.bgHover
+              selectedTextColor: colors.fgUi
+              font.family: ui.sansFont
+              font.pixelSize: ui.pickerInputTextSize
               selectByMouse: false
               onTextChanged: picker.query = text
 
@@ -236,11 +240,11 @@ Item {
             required property var modelData
             required property int index
             width: bookmarkList.width
-            height: 54
-            radius: 7
-            color: index === picker.selectedIndex ? "#3c3836" : "transparent"
+            height: ui.pickerRowHeight
+            radius: ui.pickerRowRadius
+            color: index === picker.selectedIndex ? colors.bgSoft : "transparent"
             border.width: index === picker.selectedIndex ? 1 : 0
-            border.color: "#665c54"
+            border.color: colors.bgMuted
 
             RowLayout {
               anchors.fill: parent
@@ -252,8 +256,8 @@ Item {
                 Layout.preferredWidth: 30
                 Layout.preferredHeight: 30
                 radius: 6
-                color: "#282828"
-                border.color: "#504945"
+                color: colors.bg
+                border.color: colors.bgHover
                 border.width: 1
 
                 Image {
@@ -270,10 +274,10 @@ Item {
                   anchors.centerIn: parent
                   visible: String(modelData.icon || "").length === 0
                   text: String(modelData.name || modelData.url || "?").charAt(0).toUpperCase()
-                  color: "#a89984"
-                  font.family: "sans-serif"
+                  color: colors.grayDim
+                  font.family: ui.sansFont
                   font.bold: true
-                  font.pixelSize: 13
+                  font.pixelSize: ui.pickerRowTitleSize
                 }
               }
 
@@ -284,19 +288,19 @@ Item {
                 Text {
                   Layout.fillWidth: true
                   text: String(modelData.name || modelData.url || "")
-                  color: "#ebdbb2"
-                  font.family: "sans-serif"
+                  color: colors.fgUi
+                  font.family: ui.sansFont
                   font.bold: index === picker.selectedIndex
-                  font.pixelSize: 13
+                  font.pixelSize: ui.pickerRowTitleSize
                   elide: Text.ElideRight
                 }
 
                 Text {
                   Layout.fillWidth: true
                   text: String(modelData.url || "")
-                  color: "#a89984"
-                  font.family: "sans-serif"
-                  font.pixelSize: 11
+                  color: colors.grayDim
+                  font.family: ui.sansFont
+                  font.pixelSize: ui.pickerRowSubtitleSize
                   elide: Text.ElideRight
                 }
               }
@@ -309,15 +313,15 @@ Item {
           Text {
             Layout.fillWidth: true
             text: picker.rows.length + (picker.query.trim() ? " fzf + usage matches" : " recent")
-            color: "#928374"
-            font.family: "monospace"
-            font.pixelSize: 10
+            color: colors.gray
+            font.family: ui.bodyFont
+            font.pixelSize: ui.pickerFooterSize
           }
           Text {
             text: "↑↓ / Ctrl-JK  select   Enter  open/focus   Esc  close"
-            color: "#928374"
-            font.family: "monospace"
-            font.pixelSize: 10
+            color: colors.gray
+            font.family: ui.bodyFont
+            font.pixelSize: ui.pickerFooterSize
           }
         }
       }

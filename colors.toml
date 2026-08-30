@@ -1,0 +1,42 @@
+[meta]
+name = "Gruvbox Material Dark Medium"
+variant = "dark-medium"
+reference = "nvim gruvbox-material"
+
+[colors]
+bg_hard = "#1d2021"
+bg = "#282828"
+bg_alt = "#32302f"
+bg_soft = "#3c3836"
+bg_hover = "#504945"
+bg_muted = "#665c54"
+fg = "#d4be98"
+fg_ui = "#ebdbb2"
+fg_bright = "#fbf1c7"
+fg_soft = "#d5c4a1"
+gray = "#928374"
+gray_dim = "#a89984"
+red = "#ea6962"
+green = "#a9b665"
+yellow = "#d8a657"
+orange = "#e78a4e"
+blue = "#7daea3"
+purple = "#d3869b"
+aqua = "#89b482"
+
+# Existing Yazi flavor uses the classic Gruvbox accents below. They stay in the
+# same palette file so regenerating themes does not silently change its look.
+legacy_blue = "#83a598"
+legacy_green = "#b8bb26"
+legacy_orange = "#fe8019"
+legacy_aqua = "#8ec07c"
+legacy_red = "#fb4934"
+legacy_yellow = "#fabd2f"
+legacy_blue_dark = "#458588"
+legacy_green_dark = "#689d6a"
+
+# Claude diff backgrounds are semantic shades derived from the same dark theme.
+diff_added = "#3c4a30"
+diff_removed = "#4c3432"
+diff_added_dimmed = "#333a2a"
+diff_removed_dimmed = "#3f2e2c"

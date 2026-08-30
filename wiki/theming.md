@@ -3,74 +3,59 @@ title: theming
 type: topic
 updated: 2026-08-30
 covers:
+  - colors.toml
+  - scripts/generate-theme.py
   - darkman/
   - hypr/hyprsunset.conf
   - kitty/current-theme.conf
-  - helium/
   - .claude/themes/gruvbox-material.json
+  - quickshell/config/Colors.qml
 ---
 
 # theming — gruvbox (dark everywhere)
 
-Everything is **Gruvbox Material Dark Medium**, anchored to `background #282828`
-/ `foreground #d4be98`. **nvim is the reference** — kitty's background was tuned
-to match it, not the other way round.
+Everything uses **Gruvbox Material Dark Medium**, anchored to `#282828`
+background / `#d4be98` foreground. Neovim's gruvbox-material setup remains the
+visual reference.
 
-⚠️ Gotcha: **there is no source-of-truth color file.** The palette is
-hand-duplicated in the active components, and changing a shade means editing all
-of them:
+## Palette source of truth
 
-- `kitty/current-theme.conf`, plus a second copy in
-  `quick-access-terminal-center.conf` via `kitty_override`
-- `yazi/flavors/gruvbox-dark.yazi` + `theme.toml`
-- nvim's own gruvbox-material plugin
-- `helium/gruvbox-material/manifest.json`
-- `.claude/themes/gruvbox-material.json`
-- hyprland/hyprlock — raw hex in the configs for borders and lock fields
+`colors.toml` is the only editable repository palette. After changing it, run:
 
-The old `waybar/` palette copy was removed when Waybar was retired in favor of
-Quickshell. Keeping it made palette edits look like they still had to update an
-inactive component; stale installed Waybar state is now handled by
-[dots](dots.md).
+```sh
+python3 scripts/generate-theme.py
+python3 scripts/generate-theme.py --check
+```
 
-The Claude Code theme deliberately leaves `claudeShimmer` at its built-in color:
-overriding it made the thinking animation harder to pick out. The base `claude`
-accent and the rest of that UI are gruvbox.
+The generator writes the tracked format-specific surfaces:
 
-## Helium — local Chromium theme
+- `kitty/current-theme.conf` and `kitty/quick-access-terminal-center.conf`;
+- `waybar/colors.css` (imported by `style.css`);
+- `hypr/colors.conf` (sourced by `hyprlock.conf`);
+- `scripts/generated-colors.sh` (available to shell consumers);
+- `quickshell/config/Colors.qml`;
+- `.claude/themes/gruvbox-material.json`;
+- `yazi/flavors/gruvbox-dark.yazi/flavor.toml`.
 
-`helium/gruvbox-material/manifest.json` is an unpacked Manifest V3 Chromium theme
-using the same Gruvbox Material Dark Medium palette as kitty/nvim. It keeps the
-browser chrome dark regardless of darkman's GTK/Qt sunrise/sundown switch.
+Do not hand-edit color values in those generated files. Configs listed above
+consume generated palette surfaces rather than maintaining independent values.
+Yazi's existing
+classic-Gruvbox accents are intentionally preserved as compatibility entries in
+`colors.toml`; regeneration therefore does not restyle Yazi. Its vendored
+`tmtheme.xml` is syntax-highlighting metadata from the upstream flavor and is
+not used as the desktop palette source.
 
-Install it once from `helium://extensions`: enable **Developer mode**, choose
-**Load unpacked**, and select `~/github/dotfiles/helium/gruvbox-material/`.
-After later palette edits, use **Reload** on that extension/theme entry.
+The Claude Code theme deliberately leaves `claudeShimmer` at its built-in color;
+overriding it made the thinking animation harder to distinguish.
 
-⚠️ Helium currently does not expose a stable local config/CLI for setting its
-colour theme programmatically, so the one-time profile install is intentional.
-Also, some Chromium internal pages (Settings, Extensions, Downloads, etc.) may
-still retain Helium/Chromium's own dark colours even while the browser chrome is
-gruvbox; upstream tracks consistent internal-page theming separately.
+The previously documented unpacked Helium theme is no longer present in the
+repository. Helium therefore is not a generated target here.
 
-## Light/dark: darkman toggles the system color-scheme, not kitty
+## Light/dark
 
-darkman flips the GTK/Qt `color-scheme` preference at sunrise/sundown. Modern
-GTK and Qt apps honor that preference and render their own dark/light variant,
-which is why no per-app theme files exist for them.
+Darkman flips the GTK/Qt `color-scheme` preference at sunrise/sundown. It does
+not rewrite static dotfile palettes. Hooks live in the XDG data dir
+(`~/.local/share/darkman` via bootstrap), not `~/.config`.
 
-- ⚠️ **Hooks live in the XDG *data* dir, not `~/.config`.** darkman v2 only
-  scans `$XDG_DATA_HOME/darkman/` (+ `XDG_DATA_DIRS`) for transition scripts,
-  hence the `~/.local/share/darkman → ~/github/dotfiles/darkman/scripts` symlink from
-  `bootstrap.sh`. A hook placed in `~/.config` is silently never run.
-- **kitty and Helium are intentionally NOT toggled** — both keep their single
-  gruvbox-dark themes.
-- ⚠️ **Gaps**: yazi/nvim/Helium are static gruvbox dark and don't follow the
-  color-scheme; only GTK/Qt apps do. To widen the switch, add per-app hooks to
-  `darkman/scripts/`.
-
-## hyprsunset — screen gamma/temperature only
-
-⚠️ Don't confuse `hypr/hyprsunset.conf` with theme switching: it is an
-independent night filter over the whole screen, does NOT touch app colors, and
-is NOT linked to darkman.
+`hypr/hyprsunset.conf` is independent screen gamma/temperature control and does
+not switch application themes.

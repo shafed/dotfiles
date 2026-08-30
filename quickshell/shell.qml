@@ -2,16 +2,20 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
-import Quickshell.Wayland
 import Quickshell.Services.Notifications
-import Quickshell.Services.SystemTray
+import Quickshell.Wayland
+import "components" as Components
+import "config" as Config
+import "services" as Services
 
 ShellRoot {
   id: root
 
+  Config.Colors { id: colors }
+  Config.UiConfig { id: ui }
+
   readonly property string home: Quickshell.env("HOME")
   readonly property string backend: home + "/github/dotfiles/quickshell/backend.py"
-  readonly property string workspacesBackend: home + "/github/dotfiles/quickshell/workspaces.py"
   readonly property bool laptop: state.power && Number(state.power.battery) >= 0
 
   property var state: ({
@@ -26,19 +30,23 @@ ShellRoot {
     layout: "",
     notifications: { dnd: false, history: [] }
   })
-  property var occupiedWorkspaces: []
   property string openPanel: ""
   property bool clipboardOpen: false
   property var clipboardRows: []
   property bool historyHydrated: false
-  property int lastVolume: -1
-  property int lastBrightness: -1
+  property date clockNow: new Date()
+  property date calendarMonth: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
   property bool osdOpen: false
   property string osdIcon: "VOL"
   property string osdLabel: ""
   property int osdValue: 0
   property bool osdHasValue: true
   property var notificationRefs: ({})
+  property bool agentsLiveRefreshed: false
+  property double agentsLastUpdatedMs: 0
+
+  Components.DesktopLauncher { id: desktopLauncher }
+  Components.BookmarksPicker { id: bookmarksPicker }
 
   function run(args) {
     Quickshell.execDetached(args)
@@ -52,43 +60,136 @@ ShellRoot {
     return value ? value.slice(0, 2).toUpperCase() : "--"
   }
 
+  function calendarCellDate(index) {
+    var first = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), 1)
+    var mondayOffset = (first.getDay() + 6) % 7
+    return new Date(first.getFullYear(), first.getMonth(), index - mondayOffset + 1)
+  }
+
+  function sameCalendarDay(a, b) {
+    return a.getFullYear() === b.getFullYear() &&
+           a.getMonth() === b.getMonth() &&
+           a.getDate() === b.getDate()
+  }
+
+  function shiftCalendarMonth(delta) {
+    calendarMonth = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + delta, 1)
+  }
+
+  function openCalendar() {
+    if (openPanel !== "calendar") {
+      var now = new Date()
+      calendarMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+    }
+    togglePanel("calendar")
+  }
+
+  function aiLimitColor() {
+    var rows = state.agents || []
+    var lowestRemaining = 1.0
+    var found = false
+    for (var i = 0; i < rows.length; i++) {
+      var limits = rows[i].limits || []
+      for (var j = 0; j < limits.length; j++) {
+        var used = Number(limits[j].percent)
+        if (isNaN(used)) continue
+        found = true
+        used = Math.max(0, Math.min(1, used))
+        lowestRemaining = Math.min(lowestRemaining, 1 - used)
+      }
+    }
+    if (!found) return colors.fgBright
+    if (lowestRemaining <= 0.10) return colors.red
+    if (lowestRemaining <= 0.30) return colors.yellow
+    return colors.fgBright
+  }
+
+  function formatAgentsLastUpdated() {
+    if (agentsLastUpdatedMs <= 0)
+      return agentsRefreshProc.running ? "updating..." : "never"
+    var nowMs = clockNow ? clockNow.getTime() : Date.now()
+    var seconds = Math.max(0, Math.floor((nowMs - agentsLastUpdatedMs) / 1000))
+    if (seconds < 60) return "just now"
+    var minutes = Math.floor(seconds / 60)
+    if (minutes < 60) return minutes + "m ago"
+    var hours = Math.floor(minutes / 60)
+    if (hours < 24) return hours + "h ago"
+    return Math.floor(hours / 24) + "d ago"
+  }
+
+  function agentTitle(agent) {
+    var raw = String(agent && agent.name ? agent.name : "AI")
+    var separator = raw.indexOf(" · ")
+    if (separator >= 0) raw = raw.slice(0, separator)
+    var plan = String(agent && agent.plan ? agent.plan : "")
+    return raw + (plan ? " · " + plan : "")
+  }
+
+  function agentLimit(agent, weekly) {
+    var limits = agent && agent.limits ? agent.limits : []
+    for (var i = 0; i < limits.length; i++) {
+      var limit = limits[i]
+      var label = String(limit && limit.label ? limit.label : "").toLowerCase()
+      if (weekly && label === "7d") return limit
+      if (!weekly && label !== "7d") return limit
+    }
+    return null
+  }
+
+  function limitUsed(limit) {
+    if (!limit) return 0
+    var value = Number(limit.percent)
+    if (isNaN(value)) return 0
+    return Math.max(0, Math.min(1, value))
+  }
+
+  function limitColor(limit) {
+    if (!limit) return colors.grayDim
+    var remaining = 1 - limitUsed(limit)
+    if (remaining <= 0.10) return colors.red
+    if (remaining <= 0.30) return colors.yellow
+    return colors.green
+  }
+
+  function formatLimitReset(raw) {
+    if (raw === undefined || raw === null || String(raw) === "") return "Reset time unavailable"
+    var numeric = Number(raw)
+    var when = !isNaN(numeric) && numeric > 0
+               ? new Date(numeric < 100000000000 ? numeric * 1000 : numeric)
+               : new Date(String(raw))
+    if (isNaN(when.getTime())) return "Reset time unavailable"
+
+    var now = new Date()
+    var delta = when.getTime() - now.getTime()
+    if (delta > 0 && delta <= 24 * 60 * 60 * 1000) {
+      var totalMinutes = Math.max(1, Math.ceil(delta / 60000))
+      var hours = Math.floor(totalMinutes / 60)
+      var minutes = totalMinutes % 60
+      if (hours > 0) return "Resets in " + hours + "h " + minutes + "m"
+      return "Resets in " + minutes + "m"
+    }
+    return "Resets " + Qt.formatDateTime(when, "ddd HH:mm")
+  }
+
   function backendAction(domain, action, arg) {
     var argv = ["python3", backend, "action", domain, action]
     if (arg !== undefined && arg !== null && String(arg) !== "") argv.push(String(arg))
     run(argv)
-    fastRefreshDelay.restart()
     fullRefreshDelay.restart()
-    if (domain === "workspace") workspaceRefreshDelay.restart()
   }
 
   function togglePanel(name) {
     if (!laptop && (name === "network" || name === "bluetooth")) return
+    desktopLauncher.close()
+    bookmarksPicker.close()
+    clipboardOpen = false
     openPanel = openPanel === name ? "" : name
     if (openPanel !== "" && !fullProc.running) fullProc.running = true
   }
 
-  function updateFast(next) {
-    var merged = state
-    if (next.audio) merged.audio = next.audio
-    if (next.brightness !== undefined) merged.brightness = next.brightness
-    if (next.workspace !== undefined) merged.workspace = next.workspace
-    if (next.layout !== undefined) merged.layout = next.layout
-    state = Object.assign({}, merged)
-
-    if (next.audio && lastVolume >= 0 && Number(next.audio.volume) !== lastVolume) {
-      showOsd(next.audio.muted ? "MUTE" : "VOL", Number(next.audio.volume) + "%", Number(next.audio.volume), true)
-    }
-    if (next.audio) lastVolume = Number(next.audio.volume)
-
-    if (laptop && next.brightness !== undefined && Number(next.brightness) >= 0 &&
-        lastBrightness >= 0 && Number(next.brightness) !== lastBrightness) {
-      showOsd("SUN", Number(next.brightness) + "%", Number(next.brightness), true)
-    }
-    if (next.brightness !== undefined && Number(next.brightness) >= 0)
-      lastBrightness = Number(next.brightness)
-  }
-
   function updateFull(next) {
+    if (state.layout) next.layout = state.layout
+    if (agentsLiveRefreshed && state.agents) next.agents = state.agents
     state = next
     if (!historyHydrated && next.notifications && next.notifications.history) {
       historyModel.clear()
@@ -96,8 +197,12 @@ ShellRoot {
         historyModel.append(next.notifications.history[i])
       historyHydrated = true
     }
-    if (lastVolume < 0 && next.audio) lastVolume = Number(next.audio.volume)
-    if (lastBrightness < 0 && Number(next.brightness) >= 0) lastBrightness = Number(next.brightness)
+  }
+
+  function updateLayout(layout) {
+    var merged = state
+    merged.layout = layout
+    state = Object.assign({}, merged)
   }
 
   function refreshClipboard() {
@@ -111,13 +216,6 @@ ShellRoot {
     osdHasValue = hasValue !== false
     osdOpen = true
     osdTimer.restart()
-  }
-
-  function formatTokens(value) {
-    var n = Number(value || 0)
-    if (n >= 1000000) return (n / 1000000).toFixed(1) + "M"
-    if (n >= 1000) return (n / 1000).toFixed(1) + "K"
-    return String(n)
   }
 
   function receiveNotification(notification) {
@@ -164,8 +262,13 @@ ShellRoot {
   Component.onCompleted: {
     run(["pkill", "-x", "waybar"])
     fullProc.running = true
-    fastProc.running = true
-    workspaceProc.running = true
+  }
+
+  Services.DesktopServices {
+    id: desktop
+    state: root.state
+    onOsdRequested: (icon, label, value, hasValue) => root.showOsd(icon, label, value, hasValue)
+    onLayoutChanged: layout => root.updateLayout(layout)
   }
 
   ListModel { id: historyModel }
@@ -183,28 +286,6 @@ ShellRoot {
   }
 
   Process {
-    id: fastProc
-    command: ["python3", root.backend, "fast"]
-    stdout: StdioCollector {
-      waitForEnd: true
-      onStreamFinished: {
-        try { root.updateFast(JSON.parse(text)) } catch (e) { console.warn("dots-shell fast snapshot:", e) }
-      }
-    }
-  }
-
-  Process {
-    id: workspaceProc
-    command: ["python3", root.workspacesBackend]
-    stdout: StdioCollector {
-      waitForEnd: true
-      onStreamFinished: {
-        try { root.occupiedWorkspaces = JSON.parse(text) } catch (e) { root.occupiedWorkspaces = [] }
-      }
-    }
-  }
-
-  Process {
     id: clipboardProc
     command: ["python3", root.backend, "clipboard-list"]
     stdout: StdioCollector {
@@ -216,39 +297,42 @@ ShellRoot {
   }
 
   Process {
-    id: waybarRetire
     running: true
     command: ["bash", "-lc", "for i in $(seq 1 20); do pkill -x waybar >/dev/null 2>&1 || true; sleep 0.5; done"]
   }
 
   Process {
-    id: clipCapture
     running: true
     command: ["bash", "-lc",
       "if command -v cliphist >/dev/null && command -v wl-paste >/dev/null; then exec wl-paste --type text --watch cliphist store; else exec sleep infinity; fi"]
   }
 
-  Timer {
-    interval: 15000
-    repeat: true
+  Process {
+    id: agentsRefreshProc
     running: true
-    onTriggered: if (!fullProc.running) fullProc.running = true
-  }
-
-  Timer {
-    interval: 800
-    repeat: true
-    running: true
-    onTriggered: {
-      if (!fastProc.running) fastProc.running = true
-      if (!workspaceProc.running) workspaceProc.running = true
+    command: ["python3", root.home + "/github/dotfiles/quickshell/agents-refresh.py"]
+    stdout: StdioCollector {
+      waitForEnd: true
+      onStreamFinished: {
+        try {
+          var rows = JSON.parse(text)
+          var merged = root.state
+          merged.agents = rows
+          root.state = Object.assign({}, merged)
+          root.agentsLiveRefreshed = true
+          root.agentsLastUpdatedMs = Date.now()
+        } catch (e) {
+          console.warn("dots-shell agents refresh:", e)
+        }
+      }
     }
   }
 
   Timer {
-    id: fastRefreshDelay
-    interval: 250
-    onTriggered: if (!fastProc.running) fastProc.running = true
+    interval: ui.fullRefreshMs
+    repeat: true
+    running: true
+    onTriggered: if (!fullProc.running) fullProc.running = true
   }
 
   Timer {
@@ -258,20 +342,21 @@ ShellRoot {
   }
 
   Timer {
-    id: workspaceRefreshDelay
-    interval: 180
-    onTriggered: if (!workspaceProc.running) workspaceProc.running = true
+    interval: ui.clockRefreshMs
+    repeat: true
+    running: true
+    onTriggered: root.clockNow = new Date()
   }
 
   Timer {
     id: osdTimer
-    interval: 1300
+    interval: ui.osdTimeoutMs
     onTriggered: root.osdOpen = false
   }
 
   Timer {
     id: toastTimer
-    interval: 8000
+    interval: ui.toastTimeoutMs
     onTriggered: {
       if (toastModel.count > 0) root.releaseToast(toastModel.count - 1, true)
       if (toastModel.count > 0) restart()
@@ -279,7 +364,6 @@ ShellRoot {
   }
 
   NotificationServer {
-    id: notificationServer
     keepOnReload: false
     imageSupported: true
     actionsSupported: true
@@ -289,7 +373,15 @@ ShellRoot {
 
   IpcHandler {
     target: "dots"
+    function closeOverlays(): string {
+      root.openPanel = ""
+      root.clipboardOpen = false
+      return "ok"
+    }
     function toggleClipboard(): string {
+      desktopLauncher.close()
+      bookmarksPicker.close()
+      root.openPanel = ""
       root.clipboardOpen = !root.clipboardOpen
       if (root.clipboardOpen) root.refreshClipboard()
       return root.clipboardOpen ? "open" : "closed"
@@ -300,8 +392,6 @@ ShellRoot {
     }
     function refresh(): string {
       if (!root.fullProc.running) root.fullProc.running = true
-      if (!root.fastProc.running) root.fastProc.running = true
-      if (!root.workspaceProc.running) root.workspaceProc.running = true
       return "ok"
     }
     function showOsd(icon: string, label: string, value: string): string {
@@ -310,780 +400,18 @@ ShellRoot {
     }
   }
 
-  component ClickButton: Rectangle {
-    id: button
-    property string label: ""
-    property bool active: false
-    signal pressed()
-    implicitHeight: 28
-    implicitWidth: Math.max(28, textItem.implicitWidth + 14)
-    radius: 4
-    color: mouse.containsMouse || active ? "#504945" : "transparent"
+  Components.TopBar { shell: root; services: desktop; colors: colors; ui: ui }
 
-    Text {
-      id: textItem
-      anchors.centerIn: parent
-      text: button.label
-      color: "#ebdbb2"
-      font.family: "monospace"
-      font.pixelSize: 12
-    }
-
-    MouseArea {
-      id: mouse
-      anchors.fill: parent
-      hoverEnabled: true
-      cursorShape: Qt.PointingHandCursor
-      onClicked: button.pressed()
-    }
+  Components.SystemPanel {
+    shell: root
+    services: desktop
+    colors: colors
+    ui: ui
+    historyModel: historyModel
+    agentsRefreshProc: agentsRefreshProc
   }
 
-  component PanelButton: Rectangle {
-    id: pbutton
-    property string label: ""
-    property bool selected: false
-    signal pressed()
-    Layout.fillWidth: true
-    implicitHeight: 36
-    radius: 5
-    color: selected ? "#504945" : (pmouse.containsMouse ? "#3c3836" : "#282828")
-    border.width: 1
-    border.color: "#504945"
-
-    Text {
-      anchors.left: parent.left
-      anchors.leftMargin: 12
-      anchors.verticalCenter: parent.verticalCenter
-      text: pbutton.label
-      color: "#ebdbb2"
-      font.family: "monospace"
-      font.pixelSize: 12
-      elide: Text.ElideRight
-      width: parent.width - 24
-    }
-
-    MouseArea {
-      id: pmouse
-      anchors.fill: parent
-      hoverEnabled: true
-      cursorShape: Qt.PointingHandCursor
-      onClicked: pbutton.pressed()
-    }
-  }
-
-  component Heading: Text {
-    color: "#d8a657"
-    font.family: "monospace"
-    font.bold: true
-    font.pixelSize: 13
-    Layout.topMargin: 6
-  }
-
-  Variants {
-    model: Quickshell.screens
-
-    PanelWindow {
-      required property var modelData
-      screen: modelData
-      anchors { top: true; left: true; right: true }
-      implicitHeight: 30
-      color: "#1d2021"
-      exclusionMode: ExclusionMode.Auto
-      WlrLayershell.namespace: "dots-bar"
-      WlrLayershell.layer: WlrLayer.Top
-
-      RowLayout {
-        anchors.fill: parent
-        anchors.leftMargin: 4
-        anchors.rightMargin: 4
-        spacing: 3
-
-        Row {
-          Layout.alignment: Qt.AlignLeft
-          spacing: 1
-          Repeater {
-            model: root.occupiedWorkspaces
-            ClickButton {
-              required property var modelData
-              label: String(modelData)
-              active: Number(root.state.workspace || 1) === Number(modelData)
-              onPressed: root.backendAction("workspace", "focus", modelData)
-            }
-          }
-        }
-
-        Item { Layout.fillWidth: true }
-
-        Text {
-          Layout.maximumWidth: 520
-          Layout.alignment: Qt.AlignHCenter
-          text: ToplevelManager.activeToplevel
-                ? (ToplevelManager.activeToplevel.title || ToplevelManager.activeToplevel.appId || "")
-                : ""
-          color: "#d5c4a1"
-          font.family: "monospace"
-          font.pixelSize: 12
-          elide: Text.ElideRight
-        }
-
-        Item { Layout.fillWidth: true }
-
-        Row {
-          Layout.alignment: Qt.AlignRight
-          spacing: 1
-
-          ClickButton {
-            visible: Number(root.state.updates ? root.state.updates.count : 0) > 0
-            label: "↑" + String(root.state.updates ? root.state.updates.count : 0)
-            onPressed: root.togglePanel("updates")
-          }
-
-          ClickButton {
-            visible: root.state.agents && root.state.agents.length > 0
-            label: "AI"
-            active: root.openPanel === "agents"
-            onPressed: root.togglePanel("agents")
-          }
-
-          ClickButton {
-            label: root.layoutLabel(root.state.layout)
-          }
-
-          ClickButton {
-            visible: root.laptop
-            label: "BT"
-            active: root.openPanel === "bluetooth"
-            onPressed: root.togglePanel("bluetooth")
-          }
-
-          ClickButton {
-            visible: root.laptop
-            label: root.state.network && root.state.network.active ? "NET" : "NET!"
-            active: root.openPanel === "network"
-            onPressed: root.togglePanel("network")
-          }
-
-          ClickButton {
-            label: root.state.audio && root.state.audio.muted
-                   ? "MUTE"
-                   : "VOL " + String(root.state.audio ? root.state.audio.volume : 0) + "%"
-            active: root.openPanel === "audio"
-            onPressed: root.togglePanel("audio")
-          }
-
-          ClickButton {
-            visible: root.laptop
-            label: "BAT " + String(root.state.power ? root.state.power.battery : "") + "%"
-            active: root.openPanel === "power"
-            onPressed: root.togglePanel("power")
-          }
-
-          ClickButton {
-            label: "CLIP"
-            onPressed: {
-              root.clipboardOpen = true
-              root.refreshClipboard()
-            }
-          }
-
-          ClickButton {
-            label: (root.state.notifications && root.state.notifications.dnd) ? "DND" : "BELL"
-            active: root.openPanel === "notifications"
-            onPressed: root.togglePanel("notifications")
-          }
-
-          Repeater {
-            model: SystemTray.items
-            delegate: Rectangle {
-              required property var modelData
-              width: 28
-              height: 28
-              color: trayMouse.containsMouse ? "#504945" : "transparent"
-              radius: 4
-              Image {
-                anchors.centerIn: parent
-                width: 17
-                height: 17
-                source: modelData.icon
-                fillMode: Image.PreserveAspectFit
-              }
-              MouseArea {
-                id: trayMouse
-                anchors.fill: parent
-                hoverEnabled: true
-                acceptedButtons: Qt.LeftButton | Qt.RightButton
-                onClicked: function(mouse) {
-                  if (mouse.button === Qt.RightButton && typeof modelData.secondaryActivate === "function")
-                    modelData.secondaryActivate()
-                  else if (typeof modelData.activate === "function")
-                    modelData.activate()
-                }
-              }
-            }
-          }
-
-          ClickButton {
-            label: Qt.formatDateTime(new Date(), "ddd HH:mm")
-            onPressed: root.togglePanel("power")
-          }
-        }
-      }
-    }
-  }
-
-  PanelWindow {
-    id: panelWindow
-    visible: root.openPanel !== ""
-    anchors { top: true; right: true }
-    margins.top: 34
-    margins.right: 6
-    implicitWidth: 430
-    implicitHeight: 560
-    color: "transparent"
-    exclusionMode: ExclusionMode.Ignore
-    WlrLayershell.namespace: "dots-panel"
-    WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
-
-    Rectangle {
-      anchors.fill: parent
-      color: "#1d2021"
-      border.color: "#504945"
-      border.width: 1
-      radius: 8
-
-      ColumnLayout {
-        anchors.fill: parent
-        anchors.margins: 14
-        spacing: 8
-
-        RowLayout {
-          Layout.fillWidth: true
-          Text {
-            Layout.fillWidth: true
-            text: root.openPanel.toUpperCase()
-            color: "#d8a657"
-            font.family: "monospace"
-            font.bold: true
-            font.pixelSize: 14
-          }
-          ClickButton { label: "×"; onPressed: root.openPanel = "" }
-        }
-
-        Loader {
-          Layout.fillWidth: true
-          Layout.fillHeight: true
-          sourceComponent: root.openPanel === "audio" ? audioPanel :
-                           root.openPanel === "network" ? networkPanel :
-                           root.openPanel === "bluetooth" ? bluetoothPanel :
-                           root.openPanel === "power" ? powerPanel :
-                           root.openPanel === "agents" ? agentsPanel :
-                           root.openPanel === "updates" ? updatesPanel :
-                           root.openPanel === "notifications" ? notificationsPanel : null
-        }
-      }
-    }
-  }
-
-  Component {
-    id: audioPanel
-    Flickable {
-      contentWidth: width
-      contentHeight: audioColumn.implicitHeight
-      clip: true
-
-      ColumnLayout {
-        id: audioColumn
-        width: parent.width
-        spacing: 7
-
-        Heading { text: "Master" }
-        RowLayout {
-          Layout.fillWidth: true
-          PanelButton {
-            Layout.fillWidth: true
-            label: root.state.audio && root.state.audio.muted ? "Unmute" : "Mute"
-            onPressed: root.backendAction("audio", "mute", "")
-          }
-          PanelButton {
-            Layout.preferredWidth: 74
-            label: "-5%"
-            onPressed: root.backendAction("audio", "delta", "-5")
-          }
-          PanelButton {
-            Layout.preferredWidth: 74
-            label: "+5%"
-            onPressed: root.backendAction("audio", "delta", "5")
-          }
-        }
-
-        Heading { text: "Outputs" }
-        Repeater {
-          model: root.state.audio ? root.state.audio.sinks : []
-          PanelButton {
-            required property var modelData
-            label: (modelData.default ? "● " : "  ") + modelData.name
-            selected: modelData.default
-            onPressed: root.backendAction("audio", "sink", modelData.id)
-          }
-        }
-
-        Heading { text: "Application streams" }
-        Repeater {
-          model: root.state.audio ? root.state.audio.streams : []
-          PanelButton {
-            required property var modelData
-            label: modelData.name + "  " + modelData.volume + "%"
-            onPressed: {
-              var next = modelData.volume >= 90 ? 50 : modelData.volume + 10
-              root.backendAction("audio", "stream:" + modelData.id, next)
-            }
-          }
-        }
-      }
-    }
-  }
-
-  Component {
-    id: networkPanel
-    Flickable {
-      contentWidth: width
-      contentHeight: networkColumn.implicitHeight
-      clip: true
-      ColumnLayout {
-        id: networkColumn
-        width: parent.width
-        spacing: 7
-
-        RowLayout {
-          Layout.fillWidth: true
-          PanelButton {
-            label: root.state.network && root.state.network.enabled ? "Wi-Fi: on" : "Wi-Fi: off"
-            onPressed: root.backendAction("network", "toggle", "")
-          }
-          PanelButton {
-            label: "nmtui"
-            onPressed: root.backendAction("network", "settings", "")
-          }
-        }
-
-        Heading { text: "Networks" }
-        Repeater {
-          model: root.state.network ? root.state.network.networks : []
-          PanelButton {
-            required property var modelData
-            label: (modelData.active ? "● " : "") + modelData.ssid + "  " + modelData.signal + "%  " + modelData.security
-            selected: modelData.active
-            onPressed: root.backendAction("network", "connect", modelData.ssid)
-          }
-        }
-      }
-    }
-  }
-
-  Component {
-    id: bluetoothPanel
-    Flickable {
-      contentWidth: width
-      contentHeight: bluetoothColumn.implicitHeight
-      clip: true
-      ColumnLayout {
-        id: bluetoothColumn
-        width: parent.width
-        spacing: 7
-
-        PanelButton {
-          label: root.state.bluetooth && root.state.bluetooth.powered ? "Bluetooth: on" : "Bluetooth: off"
-          onPressed: root.backendAction("bluetooth", "toggle", "")
-        }
-
-        Heading { text: "Paired devices" }
-        Repeater {
-          model: root.state.bluetooth ? root.state.bluetooth.devices : []
-          PanelButton {
-            required property var modelData
-            label: (modelData.connected ? "● " : "") + modelData.name +
-                   (Number(modelData.battery) >= 0 ? "  " + modelData.battery + "%" : "")
-            selected: modelData.connected
-            onPressed: root.backendAction("bluetooth", modelData.connected ? "disconnect" : "connect", modelData.mac)
-          }
-        }
-      }
-    }
-  }
-
-  Component {
-    id: powerPanel
-    Flickable {
-      contentWidth: width
-      contentHeight: powerColumn.implicitHeight
-      clip: true
-      ColumnLayout {
-        id: powerColumn
-        width: parent.width
-        spacing: 7
-
-        Heading { text: "Power profile" }
-        Repeater {
-          model: root.state.power ? root.state.power.profiles : []
-          PanelButton {
-            required property var modelData
-            label: String(modelData)
-            selected: root.state.power && root.state.power.profile === String(modelData)
-            onPressed: root.backendAction("power", "profile", modelData)
-          }
-        }
-
-        Heading { text: "System" }
-        Text {
-          Layout.fillWidth: true
-          text: (root.state.power && Number(root.state.power.battery) >= 0
-                 ? "Battery: " + root.state.power.battery + "% (" + root.state.power.status + ")\n"
-                 : "") +
-                "Uptime: " + (root.state.power ? root.state.power.uptime : "")
-          color: "#d5c4a1"
-          font.family: "monospace"
-          font.pixelSize: 12
-        }
-
-        RowLayout {
-          Layout.fillWidth: true
-          PanelButton { label: "Lock"; onPressed: root.backendAction("power", "lock", "") }
-          PanelButton { label: "Suspend"; onPressed: root.backendAction("power", "suspend", "") }
-        }
-        RowLayout {
-          Layout.fillWidth: true
-          PanelButton { label: "Reboot"; onPressed: root.backendAction("power", "reboot", "") }
-          PanelButton { label: "Shutdown"; onPressed: root.backendAction("power", "shutdown", "") }
-        }
-      }
-    }
-  }
-
-  Component {
-    id: agentsPanel
-    Flickable {
-      contentWidth: width
-      contentHeight: agentsColumn.implicitHeight
-      clip: true
-      ColumnLayout {
-        id: agentsColumn
-        width: parent.width
-        spacing: 9
-
-        Repeater {
-          model: root.state.agents || []
-          Rectangle {
-            required property var modelData
-            Layout.fillWidth: true
-            implicitHeight: agentColumn.implicitHeight + 20
-            radius: 6
-            color: "#282828"
-            border.color: "#504945"
-
-            ColumnLayout {
-              id: agentColumn
-              anchors.left: parent.left
-              anchors.right: parent.right
-              anchors.top: parent.top
-              anchors.margins: 10
-              spacing: 5
-
-              Heading { text: modelData.name }
-              Text {
-                text: "Today " + root.formatTokens(modelData.today) +
-                      " · 7d " + root.formatTokens(modelData.week) +
-                      " · " + modelData.sessions + " sessions"
-                color: "#d5c4a1"
-                font.family: "monospace"
-                font.pixelSize: 12
-              }
-              Repeater {
-                model: modelData.models || []
-                Text {
-                  required property var modelData
-                  text: modelData.name + "  " + root.formatTokens(modelData.tokens)
-                  color: "#a89984"
-                  font.family: "monospace"
-                  font.pixelSize: 11
-                  elide: Text.ElideRight
-                  Layout.fillWidth: true
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
-  Component {
-    id: updatesPanel
-    ColumnLayout {
-      spacing: 10
-      Text {
-        Layout.fillWidth: true
-        text: Number(root.state.updates ? root.state.updates.count : 0) === 0
-              ? "System is up to date."
-              : String(root.state.updates.count) + " package updates available."
-        color: "#d5c4a1"
-        font.family: "monospace"
-        font.pixelSize: 12
-        wrapMode: Text.WordWrap
-      }
-      PanelButton {
-        visible: Number(root.state.updates ? root.state.updates.count : 0) > 0
-        label: "Open update in kitty"
-        onPressed: root.backendAction("updates", "run", "")
-      }
-      Item { Layout.fillHeight: true }
-    }
-  }
-
-  Component {
-    id: notificationsPanel
-    ColumnLayout {
-      spacing: 8
-      RowLayout {
-        Layout.fillWidth: true
-        PanelButton {
-          label: root.state.notifications && root.state.notifications.dnd ? "Do Not Disturb: ON" : "Do Not Disturb: OFF"
-          onPressed: {
-            var next = !(root.state.notifications && root.state.notifications.dnd)
-            var n = root.state.notifications || { history: [] }
-            n.dnd = next
-            root.state.notifications = n
-            root.state = Object.assign({}, root.state)
-            root.run(["python3", root.backend, "notify", "dnd", next ? "true" : "false"])
-          }
-        }
-        PanelButton {
-          label: "Clear"
-          onPressed: {
-            historyModel.clear()
-            root.run(["python3", root.backend, "notify", "clear"])
-          }
-        }
-      }
-
-      Flickable {
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-        contentWidth: width
-        contentHeight: notificationColumn.implicitHeight
-        clip: true
-
-        ColumnLayout {
-          id: notificationColumn
-          width: parent.width
-          spacing: 6
-          Repeater {
-            model: historyModel
-            Rectangle {
-              required property string summary
-              required property string body
-              required property string app
-              Layout.fillWidth: true
-              implicitHeight: notifText.implicitHeight + 20
-              radius: 5
-              color: "#282828"
-              border.color: "#3c3836"
-              Text {
-                id: notifText
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.margins: 10
-                anchors.verticalCenter: parent.verticalCenter
-                text: (app ? app + " · " : "") + summary + (body ? "\n" + body : "")
-                textFormat: Text.PlainText
-                color: "#d5c4a1"
-                font.family: "monospace"
-                font.pixelSize: 11
-                wrapMode: Text.WordWrap
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
-  PanelWindow {
-    id: clipboardWindow
-    visible: root.clipboardOpen
-    anchors { top: true; bottom: true; left: true; right: true }
-    color: "#99000000"
-    exclusionMode: ExclusionMode.Ignore
-    WlrLayershell.namespace: "dots-clipboard"
-    WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
-
-    Rectangle {
-      width: Math.min(760, parent.width - 80)
-      height: Math.min(620, parent.height - 100)
-      anchors.centerIn: parent
-      color: "#1d2021"
-      border.color: "#504945"
-      border.width: 1
-      radius: 8
-
-      ColumnLayout {
-        anchors.fill: parent
-        anchors.margins: 14
-        spacing: 8
-
-        RowLayout {
-          Layout.fillWidth: true
-          Text {
-            Layout.fillWidth: true
-            text: "Clipboard"
-            color: "#d8a657"
-            font.family: "monospace"
-            font.bold: true
-            font.pixelSize: 15
-          }
-          ClickButton { label: "×"; onPressed: root.clipboardOpen = false }
-        }
-
-        Flickable {
-          Layout.fillWidth: true
-          Layout.fillHeight: true
-          contentWidth: width
-          contentHeight: clipColumn.implicitHeight
-          clip: true
-
-          ColumnLayout {
-            id: clipColumn
-            width: parent.width
-            spacing: 5
-            Repeater {
-              model: root.clipboardRows
-              PanelButton {
-                required property var modelData
-                label: modelData.text
-                onPressed: {
-                  root.clipboardOpen = false
-                  root.run(["python3", root.backend, "clipboard-paste", String(modelData.id)])
-                }
-              }
-            }
-          }
-        }
-      }
-
-      Keys.onEscapePressed: root.clipboardOpen = false
-    }
-  }
-
-  PanelWindow {
-    visible: toastModel.count > 0
-    anchors { top: true; right: true }
-    margins.top: 36
-    margins.right: 8
-    implicitWidth: 390
-    implicitHeight: Math.min(520, toastColumn.implicitHeight)
-    color: "transparent"
-    exclusionMode: ExclusionMode.Ignore
-    WlrLayershell.namespace: "dots-notifications"
-    WlrLayershell.layer: WlrLayer.Overlay
-
-    ColumnLayout {
-      id: toastColumn
-      width: parent.width
-      spacing: 6
-
-      Repeater {
-        model: toastModel
-        Rectangle {
-          required property int index
-          required property string summary
-          required property string body
-          required property string app
-          Layout.fillWidth: true
-          implicitHeight: toastText.implicitHeight + 24
-          color: "#1d2021"
-          border.color: "#504945"
-          border.width: 1
-          radius: 7
-
-          Text {
-            id: toastText
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.margins: 12
-            anchors.verticalCenter: parent.verticalCenter
-            text: (app ? app + " · " : "") + summary + (body ? "\n" + body : "")
-            textFormat: Text.PlainText
-            color: "#ebdbb2"
-            font.family: "monospace"
-            font.pixelSize: 11
-            wrapMode: Text.WordWrap
-          }
-
-          MouseArea {
-            anchors.fill: parent
-            onClicked: root.releaseToast(index, false)
-          }
-        }
-      }
-    }
-  }
-
-  PanelWindow {
-    visible: root.osdOpen
-    anchors { top: true; bottom: true; left: true; right: true }
-    color: "transparent"
-    exclusionMode: ExclusionMode.Ignore
-    WlrLayershell.namespace: "dots-osd"
-    WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
-    mask: Region {}
-
-    Rectangle {
-      width: 330
-      height: 76
-      anchors.horizontalCenter: parent.horizontalCenter
-      anchors.bottom: parent.bottom
-      anchors.bottomMargin: 70
-      radius: 8
-      color: "#f51d2021"
-      border.color: "#504945"
-
-      RowLayout {
-        anchors.fill: parent
-        anchors.margins: 14
-        spacing: 12
-
-        Text {
-          text: root.osdIcon
-          color: "#d8a657"
-          font.family: "monospace"
-          font.bold: true
-          font.pixelSize: 13
-        }
-
-        Rectangle {
-          visible: root.osdHasValue
-          Layout.fillWidth: true
-          height: 7
-          radius: 3
-          color: "#504945"
-          Rectangle {
-            width: parent.width * Math.max(0, Math.min(1, root.osdValue / 100))
-            height: parent.height
-            radius: 3
-            color: "#a9b665"
-          }
-        }
-
-        Text {
-          text: root.osdLabel
-          color: "#ebdbb2"
-          font.family: "monospace"
-          font.bold: true
-          font.pixelSize: 12
-        }
-      }
-    }
-  }
+  Components.ClipboardOverlay { shell: root; colors: colors; ui: ui }
+  Components.ToastOverlay { shell: root; colors: colors; ui: ui; toastModel: toastModel }
+  Components.OsdOverlay { shell: root; colors: colors; ui: ui }
 }

@@ -123,14 +123,14 @@ replace_once(
 # shell.qml already uses a 30 px bar and 28 px buttons, so no geometry rewrite
 # is needed here.
 
-# Use Inter for the top bar while keeping the old Waybar-like 13 px normal weight.
+# Use Inter for the top bar at 14 px normal weight.
 replace_once(
     "      color: \"#ebdbb2\"\n"
     "      font.family: \"monospace\"\n"
     "      font.pixelSize: 12\n",
     "      color: \"#fbf1c7\"\n"
     "      font.family: \"Inter\"\n"
-    "      font.pixelSize: 13\n",
+    "      font.pixelSize: 14\n",
     "ClickButton font",
 )
 
@@ -141,7 +141,7 @@ replace_once(
     "          elide: Text.ElideRight\n",
     "          color: \"#fbf1c7\"\n"
     "          font.family: \"Inter\"\n"
-    "          font.pixelSize: 13\n"
+    "          font.pixelSize: 14\n"
     "          elide: Text.ElideRight\n",
     "active window title font",
 )

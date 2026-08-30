@@ -119,27 +119,17 @@ replace_once(
     "right-side status order",
 )
 
-replace_once(
-    "      implicitHeight: 30\n",
-    "      implicitHeight: 34\n",
-    "top bar height",
-)
+# Match the old compact 30 px bar geometry.
+# shell.qml already uses a 30 px bar and 28 px buttons, so no geometry rewrite
+# is needed here.
 
-replace_once(
-    "    implicitHeight: 28\n"
-    "    implicitWidth: Math.max(28, textItem.implicitWidth + 14)\n",
-    "    implicitHeight: 32\n"
-    "    implicitWidth: Math.max(32, textItem.implicitWidth + 16)\n",
-    "ClickButton size",
-)
-
-# Match the old Waybar typography: Roboto, 13 px, normal weight.
+# Use Inter for the top bar while keeping the old Waybar-like 13 px normal weight.
 replace_once(
     "      color: \"#ebdbb2\"\n"
     "      font.family: \"monospace\"\n"
     "      font.pixelSize: 12\n",
     "      color: \"#fbf1c7\"\n"
-    "      font.family: \"Roboto\"\n"
+    "      font.family: \"Inter\"\n"
     "      font.pixelSize: 13\n",
     "ClickButton font",
 )
@@ -150,7 +140,7 @@ replace_once(
     "          font.pixelSize: 12\n"
     "          elide: Text.ElideRight\n",
     "          color: \"#fbf1c7\"\n"
-    "          font.family: \"Roboto\"\n"
+    "          font.family: \"Inter\"\n"
     "          font.pixelSize: 13\n"
     "          elide: Text.ElideRight\n",
     "active window title font",

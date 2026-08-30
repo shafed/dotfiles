@@ -131,18 +131,24 @@ def render_backup_background(colors: dict[str, str], width: int = 1600, height: 
     )
 
 
-def is_jpeg(data: bytes) -> bool:
-    return data.startswith(b"\xff\xd8") and data.endswith(b"\xff\xd9")
+def normalize_jpeg(data: bytes) -> bytes | None:
+    """Return the JPEG container, tolerating harmless bytes after its EOI marker."""
+    if not data.startswith(b"\xff\xd8"):
+        return None
+    end = data.rfind(b"\xff\xd9")
+    if end < 2:
+        return None
+    return data[: end + 2]
 
 
 def read_primary_background() -> bytes:
-    """Read either a real JPEG or the base64 transport form committed via GitHub."""
+    """Read either a real JPEG or the legacy base64 transport form."""
     if not BACKGROUND_SOURCE.is_file():
         raise FileNotFoundError(f"Telegram background not found: {BACKGROUND_SOURCE}")
 
     data = BACKGROUND_SOURCE.read_bytes()
-    if is_jpeg(data):
-        return data
+    if jpeg := normalize_jpeg(data):
+        return jpeg
 
     try:
         decoded = base64.b64decode(b"".join(data.split()), validate=True)
@@ -151,9 +157,9 @@ def read_primary_background() -> bytes:
             f"Telegram background is neither JPEG nor base64-encoded JPEG: {BACKGROUND_SOURCE}"
         ) from exc
 
-    if not is_jpeg(decoded):
-        raise ValueError(f"Decoded Telegram background is not a valid JPEG container: {BACKGROUND_SOURCE}")
-    return decoded
+    if jpeg := normalize_jpeg(decoded):
+        return jpeg
+    raise ValueError(f"Decoded Telegram background is not a valid JPEG container: {BACKGROUND_SOURCE}")
 
 
 def build_archive(palette: str, background: bytes) -> bytes:

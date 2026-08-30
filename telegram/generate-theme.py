@@ -27,7 +27,7 @@ def zip_entry(name: str) -> zipfile.ZipInfo:
 
 def apply_telegram_overrides(palette: str) -> str:
     """Add Telegram-only colors that are not part of the shared surfaces."""
-    sidebar = """
+    overrides = """
 
 // Telegram folder sidebar.
 sideBarBg: GB_BG;
@@ -40,11 +40,31 @@ sideBarIconFgActive: GB_YELLOW;
 sideBarBadgeBg: GB_YELLOW;
 sideBarBadgeBgMuted: GB_BG_MUTED;
 sideBarBadgeFg: GB_BG_HARD;
+
+// Voice messages. Telegram exposes unread media only as the small dot after
+// the duration; it does not expose a separate palette state for the whole
+// idle waveform. Keep the waveform neutral and make that unread dot obvious.
+// The dot shares msgFileInBg with the incoming play button, so the button uses
+// the same yellow accent as a necessary limitation of the theme format.
+msgFileInBg: GB_YELLOW;
+msgFileInBgOver: GB_ORANGE;
+msgFileInBgSelected: GB_YELLOW;
+msgFileOutBg: GB_BLUE;
+msgFileOutBgOver: GB_AQUA;
+msgFileOutBgSelected: GB_BLUE;
+msgWaveformInActive: GB_FG_SOFT;
+msgWaveformInActiveSelected: GB_FG_BRIGHT;
+msgWaveformInInactive: GB_GRAY;
+msgWaveformInInactiveSelected: GB_GRAY_DIM;
+msgWaveformOutActive: GB_FG_SOFT;
+msgWaveformOutActiveSelected: GB_FG_BRIGHT;
+msgWaveformOutInactive: GB_GRAY;
+msgWaveformOutInactiveSelected: GB_GRAY_DIM;
 """
     marker = '\n// Generic scrollbars.\n'
     if marker not in palette:
         raise ValueError("Telegram palette insertion anchor not found")
-    return palette.replace(marker, sidebar + marker, 1)
+    return palette.replace(marker, overrides + marker, 1)
 
 
 def build_archive(palette: str) -> bytes:

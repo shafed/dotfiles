@@ -56,19 +56,19 @@ the Material color generator and cannot preserve all exact Gruvbox surfaces.
 
 `helium/apply-gruvbox-theme.py` generates an unpacked Chromium theme at
 `$XDG_DATA_HOME/dotfiles/helium-gruvbox/manifest.json` directly from
-`colors.toml`. Its exact target surfaces are:
+`colors.toml`. The palette mapping is intentionally the same as the very first
+Helium Gruvbox theme added to this repo:
 
-- passive background/sidebar/inactive/omnibox: `bg_hard (#1d2021)`;
-- active-tab surface: `bg_soft (#3c3836)`;
-- text: `fg (#d4be98)`.
+- main frame / omnibox / NTP background: `bg (#282828)`;
+- toolbar / inactive frame / buttons: `bg_alt (#32302f)`;
+- NTP header: `bg_soft (#3c3836)`;
+- text: `fg (#d4be98)`;
+- links: `blue (#7daea3)`.
 
-For a third-party custom theme Chromium does not use Helium's normal Material
-User Color overrides. The custom-theme tab mixer can therefore keep the desired
-state hierarchy without changing those surfaces: `toolbar` supplies the active
-tab, while `background_tab` supplies inactive tabs and the Chromium-Refresh
-`New Tab` control. The generated theme sets those directly to `bg_soft` and
-`bg_hard` respectively. Identity tints are also emitted so fallback theme paths
-do not hue-shift the exact colors.
+Do not add explicit `background_tab` colors or tints to this theme. The original
+setup left tab-state surfaces to Chromium's own fallback behavior, and that is
+part of the palette rollback. The helper only reproduces the original colors;
+it does not revert the safer automatic deployment added later.
 
 There is one important update gotcha. Chromium's `ThemeService` skips reapplying
 an already-current unpacked theme when it is loaded again with the same extension
@@ -86,8 +86,8 @@ version is runtime metadata only; Gruvbox values still come exclusively from
 
 No custom Helium/Chromium source build is part of the theming setup. Do not add a
 browser fork or native color patch unless a forced theme update has first been
-visually disproved. Keep the branch out of `main` until the exact backgrounds,
-active-tab pill, and subdued `New Tab` state have all been checked in Helium.
+visually disproved. Keep the branch out of `main` until the Helium appearance has
+been checked visually.
 
 On Arch, `helium-browser-bin` reads `$XDG_CONFIG_HOME/helium-browser-flags.conf`.
 Its launcher deliberately does not expand `~` or `$HOME`, so the theme helper

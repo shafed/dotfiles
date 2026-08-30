@@ -149,6 +149,10 @@ keep their own green/amber/red utilization colors as well.
 
 ## Maintenance
 
+`config/Colors.qml` is generated QML, not just a text palette. It must import
+`QtQuick` because QML's `color` value type is provided by that module; an
+`import QtQml` there fails at shell load with `color is not a type`.
+
 After changing Quickshell code:
 
 ```sh

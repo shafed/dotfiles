@@ -19,6 +19,11 @@ case "${1:-}" in
     quickshell ipc -p "$config" call bookmarks close >/dev/null 2>&1 || true
     exec quickshell ipc -p "$config" call dots toggleClipboard
     ;;
+  system)
+    quickshell ipc -p "$config" call launcher close >/dev/null 2>&1 || true
+    quickshell ipc -p "$config" call bookmarks close >/dev/null 2>&1 || true
+    exec quickshell ipc -p "$config" call dots toggleSystem
+    ;;
   panel)
     [[ $# -ge 2 ]] || { echo "usage: dots-shell panel <audio|network|bluetooth|power|agents|updates|notifications|calendar>" >&2; exit 2; }
     quickshell ipc -p "$config" call launcher close >/dev/null 2>&1 || true

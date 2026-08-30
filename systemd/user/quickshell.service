@@ -1,12 +1,13 @@
 [Unit]
 Description=Personal Quickshell desktop shell
 PartOf=graphical-session.target
+Wants=layout-osd.service
 After=graphical-session.target
 ConditionPathExists=%h/github/dotfiles/quickshell/shell.qml
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/env bash %h/github/dotfiles/quickshell/start.sh
+ExecStart=/usr/bin/env quickshell -p %h/github/dotfiles/quickshell
 Restart=on-failure
 RestartSec=1
 

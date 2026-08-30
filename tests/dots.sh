@@ -121,8 +121,37 @@ if HOME="$configured_home" XDG_CONFIG_HOME="$configured_home/.config" XDG_CACHE_
   echo "migration check unexpectedly reported clean" >&2
   exit 1
 fi
-HOME="$configured_home" XDG_CONFIG_HOME="$configured_home/.config" XDG_CACHE_HOME="$configured_home/.cache" "$configured_home/.local/bin/dots" migrate >/dev/null
+[ ! -e "$configured_home/.local/state/dotfiles/backups" ]
+
+HOME="$configured_home" XDG_CONFIG_HOME="$configured_home/.config" XDG_CACHE_HOME="$configured_home/.cache" "$configured_home/.local/bin/dots" migrate >"$tmp/migrate.out"
 [ ! -e "$configured_home/.config/waybar" ]
 [ ! -e "$configured_home/.cache/waybar" ]
+mapfile -t backup_runs < <(find "$configured_home/.local/state/dotfiles/backups" -mindepth 1 -maxdepth 1 -type d -print)
+[ "${#backup_runs[@]}" -eq 1 ]
+waybar_backup="${backup_runs[0]}/.config/waybar"
+[ -L "$waybar_backup" ]
+[ "$(readlink "$waybar_backup")" = "$ROOT/waybar" ]
+grep -Fq "backup: $configured_home/.config/waybar -> $waybar_backup" "$tmp/migrate.out"
+
+HOME="$configured_home" XDG_CONFIG_HOME="$configured_home/.config" XDG_CACHE_HOME="$configured_home/.cache" "$configured_home/.local/bin/dots" migrate >"$tmp/migrate-noop.out"
+mapfile -t backup_runs_after_noop < <(find "$configured_home/.local/state/dotfiles/backups" -mindepth 1 -maxdepth 1 -type d -print)
+[ "${#backup_runs_after_noop[@]}" -eq 1 ]
+grep -q '^No migrations needed\.$' "$tmp/migrate-noop.out"
+
+cache_only_home="$tmp/cache-only"
+mkdir -p "$cache_only_home/.cache/waybar"
+HOME="$cache_only_home" XDG_CONFIG_HOME="$cache_only_home/.config" XDG_CACHE_HOME="$cache_only_home/.cache" "$ROOT/dots" migrate >/dev/null
+[ ! -e "$cache_only_home/.cache/waybar" ]
+[ ! -e "$cache_only_home/.local/state/dotfiles/backups" ]
+
+unmanaged_home="$tmp/unmanaged"
+mkdir -p "$unmanaged_home/.config/waybar"
+printf 'custom\n' >"$unmanaged_home/.config/waybar/config"
+if HOME="$unmanaged_home" XDG_CONFIG_HOME="$unmanaged_home/.config" XDG_CACHE_HOME="$unmanaged_home/.cache" "$ROOT/dots" migrate >"$tmp/unmanaged.out" 2>&1; then
+  echo "unmanaged Waybar config unexpectedly migrated" >&2
+  exit 1
+fi
+[ -f "$unmanaged_home/.config/waybar/config" ]
+[ ! -e "$unmanaged_home/.local/state/dotfiles/backups" ]
 
 echo "dots tests: ok"

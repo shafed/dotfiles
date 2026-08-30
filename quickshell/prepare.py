@@ -86,6 +86,28 @@ replace_once(
     "IPC showOsd",
 )
 
+# AI and updates are controls, not transient status messages. Keep them visible
+# even while the backend has no agent data or there are zero package updates.
+replace_once(
+    "          ClickButton {\n"
+    "            visible: Number(root.state.updates ? root.state.updates.count : 0) > 0\n"
+    "            label: \"↑\" + String(root.state.updates ? root.state.updates.count : 0)\n",
+    "          ClickButton {\n"
+    "            label: Number(root.state.updates ? root.state.updates.count : 0) > 0\n"
+    "                   ? \"↑\" + String(root.state.updates.count)\n"
+    "                   : \"UPD\"\n",
+    "updates button visibility",
+)
+
+replace_once(
+    "          ClickButton {\n"
+    "            visible: root.state.agents && root.state.agents.length > 0\n"
+    "            label: \"AI\"\n",
+    "          ClickButton {\n"
+    "            label: \"AI\"\n",
+    "AI button visibility",
+)
+
 replace_once(
     "      implicitHeight: 30\n",
     "      implicitHeight: 34\n",

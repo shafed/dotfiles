@@ -9,6 +9,8 @@ Variants {
   id: bars
   required property var shell
   required property var services
+  required property var system
+  required property var notifications
   required property var colors
   required property var ui
 
@@ -89,7 +91,7 @@ Variants {
 
         ClickButton {
           visible: bars.shell.laptop
-          label: "BAT " + String(bars.shell.state.power ? bars.shell.state.power.battery : "") + "%"
+          label: "BAT " + String(bars.system.batteryPercent >= 0 ? bars.system.batteryPercent : "--") + "%"
           active: bars.shell.openPanel === "power"
           onPressed: bars.shell.togglePanel("power")
         }
@@ -103,7 +105,7 @@ Variants {
         }
 
         ClickButton {
-          label: (bars.shell.state.notifications && bars.shell.state.notifications.dnd) ? "DND" : "BELL"
+          label: bars.notifications.dnd ? "DND" : "BELL"
           active: bars.shell.openPanel === "notifications"
           onPressed: bars.shell.togglePanel("notifications")
         }

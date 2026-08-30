@@ -1,0 +1,34 @@
+--- a/chrome/browser/ui/color/material_tab_strip_color_mixer.cc
++++ b/chrome/browser/ui/color/material_tab_strip_color_mixer.cc
+@@ -3,6 +3,7 @@
+ 
+ #include "chrome/browser/ui/color/material_tab_strip_color_mixer.h"
+ 
++#include "base/command_line.h"
+ #include "chrome/browser/ui/color/chrome_color_id.h"
+ #include "chrome/browser/ui/color/chrome_color_provider_utils.h"
+ #include "third_party/skia/include/core/SkColor.h"
+@@ -84,6 +85,21 @@ void AddMaterialTabStripColorMixer(ui::ColorProvider* provider,
+   mixer[kColorNewTabButtonCRBackgroundFrameActive] = {kColorToolbar};
+   mixer[kColorNewTabButtonCRBackgroundFrameInactive] = {kColorToolbar};
+ 
++  // Helium's normal Material mapping intentionally uses the location-bar
++  // surface for the active vertical tab and the toolbar surface for New Tab.
++  // That is a good native hierarchy, but it couples those controls to surfaces
++  // an extension theme also needs to color independently.  The dotfiles theme
++  // opts into the generic tab ColorIds instead: toolbar for the active tab and
++  // inactive-tab background for New Tab.  The unpacked theme can then provide
++  // exact colors without changing Helium's default behavior for other users.
++  if (base::CommandLine::ForCurrentProcess()->HasSwitch(
++          "helium-gruvbox-exact-tabs")) {
++    mixer[kColorTabBackgroundActiveFrameActive] = {kColorToolbar};
++    mixer[kColorTabBackgroundActiveFrameInactive] = {kColorToolbar};
++    mixer[kColorNewTabButtonCRBackgroundFrameActive] = {
++        kColorTabBackgroundInactiveFrameActive};
++    mixer[kColorNewTabButtonCRBackgroundFrameInactive] = {
++        kColorTabBackgroundInactiveFrameInactive};
++  }
++
+   mixer[kColorTabSearchButtonCRForegroundFrameActive] = {
+       ui::kColorSysOnSurfacePrimary};
+   mixer[kColorTabSearchButtonCRForegroundFrameInactive] = {

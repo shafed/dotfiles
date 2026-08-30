@@ -128,13 +128,41 @@ grep -q 'Doctor: 0 error(s)' "$tmp/configured.out"
 mkdir -p "$configured_home/.cache/waybar" "$configured_home/.cache/dots-shell/quickshell"
 touch "$configured_home/.cache/dots-shell/quickshell/shell.qml"
 ln -s "$ROOT/waybar" "$configured_home/.config/waybar"
+[ ! -e "$configured_home/.local/state/dotfiles/backups" ]
 : >"$DOTS_TEST_LOG"
 HOME="$configured_home" XDG_CONFIG_HOME="$configured_home/.config" XDG_CACHE_HOME="$configured_home/.cache" "$configured_home/.local/bin/dots" apply >"$tmp/apply.out"
-[ ! -e "$configured_home/.config/waybar" ]
+[ ! -L "$configured_home/.config/waybar" ]
 [ ! -e "$configured_home/.cache/waybar" ]
 [ ! -e "$configured_home/.cache/dots-shell/quickshell" ]
 grep -q '^systemctl --user try-restart quickshell.service$' "$DOTS_TEST_LOG"
 grep -q 'Doctor: 0 error(s)' "$tmp/apply.out"
+mapfile -t backup_runs < <(find "$configured_home/.local/state/dotfiles/backups" -mindepth 1 -maxdepth 1 -type d -print)
+[ "${#backup_runs[@]}" -eq 1 ]
+waybar_backup="${backup_runs[0]}/.config/waybar"
+[ -L "$waybar_backup" ]
+[ "$(readlink "$waybar_backup")" = "$ROOT/waybar" ]
+grep -Fq "backup: $configured_home/.config/waybar -> $waybar_backup" "$tmp/apply.out"
+
+HOME="$configured_home" XDG_CONFIG_HOME="$configured_home/.config" XDG_CACHE_HOME="$configured_home/.cache" "$configured_home/.local/bin/dots" migrate >"$tmp/migrate-noop.out"
+mapfile -t backup_runs_after_noop < <(find "$configured_home/.local/state/dotfiles/backups" -mindepth 1 -maxdepth 1 -type d -print)
+[ "${#backup_runs_after_noop[@]}" -eq 1 ]
+grep -q '^No migrations needed\.$' "$tmp/migrate-noop.out"
+
+cache_only_home="$tmp/cache-only"
+mkdir -p "$cache_only_home/.cache/waybar"
+HOME="$cache_only_home" XDG_CONFIG_HOME="$cache_only_home/.config" XDG_CACHE_HOME="$cache_only_home/.cache" "$ROOT/dots" migrate >/dev/null
+[ ! -e "$cache_only_home/.cache/waybar" ]
+[ ! -e "$cache_only_home/.local/state/dotfiles/backups" ]
+
+unmanaged_home="$tmp/unmanaged"
+mkdir -p "$unmanaged_home/.config/waybar"
+printf 'custom\n' >"$unmanaged_home/.config/waybar/config"
+if HOME="$unmanaged_home" XDG_CONFIG_HOME="$unmanaged_home/.config" XDG_CACHE_HOME="$unmanaged_home/.cache" "$ROOT/dots" migrate >"$tmp/unmanaged.out" 2>&1; then
+  echo "unmanaged Waybar config unexpectedly migrated" >&2
+  exit 1
+fi
+[ -f "$unmanaged_home/.config/waybar/config" ]
+[ ! -e "$unmanaged_home/.local/state/dotfiles/backups" ]
 
 HOME="$configured_home" XDG_CONFIG_HOME="$configured_home/.config" XDG_CACHE_HOME="$configured_home/.cache" "$configured_home/.local/bin/dots" debug --no-logs >"$tmp/debug.out"
 grep -q '^== repository ==$' "$tmp/debug.out"

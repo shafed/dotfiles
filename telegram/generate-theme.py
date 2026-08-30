@@ -25,6 +25,20 @@ def zip_entry(name: str) -> zipfile.ZipInfo:
     return info
 
 
+def apply_telegram_overrides(palette: str) -> str:
+    """Map shared Gruvbox colors to Telegram-specific UI semantics."""
+    replacements = {
+        # Keep the navigation/sidebar selection muted instead of bright yellow.
+        "windowBgActive: GB_YELLOW;": "windowBgActive: GB_BLUE;",
+        "dialogsBgActive: GB_BG_HOVER;": "dialogsBgActive: GB_BG_SOFT;",
+    }
+    for old, new in replacements.items():
+        if old not in palette:
+            raise ValueError(f"Telegram palette anchor not found: {old}")
+        palette = palette.replace(old, new, 1)
+    return palette
+
+
 def build_archive(palette: str) -> bytes:
     if not BACKGROUND.is_file():
         raise FileNotFoundError(f"Telegram background not found: {BACKGROUND}")
@@ -41,7 +55,7 @@ def main() -> int:
     parser.add_argument("--stdout", action="store_true", help="print the generated palette instead of writing files")
     args = parser.parse_args()
 
-    palette = render(load_colors())
+    palette = apply_telegram_overrides(render(load_colors()))
     if args.stdout:
         print(palette, end="")
         return 0

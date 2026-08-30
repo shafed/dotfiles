@@ -86,7 +86,7 @@ Item {
 
   HotkeysPanel { shell: panel.shell; colors: panel.colors; ui: panel.ui }
 
-  Component { id: systemOverview; SystemOverview { shell: panel.shell; services: panel.services; colors: panel.colors; ui: panel.ui } }
+  Component { id: systemOverview; SystemOverview { shell: panel.shell; services: panel.services; system: panel.system; notifications: panel.notifications; colors: panel.colors; ui: panel.ui } }
   Component { id: audioPanel; AudioPanel { shell: panel.shell; services: panel.services; colors: panel.colors; ui: panel.ui } }
   Component { id: networkPanel; NetworkPanel { shell: panel.shell; colors: panel.colors; ui: panel.ui } }
   Component { id: bluetoothPanel; BluetoothPanel { shell: panel.shell; system: panel.system; colors: panel.colors; ui: panel.ui } }

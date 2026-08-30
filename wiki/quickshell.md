@@ -5,56 +5,50 @@ updated: 2026-08-30
 covers:
   - quickshell/shell.qml
   - quickshell/prepare.py
-  - quickshell/event-state.py
   - quickshell/start.sh
-  - quickshell/layout-watch.py
-  - quickshell/audio-watch.py
-  - quickshell/brightness-watch.py
   - quickshell/backend.py
   - systemd/user/quickshell.service
-  - systemd/user/layout-osd.service
-  - systemd/user/audio-osd.service
-  - systemd/user/brightness-osd.service
 ---
 
 # Quickshell
 
-Quickshell is the active Hyprland bar and desktop shell. It replaced Waybar so
-bar state, popups, OSD, notifications and related desktop UI can live in one
-shell instead of being split across independent bars and helpers.
+Quickshell is the active Hyprland bar and desktop shell. Realtime desktop state
+belongs in the long-running QML process; separate watcher daemons are avoided so
+an input event does not have to cross Python, IPC and another scheduler before
+it becomes visible.
 
 ## Runtime QML
 
-`shell.qml` is the base source. `prepare.py` builds the generated config under
-`~/.cache/dots-shell/quickshell`; `event-state.py` removes the obsolete fast
-polling path and adds the small IPC hooks used by event watchers. Source drift
-is intentionally a hard error rather than silently producing a partially
-transformed bar.
+`shell.qml` is still the base source and `prepare.py` builds the generated config
+under `~/.cache/dots-shell/quickshell`. `prepare.py` is a build-time migration
+shim, not a realtime backend. The eventual cleanup target is to fold stable
+transformations back into QML and remove the shim rather than grow another
+runtime layer.
 
 ⚠️ Gotcha: the running QML is the generated copy, not `shell.qml` directly.
-When changing a block that a runtime transform expects, update the transform as
-well or startup will fail with the missing block name.
+Changing a source block that `prepare.py` expects can make startup fail with the
+missing block name.
 
 ## Realtime state
 
-Anything where visible latency matters must not depend on the periodic backend
-snapshot. Workspaces use Quickshell's native Hyprland model. Keyboard layout
-comes from Hyprland Socket2. Audio changes are observed from PipeWire/Pulse
-events and pushed through IPC. Brightness is read directly from the kernel
-backlight interface and published only when it changes.
+Latency-sensitive state stays inside Quickshell:
 
-The watcher services are tied to the graphical session, not to
-`quickshell.service`. A shell crash therefore cannot repeatedly stop/start the
-watchers and push them into `start-limit-hit`.
+- workspaces use `Quickshell.Hyprland` objects directly;
+- keyboard layout follows `Hyprland.rawEvent` / `activelayout`;
+- volume and mute use `Quickshell.Services.Pipewire` with `PwObjectTracker`;
+- brightness is sampled from the kernel backlight file inside QML because
+  Quickshell 0.3.1 has no brightness service and sysfs does not provide a
+  reliable change event on every driver.
 
-Slow state such as package updates, battery metadata and agent usage can remain
-on coarse snapshots without making direct user actions feel delayed.
+There is no 800 ms fast snapshot and no audio/layout/brightness watcher service.
+Python remains for slow or integration-heavy data such as AI usage, package
+updates, network/Bluetooth discovery, notification persistence and clipboard
+operations.
 
 ## Clock and power
 
-The clock opens the calendar because it is a general desktop action. Power
-controls stay attached to the battery entry on laptops instead of overloading
-the clock with an unrelated panel.
+The clock opens the calendar. Power controls remain attached to the battery
+entry on laptops.
 
 ## Maintenance
 
@@ -62,15 +56,12 @@ After changing Quickshell code:
 
 ```sh
 systemctl --user daemon-reload
-systemctl --user reset-failed quickshell.service layout-osd.service audio-osd.service brightness-osd.service
-systemctl --user restart layout-osd.service audio-osd.service brightness-osd.service quickshell.service
+systemctl --user reset-failed
+systemctl --user restart quickshell.service
 ```
 
-If startup fails, check:
+If startup fails:
 
 ```sh
-journalctl --user -u quickshell.service -n 100 --no-pager
-journalctl --user -u layout-osd.service -n 100 --no-pager
-journalctl --user -u audio-osd.service -n 100 --no-pager
-journalctl --user -u brightness-osd.service -n 100 --no-pager
+journalctl --user -u quickshell.service -n 100 --no-pager -o cat
 ```

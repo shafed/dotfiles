@@ -9,6 +9,16 @@ Item {
   id: service
   property var state: ({ audio: { volume: 0, muted: false } })
   readonly property var audioSink: Pipewire.defaultAudioSink
+  readonly property var outputs: Pipewire.nodes && Pipewire.nodes.values
+                                 ? Pipewire.nodes.values.filter(function(node) {
+                                     return node && node.audio && !node.isStream && node.isSink
+                                   })
+                                 : []
+  readonly property var streams: Pipewire.nodes && Pipewire.nodes.values
+                                 ? Pipewire.nodes.values.filter(function(node) {
+                                     return node && node.audio && node.isStream && !node.isSink
+                                   })
+                                 : []
   readonly property int volume: audioSink && audioSink.ready && audioSink.audio
                                 ? Math.round(audioSink.audio.volume * 100)
                                 : Number(state.audio ? state.audio.volume : 0)
@@ -53,6 +63,22 @@ Item {
     audioSink.audio.muted = !audioSink.audio.muted
   }
 
+  function setDefaultOutput(node) {
+    if (node) Pipewire.preferredDefaultAudioSink = node
+  }
+
+  function adjustStream(node) {
+    if (!node || !node.ready || !node.audio) return
+    var current = Math.round(node.audio.volume * 100)
+    var next = current >= 90 ? 50 : current + 10
+    node.audio.volume = Math.max(0, Math.min(1.5, next / 100.0))
+  }
+
+  function nodeLabel(node) {
+    if (!node) return "Audio"
+    return String(node.description || node.nickname || node.name || "Audio")
+  }
+
   function applyLayoutEvent(event) {
     if (!event || String(event.name || "") !== "activelayout") return
     var parts = null
@@ -83,7 +109,13 @@ Item {
     }
   }
 
-  PwObjectTracker { objects: [service.audioSink] }
+  PwObjectTracker {
+    objects: {
+      var values = service.outputs.concat(service.streams)
+      if (service.audioSink && values.indexOf(service.audioSink) < 0) values.push(service.audioSink)
+      return values
+    }
+  }
 
   Connections {
     target: Hyprland

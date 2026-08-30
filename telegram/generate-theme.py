@@ -16,7 +16,8 @@ from _palette_renderer import load_colors, render
 ROOT = Path(__file__).resolve().parents[1]
 HERE = Path(__file__).resolve().parent
 PALETTE_OUTPUT = HERE / "colors.tdesktop-theme"
-BACKGROUND_OUTPUT = HERE / "background.png"
+BACKGROUND_SOURCE = HERE / "background.jpg"
+BACKGROUND_BACKUP_OUTPUT = HERE / "background-backup.png"
 OUTPUT = HERE / "gruvbox-material-dark-medium.tdesktop-theme"
 
 
@@ -81,8 +82,8 @@ def png_chunk(kind: bytes, data: bytes) -> bytes:
     return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data) & 0xFFFFFFFF)
 
 
-def render_background(colors: dict[str, str], width: int = 1600, height: int = 1000) -> bytes:
-    """Render a deterministic, low-contrast Gruvbox wallpaper using stdlib only."""
+def render_backup_background(colors: dict[str, str], width: int = 1600, height: int = 1000) -> bytes:
+    """Render the alternate low-contrast Gruvbox wallpaper using stdlib only."""
     base = rgb(colors["bg"])
     soft = rgb(colors["bg_soft"])
     hover = rgb(colors["bg_hover"])
@@ -92,9 +93,8 @@ def render_background(colors: dict[str, str], width: int = 1600, height: int = 1
     raw = bytearray()
     tile = 128
     for y in range(height):
-        raw.append(0)  # PNG filter: None.
+        raw.append(0)
         for x in range(width):
-            # Gentle vignette / paper variation, intentionally very subtle.
             nx = abs(2 * x - width)
             ny = abs(2 * y - height)
             shade = min(18, (nx + ny) * 18 // (width + height))
@@ -102,8 +102,6 @@ def render_background(colors: dict[str, str], width: int = 1600, height: int = 1
 
             tx, ty = x % tile, y % tile
             cell = ((x // tile) + (y // tile)) % 4
-
-            # Sparse hand-drawn-like motifs. Keep the center quiet enough for text.
             dot = (tx - 24) ** 2 + (ty - 28) ** 2 <= 5 ** 2
             ring_d2 = (tx - 86) ** 2 + (ty - 38) ** 2
             ring = 15 ** 2 <= ring_d2 <= 18 ** 2
@@ -119,7 +117,6 @@ def render_background(colors: dict[str, str], width: int = 1600, height: int = 1
             elif sprig:
                 px = blend(px, yellow, 14)
 
-            # Tiny deterministic grain avoids a flat digital look.
             grain = ((x * 17 + y * 29 + (x ^ y) * 3) & 3) - 1
             raw.extend(max(0, min(255, channel + grain)) for channel in px)
 
@@ -132,11 +129,20 @@ def render_background(colors: dict[str, str], width: int = 1600, height: int = 1
     )
 
 
+def read_primary_background() -> bytes:
+    if not BACKGROUND_SOURCE.is_file():
+        raise FileNotFoundError(f"Telegram background not found: {BACKGROUND_SOURCE}")
+    data = BACKGROUND_SOURCE.read_bytes()
+    if not data.startswith(b"\xff\xd8") or not data.endswith(b"\xff\xd9"):
+        raise ValueError(f"Telegram background is not a valid JPEG container: {BACKGROUND_SOURCE}")
+    return data
+
+
 def build_archive(palette: str, background: bytes) -> bytes:
     buffer = BytesIO()
     with zipfile.ZipFile(buffer, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
         archive.writestr(zip_entry("colors.tdesktop-theme"), palette.encode())
-        archive.writestr(zip_entry("background.png"), background)
+        archive.writestr(zip_entry("background.jpg"), background)
     return buffer.getvalue()
 
 
@@ -152,16 +158,17 @@ def main() -> int:
         print(palette, end="")
         return 0
 
-    background = render_background(colors)
-    archive = build_archive(palette, background)
+    primary_background = read_primary_background()
+    backup_background = render_backup_background(colors)
+    archive = build_archive(palette, primary_background)
 
     if args.check:
         stale = False
         if not PALETTE_OUTPUT.exists() or PALETTE_OUTPUT.read_text() != palette:
             print(f"stale generated Telegram palette: {PALETTE_OUTPUT.relative_to(ROOT)}", file=sys.stderr)
             stale = True
-        if not BACKGROUND_OUTPUT.exists() or BACKGROUND_OUTPUT.read_bytes() != background:
-            print(f"stale generated Telegram wallpaper: {BACKGROUND_OUTPUT.relative_to(ROOT)}", file=sys.stderr)
+        if not BACKGROUND_BACKUP_OUTPUT.exists() or BACKGROUND_BACKUP_OUTPUT.read_bytes() != backup_background:
+            print(f"stale generated Telegram backup wallpaper: {BACKGROUND_BACKUP_OUTPUT.relative_to(ROOT)}", file=sys.stderr)
             stale = True
         if not OUTPUT.exists() or OUTPUT.read_bytes() != archive:
             print(f"stale generated Telegram archive: {OUTPUT.relative_to(ROOT)}", file=sys.stderr)
@@ -169,7 +176,7 @@ def main() -> int:
         return 1 if stale else 0
 
     PALETTE_OUTPUT.write_text(palette)
-    BACKGROUND_OUTPUT.write_bytes(background)
+    BACKGROUND_BACKUP_OUTPUT.write_bytes(backup_background)
     OUTPUT.write_bytes(archive)
     print(OUTPUT.relative_to(ROOT))
     return 0

@@ -145,8 +145,9 @@ Full map in [keymap](keymap.md); only the surprises here.
   apps layer instead, where Q sits under the thumb.
 - **`Ctrl-h/j/k/l` is not a Hyprland binding at all** — it lives in kitty via
   `pass_keys.py`, which gives nvim and fzf first refusal ([kitty](kitty.md)).
-- `SUPER, N` opens the self-pasting scratch note — a QAT panel, deliberately not
-  a special workspace or windowrule ([scripts-scratch](scripts-scratch.md)).
+- `SUPER, N` toggles the self-pasting Quickshell scratch editor through
+  `dots-shell scratch`; it no longer launches the legacy nvim QAT panel
+  ([scripts-scratch](scripts-scratch.md)).
 
 ## idle / lock
 

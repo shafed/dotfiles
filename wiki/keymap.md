@@ -39,17 +39,18 @@ keys go to Hyprland, and workspace chords arrive as normal Super+digit events.
 - **base** — letters + HRM + functional thumb/letter holds.
 - **normal** — a "safe" layer (letters as-is, `lsft` = switch language), entered
   by holding Enter.
-- **apps** (hold thumb) — launcher layer. `a` opens the Quickshell Applications
-  picker and `b` opens the separate Quickshell Bookmarks picker; projects,
-  YouTube and kitty-session pickers remain QAT/fzf where the terminal is still
-  the better frontend. The browser sub-layer remains on hold `s`. System chords
-  are `u+i` volume down, `i+o` volume up, `o+p` mute, `j+k` brightness down,
-  `k+l` brightness up, and `w+e` the compact Quickshell system overview. The
-  volume/brightness chords emit standard XF86 keycodes instead of running
-  system commands themselves. ⚠️ `q` here runs [close-window.sh](kanata.md),
-  which is `hl.dsp.window.close()` for most apps — **not** kill, so tray apps
-  minimize instead of being SIGKILL'd — except Telegram, which is force-killed
-  since a graceful close just minimizes it to tray instead of quitting.
+- **apps** (hold thumb) — launcher layer. `a` opens Quickshell Applications,
+  `b` Bookmarks, `e` Projects (named sessions + zoxide + SSH), `c` open Kitty
+  Sessions and `u` YouTube. These active picker routes are all Quickshell now;
+  the old QAT/fzf scripts are manual fallbacks only. The browser sub-layer
+  remains on hold `s`. System chords are `u+i` volume down, `i+o` volume up,
+  `o+p` mute, `j+k` brightness down, `k+l` brightness up, and `w+e` the compact
+  Quickshell system overview. The volume/brightness chords emit standard XF86
+  keycodes instead of running system commands themselves. ⚠️ `q` here runs
+  [close-window.sh](kanata.md), which is `hl.dsp.window.close()` for most apps —
+  **not** kill, so tray apps minimize instead of being SIGKILL'd — except
+  Telegram, which is force-killed since a graceful close just minimizes it to
+  tray instead of quitting.
 - **symbols / symbols2** (hold `e`/`r`, or chords `s+d` / `s+d+f`) — programmer
   symbols on the right hand, with xkb forced to US ([kanata](kanata.md)).
 - **navi** (hold `w`, or toggle via caps-hold) — arrows and navigation on the
@@ -63,10 +64,16 @@ keys go to Hyprland, and workspace chords arrive as normal Super+digit events.
 
 Hyprland owns the direct desktop-shell bindings while kanata provides the
 thumb-layer routes above. `Super+F1` toggles the searchable Hotkeys panel,
-`Super+Space` opens Applications and `Super+V` opens Clipboard.
-`Super+Shift+A/W/B/P/I/U/N` open Audio, Network, Bluetooth, Power, Agents,
-Updates and Notifications respectively. `apps+w+e` toggles the compact system
-overview through `dots-shell system`.
+`Super+Space` opens Applications, `Super+V` opens Clipboard and `Super+N`
+toggles the self-pasting Quickshell scratch editor. `Super+Shift+A/W/B/P/I/U/N`
+open Audio, Network, Bluetooth, Power, Agents, Updates and Notifications
+respectively. `apps+w+e` toggles the compact system overview through
+`dots-shell system`.
+
+Clipboard is keyboard-first: opening gives its search input focus, typing
+filters history, arrows or `Ctrl-J/K` move the selected row, `Enter` pastes and
+`Esc` closes. Projects/Sessions/YouTube use the same navigation contract; the
+Sessions picker additionally accepts `Ctrl-D`/Delete to close a session.
 
 The Hotkeys panel includes the main Hyprland, Kanata and active custom Kitty
 maps with filtering by key or action. It is intentionally curated rather than
@@ -78,11 +85,11 @@ control shortcuts are removed. Volume/mute/brightness actions now have one
 Hyprland source of truth: the standard XF86 bindings, reached either by real
 multimedia keys or by Kanata's emitted keycodes.
 
-These system panels are mutually exclusive popovers: opening one closes other
-overlays; `Esc` or the first click outside closes the active panel. Applications,
-Bookmarks, Clipboard and Hotkeys close the system overview and vice versa.
+These system panels and picker overlays are mutually exclusive: opening one
+closes the others; `Esc` or the first click outside closes the active surface.
 Hotkeys also closes on a repeated `Super+F1`. This is a UI contract rather than
-a kanata-layer rule, so its implementation belongs to [quickshell](quickshell.md).
+a kanata-layer rule, so its implementation belongs to
+[quickshell](quickshell.md).
 
 ## Collisions that had to be resolved
 
@@ -105,10 +112,12 @@ global layout), through
 
 - **symbol layers** switch to US for as long as the layer is held, then restore
   the remembered index — so `S-...` yields the same symbols under RU and US.
-- **apps actions** hard-force US index 0 before opening a picker. This remains
-  useful for both Quickshell text inputs and the QAT/fzf pickers that remain.
-  Apps system chords themselves use physical keycodes, so they do not depend on
-  whether the active xkb layout is RU or US.
+- **apps actions** hard-force US index 0 before opening a picker. The active
+  picker text inputs are Quickshell now, but they still need Latin queries when
+  the current xkb layout is RU. The legacy QAT/fzf fallback tools benefit from
+  the same helper when launched through a compatible route. Apps system chords
+  themselves use physical keycodes, so they do not depend on whether the active
+  xkb layout is RU or US.
 - **nvim** does the same for normal mode on its own, with a `langmap` covering
   the async gap ([nvim-layout](nvim-layout.md)).
 

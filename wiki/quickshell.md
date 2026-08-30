@@ -9,6 +9,7 @@ covers:
   - quickshell/config/
   - quickshell/prepare.py
   - quickshell/agents-refresh.py
+  - quickshell/picker-helper.py
   - quickshell/start.sh
   - quickshell/backend.py
   - quickshell/dots-shell
@@ -21,20 +22,23 @@ Quickshell is the active Hyprland bar and desktop shell. Realtime desktop state
 belongs in the long-running QML process; separate watcher daemons are avoided so
 an input event does not cross Python/IPC before it becomes visible.
 
-Applications and bookmarks are desktop-facing Quickshell pickers. Their data and
+All active desktop-facing pickers now belong to Quickshell: Applications,
+Bookmarks, Projects, open Kitty Sessions, YouTube and Clipboard. `Super+N` also
+uses a native Quickshell scratch editor instead of a terminal QAT. Data and
 ranking contracts remain separate from the bar; see
 [quickshell-pickers](quickshell-pickers.md).
 
 ## Runtime QML
 
-Tracked QML is now the runtime source instead of a base file plus ordered string
+Tracked QML is the runtime source instead of a base file plus ordered string
 post-processors:
 
 - `shell.qml` — orchestration, slow backend state, notifications, process lifetimes
   and IPC;
 - `components/` — top bar, system panel, compact system overview, searchable
   hotkeys cheat sheet, clipboard/toast/OSD overlays, shared controls,
-  Applications and Bookmarks;
+  Applications, Bookmarks, the shared Projects/Sessions/YouTube picker and the
+  scratch editor;
 - `services/DesktopServices.qml` — realtime PipeWire volume/mute, Hyprland
   keyboard layout events and sysfs backlight sampling;
 - `config/UiConfig.qml` — declarative fonts, geometry, sizing and timers;
@@ -44,8 +48,8 @@ post-processors:
 `$XDG_CACHE_HOME/dots-shell/quickshell`; `start.sh` then runs that copy. The old
 `center-title.py`, `agents-panel.py`, `prepare-agents-refresh-ui.py`,
 `prepare-launcher.py` and `prepare-ui-fixes.py` build-time rewrites were folded
-into tracked QML and removed. Debugging the cache is still useful, but there is no second QML logic
-representation to keep in sync.
+into tracked QML and removed. Debugging the cache is still useful, but there is
+no second QML logic representation to keep in sync.
 
 ## Realtime state
 
@@ -61,16 +65,17 @@ Latency-sensitive state stays inside Quickshell:
 
 There is no 800 ms fast snapshot and no audio/layout/brightness watcher service.
 Python remains for slow/integration-heavy data such as AI usage, package
-updates, network/Bluetooth discovery, notification persistence, clipboard and
-bookmark catalog/fzf integration. The full backend snapshot runs every 15 s and
-after actions.
+updates, network/Bluetooth discovery, notification persistence and clipboard
+history. Picker-specific integrations that need external programs live in
+`picker-helper.py`: zoxide/SSH/Kitty session state and YouTube extraction. The
+full backend snapshot runs every 15 s and after actions.
 
 Kanata's apps-layer volume, mute and brightness chords do not add another
 control backend: Kanata emits the standard XF86 media/backlight key events,
 Hyprland owns the corresponding `wpctl`/`brightnessctl` commands, and the native
 Quickshell services observe the resulting state.
 
-## Desktop popovers
+## Desktop popovers and pickers
 
 System panels use one fullscreen layer-shell surface with the visible card
 anchored at the top-right. The rest is the dismiss area: `Esc` closes; the first
@@ -87,16 +92,31 @@ from the overview even when their top-bar buttons are hidden on a non-laptop.
 Its height is declared in `config/UiConfig.qml`.
 
 Repeated `dots-shell system` closes the overview because it uses the existing
-`dots panel system` toggle. Applications, Bookmarks and Clipboard close an open
-system panel/overview, and opening any system panel closes those overlays.
+`dots panel system` toggle. Applications, Bookmarks, Projects, Sessions,
+YouTube, Clipboard, Scratch and Hotkeys are mutually exclusive with system
+panels and with one another. `dots-shell` closes the competing IPC targets before
+opening the requested surface.
+
+`components/QuickPicker.qml` is the shared UI for Projects, Sessions and
+YouTube. Its `TextInput` gets focus on show; arrows/`Ctrl-J/K` navigate, Enter
+opens and Esc closes. Sessions also support `Ctrl-D`/Delete. Provider rows and
+actions are supplied as JSON by `picker-helper.py`; see
+[quickshell-pickers](quickshell-pickers.md).
+
+`components/ClipboardOverlay.qml` uses the same keyboard contract and adds
+inline filtering. Clipboard paste is scheduled shortly after hiding the
+exclusive layer-shell surface so the synthetic `Ctrl+V` reaches the previously
+focused application rather than racing the overlay teardown.
+
+`components/ScratchOverlay.qml` is a focused multiline editor. `Esc` hides while
+preserving the draft and `Ctrl+Enter` closes, copies and pastes back into the
+window that was focused before scratch opened. Details and the retained legacy
+nvim/QAT fallback are in [scripts-scratch](scripts-scratch.md).
 
 `Super+F1` runs `dots-shell hotkeys`, which toggles
 `components/HotkeysPanel.qml`. It is a centered fullscreen overlay using the
 same generated Gruvbox colors and declarative UI sizing as the rest of the
-shell. `Esc`, the first outside click, or another `Super+F1` closes it. The
-`dots-shell` routes close Hotkeys before opening Applications, Bookmarks,
-Clipboard or a system panel, while Hotkeys closes those overlays before it
-opens.
+shell. `Esc`, the first outside click, or another `Super+F1` closes it.
 
 The Hotkeys component keeps only a small static searchable presentation index of
 the main Hyprland, Kanata and active custom Kitty shortcuts. It does not parse

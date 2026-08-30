@@ -21,13 +21,14 @@ rules: [../CLAUDE.md](../CLAUDE.md) (`AGENTS.md` symlinks to it).
 
 - **[kanata](kanata.md)** — keyboard layers, home-row mods, chords. The most
   fragile part of the keymap.
-- **[scripts](scripts.md)** — map of content: fzf pickers, the self-pasting
-  scratch note, training logbook, standalone helpers. The most active and
-  gotcha-dense part of the repo.
+- **[scripts](scripts.md)** — map of content: fallback fzf/QAT pickers, training
+  logbook, legacy scratch helpers and standalone integrations.
 - **[hypr](hypr.md)** — Hyprland: bindings, monitors, idle/lock/gamma.
 - **[quickshell](quickshell.md)** — active top bar and desktop shell; modular
-  QML, realtime services, picker integration and runtime-cache layout.
-- **[kitty](kitty.md)** — terminal: QAT panels, custom kittens, remote control.
+  QML, realtime services, Applications/Bookmarks/Projects/Sessions/YouTube,
+  keyboard clipboard and scratch overlays.
+- **[kitty](kitty.md)** — terminal: sessions, legacy/manual QAT panels, custom
+  kittens and remote control.
 - **[nvim](nvim.md)** — map of content: which LazyVim behavior was overridden
   and why — window UI, vault workflows, clipboard, Russian layout.
 - **[zsh](zsh.md)** — shell config, aliases, functions.

@@ -3,56 +3,91 @@ set -euo pipefail
 
 config="${QUICKSHELL_CONFIG_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/dots-shell/quickshell}"
 
+ipc() {
+  quickshell ipc -p "$config" call "$@"
+}
+
 close_hotkeys() {
-  quickshell ipc -p "$config" call hotkeys close >/dev/null 2>&1 || true
+  ipc hotkeys close >/dev/null 2>&1 || true
+}
+
+close_pickers() {
+  ipc launcher close >/dev/null 2>&1 || true
+  ipc bookmarks close >/dev/null 2>&1 || true
+  ipc quickpicker close >/dev/null 2>&1 || true
+  ipc scratch close >/dev/null 2>&1 || true
 }
 
 case "${1:-}" in
   launcher|apps)
     close_hotkeys
-    quickshell ipc -p "$config" call dots closeOverlays >/dev/null 2>&1 || true
-    quickshell ipc -p "$config" call bookmarks close >/dev/null 2>&1 || true
-    exec quickshell ipc -p "$config" call launcher toggle
+    ipc dots closeOverlays >/dev/null 2>&1 || true
+    ipc bookmarks close >/dev/null 2>&1 || true
+    ipc quickpicker close >/dev/null 2>&1 || true
+    ipc scratch close >/dev/null 2>&1 || true
+    ipc launcher toggle
     ;;
   bookmarks)
     close_hotkeys
-    quickshell ipc -p "$config" call dots closeOverlays >/dev/null 2>&1 || true
-    quickshell ipc -p "$config" call launcher close >/dev/null 2>&1 || true
-    exec quickshell ipc -p "$config" call bookmarks toggle
+    ipc dots closeOverlays >/dev/null 2>&1 || true
+    ipc launcher close >/dev/null 2>&1 || true
+    ipc quickpicker close >/dev/null 2>&1 || true
+    ipc scratch close >/dev/null 2>&1 || true
+    ipc bookmarks toggle
     ;;
   clipboard)
     close_hotkeys
-    quickshell ipc -p "$config" call launcher close >/dev/null 2>&1 || true
-    quickshell ipc -p "$config" call bookmarks close >/dev/null 2>&1 || true
-    exec quickshell ipc -p "$config" call dots toggleClipboard
+    close_pickers
+    ipc dots toggleClipboard
+    ;;
+  projects|sessions|youtube)
+    close_hotkeys
+    ipc dots closeOverlays >/dev/null 2>&1 || true
+    ipc launcher close >/dev/null 2>&1 || true
+    ipc bookmarks close >/dev/null 2>&1 || true
+    ipc scratch close >/dev/null 2>&1 || true
+    ipc quickpicker toggle "$1"
+    ;;
+  scratch)
+    target="none"
+    if command -v hyprctl >/dev/null 2>&1 && command -v jq >/dev/null 2>&1; then
+      target="$(hyprctl activewindow -j 2>/dev/null | jq -r '.address // "none"' 2>/dev/null || printf none)"
+      [[ -n "$target" && "$target" != "null" ]] || target="none"
+    fi
+    close_hotkeys
+    ipc dots closeOverlays >/dev/null 2>&1 || true
+    ipc launcher close >/dev/null 2>&1 || true
+    ipc bookmarks close >/dev/null 2>&1 || true
+    ipc quickpicker close >/dev/null 2>&1 || true
+    ipc scratch toggle "$target"
     ;;
   hotkeys)
-    quickshell ipc -p "$config" call dots closeOverlays >/dev/null 2>&1 || true
-    quickshell ipc -p "$config" call launcher close >/dev/null 2>&1 || true
-    quickshell ipc -p "$config" call bookmarks close >/dev/null 2>&1 || true
-    exec quickshell ipc -p "$config" call hotkeys toggle
+    ipc dots closeOverlays >/dev/null 2>&1 || true
+    close_pickers
+    ipc hotkeys toggle
     ;;
   system)
     close_hotkeys
-    quickshell ipc -p "$config" call launcher close >/dev/null 2>&1 || true
-    quickshell ipc -p "$config" call bookmarks close >/dev/null 2>&1 || true
-    exec quickshell ipc -p "$config" call dots panel system
+    close_pickers
+    ipc dots panel system
     ;;
   panel)
-    [[ $# -ge 2 ]] || { echo "usage: dots-shell panel <system|audio|network|bluetooth|power|agents|updates|notifications|calendar>" >&2; exit 2; }
+    [[ $# -ge 2 ]] || {
+      echo "usage: dots-shell panel <system|audio|network|bluetooth|power|agents|updates|notifications|calendar>" >&2
+      exit 2
+    }
     close_hotkeys
-    quickshell ipc -p "$config" call launcher close >/dev/null 2>&1 || true
-    quickshell ipc -p "$config" call bookmarks close >/dev/null 2>&1 || true
-    exec quickshell ipc -p "$config" call dots panel "$2"
+    close_pickers
+    ipc dots panel "$2"
     ;;
   refresh)
-    exec quickshell ipc -p "$config" call dots refresh
+    ipc dots refresh
     ;;
   osd)
     [[ $# -ge 4 ]] || { echo "usage: dots-shell osd <icon> <label> <value>" >&2; exit 2; }
-    exec quickshell ipc -p "$config" call dots showOsd "$2" "$3" "$4"
+    ipc dots showOsd "$2" "$3" "$4"
     ;;
   *)
-    exec quickshell ipc -p "$config" call dots "$@"
+    ipc dots "$@"
     ;;
 esac

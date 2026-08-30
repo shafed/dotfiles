@@ -9,10 +9,10 @@ Item {
   required property var services
   required property var system
   required property var notifications
+  required property var agents
   required property var colors
   required property var ui
   required property var historyModel
-  required property var agentsRefreshProc
 
   PanelWindow {
     visible: panel.shell.openPanel !== ""
@@ -92,7 +92,7 @@ Item {
   Component { id: bluetoothPanel; BluetoothPanel { shell: panel.shell; system: panel.system; colors: panel.colors; ui: panel.ui } }
   Component { id: calendarPanel; CalendarPanel { shell: panel.shell; colors: panel.colors; ui: panel.ui } }
   Component { id: powerPanel; PowerPanel { shell: panel.shell; system: panel.system; colors: panel.colors; ui: panel.ui } }
-  Component { id: agentsPanel; AgentsPanel { shell: panel.shell; colors: panel.colors; ui: panel.ui; agentsRefreshProc: panel.agentsRefreshProc } }
+  Component { id: agentsPanel; AgentsPanel { shell: panel.shell; agents: panel.agents; colors: panel.colors; ui: panel.ui } }
   Component { id: updatesPanel; UpdatesPanel { system: panel.system; colors: panel.colors; ui: panel.ui } }
   Component { id: notificationsPanel; NotificationsPanel { shell: panel.shell; notifications: panel.notifications; colors: panel.colors; ui: panel.ui; historyModel: panel.historyModel } }
 }

@@ -15,6 +15,7 @@ close_pickers() {
   ipc launcher close >/dev/null 2>&1 || true
   ipc bookmarks close >/dev/null 2>&1 || true
   ipc quickpicker close >/dev/null 2>&1 || true
+  ipc youtube close >/dev/null 2>&1 || true
   ipc scratch close >/dev/null 2>&1 || true
 }
 
@@ -24,6 +25,7 @@ case "${1:-}" in
     ipc dots closeOverlays >/dev/null 2>&1 || true
     ipc bookmarks close >/dev/null 2>&1 || true
     ipc quickpicker close >/dev/null 2>&1 || true
+    ipc youtube close >/dev/null 2>&1 || true
     ipc scratch close >/dev/null 2>&1 || true
     ipc launcher toggle
     ;;
@@ -32,6 +34,7 @@ case "${1:-}" in
     ipc dots closeOverlays >/dev/null 2>&1 || true
     ipc launcher close >/dev/null 2>&1 || true
     ipc quickpicker close >/dev/null 2>&1 || true
+    ipc youtube close >/dev/null 2>&1 || true
     ipc scratch close >/dev/null 2>&1 || true
     ipc bookmarks toggle
     ;;
@@ -40,13 +43,23 @@ case "${1:-}" in
     close_pickers
     ipc dots toggleClipboard
     ;;
-  projects|sessions|youtube)
+  projects|sessions)
     close_hotkeys
     ipc dots closeOverlays >/dev/null 2>&1 || true
     ipc launcher close >/dev/null 2>&1 || true
     ipc bookmarks close >/dev/null 2>&1 || true
+    ipc youtube close >/dev/null 2>&1 || true
     ipc scratch close >/dev/null 2>&1 || true
     ipc quickpicker toggle "$1"
+    ;;
+  youtube)
+    close_hotkeys
+    ipc dots closeOverlays >/dev/null 2>&1 || true
+    ipc launcher close >/dev/null 2>&1 || true
+    ipc bookmarks close >/dev/null 2>&1 || true
+    ipc quickpicker close >/dev/null 2>&1 || true
+    ipc scratch close >/dev/null 2>&1 || true
+    ipc youtube toggle
     ;;
   scratch)
     target="none"
@@ -59,6 +72,7 @@ case "${1:-}" in
     ipc launcher close >/dev/null 2>&1 || true
     ipc bookmarks close >/dev/null 2>&1 || true
     ipc quickpicker close >/dev/null 2>&1 || true
+    ipc youtube close >/dev/null 2>&1 || true
     ipc scratch toggle "$target"
     ;;
   hotkeys)

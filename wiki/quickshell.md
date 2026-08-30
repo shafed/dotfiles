@@ -152,6 +152,8 @@ keep their own green/amber/red utilization colors as well.
 `config/Colors.qml` and `config/UiConfig.qml` both declare QML `color`
 properties, so they must import `QtQuick`; importing only `QtQml` makes shell
 loading fail with `color is not a type` before any component is created.
+Components that declare `IpcHandler` must import `Quickshell.Io`; the generic
+`import Quickshell` does not expose that type.
 
 After changing Quickshell code:
 

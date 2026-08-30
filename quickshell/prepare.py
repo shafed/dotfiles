@@ -27,6 +27,24 @@ replace_once(
     "Hyprland import",
 )
 
+# Layout changes are pushed by layout-watch.py. Do not let an older in-flight
+# fast snapshot overwrite a freshly received keyboard-layout event.
+replace_once(
+    "    if (next.layout !== undefined) merged.layout = next.layout\n",
+    "",
+    "fast layout assignment",
+)
+
+# Keep the event-driven layout value when the slower full snapshot refreshes
+# unrelated state. The first full snapshot still initializes it at startup.
+replace_once(
+    "  function updateFull(next) {\n    state = next\n",
+    "  function updateFull(next) {\n"
+    "    if (state.layout) next.layout = state.layout\n"
+    "    state = next\n",
+    "full snapshot layout preservation",
+)
+
 replace_once(
     "          Repeater {\n"
     "            model: root.occupiedWorkspaces\n"

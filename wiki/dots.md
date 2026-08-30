@@ -61,16 +61,24 @@ journal text.
 
 `migrate` is intentionally idempotent and has no migration database. A migration
 exists only while an obsolete state can be detected directly. This avoids a
-second source of truth for machine history. Destructive cleanup is limited to
-safe state such as cache or an old managed symlink; an unmanaged real config is
-reported for manual archival instead of being deleted.
+second source of truth for machine history. Before a migration deletes or
+changes an existing user file/config, it first copies that path with metadata
+and symlink identity preserved into a lazily-created run directory under
+`$XDG_STATE_HOME/dotfiles/backups/` when `XDG_STATE_HOME` is set, otherwise
+`~/.local/state/dotfiles/backups/`, and prints the exact source and backup paths.
+`--check`, no-op runs, cache cleanup, service changes, and unmanaged configs that
+are only reported do not create backups. There is no automatic rollback layer;
+a backup is just a transparent copy to restore manually if needed.
 
 Waybar is the first such migration. Quickshell owns the bar, so a running or
-enabled Waybar, `~/.config/waybar`, or Waybar cache is stale state. The old
-tracked `waybar/` directory was removed as part of introducing this contract.
-The Quickshell startup kill remains as compatibility insurance for machines that
-have not migrated yet; it is not evidence that Waybar is still a supported
-component.
+enabled Waybar, `~/.config/waybar`, or Waybar cache is stale state. The retired
+managed `~/.config/waybar` symlink is backed up before removal; stale Waybar
+cache is removed without backup because it is derived state. An unmanaged real
+Waybar config is still reported for manual archival instead of being touched.
+The old tracked `waybar/` directory was removed as part of introducing this
+contract. The Quickshell startup kill remains as compatibility insurance for
+machines that have not migrated yet; it is not evidence that Waybar is still a
+supported component.
 
 ⚠️ Gotcha: `dots doctor` treats missing required commands and broken managed
 links as errors, while developer-only tools such as `luac` and `pre-commit` are

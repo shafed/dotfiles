@@ -7,12 +7,14 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+import tomllib
 
 ROOT = Path(__file__).resolve().parents[1]
 APPLY = ROOT / "helium/apply-gruvbox-theme.py"
 SWITCH = ROOT / "helium/switch-gruvbox-theme.py"
 DARK = ROOT / "helium/gruvbox-dark/manifest.json"
 LIGHT = ROOT / "helium/gruvbox-light/manifest.json"
+PALETTE = ROOT / "colors.toml"
 
 
 def fake_darkman(bin_dir: Path, mode: str) -> None:
@@ -54,19 +56,33 @@ def runtime_manifest(home: Path) -> Path:
     return home / ".local/share/dotfiles/helium-gruvbox/manifest.json"
 
 
+def rgb(value: str) -> list[int]:
+    value = value.removeprefix("#")
+    return [int(value[index : index + 2], 16) for index in (0, 2, 4)]
+
+
 def assert_exact_palettes() -> None:
+    palette = tomllib.loads(PALETTE.read_text())
+    dark_palette = palette["colors"]
+    light_palette = palette["colors_light"]
     dark = json.loads(DARK.read_text())["theme"]["colors"]
     light = json.loads(LIGHT.read_text())["theme"]["colors"]
 
-    assert dark["frame"] == [29, 32, 33]  # #1d2021
-    assert dark["toolbar"] == [60, 56, 54]  # #3c3836
-    assert dark["omnibox_background"] == [40, 40, 40]  # #282828
-    assert dark["tab_text"] == [212, 190, 152]  # #d4be98
+    mapping = {
+        "frame": "bg_hard",
+        "toolbar": "bg_soft",
+        "omnibox_background": "bg",
+        "tab_text": "fg",
+        "ntp_link": "blue",
+    }
+    for chromium_name, palette_name in mapping.items():
+        assert dark[chromium_name] == rgb(dark_palette[palette_name])
+        assert light[chromium_name] == rgb(light_palette[palette_name])
 
+    assert dark["frame"] == [29, 32, 33]  # #1d2021
+    assert dark["omnibox_background"] == [40, 40, 40]  # #282828
     assert light["frame"] == [242, 239, 232]  # #f2efe8
-    assert light["toolbar"] == [236, 233, 226]  # #ece9e2
     assert light["omnibox_background"] == [251, 250, 247]  # #fbfaf7
-    assert light["tab_text"] == [60, 56, 54]  # #3c3836
 
 
 def main() -> int:

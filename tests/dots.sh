@@ -37,19 +37,61 @@ chmod +x "$fake_bin/darkman" "$fake_bin/quickshell" "$fake_bin/systemctl"
 export PATH="$fake_bin:$PATH"
 
 "$ROOT/dots" help >"$tmp/help.out"
-for command in plan apply drift provision stage doctor history rollback; do
+for command in plan apply drift provision doctor history show rollback aliases completion; do
   grep -q "^  $command" "$tmp/help.out"
 done
-for command in drift provision stage rollback; do
+! grep -q '^  stage' "$tmp/help.out"
+for command in drift provision rollback aliases completion; do
   "$ROOT/dots" help "$command" >"$tmp/$command-help.out"
   grep -q "^Usage: dots $command" "$tmp/$command-help.out"
 done
+"$ROOT/dots" help hi >"$tmp/history-alias-help.out"
+grep -q '^Usage: dots history' "$tmp/history-alias-help.out"
+"$ROOT/dots" sh --help >"$tmp/show-alias-help.out"
+grep -q '^Usage: dots show' "$tmp/show-alias-help.out"
+
 "$ROOT/dots" commands --json >"$tmp/commands.json"
 "$REAL_PYTHON" - "$tmp/commands.json" <<'PY'
 import json, sys
-names = {item["name"] for item in json.load(open(sys.argv[1], encoding="utf-8"))}
-assert {"plan", "apply", "drift", "provision", "stage", "doctor", "history", "show", "rollback"} <= names
+items = json.load(open(sys.argv[1], encoding="utf-8"))
+by_name = {item["name"]: item for item in items}
+assert {"plan", "apply", "drift", "provision", "doctor", "history", "show", "rollback", "aliases", "completion"} <= set(by_name)
+assert "stage" not in by_name
+assert by_name["plan"]["aliases"] == ["pl"]
+assert by_name["history"]["aliases"] == ["hi", "hist"]
+assert by_name["show"]["aliases"] == ["sh"]
+assert by_name["aliases"]["aliases"] == ["al"]
 PY
+
+"$ROOT/dots" aliases >"$tmp/aliases.out"
+grep -Eq '^pl[[:space:]]+plan$' "$tmp/aliases.out"
+grep -Eq '^hi[[:space:]]+history$' "$tmp/aliases.out"
+grep -Eq '^hist[[:space:]]+history$' "$tmp/aliases.out"
+grep -Eq '^sh[[:space:]]+show$' "$tmp/aliases.out"
+grep -Eq '^al[[:space:]]+aliases$' "$tmp/aliases.out"
+"$ROOT/dots" aliases --json >"$tmp/aliases.json"
+"$REAL_PYTHON" - "$tmp/aliases.json" <<'PY'
+import json, sys
+pairs = {(item["alias"], item["command"]) for item in json.load(open(sys.argv[1], encoding="utf-8"))}
+assert ("pl", "plan") in pairs
+assert ("hi", "history") in pairs
+assert ("sh", "show") in pairs
+assert all(command != "stage" for _, command in pairs)
+PY
+
+"$ROOT/dots" completion zsh >"$tmp/dots-completion.zsh"
+grep -q "'pl:alias for plan'" "$tmp/dots-completion.zsh"
+grep -q 'compdef _dots dots ds' "$tmp/dots-completion.zsh"
+! grep -q 'stage' "$tmp/dots-completion.zsh"
+if command -v zsh >/dev/null 2>&1; then
+  zsh -n "$tmp/dots-completion.zsh"
+fi
+[ ! -e "$ROOT/scripts/dots-stage.sh" ]
+if "$ROOT/dots" stage >"$tmp/stage.out" 2>&1; then
+  echo "removed stage command unexpectedly succeeded" >&2
+  exit 1
+fi
+grep -q 'unknown command: stage' "$tmp/stage.out"
 
 "$ROOT/dots" theme >"$tmp/theme.out"
 grep -q '^dark$' "$tmp/theme.out"

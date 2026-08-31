@@ -3,7 +3,7 @@ description = "Hyprland desktop session and graphical integrations"
 includes = ["base"]
 capabilities = ["desktop", "bluetooth"]
 config_dirs = ["hypr", "kanata", "quickshell", "darkman", "systemd"]
-sources = ["helium/apply-gruvbox-theme.py", "scripts/dots-helium-generator.sh", "scripts/copyq-apply-theme.py"]
+sources = ["helium/apply-gruvbox-theme.py", "scripts/dots-helium-generator.sh", "scripts/copyq-apply-theme.py", "telegram/generate-theme.py", "telegram/_palette_renderer.py", "telegram/background.png.b64"]
 services = ["quickshell.service", "kanata.service", "darkman.service", "copyq.service"]
 
 [[links]]
@@ -22,6 +22,12 @@ name = "copyq-live-config"
 apply = ["python3", "scripts/copyq-apply-theme.py"]
 outputs = ["{config}/copyq/copyq.conf"]
 reason = "merge the generated theme into CopyQ's mutable live config"
+
+[[generators]]
+name = "telegram-live-theme"
+apply = ["python3", "telegram/generate-theme.py", "--runtime", "auto"]
+outputs = ["{data}/dotfiles/telegram/current.tdesktop-theme"]
+reason = "keep one stable Telegram theme file that darkman can switch in place"
 
 [[prerequisites]]
 kind = "system-service"

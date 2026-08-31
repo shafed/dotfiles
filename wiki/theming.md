@@ -15,15 +15,18 @@ covers:
   - quickshell/config/Colors.qml
 ---
 
-# theming — gruvbox (dark everywhere)
+# theming — Gruvbox base with a Telegram daylight exception
 
-Everything uses **Gruvbox Material Dark Medium**, anchored to `#282828`
+The desktop base uses **Gruvbox Material Dark Medium**, anchored to `#282828`
 background / `#d4be98` foreground. Neovim's gruvbox-material setup remains the
-visual reference.
+visual reference. Telegram is the deliberate exception: its `light` solar state
+uses a warmer olive/taupe palette for daylight readability while its `dark`
+state stays Gruvbox.
 
 ## Palette source of truth
 
-`colors.toml` is the only editable repository palette. After changing it, run:
+`colors.toml` is the only editable repository palette for shared surfaces. After
+changing it, run:
 
 ```sh
 python3 scripts/generate-theme.py
@@ -52,14 +55,29 @@ slightly teal `bg_hard` amplifies that hue into blue icons. Its surface therefor
 uses the neutral Gruvbox `bg` (`#282828`), which makes the derived icons neutral
 gray while preserving Gruvbox hover, selection, and foreground colors.
 
-Telegram Desktop is user-imported rather than symlinked by bootstrap, so its
-surface is generated separately by `telegram/generate-theme.py`. The tracked
-`telegram/colors.tdesktop-theme` contains the palette. The preferred botanical
-wallpaper is stored as text-safe `telegram/background.png.b64`; the generator
-decodes it to local `telegram/background-primary.png` and embeds the decoded
-bytes in `telegram/gruvbox-material-dark-medium.tdesktop-theme` as
-`background.png`. Storing the source as base64 avoids binary corruption when the
-repository is updated through APIs that primarily handle UTF-8 text.
+Telegram Desktop is generated separately by `telegram/generate-theme.py`. The
+night variant comes from the shared Gruvbox palette, while the day variant
+re-maps Telegram's whole local alias layer to muted olive/taupe surfaces and
+warmer accents. These Telegram-only daylight values stay in the Telegram
+generator rather than `colors.toml`, because the readability problem is specific
+to its dense chat UI and should not recolor the rest of the desktop.
+
+The preferred botanical wallpaper is stored as text-safe
+`telegram/background.png.b64`; the generator decodes it to local
+`telegram/background-primary.png` and embeds the decoded bytes in both generated
+variant archives. Day/night palettes and archives are local build artifacts and
+are ignored by git. The legacy
+`telegram/gruvbox-material-dark-medium.tdesktop-theme` output remains a night
+alias for compatibility with the older manual workflow.
+
+For the live setup, the desktop profile runs
+`telegram/generate-theme.py --runtime auto`, which writes one stable file at
+`$XDG_DATA_HOME/dotfiles/telegram/current.tdesktop-theme`. Import that file in
+Telegram and press **Apply Theme** once. Telegram Desktop watches the native path
+of a loaded local theme and reapplies it when the file changes, so
+`darkman/scripts/telegram` can switch the contents between day and night on each
+solar transition without editing `tdata` or automating UI clicks. See
+[telegram](telegram.md) for the palette and bootstrap decision.
 
 The wallpaper is PNG, not JPEG: an earlier JPEG source got silently bit-corrupted
 somewhere in git history (mid-stream, not just a truncated tail — every JPEG
@@ -71,10 +89,7 @@ decoder. PNG's checksummed chunks make that class of silent corruption far less
 likely to reoccur unnoticed.
 
 The artwork itself is inset on a taller dark canvas so Telegram's cover-style
-wallpaper scaling crops and zooms it less in a narrow chat pane. The final theme
-archive is a local build artifact and is ignored by git. Import the final
-`telegram/gruvbox-material-dark-medium.tdesktop-theme`, not the standalone
-palette file or the `.b64` source.
+wallpaper scaling crops and zooms it less in a narrow chat pane.
 
 Regardless of source format, verify a new wallpaper source decodes with a real
 decoder (`python3 -c "from PIL import Image; Image.open(...).load()"` or
@@ -89,25 +104,25 @@ without storing a second large binary in git.
 
 Telegram-specific semantic overrides live in `telegram/generate-theme.py` when
 a palette surface has no useful cross-application equivalent. The vertical chat
-folder sidebar uses Telegram's `sideBar*` keys explicitly: dark Gruvbox for the
-rail and active item, muted foreground for inactive folders, and yellow only for
-the active folder and unread badges. This prevents Telegram's built-in blue
-sidebar defaults from leaking through the custom theme.
+folder sidebar uses Telegram's `sideBar*` keys explicitly and inherits whichever
+Telegram variant is active rather than leaking Telegram's built-in blue defaults.
 
 Voice messages also have Telegram-specific overrides. The idle waveform is kept
-neutral Gruvbox rather than being used as an unread/read signal. Telegram's
-theme API does not expose separate colors for an unread idle voice message and
-a listened-but-stopped one: unread media is represented by the small dot after
-the duration. That dot shares `msgFileInBg` with the incoming play button, so the
-theme makes both yellow to keep the unread marker obvious. Exact whole-message
+neutral rather than being used as an unread/read signal. Telegram's theme API
+does not expose separate colors for an unread idle voice message and a
+listened-but-stopped one: unread media is represented by the small dot after the
+duration. That dot shares `msgFileInBg` with the incoming play button, so the
+theme gives both the active variant's yellow accent. Exact whole-message
 unread/read recoloring would require patching Telegram Desktop itself.
 
-Do not hand-edit color values in generated files. Configs listed above consume
-generated palette surfaces rather than maintaining independent values. Yazi's
-existing classic-Gruvbox accents are intentionally preserved as compatibility
-entries in `colors.toml`; regeneration therefore does not restyle Yazi. Its
-vendored `tmtheme.xml` is syntax-highlighting metadata from the upstream flavor
-and is not used as the desktop palette source.
+Do not hand-edit generated Telegram day/night palette files. The source is the
+shared renderer plus Telegram's variant transformation in
+`telegram/generate-theme.py`. Other generated configs consume shared palette
+surfaces rather than maintaining independent values. Yazi's existing
+classic-Gruvbox accents are intentionally preserved as compatibility entries in
+`colors.toml`; regeneration therefore does not restyle Yazi. Its vendored
+`tmtheme.xml` is syntax-highlighting metadata from the upstream flavor and is
+not used as the desktop palette source.
 
 The Claude Code theme deliberately leaves `claudeShimmer` at its built-in color;
 overriding it made the thinking animation harder to distinguish.
@@ -240,10 +255,12 @@ compiled pack can survive in the profile.
 
 ## Light/dark
 
-Darkman's solar state becomes `dark` or `light`, but visual appearance is
-deliberately pinned dark in both states for every application surface — the
-**wallpaper is the sole exception**, see below. The GTK hook always sets
-`color-scheme=prefer-dark` and selects the first installed theme from:
+Darkman's solar state becomes `dark` or `light`. Most application surfaces stay
+pinned to Gruvbox dark in both states. There are now two intentional visual
+exceptions: the Hyprland wallpaper and Telegram Desktop.
+
+The GTK hook still always sets `color-scheme=prefer-dark` and selects the first
+installed theme from:
 
 1. `Gruvbox-Material-Dark`
 2. `Gruvbox-Dark-Medium`
@@ -252,12 +269,13 @@ deliberately pinned dark in both states for every application surface — the
 If none exists it falls back to `Adwaita-dark` and prints a warning. Hooks live
 in the XDG data dir (`~/.local/share/darkman` via `dots apply`), not
 `~/.config`. GTK4/libadwaita is not fully controlled by `gtk-theme`, but the
-system color-scheme remains dark.
+system color-scheme remains dark. Telegram does not depend on this system value;
+it switches through its watched local theme file instead.
 
 `hypr/hyprsunset.conf` is independent screen gamma/temperature control and does
 not switch application themes.
 
-### Wallpaper is the one thing that does switch
+### Wallpaper and Telegram switch with the solar state
 
 `darkman/scripts/wallpaper` swaps the Hyprland wallpaper between
 `hypr/wallpapers/light.png` and `hypr/wallpapers/dark.png` on every darkman
@@ -267,6 +285,13 @@ through a `hyprpaper.conf`, which this build ignores. See
 and the config-file gotcha; `hypr/modules/autostart.lua` also resyncs it to
 the current `darkman get` state on every Hyprland start, since restarting only
 `hyprpaper` doesn't make `darkman.service` refire its hooks.
+
+`darkman/scripts/telegram` maps `light` to the full olive/taupe Telegram day
+variant and `dark` to the Gruvbox night variant. It rewrites
+`$XDG_DATA_HOME/dotfiles/telegram/current.tdesktop-theme`; Telegram's own file
+watcher reloads the active custom theme from that stable path. `dots apply`
+creates/resyncs that runtime file through the desktop profile generator, but the
+first Telegram import still requires one manual **Apply Theme** confirmation.
 
 ### Fixing a stale `~/.local/share/darkman` on an existing machine
 

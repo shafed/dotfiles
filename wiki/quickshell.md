@@ -35,9 +35,9 @@ Tracked QML is the runtime source and `start.sh` runs that tree directly with
 
 - `shell.qml` — orchestration, notifications, process lifetimes and IPC;
 - `components/` — top bar, system panel, compact system overview, searchable
-  hotkeys cheat sheet, clipboard/toast/OSD overlays, shared controls,
-  Applications, Bookmarks, the shared Projects/Sessions picker, the dedicated
-  YouTube picker and the scratch editor;
+  hotkeys cheat sheet, toast/OSD overlays, shared controls, Applications,
+  Bookmarks, the shared Projects/Sessions picker, the dedicated YouTube picker
+  and the scratch editor;
 - `services/DesktopServices.qml` — PipeWire outputs/streams/volume/mute,
   Hyprland keyboard layout events and sysfs backlight sampling;
 - `services/SystemServices.qml` — composition of native UPower/Bluetooth plus
@@ -151,10 +151,11 @@ same palette as a required component property; keeping those ownership models
 distinct prevents a match-only QML exception from blanking result text.
 
 The old native `components/ClipboardOverlay.qml` and its `cliphist` watcher were
-removed. `Super+V`, the top-bar `CLIP` button, and `dots-shell clipboard` now
-toggle CopyQ's own window, preserving its native history, search, and paste
-handling. `components/PickerOverlays.qml` only groups the remaining Projects,
-Sessions, YouTube, and Scratch overlays.
+removed. `Super+V` and `dots-shell clipboard` toggle CopyQ's own window,
+preserving its native history, search, and paste handling. Clipboard is not
+shown in the top bar; the dedicated `CLIP` button was removed to keep the bar
+focused on live system state. `components/PickerOverlays.qml` only groups the
+remaining Projects, Sessions, YouTube, and Scratch overlays.
 
 `components/ScratchOverlay.qml` is a focused multiline editor. `Esc` hides while
 preserving the draft and `Ctrl+Enter` closes, copies and pastes back into the

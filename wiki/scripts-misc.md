@@ -67,10 +67,21 @@ push-on-exit so call sites stop inlining their own `git pull`/`git push`.
   skip a just-published remote update, so the simpler unconditional pull won.
 - `push` — first runs the same pull, then `git add -A`, commits as
   `Vault backup: <timestamp>` if there's anything staged, and finally
-  `git push`; `silent` suppresses the success message. Pull-before-commit makes
-  remote deletions land locally before a stale copy can be staged again. If the
-  deleted note was also modified locally, the pull stops on the conflict and
-  the push is aborted instead of resurrecting the note on another device.
+  `git push`; `silent` suppresses the success message. Pull-before-commit also
+  protects edits inside one note: if another device removed old lines while
+  this device still has a stale copy, those remote deletions land first and the
+  local working-tree diff is reapplied on top. Non-overlapping new lines survive;
+  same-hunk conflicts stop instead of silently resurrecting removed text.
+- Sync refuses to proceed while merge/rebase/cherry-pick state is active, while
+  the index has unmerged entries, or while Markdown contains literal Git
+  conflict markers (`<<<<<<<` / `>>>>>>>`). This matters because a phone/Termux
+  merge once committed conflict-marker text as ordinary `notes/todos.md`
+  content; after that Git correctly treated the bad merged file as history and
+  propagated it everywhere.
+- The same ordering should be used by the Termux HTTP helper on Android:
+  pull/rebase/autostash first, verify there is no merge/conflict state, then
+  `git add -A` → commit → push. A plain merge followed by unconditional
+  `git add -A && git commit` is deliberately not a supported sync path.
 - Both commands take the same vault-specific `flock`, because Neovim exit and
   focus events can overlap with each other or with a session-entry pull. Waiting
   for the active sync avoids Git index-lock races without dropping a push.

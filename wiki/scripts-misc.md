@@ -65,8 +65,12 @@ push-on-exit so call sites stop inlining their own `git pull`/`git push`.
 - `pull` — `git pull --rebase --autostash` on every session entry. A former
   30-second marker saved an occasional fetch but introduced state that could
   skip a just-published remote update, so the simpler unconditional pull won.
-- `push` — `git add -A`, commit as `Vault backup: <timestamp>` if there's
-  anything staged, then `git push`; `silent` suppresses the success message.
+- `push` — first runs the same pull, then `git add -A`, commits as
+  `Vault backup: <timestamp>` if there's anything staged, and finally
+  `git push`; `silent` suppresses the success message. Pull-before-commit makes
+  remote deletions land locally before a stale copy can be staged again. If the
+  deleted note was also modified locally, the pull stops on the conflict and
+  the push is aborted instead of resurrecting the note on another device.
 - Both commands take the same vault-specific `flock`, because Neovim exit and
   focus events can overlap with each other or with a session-entry pull. Waiting
   for the active sync avoids Git index-lock races without dropping a push.

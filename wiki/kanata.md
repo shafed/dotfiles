@@ -4,7 +4,9 @@ type: component
 updated: 2026-08-31
 covers:
   - kanata/config.kbd
-  - kanata/hyprshot-region.sh
+  - kanata/screenshot-region.sh
+  - kanata/screenshot-full.sh
+  - kanata/screenshot-cursor.sh
   - kanata/switchApp.sh
   - kanata/close-window.sh
   - scripts/symlayout-watch.sh
@@ -199,31 +201,39 @@ Hyprland to handle.
 ## Screenshots
 
 `s` in the **navi** layer is a tap-hold between two screenshot paths, both
-straight to the clipboard: tap = whole monitor through hyprshot, hold =
-interactive region through the local wrapper. The split exists so the fast
+straight to the clipboard: tap = whole (focused) monitor via
+`screenshot-full.sh`, hold = interactive region via `screenshot-region.sh`.
+Both are plain `grim`/`slurp` wrappers with no `hyprshot` dependency — the tap
+path used to shell out to `hyprshot -m output`, but that meant an unwanted
+`slurp -or` click-to-pick-a-monitor step; `screenshot-full.sh` instead reads
+the focused output from `hyprctl monitors -j` and captures it directly, so tap
+truly is a single zero-interaction keypress. The split exists so that fast
 full-screen path doesn't pay the region-select cost.
-The region path freezes the screen before selection so transient content is
-captured at keypress time instead of continuing to move while framing the area.
-It uses `hyprshot-region.sh` instead of hyprshot directly because the machine
+
+The region path freezes the screen (`hyprpicker -r -z`) before selection so
+transient content is captured at keypress time instead of continuing to move
+while framing the area.
+
+Both scripts source `screenshot-cursor.sh` for a shared problem: the machine
 is forced into software-cursor mode (`cursor.no_hardware_cursors = true` in
 `hypr/machine/appearance.lua`, an Nvidia workaround — plain hardware cursors
 render invisible/corrupted here). Software cursors are baked into the
 composited frame, so grim always captures the pointer unless the compositor is
 briefly switched to hardware-cursor mode, whose plane screencopy excludes.
-
-The wrapper switches to hardware-cursor mode before starting hyprpicker's
-freeze (so that frame is cursor-free too), restores software cursor for the
-visible interactive `slurp` selection, then **kills the freeze and switches to
-hardware cursor again for a fresh, live `grim` capture** rather than
-re-photographing hyprpicker's frame. The original cursor mode is restored on
-every exit path.
+`screenshot-full.sh` just toggles to hardware-cursor mode before its single
+`grim` call. `screenshot-region.sh` also switches to hardware-cursor mode
+before starting hyprpicker's freeze (so that frame is cursor-free too),
+restores software cursor for the visible interactive `slurp` selection, then
+**kills the freeze and switches to hardware cursor again for a fresh, live
+`grim` capture** rather than re-photographing hyprpicker's frame. The original
+cursor mode is restored on every exit path.
 
 ⚠️ **Gotchas:**
 
 - `hyprctl keyword` no longer applies config changes at runtime under
   Hyprland's Lua config parser — it errors with "Use eval." Runtime toggles
   here go through `hyprctl eval 'hl.config({cursor={no_hardware_cursors=...}})'`
-  instead.
+  instead (see `screenshot-cursor.sh`).
 - The mode switch is asynchronous: `grim`/`hyprpicker` must not run for ~0.5s
   after it, or they still capture the software cursor.
 - Toggling hardware-cursor mode _after_ hyprpicker has already frozen the
@@ -231,8 +241,10 @@ every exit path.
   The freeze must be killed and a live capture taken instead of reusing it.
 
 Deliberately removed and not to be reinstated: `flameshot` + its service
-(2026-07-18, no daemon needed since hyprshot runs on demand) and `satty`
-annotation on the region path (2026-08-03).
+(2026-07-18, no daemon needed since screenshots run on demand), `satty`
+annotation on the region path (2026-08-03), and the `hyprshot` binary itself
+(2026-08-31, both paths now call `grim`/`slurp`/`hyprpicker` directly — see
+above).
 
 ## browser layer (site shortcuts)
 

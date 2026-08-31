@@ -180,8 +180,6 @@ ZSH
 
   return ret
 }
-
-compdef _dots dots ds
 ZSH
 }
 

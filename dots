@@ -29,6 +29,8 @@ check | c) exec "$ROOT/scripts/dots-check.sh" "$@" ;;
 migrate | m) exec "$ROOT/scripts/dots-migrate.sh" "$@" ;;
 history | hist) exec "$ROOT/scripts/dots-history.sh" "$@" ;;
 show) exec "$ROOT/scripts/dots-show.sh" "$@" ;;
+rollback | rb) exec "$ROOT/scripts/dots-rollback.sh" "$@" ;;
+provision | pv) exec "$ROOT/scripts/dots-provision.sh" "$@" ;;
 theme | t) exec "$ROOT/scripts/dots-theme.sh" "$@" ;;
 restart | rs) exec "$ROOT/scripts/dots-restart.sh" "$@" ;;
 refresh | rf) exec "$ROOT/scripts/dots-refresh.sh" "$@" ;;
@@ -49,6 +51,8 @@ help | h | -h | --help)
     c) command_name="check" ;;
     m) command_name="migrate" ;;
     hist) command_name="history" ;;
+    rb) command_name="rollback" ;;
+    pv) command_name="provision" ;;
     t) command_name="theme" ;;
     rs) command_name="restart" ;;
     rf) command_name="refresh" ;;

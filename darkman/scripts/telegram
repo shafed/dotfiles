@@ -10,4 +10,4 @@ esac
 script="$(readlink -f "$0")"
 repo_root="$(dirname "$(dirname "$(dirname "$script")")")"
 
-"$repo_root/scripts/dots-telegram-generator.sh" "$1" >/dev/null
+bash "$repo_root/scripts/dots-telegram-generator.sh" "$1" >/dev/null

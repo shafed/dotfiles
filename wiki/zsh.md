@@ -26,10 +26,9 @@ oh-my-zsh with plugins that install themselves. Main file — `../zsh/zshrc`
 - **`dots` completion is registered directly after Oh My Zsh initializes
   `compinit`.** `zshrc` evaluates `dots completion zsh`, which defines one
   command-aware `_dots` function and registers it for both `dots` and `ds`.
-  This deliberately avoids an extra `fpath`/autoload wrapper: command names,
-  aliases, flags and fixed subcommands are available immediately in a new shell.
-  The generator still reads canonical command/alias metadata from
-  `scripts/dots-lib.sh`.
+  Completion deliberately suggests only canonical command names, long flags and
+  canonical fixed subcommands. CLI abbreviations remain executable and visible
+  through `dots aliases`, but do not clutter interactive completion menus.
 
 ## zsh-vi-mode: three settings that all look like the same bug
 

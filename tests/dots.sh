@@ -29,7 +29,7 @@ case "$*" in
   "--user is-enabled waybar.service") echo disabled; exit 1 ;;
   "--user is-active waybar.service") echo inactive; exit 3 ;;
   "--user is-enabled quickshell.service"|"--user is-enabled kanata.service"|"--user is-enabled darkman.service"|"--user is-enabled copyq.service") echo enabled; exit 0 ;;
-  "--user is-active graphical-session.target"|"--user is-active quickshell.service"|"--user is-active kanata.service.service"|"--user is-active darkman.service") echo active; exit 0 ;;
+  "--user is-active graphical-session.target"|"--user is-active quickshell.service"|"--user is-active kanata.service"|"--user is-active darkman.service") echo active; exit 0 ;;
   *) exit 0 ;;
 esac
 EOF

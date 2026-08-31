@@ -68,6 +68,15 @@ cmd_push() {
     return 1
   fi
 
+  # Synchronize the remote state before taking a local snapshot. In particular,
+  # a note deleted on another device must disappear here before `git add -A`
+  # gets a chance to commit a stale local copy. If the same note was edited
+  # locally, cmd_pull stops on the modify/delete conflict instead of silently
+  # resurrecting it on the remote.
+  if ! cmd_pull; then
+    return 1
+  fi
+
   if ! git add -A; then
     warn "could not stage vault changes"
     return 1

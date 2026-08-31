@@ -81,7 +81,7 @@ PY
 
 "$ROOT/dots" completion zsh >"$tmp/dots-completion.zsh"
 grep -q "'pl:alias for plan'" "$tmp/dots-completion.zsh"
-grep -q 'compdef _dots dots ds' "$tmp/dots-completion.zsh"
+! grep -q 'compdef _dots dots ds' "$tmp/dots-completion.zsh"
 ! grep -q 'stage' "$tmp/dots-completion.zsh"
 if ! command -v zsh >/dev/null 2>&1; then
   echo "zsh is required for dots completion tests" >&2
@@ -92,17 +92,8 @@ zsh - "$tmp/dots-completion.zsh" "$tmp" <<'ZSH'
 set -e
 completion_file="$1"
 out_dir="$2"
-typeset -A _comps
-compdef() {
-  local function="$1" name
-  shift
-  for name in "$@"; do
-    _comps[$name]="$function"
-  done
-}
 source "$completion_file"
-[[ "${_comps[dots]}" == _dots ]]
-[[ "${_comps[ds]}" == _dots ]]
+(( $+functions[_dots] ))
 
 capture_command() {
   local wanted="$1"
@@ -138,6 +129,7 @@ grep -q 'status s light l dark d toggle t' "$tmp/complete-theme"
 grep -q 'system s audio a network n bluetooth b power p agents ag updates u notifications no calendar c' "$tmp/complete-panel"
 
 grep -q 'eval "$("\$DOTFILES/dots" completion zsh)"' "$ROOT/zsh/zshrc"
+grep -q 'compdef _dots dots ds' "$ROOT/zsh/zshrc"
 [ ! -e "$ROOT/zsh/completions/_dots" ]
 [ ! -e "$ROOT/scripts/dots-stage.sh" ]
 if "$ROOT/dots" stage >"$tmp/stage.out" 2>&1; then

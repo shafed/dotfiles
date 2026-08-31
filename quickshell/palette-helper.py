@@ -9,6 +9,7 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
+from urllib.parse import urlsplit
 
 HOME = Path.home()
 # Resolve through ~/.config/quickshell when active, so this works from either
@@ -201,6 +202,17 @@ def _copy_sqlite_snapshot(source: Path, dest_dir: Path):
         return None
 
 
+def _favicon_host(url: str):
+    try:
+        parsed = urlsplit(url)
+    except ValueError:
+        return ""
+    if parsed.scheme not in ("http", "https") or not parsed.netloc:
+        return ""
+    # Ignore any userinfo but keep an explicit port and IPv6 brackets intact.
+    return parsed.netloc.rsplit("@", 1)[-1].casefold()
+
+
 def sync_favicons(rows):
     if not BROWSER_FAVICONS_DB.exists() or not rows:
         return
@@ -223,8 +235,8 @@ def sync_favicons(rows):
 
         try:
             best = {}
-            # Chromium's Favicons DB maps page URLs to icon ids and stores
-            # encoded PNG bitmaps in favicon_bitmaps. Query only our bookmarks.
+            png_header = b"\x89PNG\r\n\x1a\n"
+            # Prefer a mapping for the exact bookmark URL.
             for offset in range(0, len(urls), 300):
                 chunk = urls[offset:offset + 300]
                 placeholders = ",".join("?" for _ in chunk)
@@ -240,14 +252,56 @@ def sync_favicons(rows):
                     for page_url, image_data, width, height in db.execute(query, chunk):
                         if page_url in best or not image_data:
                             continue
-                        best[page_url] = bytes(image_data)
+                        data = bytes(image_data)
+                        if data.startswith(png_header):
+                            best[page_url] = data
                 except sqlite3.Error:
                     return
 
-            for url, data in best.items():
-                # Chromium stores favicon_bitmaps.image_data as encoded PNG.
-                if not data.startswith(b"\x89PNG\r\n\x1a\n"):
+            # Chromium often only has an icon mapping for another visited page
+            # on the same site. Reuse that local favicon for bookmarks whose
+            # exact URL has no mapping, without making a network request.
+            by_host = {}
+            for url in urls:
+                if url in best:
                     continue
+                host = _favicon_host(url)
+                if host:
+                    by_host.setdefault(host, []).append(url)
+
+            host_query = """
+                SELECT m.page_url, b.image_data, b.width, b.height
+                FROM icon_mapping AS m
+                JOIN favicon_bitmaps AS b ON b.icon_id = m.icon_id
+                WHERE (
+                    m.page_url = ? OR instr(m.page_url, ?) = 1 OR
+                    m.page_url = ? OR instr(m.page_url, ?) = 1
+                )
+                  AND b.image_data IS NOT NULL
+                ORDER BY b.width DESC, b.height DESC
+            """
+            for host, host_urls in by_host.items():
+                https_base = f"https://{host}"
+                http_base = f"http://{host}"
+                try:
+                    fallback = None
+                    for page_url, image_data, width, height in db.execute(
+                        host_query,
+                        (https_base, https_base + "/", http_base, http_base + "/"),
+                    ):
+                        if not image_data:
+                            continue
+                        data = bytes(image_data)
+                        if data.startswith(png_header):
+                            fallback = data
+                            break
+                except sqlite3.Error:
+                    return
+                if fallback is not None:
+                    for url in host_urls:
+                        best[url] = fallback
+
+            for url, data in best.items():
                 target = favicon_path(url)
                 if target:
                     try:

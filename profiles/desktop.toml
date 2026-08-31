@@ -1,7 +1,7 @@
 [profile]
 description = "Hyprland desktop session and graphical integrations"
 includes = ["base"]
-capabilities = ["desktop", "bluetooth", "battery"]
+capabilities = ["desktop", "bluetooth"]
 config_dirs = ["hypr", "kanata", "quickshell", "darkman", "systemd"]
 sources = ["helium/apply-gruvbox-theme.py", "scripts/dots-helium-generator.sh", "scripts/copyq-apply-theme.py"]
 services = ["quickshell.service", "kanata.service", "darkman.service", "copyq.service"]
@@ -34,12 +34,6 @@ kind = "system-service"
 name = "bluetooth.service"
 required = true
 reason = "Bluetooth capability needs the BlueZ daemon"
-
-[[prerequisites]]
-kind = "system-service"
-name = "power-profiles-daemon.service"
-required = true
-reason = "power profile controls need the system daemon"
 
 [[packages]]
 command = "hyprland"
@@ -96,20 +90,6 @@ package = "bluez-utils"
 manager = "pacman"
 required = true
 reason = "Bluetooth capability"
-
-[[packages]]
-command = "powerprofilesctl"
-package = "power-profiles-daemon"
-manager = "pacman"
-required = true
-reason = "power profile capability"
-
-[[packages]]
-command = "brightnessctl"
-package = "brightnessctl"
-manager = "pacman"
-required = true
-reason = "display brightness controls"
 
 [[packages]]
 command = "checkupdates"

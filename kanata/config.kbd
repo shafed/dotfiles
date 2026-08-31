@@ -9,7 +9,7 @@
 ;; the other hand, so fast same-hand rolls stay taps without manual key lists.
 (defhands
   (left  grv tab q w e r t caps a s d f g z x c v b esc)
-  (right - = bspc y u i o p [ ] \\ h j k l ; ' n m , . /)
+  (right - = bspc y u i o p [ ] \ h j k l ; ' n m , . /)
 )
 
 (defvar
@@ -147,8 +147,8 @@
 ;; second symbol set, momentary (s+d+f held); longer chord beats (s d).
 (deflayermap (symbols2)
   y S-grv u S-[ i S-] o S-7  p XX      ;; ~ { } &
-  h S-1 j S-3 k S-8 l S-\\  ; ; ' ' ;; ! # * |
-  n \\ m S-5  , S-6 . S-4 / /          ;; \\ % ^ $
+  h S-1 j S-3 k S-8 l S-\  ; ; ' ' ;; ! # * |
+  n \ m S-5  , S-6 . S-4 / /          ;; \ % ^ $
 )
 
 ;; workspace numbers, momentary (apps+l held): Super+digit.

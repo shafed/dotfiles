@@ -149,13 +149,21 @@ before setting the wallpaper, since hyprpaper's IPC socket isn't up the
 instant it's launched.
 
 `misc.disable_hyprland_logo` in `hypr/modules/appearance.lua` must stay
-`true`. Hyprland draws its own corner logo and a random joke caption (e.g.
-"Hyprland only gives you up on -git") as a decoration on top of _any_
-wallpaper, independent of what hyprpaper is actually displaying — it is not
-part of the wallpaper image. `misc.force_default_wallpaper` is set to `0`
-rather than `-1` for the same reason: hyprpaper always sets a real wallpaper
-here, so there is no scenario where Hyprland's own built-in mascot background
-should ever be picked.
+`true` — it kills the corner logo Hyprland draws on top of _any_ wallpaper,
+independent of what hyprpaper is actually displaying; it is not part of the
+wallpaper image. `misc.force_default_wallpaper` is set to `0` rather than
+`-1` for the same reason: hyprpaper always sets a real wallpaper here, so
+there is no scenario where Hyprland's own built-in mascot background should
+ever be picked.
+
+Hyprland also draws a random joke caption (e.g. "Designed in California -
+Assembled in China") over the wallpaper. `misc.disable_splash_rendering` in
+`hyprland.conf`/`.lua` looks like the toggle for this, but as of Hyprland
+0.54.1+ it is an "old flag" that is ignored once hyprpaper owns the
+wallpaper — Hyprland defers the splash decision to hyprpaper itself. The
+actual toggle is `splash = false` in `hypr/hyprpaper.conf`. This repo had no
+`hyprpaper.conf` at all until this was discovered, so hyprpaper ran with its
+built-in default (splash on).
 
 ## Session launch: uwsm
 

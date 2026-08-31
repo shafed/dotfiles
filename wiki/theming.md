@@ -41,7 +41,8 @@ The main generator writes the tracked format-specific surfaces:
 - `quickshell/config/Colors.qml`;
 - `.claude/themes/gruvbox-material.json`;
 - `copyq/gruvbox.ini` (applied to CopyQ's mutable live config by
-  `scripts/copyq-apply-theme.py`);
+  `scripts/copyq-apply-theme.py`, which also enforces the repo-owned behavior
+  options);
 - `yazi/flavors/gruvbox-dark.yazi/flavor.toml`.
 
 CopyQ keeps its complete bundled Font Awesome toolbar set because the available

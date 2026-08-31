@@ -180,7 +180,10 @@ fzf/QAT frontend for search, history, Watch later or channel browsing.
 native window. Clipboard history is no longer a Quickshell picker: the deleted
 `ClipboardOverlay.qml` duplicated CopyQ's history, filtering, selection, and
 paste semantics while requiring a separate `cliphist` watcher. Hyprland floats
-and centers the CopyQ window at the former overlay size.
+and centers the CopyQ window at the former overlay size. CopyQ closes when it
+loses focus (`close_on_unfocus=true`), so clicking anywhere else dismisses it
+like a system widget; `dots apply` enforces this option without replacing the
+rest of CopyQ's mutable configuration.
 
 ## Scratch note
 

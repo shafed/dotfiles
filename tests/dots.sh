@@ -29,7 +29,7 @@ case "$*" in
   "--user is-enabled waybar.service") echo disabled; exit 1 ;;
   "--user is-active waybar.service") echo inactive; exit 3 ;;
   "--user is-enabled quickshell.service"|"--user is-enabled kanata.service"|"--user is-enabled darkman.service"|"--user is-enabled copyq.service") echo enabled; exit 0 ;;
-  "--user is-active graphical-session.target"|"--user is-active quickshell.service"|"--user is-active kanata.service"|"--user is-active darkman.service") echo active; exit 0 ;;
+  "--user is-active graphical-session.target"|"--user is-active quickshell.service"|"--user is-active kanata.service.service"|"--user is-active darkman.service") echo active; exit 0 ;;
   *) exit 0 ;;
 esac
 EOF
@@ -80,7 +80,9 @@ assert all(command != "stage" for _, command in pairs)
 PY
 
 "$ROOT/dots" completion zsh >"$tmp/dots-completion.zsh"
-grep -q "'pl:alias for plan'" "$tmp/dots-completion.zsh"
+grep -q "'plan:Preview exactly what apply would change'" "$tmp/dots-completion.zsh"
+! grep -q "'pl:" "$tmp/dots-completion.zsh"
+! grep -q 'alias for' "$tmp/dots-completion.zsh"
 ! grep -q 'compdef _dots dots ds' "$tmp/dots-completion.zsh"
 ! grep -q 'stage' "$tmp/dots-completion.zsh"
 if ! command -v zsh >/dev/null 2>&1; then
@@ -97,9 +99,10 @@ ZSH
 grep -q -- '--json\[machine-readable output\]' "$tmp/dots-completion.zsh"
 grep -q -- '--machine\[select a machine manifest\]' "$tmp/dots-completion.zsh"
 grep -q -- '--profile\[override selected profiles\]' "$tmp/dots-completion.zsh"
-grep -q '1:check scope:(all shell sh lua python py generated gen g tests t)' "$tmp/dots-completion.zsh"
-grep -q '1:theme action:(status s light l dark d toggle t)' "$tmp/dots-completion.zsh"
-grep -q '1:panel:(system s audio a network n bluetooth b power p agents ag updates u notifications no calendar c)' "$tmp/dots-completion.zsh"
+grep -q '1:check scope:(all shell lua python generated tests)' "$tmp/dots-completion.zsh"
+grep -q '1:theme action:(status light dark toggle)' "$tmp/dots-completion.zsh"
+grep -q '1:panel:(system audio network bluetooth power agents updates notifications calendar)' "$tmp/dots-completion.zsh"
+! grep -q "'(-h --help)'" "$tmp/dots-completion.zsh"
 
 grep -q 'eval "$("\$DOTFILES/dots" completion zsh)"' "$ROOT/zsh/zshrc"
 grep -q 'compdef _dots dots ds' "$ROOT/zsh/zshrc"

@@ -1,7 +1,7 @@
 ---
 title: hypr
 type: component
-updated: 2026-08-30
+updated: 2026-08-31
 covers:
   - hypr/hyprland.lua
   - hypr/modules/*.lua
@@ -148,6 +148,13 @@ Full map in [keymap](keymap.md); only the surprises here.
 - `SUPER, N` toggles the self-pasting Quickshell scratch editor through
   `dots-shell scratch`; it no longer launches the legacy nvim QAT panel
   ([scripts-scratch](scripts-scratch.md)).
+- **XF86 volume/mute/backlight keys live in `hypr/modules/binds.lua`.** Kanata's
+  apps-layer system chords only emit those standard keycodes; Hyprland remains
+  the single owner of the `wpctl`/`brightnessctl` actions. Keep these bindings
+  when splitting/refactoring the Lua modules — losing them leaves the Kanata
+  chords syntactically valid but with no consumer. Desktop monitor brightness
+  is not guaranteed: `brightnessctl` only works when Linux exposes a supported
+  backlight/LED device; an external monitor may need DDC/CI instead.
 
 ## idle / lock
 

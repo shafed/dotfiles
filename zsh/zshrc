@@ -185,6 +185,7 @@ alias ls="eza"
 # flags and command-specific arguments work for both `dots` and its `ds` alias.
 if [[ -x "$DOTFILES/dots" ]]; then
   eval "$("$DOTFILES/dots" completion zsh)"
+  compdef _dots dots ds
 fi
 
 export PATH="$HOME/.local/bin:$PATH"

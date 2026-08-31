@@ -77,12 +77,19 @@ handling. Quickshell owns the window, input and row rendering;
 Favicons come from Helium's local Chromium `Favicons` SQLite database via a
 temporary snapshot; extracted PNGs are cached under
 `~/.cache/bookmarks-fzf/favicons/`. Missing favicons fall back to the first
-letter and never trigger a network request. When an exact URL has no mapping,
-the host fallback prefers a locally cached dark-theme favicon variant: this is
-necessary for sites such as GitHub whose default transparent favicon is nearly
-black and disappears against the picker's dark surface. This SQLite/binary
-extraction is intentionally still a bounded Python helper rather than QML shell
-state.
+letter. When an exact URL has no mapping, the host fallback prefers a locally
+cached dark-theme favicon variant: this is necessary for sites such as GitHub
+whose default transparent favicon is nearly black and disappears against the
+picker's dark surface. If Helium has no icon for the host at all, the helper
+fetches the page's declared icon (or `/favicon.ico`) once and stores it in the
+same per-bookmark cache. Downloads have short timeouts and 1 MiB icon/512 KiB
+HTML limits; ImageMagick normalizes accepted ICO, SVG, WebP, GIF and JPEG input
+to the PNG format expected by the cache. Failures get a 24-hour negative-cache
+marker so an unreachable site cannot delay every picker open. SQLite, HTML
+discovery and binary validation remain in the bounded Python helper rather than
+QML shell state.
+`palette-helper.py fetch-favicon URL` performs the same network fallback for one
+explicit URL, which keeps manual diagnosis from contacting every uncached host.
 
 `palette-helper.py` also returns the character positions its own greedy scan
 found in `name`/`url` (`nameMatches`/`urlMatches`) — the same best-effort

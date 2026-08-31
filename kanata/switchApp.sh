@@ -2,6 +2,7 @@
 
 APP_CLASS="$1"
 APP_COMMAND="$2"
+KILL_WINDOWLESS="${3:-false}"
 
 if hyprctl clients | grep -q "class: $APP_CLASS"; then
   hyprctl dispatch "hl.dsp.focus({ window = \"class:${APP_CLASS}\" })"
@@ -15,9 +16,12 @@ else
       exit 0
     fi
   done
-  # no window but a same-named process may already be running and stuck
-  # (e.g. sioyek looping on an EGL context failure); a stuck process
-  # blocks new launches via single-instance IPC, so clear it first
-  pkill -x "$APP_CLASS" 2>/dev/null
+  # Killing a windowless process is opt-in: during a kanata restart Hyprland
+  # can temporarily omit a healthy kitty window from `hyprctl clients`.
+  if [[ "$KILL_WINDOWLESS" == true ]]; then
+    pkill -x "$APP_CLASS" 2>/dev/null
+  elif pgrep -x "$APP_CLASS" >/dev/null; then
+    exit 0
+  fi
   eval "$APP_COMMAND" &
 fi

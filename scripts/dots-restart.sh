@@ -2,7 +2,7 @@
 set -euo pipefail
 
 usage() {
-  echo "Usage: dots restart <quickshell|kanata|darkman|all>"
+  echo "Usage: dots restart <quickshell|kanata|darkman|copyq|all>"
 }
 
 require_user_systemd() {
@@ -19,9 +19,10 @@ require_user_systemd() {
 restart_one() {
   local name="$1" unit
   case "$name" in
-    quickshell) unit="quickshell.service" ;;
-    kanata) unit="kanata.service" ;;
-    darkman) unit="darkman.service" ;;
+    quickshell|q) unit="quickshell.service" ;;
+    kanata|k) unit="kanata.service" ;;
+    darkman|d) unit="darkman.service" ;;
+    copyq) unit="copyq.service" ;;
     *)
       usage >&2
       return 2
@@ -36,15 +37,16 @@ case "${1:-}" in
     usage
     exit 0
     ;;
-  quickshell|kanata|darkman)
+  quickshell|q|kanata|k|darkman|d|copyq)
     require_user_systemd
     restart_one "$1"
     ;;
-  all)
+  all|a)
     require_user_systemd
     restart_one quickshell
     restart_one kanata
     restart_one darkman
+    restart_one copyq
     ;;
   *)
     usage >&2

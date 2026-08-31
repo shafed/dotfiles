@@ -178,6 +178,7 @@ alias clr="claude --resume"
 alias cx="codex"
 alias oc="opencode"
 alias bt="bruvtab"
+alias ds="dots"
 alias ls="eza"
 
 export PATH="$HOME/.local/bin:$PATH"

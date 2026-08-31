@@ -67,6 +67,8 @@ grep -q '^  doctor' "$tmp/help.out"
 grep -q '^Usage: dots apply' "$tmp/apply-help.out"
 "$ROOT/dots" help restart >"$tmp/restart-help.out"
 grep -q '^Usage: dots restart' "$tmp/restart-help.out"
+"$ROOT/dots" h a >"$tmp/short-apply-help.out"
+grep -q '^Usage: dots apply' "$tmp/short-apply-help.out"
 "$ROOT/dots" commands >"$tmp/commands.out"
 grep -q '^  apply' "$tmp/commands.out"
 grep -q '^  restart' "$tmp/commands.out"
@@ -80,9 +82,19 @@ assert {"apply", "doctor", "restart", "refresh", "shell", "panel", "debug"} <= n
 ' "$tmp/commands.json"
 "$ROOT/dots" theme >"$tmp/theme.out"
 grep -q '^dark$' "$tmp/theme.out"
+"$ROOT/dots" t >"$tmp/short-theme.out"
+grep -q '^dark$' "$tmp/short-theme.out"
 
 : >"$DOTS_TEST_LOG"
 "$ROOT/dots" restart quickshell >/dev/null
+grep -q '^systemctl --user restart quickshell.service$' "$DOTS_TEST_LOG"
+
+: >"$DOTS_TEST_LOG"
+"$ROOT/dots" rs quickshell >/dev/null
+grep -q '^systemctl --user restart quickshell.service$' "$DOTS_TEST_LOG"
+
+: >"$DOTS_TEST_LOG"
+"$ROOT/dots" rs q >/dev/null
 grep -q '^systemctl --user restart quickshell.service$' "$DOTS_TEST_LOG"
 
 refresh_home="$tmp/refresh"

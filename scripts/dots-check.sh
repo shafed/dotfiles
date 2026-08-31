@@ -51,10 +51,10 @@ case "${1:-all}" in
     check_python
     check_tests
     ;;
-  shell) check_shell ;;
+  shell|sh) check_shell ;;
   lua) check_lua ;;
-  python) check_python ;;
-  tests) check_tests ;;
+  python|py) check_python ;;
+  tests|t) check_tests ;;
   help|-h|--help) usage ;;
   *)
     usage >&2

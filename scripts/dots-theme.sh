@@ -13,13 +13,16 @@ if ! command -v darkman >/dev/null 2>&1; then
 fi
 
 case "${1:-status}" in
-  status)
+  status|s)
     darkman get
     ;;
-  light|dark)
-    darkman set "$1"
+  light|l)
+    darkman set light
     ;;
-  toggle)
+  dark|d)
+    darkman set dark
+    ;;
+  toggle|t)
     current="$(darkman get)"
     case "$current" in
       dark) darkman set light ;;

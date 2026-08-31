@@ -35,15 +35,15 @@ case "${1:-}" in
     usage
     exit 0
     ;;
-  quickshell)
+  quickshell|q)
     require_user_systemd
     refresh_quickshell
     ;;
-  systemd)
+  systemd|s)
     require_user_systemd
     refresh_systemd
     ;;
-  all)
+  all|a)
     require_user_systemd
     refresh_systemd
     refresh_quickshell

@@ -34,6 +34,17 @@ require_quickshell() {
 
 run_panel() {
   local panel="${1:-}"
+  case "$panel" in
+    s) panel="system" ;;
+    a) panel="audio" ;;
+    n) panel="network" ;;
+    b) panel="bluetooth" ;;
+    p) panel="power" ;;
+    ag) panel="agents" ;;
+    u) panel="updates" ;;
+    no) panel="notifications" ;;
+    c) panel="calendar" ;;
+  esac
   if ! valid_panel "$panel"; then
     panel_usage >&2
     exit 2
@@ -52,6 +63,14 @@ case "$mode" in
         shell_usage
         [ -n "${1:-}" ] || exit 2
         ;;
+      a) set -- apps "${@:2}" ;;
+      b) set -- bookmarks "${@:2}" ;;
+      c) set -- clipboard "${@:2}" ;;
+      h) set -- hotkeys "${@:2}" ;;
+      s) set -- system "${@:2}" ;;
+      r) set -- refresh "${@:2}" ;;
+    esac
+    case "${1:-}" in
       apps|launcher|bookmarks|clipboard|hotkeys|system|refresh)
         require_quickshell
         exec "$QS_WRAPPER" "$1"

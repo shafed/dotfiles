@@ -22,20 +22,35 @@ if [ "$#" -gt 0 ]; then
 fi
 
 case "$command_name" in
-  apply) exec "$ROOT/scripts/dots-apply.sh" "$@" ;;
-  doctor) exec "$ROOT/scripts/dots-doctor.sh" "$@" ;;
-  check) exec "$ROOT/scripts/dots-check.sh" "$@" ;;
-  migrate) exec "$ROOT/scripts/dots-migrate.sh" "$@" ;;
-  theme) exec "$ROOT/scripts/dots-theme.sh" "$@" ;;
-  restart) exec "$ROOT/scripts/dots-restart.sh" "$@" ;;
-  refresh) exec "$ROOT/scripts/dots-refresh.sh" "$@" ;;
-  shell) exec "$ROOT/scripts/dots-shell.sh" shell "$@" ;;
-  panel) exec "$ROOT/scripts/dots-shell.sh" panel "$@" ;;
-  debug) exec "$ROOT/scripts/dots-debug.sh" "$@" ;;
-  commands) exec "$ROOT/scripts/dots-commands.sh" "$@" ;;
-  help|-h|--help)
+  apply|a) exec "$ROOT/scripts/dots-apply.sh" "$@" ;;
+  doctor|d) exec "$ROOT/scripts/dots-doctor.sh" "$@" ;;
+  check|c) exec "$ROOT/scripts/dots-check.sh" "$@" ;;
+  migrate|m) exec "$ROOT/scripts/dots-migrate.sh" "$@" ;;
+  theme|t) exec "$ROOT/scripts/dots-theme.sh" "$@" ;;
+  restart|rs) exec "$ROOT/scripts/dots-restart.sh" "$@" ;;
+  refresh|rf) exec "$ROOT/scripts/dots-refresh.sh" "$@" ;;
+  shell|s) exec "$ROOT/scripts/dots-shell.sh" shell "$@" ;;
+  panel|p) exec "$ROOT/scripts/dots-shell.sh" panel "$@" ;;
+  debug|db) exec "$ROOT/scripts/dots-debug.sh" "$@" ;;
+  commands|ls) exec "$ROOT/scripts/dots-commands.sh" "$@" ;;
+  help|h|-h|--help)
     if [ "$#" -gt 0 ]; then
-      exec "$SELF" "$1" --help
+      case "$1" in
+        help|h|-h|--help) usage; exit 0 ;;
+        a) command_name="apply" ;;
+        d) command_name="doctor" ;;
+        c) command_name="check" ;;
+        m) command_name="migrate" ;;
+        t) command_name="theme" ;;
+        rs) command_name="restart" ;;
+        rf) command_name="refresh" ;;
+        s) command_name="shell" ;;
+        p) command_name="panel" ;;
+        db) command_name="debug" ;;
+        ls) command_name="commands" ;;
+        *) command_name="$1" ;;
+      esac
+      exec "$SELF" "$command_name" --help
     fi
     usage
     ;;

@@ -2,7 +2,8 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 tmp="$(mktemp -d)"
-trap 'rm -rf "$tmp"' EXIT
+service_profile="$ROOT/profiles/test-service-ci.toml"
+trap 'rm -f "$service_profile"; rm -rf "$tmp"' EXIT
 home="$tmp/home"
 fake_bin="$tmp/bin"
 mkdir -p "$home" "$fake_bin"
@@ -162,5 +163,59 @@ source=sys.argv[2]
 backup=next(item['backup'] for item in record['backups'] if item['source'] == source)
 assert Path(backup).read_text() == 'local managed edit\n'
 PY
+
+# Full apply must converge selected user services, not merely link the unit files.
+cat >"$service_profile" <<'EOF'
+[profile]
+description = "CI-only service convergence profile"
+includes = ["base"]
+capabilities = []
+config_dirs = ["systemd"]
+services = ["darkman.service"]
+EOF
+service_home="$tmp/service-home"
+service_state="$tmp/darkman-enabled"
+service_log="$tmp/systemctl.log"
+mkdir -p "$service_home"
+cat >"$fake_bin/systemctl" <<'EOF'
+#!/usr/bin/env bash
+printf '%s\n' "$*" >>"${DOTS_SERVICE_LOG:?}"
+case "$*" in
+  "--user show-environment") exit 0 ;;
+  "--user is-enabled darkman.service")
+    if [ -e "${DOTS_SERVICE_STATE:?}" ]; then echo enabled; exit 0; fi
+    echo disabled; exit 1 ;;
+  "--user is-active darkman.service")
+    if [ -e "${DOTS_SERVICE_STATE:?}" ]; then echo active; exit 0; fi
+    echo inactive; exit 3 ;;
+  "--user is-active graphical-session.target") echo inactive; exit 3 ;;
+  "--user enable --now darkman.service") touch "${DOTS_SERVICE_STATE:?}"; exit 0 ;;
+  "--user unmask darkman.service"|"--user daemon-reload"|"--user reset-failed darkman.service"|"--user try-restart darkman.service") exit 0 ;;
+  "--user is-enabled "*) echo disabled; exit 1 ;;
+  "--user is-active "*) echo inactive; exit 3 ;;
+  *) exit 0 ;;
+esac
+EOF
+chmod +x "$fake_bin/systemctl"
+service_env=(HOME="$service_home" XDG_CONFIG_HOME="$service_home/.config" XDG_DATA_HOME="$service_home/.local/share" XDG_CACHE_HOME="$service_home/.cache" XDG_STATE_HOME="$service_home/.local/state" DOTS_SERVICE_STATE="$service_state" DOTS_SERVICE_LOG="$service_log")
+
+env "${service_env[@]}" "$ROOT/dots" plan --profile test-service-ci --json >"$tmp/service-before.json"
+python3 - "$tmp/service-before.json" <<'PY'
+import json, sys
+plan=json.load(open(sys.argv[1], encoding='utf-8'))
+assert any(item['kind']=='service' and item['action']=='enable' and item['unit']=='darkman.service' for item in plan['changes']), plan['changes']
+PY
+
+env "${service_env[@]}" "$ROOT/dots" apply --profile test-service-ci >/dev/null
+[ -e "$service_state" ]
+grep -q '^--user enable --now darkman.service$' "$service_log"
+env "${service_env[@]}" "$ROOT/dots" plan --profile test-service-ci --json >"$tmp/service-after.json"
+python3 - "$tmp/service-after.json" <<'PY'
+import json, sys
+plan=json.load(open(sys.argv[1], encoding='utf-8'))
+assert not any(item['kind']=='service' and item['action']=='enable' for item in plan['changes']), plan['changes']
+assert plan['summary']['no_op'] is True, plan['changes']
+PY
+rm -f "$service_profile"
 
 echo "dots state tests: ok"

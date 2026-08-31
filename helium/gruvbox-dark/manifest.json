@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Gruvbox Material Dark — Helium",
   "version": "1.0.0",
-  "description": "Standalone Gruvbox Material Dark theme for manual Helium testing; dotfiles does not apply it automatically.",
+  "description": "Exact Gruvbox Material Dark theme managed by dotfiles and reloaded on darkman transitions.",
   "theme": {
     "colors": {
       "frame": [29, 32, 33],

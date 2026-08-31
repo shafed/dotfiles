@@ -21,7 +21,7 @@ state_home="${XDG_STATE_HOME:-$HOME/.local/state}"
 data_home="${XDG_DATA_HOME:-$HOME/.local/share}"
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 backup_root="$state_home/dotfiles/backups"
-backup_run_dir=""
+backup_run_dir="${DOTS_BACKUP_RUN_DIR:-}"
 pending=0
 unresolved=0
 
@@ -41,6 +41,8 @@ backup_path() {
     mkdir -p -m 700 "$backup_root"
     stamp="$(date -u +%Y%m%dT%H%M%SZ)"
     backup_run_dir="$(mktemp -d "$backup_root/$stamp-XXXXXX")"
+  else
+    mkdir -p -m 700 "$backup_run_dir"
   fi
 
   case "$source" in
@@ -48,6 +50,10 @@ backup_path() {
     *) rel="${source#/}" ;;
   esac
   dest="$backup_run_dir/$rel"
+  if [ -e "$dest" ] || [ -L "$dest" ]; then
+    printf '  backup: %s -> %s (already saved)\n' "$source" "$dest"
+    return 0
+  fi
   mkdir -p "$(dirname "$dest")"
   cp -a -- "$source" "$dest"
   printf '  backup: %s -> %s\n' "$source" "$dest"

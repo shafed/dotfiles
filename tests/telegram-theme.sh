@@ -26,6 +26,10 @@ with zipfile.ZipFile(path) as archive:
     palette = archive.read("colors.tdesktop-theme").decode()
 if "GB_BG: #41423b;" not in palette:
     raise SystemExit("day palette was not written to runtime theme")
+if "historyTextInFg: GB_FG_BRIGHT;" not in palette:
+    raise SystemExit("day palette lost its high-contrast message text")
+if "msgInBg: #41423b;" not in palette:
+    raise SystemExit("day palette lost its daylight incoming bubble")
 PY
 
 bash "$ROOT/scripts/dots-telegram-generator.sh" dark >/dev/null
@@ -43,6 +47,14 @@ with zipfile.ZipFile(path) as archive:
     palette = archive.read("colors.tdesktop-theme").decode()
 if "GB_BG: #282828;" not in palette:
     raise SystemExit("night palette was not written to runtime theme")
+if "GB_FG: #d4be98;" not in palette:
+    raise SystemExit("night palette lost the warm Gruvbox foreground")
+if "historyTextInFg: GB_FG;" not in palette or "historyTextOutFg: GB_FG;" not in palette:
+    raise SystemExit("night message text is not using the original Gruvbox foreground")
+if "msgInBg: GB_BG_ALT;" not in palette:
+    raise SystemExit("night incoming bubble is not using the original Gruvbox surface")
+if "msgInDateFg: GB_GRAY_DIM;" not in palette or "msgOutDateFg: GB_GRAY_DIM;" not in palette:
+    raise SystemExit("night message metadata is brighter than the original Gruvbox theme")
 PY
 
 bash "$ROOT/scripts/dots-telegram-generator.sh" light >/dev/null

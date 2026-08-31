@@ -361,6 +361,13 @@ Item {
     }
   }
 
+  Timer {
+    interval: 600000
+    running: true
+    repeat: true
+    onTriggered: service.refresh()
+  }
+
   Component.onCompleted: {
     loadCache()
     refresh()

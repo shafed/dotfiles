@@ -1,0 +1,120 @@
+[profile]
+description = "Hyprland desktop session and graphical integrations"
+includes = ["base"]
+capabilities = ["desktop", "bluetooth"]
+config_dirs = ["hypr", "kanata", "quickshell", "darkman", "systemd"]
+sources = ["helium/apply-gruvbox-theme.py", "scripts/dots-helium-generator.sh", "scripts/copyq-apply-theme.py"]
+services = ["quickshell.service", "kanata.service", "darkman.service", "copyq.service"]
+
+[[links]]
+source = "darkman/scripts"
+destination = "{data}/darkman"
+reason = "darkman hooks generated from the tracked theme"
+
+[[generators]]
+name = "helium-theme"
+apply = ["bash", "scripts/dots-helium-generator.sh"]
+outputs = ["{data}/dotfiles/helium-gruvbox/manifest.json", "{config}/helium-browser-flags.conf"]
+reason = "keep Helium's generated Gruvbox extension and flags in sync"
+
+[[generators]]
+name = "copyq-live-config"
+apply = ["python3", "scripts/copyq-apply-theme.py"]
+outputs = ["{config}/copyq/copyq.conf"]
+reason = "merge the generated theme into CopyQ's mutable live config"
+
+[[prerequisites]]
+kind = "system-service"
+name = "NetworkManager.service"
+required = true
+reason = "network controls and status need NetworkManager"
+
+[[prerequisites]]
+kind = "system-service"
+name = "bluetooth.service"
+required = true
+reason = "Bluetooth capability needs the BlueZ daemon"
+
+[[packages]]
+command = "hyprland"
+package = "hyprland"
+manager = "pacman"
+required = true
+reason = "desktop compositor"
+
+[[packages]]
+command = "uwsm"
+package = "uwsm"
+manager = "pacman"
+required = true
+reason = "starts and manages the Hyprland session"
+
+[[packages]]
+command = "kanata"
+package = "kanata-bin"
+manager = "aur"
+required = true
+reason = "keyboard layers and chords"
+
+[[packages]]
+command = "helium-browser"
+package = "helium-browser-bin"
+manager = "aur"
+required = true
+reason = "browser configuration and generated theme"
+
+[[packages]]
+command = "quickshell"
+package = "quickshell"
+manager = "pacman"
+required = true
+reason = "top bar, panels and desktop shell"
+
+[[packages]]
+command = "wpctl"
+package = "wireplumber"
+manager = "pacman"
+required = true
+reason = "audio controls used by Quickshell and keybindings"
+
+[[packages]]
+command = "nmcli"
+package = "networkmanager"
+manager = "pacman"
+required = true
+reason = "network status and controls"
+
+[[packages]]
+command = "bluetoothctl"
+package = "bluez-utils"
+manager = "pacman"
+required = true
+reason = "Bluetooth capability"
+
+[[packages]]
+command = "checkupdates"
+package = "pacman-contrib"
+manager = "pacman"
+required = true
+reason = "update count in Quickshell"
+
+[[packages]]
+command = "wl-paste"
+package = "wl-clipboard"
+manager = "pacman"
+required = true
+reason = "Wayland clipboard integration"
+
+[[packages]]
+command = "copyq"
+package = "copyq"
+manager = "pacman"
+required = true
+reason = "clipboard history backend"
+
+[[packages]]
+command = "darkman"
+package = "darkman"
+manager = "aur"
+required = true
+reason = "theme switching service"

@@ -81,10 +81,10 @@ return {
               local scalar = line:match("^aliases:%s*(%S.*)$")
               if inline then
                 -- aliases: [a, "b c", 'd']
-                for a in inline:gmatch("[^,]+") do
-                  a = a:gsub("^%s*['\"]?", ""):gsub("['\"]?%s*$", "")
-                  if a ~= "" then
-                    table.insert(aliases, a)
+                for raw_alias in inline:gmatch("[^,]+") do
+                  local alias = raw_alias:gsub("^%s*['\"]?", ""):gsub("['\"]?%s*$", "")
+                  if alias ~= "" then
+                    table.insert(aliases, alias)
                   end
                 end
               elseif scalar then
@@ -396,7 +396,7 @@ return {
         header = [[
 ███╗   ██╗███████╗ ██████╗ ██╗   ██╗██╗███╗   ███╗
 ████╗  ██║██╔════╝██╔═══██╗██║   ██║██║████╗ ████║
-██╔██╗ ██║█████╗  ██║   ██║██║   ██║██║██╔████╔██║
+██╔██╗ ██║█████╗  ██║   ██║██║   ██║██╔████╔██║
 ██║╚██╗██║██╔══╝  ██║   ██║╚██╗ ██╔╝██║██║╚██╔╝██║
 ██║ ╚████║███████╗╚██████╔╝ ╚████╔╝ ██║██║ ╚═╝ ██║
 ╚═╝  ╚═══╝╚══════╝ ╚═════╝   ╚═══╝  ╚═╝╚═╝     ╚═╝

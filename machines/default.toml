@@ -1,0 +1,4 @@
+[machine]
+description = "Fallback workstation until a hostname-specific machine file exists"
+profiles = ["desktop"]
+capabilities = []

@@ -1,7 +1,7 @@
 ---
 title: nvim
 type: moc
-updated: 2026-08-24
+updated: 2026-08-31
 covers:
   - nvim/
 ---
@@ -24,6 +24,13 @@ which LazyVim behavior was overridden and why.
 - **[nvim-layout](nvim-layout.md)** — how the Russian layout is kept from
   breaking normal mode: the autocmd layout switch, the langmap safety net, and
   bilingual flash.
+
+## Lua validation
+
+`dots check` parses tracked Lua with the system `luac` (currently Lua 5.4 on
+Arch and in CI), even though Neovim itself runs LuaJIT. Keep config syntax valid
+under both: in particular, do not reassign numeric/generic `for` control
+variables, which Lua 5.4 treats as constant.
 
 ## LSP / other exclusions
 

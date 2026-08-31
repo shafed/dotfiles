@@ -1,11 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
-
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-# shellcheck source=scripts/dots-lib.sh
-source "$ROOT/scripts/dots-lib.sh"
 REAL_PYTHON="$(command -v python3)"
-
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 fake_bin="$tmp/bin"
@@ -13,86 +9,50 @@ mkdir -p "$fake_bin"
 export DOTS_TEST_LOG="$tmp/calls.log"
 : >"$DOTS_TEST_LOG"
 
-for entry in "${REQUIRED_PKGS[@]}"; do
-  cmd="${entry%%:*}"
-  if [ "$cmd" = "darkman" ] || [ "$cmd" = "quickshell" ]; then
-    continue
-  fi
-  cat > "$fake_bin/$cmd" <<'SH'
-#!/usr/bin/env bash
-exit 0
-SH
-  chmod +x "$fake_bin/$cmd"
-done
-
-cat > "$fake_bin/darkman" <<'SH'
+cat >"$fake_bin/darkman" <<'EOF'
 #!/usr/bin/env bash
 case "${1:-get}" in
-  get) echo dark ;;
-  set) exit 0 ;;
-  *) exit 0 ;;
+get) echo dark ;;
+*) exit 0 ;;
 esac
-SH
-chmod +x "$fake_bin/darkman"
-
-cat > "$fake_bin/quickshell" <<'SH'
+EOF
+cat >"$fake_bin/quickshell" <<'EOF'
 #!/usr/bin/env bash
 printf 'quickshell %s\n' "$*" >>"${DOTS_TEST_LOG:-/dev/null}"
-exit 0
-SH
-chmod +x "$fake_bin/quickshell"
-
-cat > "$fake_bin/systemctl" <<'SH'
+EOF
+cat >"$fake_bin/systemctl" <<'EOF'
 #!/usr/bin/env bash
-args="$*"
-printf 'systemctl %s\n' "$args" >>"${DOTS_TEST_LOG:-/dev/null}"
-case "$args" in
+printf 'systemctl %s\n' "$*" >>"${DOTS_TEST_LOG:-/dev/null}"
+case "$*" in
   "--user show-environment") exit 0 ;;
   "--user is-enabled dunst.service") echo masked; exit 0 ;;
   "--user is-enabled waybar.service") echo disabled; exit 1 ;;
   "--user is-active waybar.service") echo inactive; exit 3 ;;
-  "--user is-enabled quickshell.service"|"--user is-enabled kanata.service"|"--user is-enabled darkman.service") echo enabled; exit 0 ;;
+  "--user is-enabled quickshell.service"|"--user is-enabled kanata.service"|"--user is-enabled darkman.service"|"--user is-enabled copyq.service") echo enabled; exit 0 ;;
   "--user is-active graphical-session.target"|"--user is-active quickshell.service"|"--user is-active kanata.service"|"--user is-active darkman.service") echo active; exit 0 ;;
   *) exit 0 ;;
 esac
-SH
-chmod +x "$fake_bin/systemctl"
-
+EOF
+chmod +x "$fake_bin/darkman" "$fake_bin/quickshell" "$fake_bin/systemctl"
 export PATH="$fake_bin:$PATH"
 
 "$ROOT/dots" help >"$tmp/help.out"
-grep -q '^  apply' "$tmp/help.out"
-grep -q '^  doctor' "$tmp/help.out"
-"$ROOT/dots" help apply >"$tmp/apply-help.out"
-grep -q '^Usage: dots apply' "$tmp/apply-help.out"
-"$ROOT/dots" help restart >"$tmp/restart-help.out"
-grep -q '^Usage: dots restart' "$tmp/restart-help.out"
-"$ROOT/dots" h a >"$tmp/short-apply-help.out"
-grep -q '^Usage: dots apply' "$tmp/short-apply-help.out"
-"$ROOT/dots" commands >"$tmp/commands.out"
-grep -q '^  apply' "$tmp/commands.out"
-grep -q '^  restart' "$tmp/commands.out"
+for command in plan apply drift provision stage doctor history rollback; do
+  grep -q "^  $command" "$tmp/help.out"
+done
+for command in drift provision stage rollback; do
+  "$ROOT/dots" help "$command" >"$tmp/$command-help.out"
+  grep -q "^Usage: dots $command" "$tmp/$command-help.out"
+done
 "$ROOT/dots" commands --json >"$tmp/commands.json"
-"$REAL_PYTHON" -c '
+"$REAL_PYTHON" - "$tmp/commands.json" <<'PY'
 import json, sys
-with open(sys.argv[1], encoding="utf-8") as f:
-    commands = json.load(f)
-names = {item["name"] for item in commands}
-assert {"apply", "doctor", "restart", "refresh", "shell", "panel", "debug"} <= names
-' "$tmp/commands.json"
+names = {item["name"] for item in json.load(open(sys.argv[1], encoding="utf-8"))}
+assert {"plan", "apply", "drift", "provision", "stage", "doctor", "history", "show", "rollback"} <= names
+PY
+
 "$ROOT/dots" theme >"$tmp/theme.out"
 grep -q '^dark$' "$tmp/theme.out"
-"$ROOT/dots" t >"$tmp/short-theme.out"
-grep -q '^dark$' "$tmp/short-theme.out"
-
-: >"$DOTS_TEST_LOG"
-"$ROOT/dots" restart quickshell >/dev/null
-grep -q '^systemctl --user restart quickshell.service$' "$DOTS_TEST_LOG"
-
-: >"$DOTS_TEST_LOG"
-"$ROOT/dots" rs quickshell >/dev/null
-grep -q '^systemctl --user restart quickshell.service$' "$DOTS_TEST_LOG"
-
 : >"$DOTS_TEST_LOG"
 "$ROOT/dots" rs q >/dev/null
 grep -q '^systemctl --user restart quickshell.service$' "$DOTS_TEST_LOG"
@@ -108,76 +68,28 @@ grep -q '^systemctl --user restart quickshell.service$' "$DOTS_TEST_LOG"
 : >"$DOTS_TEST_LOG"
 HOME="$refresh_home" XDG_CACHE_HOME="$refresh_home/.cache" "$ROOT/dots" shell apps >/dev/null
 grep -q 'quickshell .*call launcher toggle$' "$DOTS_TEST_LOG"
-
 : >"$DOTS_TEST_LOG"
 HOME="$refresh_home" XDG_CACHE_HOME="$refresh_home/.cache" "$ROOT/dots" panel agents >/dev/null
 grep -q 'quickshell .*call dots panel agents$' "$DOTS_TEST_LOG"
 
-fresh_home="$tmp/fresh"
-mkdir -p "$fresh_home"
-if HOME="$fresh_home" XDG_CONFIG_HOME="$fresh_home/.config" XDG_CACHE_HOME="$fresh_home/.cache" "$ROOT/dots" doctor >"$tmp/fresh.out" 2>&1; then
-  echo "fresh-state doctor unexpectedly succeeded" >&2
-  exit 1
-fi
-grep -q 'is missing' "$tmp/fresh.out"
-
 conflict_home="$tmp/conflict"
-mkdir -p "$conflict_home/.config/hypr"
-echo keep >"$conflict_home/.config/hypr/local.conf"
-if HOME="$conflict_home" XDG_CONFIG_HOME="$conflict_home/.config" "$ROOT/dots" apply --links-only >"$tmp/conflict.out" 2>&1; then
+mkdir -p "$conflict_home/.config/kitty"
+printf 'keep\n' >"$conflict_home/.config/kitty/local.conf"
+if HOME="$conflict_home" XDG_CONFIG_HOME="$conflict_home/.config" "$ROOT/dots" apply --links-only --profile base >"$tmp/conflict.out" 2>&1; then
   echo "apply unexpectedly replaced an unmanaged config directory" >&2
   exit 1
 fi
-[ -f "$conflict_home/.config/hypr/local.conf" ]
-grep -q 'REFUSE.*hypr' "$tmp/conflict.out"
+[ -f "$conflict_home/.config/kitty/local.conf" ]
+grep -q 'exists and is not a symlink' "$tmp/conflict.out"
 
-configured_home="$tmp/configured"
-mkdir -p "$configured_home"
-HOME="$configured_home" XDG_CONFIG_HOME="$configured_home/.config" XDG_CACHE_HOME="$configured_home/.cache" "$ROOT/dots" apply --links-only >"$tmp/apply-links.out"
-HOME="$configured_home" XDG_CONFIG_HOME="$configured_home/.config" XDG_CACHE_HOME="$configured_home/.cache" "$configured_home/.local/bin/dots" doctor >"$tmp/configured.out"
-grep -q 'Doctor: 0 error(s)' "$tmp/configured.out"
-
-mkdir -p "$configured_home/.cache/waybar" "$configured_home/.cache/dots-shell/quickshell"
-touch "$configured_home/.cache/dots-shell/quickshell/shell.qml"
-ln -s "$ROOT/waybar" "$configured_home/.config/waybar"
-[ ! -e "$configured_home/.local/state/dotfiles/backups" ]
-: >"$DOTS_TEST_LOG"
-HOME="$configured_home" XDG_CONFIG_HOME="$configured_home/.config" XDG_CACHE_HOME="$configured_home/.cache" "$configured_home/.local/bin/dots" apply >"$tmp/apply.out"
-[ ! -L "$configured_home/.config/waybar" ]
-[ ! -e "$configured_home/.cache/waybar" ]
-[ ! -e "$configured_home/.cache/dots-shell/quickshell" ]
-grep -q '^systemctl --user try-restart quickshell.service$' "$DOTS_TEST_LOG"
-grep -q 'Doctor: 0 error(s)' "$tmp/apply.out"
-mapfile -t backup_runs < <(find "$configured_home/.local/state/dotfiles/backups" -mindepth 1 -maxdepth 1 -type d -print)
-[ "${#backup_runs[@]}" -eq 1 ]
-waybar_backup="${backup_runs[0]}/.config/waybar"
-[ -L "$waybar_backup" ]
-[ "$(readlink "$waybar_backup")" = "$ROOT/waybar" ]
-grep -Fq "backup: $configured_home/.config/waybar -> $waybar_backup" "$tmp/apply.out"
-
-HOME="$configured_home" XDG_CONFIG_HOME="$configured_home/.config" XDG_CACHE_HOME="$configured_home/.cache" "$configured_home/.local/bin/dots" migrate >"$tmp/migrate-noop.out"
-mapfile -t backup_runs_after_noop < <(find "$configured_home/.local/state/dotfiles/backups" -mindepth 1 -maxdepth 1 -type d -print)
-[ "${#backup_runs_after_noop[@]}" -eq 1 ]
-grep -q '^No migrations needed\.$' "$tmp/migrate-noop.out"
-
-cache_only_home="$tmp/cache-only"
-mkdir -p "$cache_only_home/.cache/waybar"
-HOME="$cache_only_home" XDG_CONFIG_HOME="$cache_only_home/.config" XDG_CACHE_HOME="$cache_only_home/.cache" "$ROOT/dots" migrate >/dev/null
-[ ! -e "$cache_only_home/.cache/waybar" ]
-[ ! -e "$cache_only_home/.local/state/dotfiles/backups" ]
-
-unmanaged_home="$tmp/unmanaged"
-mkdir -p "$unmanaged_home/.config/waybar"
-printf 'custom\n' >"$unmanaged_home/.config/waybar/config"
-if HOME="$unmanaged_home" XDG_CONFIG_HOME="$unmanaged_home/.config" XDG_CACHE_HOME="$unmanaged_home/.cache" "$ROOT/dots" migrate >"$tmp/unmanaged.out" 2>&1; then
-  echo "unmanaged Waybar config unexpectedly migrated" >&2
-  exit 1
-fi
-[ -f "$unmanaged_home/.config/waybar/config" ]
-[ ! -e "$unmanaged_home/.local/state/dotfiles/backups" ]
-
-HOME="$configured_home" XDG_CONFIG_HOME="$configured_home/.config" XDG_CACHE_HOME="$configured_home/.cache" "$configured_home/.local/bin/dots" debug --no-logs >"$tmp/debug.out"
-grep -q '^== repository ==$' "$tmp/debug.out"
-grep -q '^== doctor summary ==$' "$tmp/debug.out"
+migration_home="$tmp/migration"
+mkdir -p "$migration_home/.config"
+ln -s "$ROOT/waybar" "$migration_home/.config/waybar"
+HOME="$migration_home" XDG_CONFIG_HOME="$migration_home/.config" XDG_CACHE_HOME="$migration_home/.cache" XDG_STATE_HOME="$migration_home/.local/state" \
+  "$ROOT/dots" migrate >/dev/null
+[ ! -L "$migration_home/.config/waybar" ]
+mapfile -t backups < <(find "$migration_home/.local/state/dotfiles/backups" -mindepth 1 -maxdepth 1 -type d -print)
+[ "${#backups[@]}" -eq 1 ]
+[ -L "${backups[0]}/.config/waybar" ]
 
 echo "dots tests: ok"

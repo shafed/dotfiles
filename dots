@@ -22,17 +22,24 @@ if [ "$#" -gt 0 ]; then
 fi
 
 case "$command_name" in
-apply | a) exec "$ROOT/scripts/dots-apply.sh" "$@" ;;
-doctor | d) exec "$ROOT/scripts/dots-doctor.sh" "$@" ;;
-check | c) exec "$ROOT/scripts/dots-check.sh" "$@" ;;
-migrate | m) exec "$ROOT/scripts/dots-migrate.sh" "$@" ;;
-theme | t) exec "$ROOT/scripts/dots-theme.sh" "$@" ;;
-restart | rs) exec "$ROOT/scripts/dots-restart.sh" "$@" ;;
-refresh | rf) exec "$ROOT/scripts/dots-refresh.sh" "$@" ;;
-shell | s) exec "$ROOT/scripts/dots-shell.sh" shell "$@" ;;
-panel | p) exec "$ROOT/scripts/dots-shell.sh" panel "$@" ;;
-debug | db) exec "$ROOT/scripts/dots-debug.sh" "$@" ;;
-commands | ls) exec "$ROOT/scripts/dots-commands.sh" "$@" ;;
+plan | pl) exec bash "$ROOT/scripts/dots-plan.sh" "$@" ;;
+apply | a) exec bash "$ROOT/scripts/dots-apply.sh" "$@" ;;
+drift | dr) exec bash "$ROOT/scripts/dots-drift.sh" "$@" ;;
+provision | pv) exec bash "$ROOT/scripts/dots-provision.sh" "$@" ;;
+stage | st) exec bash "$ROOT/scripts/dots-stage.sh" "$@" ;;
+doctor | d) exec bash "$ROOT/scripts/dots-doctor.sh" "$@" ;;
+check | c) exec bash "$ROOT/scripts/dots-check.sh" "$@" ;;
+migrate | m) exec bash "$ROOT/scripts/dots-migrate.sh" "$@" ;;
+history | hist) exec bash "$ROOT/scripts/dots-history.sh" "$@" ;;
+show) exec bash "$ROOT/scripts/dots-show.sh" "$@" ;;
+rollback | rb) exec bash "$ROOT/scripts/dots-rollback.sh" "$@" ;;
+theme | t) exec bash "$ROOT/scripts/dots-theme.sh" "$@" ;;
+restart | rs) exec bash "$ROOT/scripts/dots-restart.sh" "$@" ;;
+refresh | rf) exec bash "$ROOT/scripts/dots-refresh.sh" "$@" ;;
+shell | s) exec bash "$ROOT/scripts/dots-shell.sh" shell "$@" ;;
+panel | p) exec bash "$ROOT/scripts/dots-shell.sh" panel "$@" ;;
+debug | db) exec bash "$ROOT/scripts/dots-debug.sh" "$@" ;;
+commands | ls) exec bash "$ROOT/scripts/dots-commands.sh" "$@" ;;
 help | h | -h | --help)
   if [ "$#" -gt 0 ]; then
     case "$1" in
@@ -40,10 +47,16 @@ help | h | -h | --help)
       usage
       exit 0
       ;;
+    pl) command_name="plan" ;;
     a) command_name="apply" ;;
+    dr) command_name="drift" ;;
+    pv) command_name="provision" ;;
+    st) command_name="stage" ;;
     d) command_name="doctor" ;;
     c) command_name="check" ;;
     m) command_name="migrate" ;;
+    hist) command_name="history" ;;
+    rb) command_name="rollback" ;;
     t) command_name="theme" ;;
     rs) command_name="restart" ;;
     rf) command_name="refresh" ;;

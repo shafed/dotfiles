@@ -1,0 +1,4 @@
+[profile]
+description = "Desktop profile with explicit laptop hardware intent"
+includes = ["desktop"]
+capabilities = ["laptop", "battery"]

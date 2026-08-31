@@ -6,14 +6,20 @@ covers:
   - profiles/
   - machines/
   - scripts/dots-state.py
+  - scripts/dots-machine.py
 ---
 
 # Profiles and desired machine state
 
 Profiles describe *what a machine should be* rather than duplicating bootstrap
-logic. `base` owns shared shell/editor tools; `desktop` adds the graphical
-Hyprland/Quickshell stack; `laptop`, `gaming` and `ai` compose on top and are
-small extension points for hardware/workload-specific requirements.
+logic. `base` owns shared shell/editor tools. `desktop` adds the graphical
+Hyprland/Quickshell stack and desktop-wide networking/Bluetooth state. `laptop`
+includes `desktop` and adds only laptop-specific battery, power-profile and
+brightness requirements. `ai` remains a small workload extension point.
+
+There is intentionally no empty `gaming` profile. A profile should exist only
+when it owns real distinguishing desired state; a future gaming profile can be
+added when it has actual packages/services/configuration to declare.
 
 A machine file is intentionally small. `dots` looks for
 `machines/<hostname>.toml`, falling back to `machines/default.toml`; the machine
@@ -21,42 +27,45 @@ selects profiles and can add/disable explicit capabilities. Links, managed
 files, packages, user services, runtime generators and system prerequisites stay
 in profiles so machines cannot drift through copied lists.
 
-Capabilities are descriptive facts used to explain/extend the desired state,
-for example `desktop`, `bluetooth`, `battery`, `laptop`, `gaming` and `ai`.
-Machine-specific facts belong in `machines/`; application configuration itself
-should stay shared unless the machine genuinely needs a different value.
+Capabilities are descriptive facts used to explain or extend state. Current
+examples include `base`, `desktop`, `bluetooth`, `laptop`, `battery` and `ai`.
+Machine-specific facts belong in `machines/`; shared application configuration
+should stay in profiles unless a machine genuinely needs a different value.
 
-The profile TOML files are the only desired-state manifest. The older package,
-link and service arrays were removed from `scripts/dots-lib.sh`; that file now
-only contains public CLI metadata. As a result `plan`, `apply`, `doctor` and
-`provision` cannot silently consult different dependency lists.
+The profile TOML files are the only desired-state manifest. Package, link and
+service arrays do not exist in `scripts/dots-lib.sh`; that file contains only
+public CLI metadata. `plan`, `apply`, `doctor`, `drift` and `provision` therefore
+start from the same resolved profile/machine model.
 
-`dots plan` resolves profile includes and compares the selected desired state
-with the machine. It is observational: safe migrations run in check mode and
-runtime generators are rendered in a temporary HOME. `--json` exposes the same
-state for Quickshell or agents. Each dependency/prerequisite declaration carries
-a reason so doctor/provision can explain why it exists rather than only naming a
-package.
+`dots plan` resolves profile includes and compares selected desired state with
+the machine. It is observational: safe migrations run in check mode and runtime
+generators are rendered in a temporary HOME. `--json` exposes the same plan for
+Quickshell or agents. Each dependency/prerequisite declaration carries a reason
+so doctor/provision can explain why it exists instead of only naming a package.
 
-`dots apply` consumes exactly that plan. It converges both missing desired state
+`dots apply` uses the same state engine and converges both missing desired state
 and unambiguous repo-owned leftovers from profiles that are no longer selected.
 A symlink is removable as extra only while it still points to its known tracked
 source; a managed regular file is removable only while its content still equals
-the known profile-owned content. This keeps profile switching useful without
-turning it into arbitrary `$HOME` cleanup.
+the known profile-owned content. This permits profile switching without turning
+apply into arbitrary `$HOME` cleanup.
+
+`dots drift` is broader than plan. It adds missing packages, explicitly installed
+Arch packages outside the manifest and enabled local user services outside the
+selected profile. These extras are informational and are never removed
+automatically.
+
+External installation remains opt-in. `dots provision --dry-run` calculates the
+exact package/system actions from the same profile declarations without running
+them. A real `dots provision` executes that action list; normal `dots apply`
+never becomes a package manager.
 
 Runtime generator declarations include explicit outputs. The engine renders the
 same seeded input twice in isolated HOMEs: a nondeterministic generator is a
 blocker, while a deterministic mismatch becomes an ordinary planned change.
 Tracked theme/Telegram generation is additionally checked by `dots check`/CI.
 
-A changing apply records profiles, capabilities, changes, backups and post-state
-under `$XDG_STATE_HOME/dotfiles/runs/`. `dots rollback <run>` can then restore
-only the dotfiles-owned paths from that run, provided those paths have not been
-changed again since the apply.
-
-External installation remains opt-in. `dots provision` reads the same package
-and prerequisite declarations but normal `dots apply` never installs packages
-or enables system services. The current provision backend is deliberately Arch
-only; a package-manager portability layer should be added only when an actual
-second distribution needs it.
+A changing apply records commit, machine, profiles, capabilities, the pre-apply
+plan, changes, backups, post-state and doctor result under
+`$XDG_STATE_HOME/dotfiles/runs/`. `dots rollback <run>` can restore only the
+dotfiles-owned paths from that run when they have not changed again since apply.

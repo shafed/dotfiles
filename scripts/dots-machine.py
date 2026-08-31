@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Machine-wide drift, provisioning and staging helpers for dots."""
+"""Machine-wide drift and provisioning helpers for dots."""
 from __future__ import annotations
 
 import argparse
@@ -10,7 +10,6 @@ from pathlib import Path
 import shutil
 import subprocess
 import sys
-import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 STATE_PATH = ROOT / "scripts/dots-state.py"
@@ -327,77 +326,6 @@ def provision(context: dict, dry_run: bool, assume_yes: bool, as_json: bool) -> 
     return 0
 
 
-def stage(ref: str, machine: str | None, profile: str | None, as_json: bool) -> int:
-    """Validate a candidate in a detached temporary worktree and HOME."""
-    with tempfile.TemporaryDirectory(prefix="dots-stage-") as temp:
-        base = Path(temp)
-        checkout = base / "checkout"
-        home = base / "home"
-        home.mkdir()
-        added = run(["git", "-C", ROOT, "worktree", "add", "--detach", checkout, ref])
-        if added.returncode:
-            print(added.stderr or added.stdout, file=sys.stderr, end="")
-            return 2
-        try:
-            env = os.environ.copy()
-            env.update(
-                HOME=str(home),
-                XDG_CONFIG_HOME=str(home / ".config"),
-                XDG_DATA_HOME=str(home / ".local/share"),
-                XDG_CACHE_HOME=str(home / ".cache"),
-                XDG_STATE_HOME=str(home / ".local/state"),
-            )
-            check = run([checkout / "dots", "check"], cwd=checkout, env=env)
-            plan_argv = [checkout / "dots", "plan", "--json"]
-            if machine:
-                plan_argv += ["--machine", machine]
-            if profile:
-                plan_argv += ["--profile", profile]
-            preview = run(plan_argv, cwd=checkout, env=env)
-            try:
-                plan_data = json.loads(preview.stdout) if preview.stdout else None
-            except json.JSONDecodeError:
-                plan_data = None
-            ready = check.returncode == 0 and preview.returncode == 0 and plan_data is not None
-            result = {
-                "schema": 1,
-                "type": "stage",
-                "ref": ref,
-                "candidate_ready": ready,
-                "check": {
-                    "returncode": check.returncode,
-                    "stdout": check.stdout,
-                    "stderr": check.stderr,
-                },
-                "plan": {
-                    "returncode": preview.returncode,
-                    "data": plan_data,
-                    "stderr": preview.stderr,
-                },
-                "activation": "explicit: run dots apply from the checkout chosen for activation",
-            }
-            if as_json:
-                print(json.dumps(result, indent=2, sort_keys=True))
-            else:
-                print(f"Candidate: {ref}")
-                print(f"dots check: {'ok' if check.returncode == 0 else 'FAILED'}")
-                if check.stdout:
-                    print(check.stdout, end="")
-                if check.stderr:
-                    print(check.stderr, end="", file=sys.stderr)
-                if plan_data is not None:
-                    state.print_plan(plan_data)
-                elif preview.stdout:
-                    print(preview.stdout, end="")
-                if preview.stderr:
-                    print(preview.stderr, end="", file=sys.stderr)
-                print("\nCandidate ready." if ready else "\nCandidate is not ready.")
-                print("No active ~/.config links were switched; activation remains explicit.")
-            return 0 if ready else 1
-        finally:
-            run(["git", "-C", ROOT, "worktree", "remove", "--force", checkout])
-
-
 def common(parser) -> None:
     parser.add_argument("--machine")
     parser.add_argument("--profile")
@@ -417,16 +345,8 @@ def main() -> int:
     provision_parser.add_argument("--yes", action="store_true")
     provision_parser.add_argument("--json", action="store_true")
 
-    stage_parser = sub.add_parser("stage", help="validate a ref in an isolated worktree")
-    stage_parser.add_argument("ref", nargs="?", default="HEAD")
-    stage_parser.add_argument("--machine")
-    stage_parser.add_argument("--profile")
-    stage_parser.add_argument("--json", action="store_true")
-
     args = parser.parse_args()
     try:
-        if args.cmd == "stage":
-            return stage(args.ref, args.machine, args.profile, args.json)
         context = state.ctx(args.machine, args.profile)
         if args.cmd == "drift":
             result = drift(context)

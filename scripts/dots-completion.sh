@@ -10,7 +10,7 @@ emit_zsh() {
   local -a alias_list
 
   cat <<'ZSH'
-_dots() {
+_dots_impl() {
   local context state line command
   typeset -A opt_args
   local -a commands
@@ -128,7 +128,7 @@ ZSH
   esac
 }
 
-compdef _dots dots ds
+compdef _dots_impl dots ds
 ZSH
 }
 

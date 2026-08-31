@@ -32,20 +32,33 @@ def zip_entry(name: str) -> zipfile.ZipInfo:
 
 def apply_telegram_overrides(palette: str) -> str:
     """Apply Telegram-only readability tweaks and semantic colors."""
+    # The daytime chat treatment deliberately moves away from near-black
+    # Gruvbox surfaces toward the muted olive/taupe range used by Telegram's
+    # more readable dim themes. Keep this local to Telegram instead of changing
+    # the shared palette for every application.
     daylight_replacements = {
-        "msgInBgSelected: GB_BG_HOVER;": "msgInBgSelected: GB_BG_ALT;",
-        "msgOutBg: GB_BG_SOFT;": "msgOutBg: GB_BG;",
-        "msgOutBgSelected: GB_BG_MUTED;": "msgOutBgSelected: GB_BG_SOFT;",
-        "msgServiceFg: GB_FG_SOFT;": "msgServiceFg: GB_FG_BRIGHT;",
-        "msgServiceBg: #1d2021cc;": "msgServiceBg: #1d2021f0;",
-        "msgServiceBgSelected: #504945dd;": "msgServiceBgSelected: #282828f0;",
-        "historySystemBg: #1d2021cc;": "historySystemBg: #1d2021f0;",
-        "historySystemBgSelected: #504945dd;": "historySystemBgSelected: #282828f0;",
-        "historySystemFg: GB_FG_SOFT;": "historySystemFg: GB_FG_BRIGHT;",
-        "mediaInFg: GB_GRAY_DIM;": "mediaInFg: GB_FG_SOFT;",
-        "mediaInFgSelected: GB_FG_SOFT;": "mediaInFgSelected: GB_FG_BRIGHT;",
-        "mediaOutFg: GB_GRAY_DIM;": "mediaOutFg: GB_FG_SOFT;",
-        "mediaOutFgSelected: GB_FG_SOFT;": "mediaOutFgSelected: GB_FG_BRIGHT;",
+        "historyTextInFg: GB_FG_BRIGHT;": "historyTextInFg: #f3f0e6;",
+        "historyTextInFgSelected: GB_FG_BRIGHT;": "historyTextInFgSelected: #fffaf0;",
+        "historyTextOutFg: GB_FG_BRIGHT;": "historyTextOutFg: #f3f0e6;",
+        "historyTextOutFgSelected: GB_FG_BRIGHT;": "historyTextOutFgSelected: #fffaf0;",
+        "msgInBg: GB_BG_HARD;": "msgInBg: #41423b;",
+        "msgInBgSelected: GB_BG_HOVER;": "msgInBgSelected: #55564d;",
+        "msgOutBg: GB_BG_SOFT;": "msgOutBg: #5b5c52;",
+        "msgOutBgSelected: GB_BG_MUTED;": "msgOutBgSelected: #6b6c60;",
+        "msgInDateFg: GB_FG_SOFT;": "msgInDateFg: #d8d4c8;",
+        "msgInDateFgSelected: GB_FG_BRIGHT;": "msgInDateFgSelected: #f3f0e6;",
+        "msgOutDateFg: GB_FG_SOFT;": "msgOutDateFg: #d8d4c8;",
+        "msgOutDateFgSelected: GB_FG_BRIGHT;": "msgOutDateFgSelected: #f3f0e6;",
+        "msgServiceFg: GB_FG_SOFT;": "msgServiceFg: #f3f0e6;",
+        "msgServiceBg: #1d2021cc;": "msgServiceBg: #41423bf0;",
+        "msgServiceBgSelected: #504945dd;": "msgServiceBgSelected: #55564df0;",
+        "historySystemBg: #1d2021cc;": "historySystemBg: #41423bf0;",
+        "historySystemBgSelected: #504945dd;": "historySystemBgSelected: #55564df0;",
+        "historySystemFg: GB_FG_SOFT;": "historySystemFg: #f3f0e6;",
+        "mediaInFg: GB_GRAY_DIM;": "mediaInFg: #d8d4c8;",
+        "mediaInFgSelected: GB_FG_SOFT;": "mediaInFgSelected: #f3f0e6;",
+        "mediaOutFg: GB_GRAY_DIM;": "mediaOutFg: #d8d4c8;",
+        "mediaOutFgSelected: GB_FG_SOFT;": "mediaOutFgSelected: #f3f0e6;",
     }
     for old, new in daylight_replacements.items():
         if old not in palette:

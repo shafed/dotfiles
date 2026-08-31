@@ -72,6 +72,19 @@ DAY_REPLACEMENTS = {
     "scrollBgOver: #50494555;": "scrollBgOver: #62635866;",
 }
 
+# The base renderer was tuned for daylight before day/night variants existed.
+# Restore the original Gruvbox Material Dark chat semantics only for night so
+# bright daytime text and darker daylight bubbles do not leak into dark mode.
+NIGHT_REPLACEMENTS = {
+    "historyTextInFg: GB_FG_BRIGHT;": "historyTextInFg: GB_FG;",
+    "historyTextOutFg: GB_FG_BRIGHT;": "historyTextOutFg: GB_FG;",
+    "msgInBg: GB_BG_HARD;": "msgInBg: GB_BG_ALT;",
+    "msgInDateFg: GB_FG_SOFT;": "msgInDateFg: GB_GRAY_DIM;",
+    "msgInDateFgSelected: GB_FG_BRIGHT;": "msgInDateFgSelected: GB_FG_SOFT;",
+    "msgOutDateFg: GB_FG_SOFT;": "msgOutDateFg: GB_GRAY_DIM;",
+    "msgOutDateFgSelected: GB_FG_BRIGHT;": "msgOutDateFgSelected: GB_FG_SOFT;",
+}
+
 COMMON_OVERRIDES = """
 
 // Telegram folder sidebar.
@@ -138,11 +151,20 @@ def apply_day_palette(palette: str) -> str:
     return palette
 
 
+def apply_night_palette(palette: str) -> str:
+    """Restore the original warm Gruvbox Material Dark chat treatment."""
+    for old, new in NIGHT_REPLACEMENTS.items():
+        palette = replace_once(palette, old, new, "night")
+    return palette
+
+
 def apply_telegram_overrides(palette: str, variant: str = "night") -> str:
     """Apply the selected Telegram palette plus Telegram-only semantic keys."""
     if variant == "day":
         palette = apply_day_palette(palette)
-    elif variant != "night":
+    elif variant == "night":
+        palette = apply_night_palette(palette)
+    else:
         raise ValueError(f"unknown Telegram theme variant: {variant}")
 
     marker = "\n// Generic scrollbars.\n"

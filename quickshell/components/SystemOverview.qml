@@ -14,16 +14,28 @@ GridLayout {
   rowSpacing: ui.panelSpacing
   columnSpacing: ui.panelSpacing
 
+  // Keep the visual grouping aligned with the keyboard mnemonic: software and
+  // information live on the left, sound/hardware on the right.
   readonly property var entries: [
-    { key: "audio", label: "Audio", status: services.muted ? "muted" : String(services.volume) + "%" },
-    { key: "network", label: "Network / Wi-Fi", status: system.network.enabled ? String(system.network.active || "on") : "off" },
-    { key: "bluetooth", label: "Bluetooth", status: system.bluetoothPowered ? "on" : "off" },
-    { key: "power", label: "Power", status: shell.laptop ? String(system.batteryPercent) + "%" : String(system.powerProfile || "power") },
-    { key: "agents", label: "AI limits", status: String((shell.state.agents || []).length) + " accounts" },
-    { key: "updates", label: "Updates", status: String(system.updates.count) },
-    { key: "notifications", label: "Notifications", status: notifications.dnd ? "DND" : String((notifications.history || []).length) },
-    { key: "calendar", label: "Calendar", status: Qt.formatDate(shell.clockNow, "ddd d MMM") }
+    { key: "agents", label: "AI limits", chord: "E+R", status: String((shell.state.agents || []).length) + " accounts" },
+    { key: "audio", label: "Audio", chord: "Y+U", status: services.muted ? "muted" : String(services.volume) + "%" },
+    { key: "updates", label: "Updates", chord: "R+T", status: String(system.updates.count) },
+    { key: "network", label: "Network / Wi-Fi", chord: "H+J", status: system.network.enabled ? String(system.network.active || "on") : "off" },
+    { key: "notifications", label: "Notifications", chord: "D+F", status: notifications.dnd ? "DND" : String((notifications.history || []).length) },
+    { key: "bluetooth", label: "Bluetooth", chord: "L+;", status: system.bluetoothPowered ? "on" : "off" },
+    { key: "calendar", label: "Calendar", chord: "X+C", status: Qt.formatDate(shell.clockNow, "ddd d MMM") },
+    { key: "power", label: "Power", chord: "C+V", status: shell.laptop ? String(system.batteryPercent) + "%" : String(system.powerProfile || "power") }
   ]
+
+  Text {
+    Layout.columnSpan: 2
+    Layout.fillWidth: true
+    text: "W+E overview  ·  software ←   sound / hardware →"
+    color: overview.colors.grayDim
+    font.family: overview.ui.bodyFont
+    font.pixelSize: overview.ui.panelButtonTextSize - 1
+    horizontalAlignment: Text.AlignHCenter
+  }
 
   Repeater {
     model: overview.entries
@@ -31,7 +43,7 @@ GridLayout {
     Rectangle {
       required property var modelData
       Layout.fillWidth: true
-      implicitHeight: 72
+      implicitHeight: 64
       radius: overview.ui.panelButtonRadius
       color: mouse.containsMouse ? overview.colors.bgHover : overview.colors.bg
       border.color: overview.colors.bgHover
@@ -42,14 +54,27 @@ GridLayout {
         anchors.margins: 10
         spacing: 4
 
-        Text {
+        RowLayout {
           Layout.fillWidth: true
-          text: modelData.label
-          color: overview.colors.fgBright
-          font.family: overview.ui.bodyFont
-          font.bold: true
-          font.pixelSize: overview.ui.panelButtonTextSize
-          elide: Text.ElideRight
+          spacing: 8
+
+          Text {
+            Layout.fillWidth: true
+            text: modelData.label
+            color: overview.colors.fgBright
+            font.family: overview.ui.bodyFont
+            font.bold: true
+            font.pixelSize: overview.ui.panelButtonTextSize
+            elide: Text.ElideRight
+          }
+
+          Text {
+            text: modelData.chord
+            color: overview.colors.yellow
+            font.family: overview.ui.bodyFont
+            font.bold: true
+            font.pixelSize: overview.ui.panelButtonTextSize - 1
+          }
         }
 
         Text {

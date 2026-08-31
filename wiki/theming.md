@@ -31,8 +31,8 @@ surfaces:
   generators;
 - `[colors_light]` — warm-white reference (`#fbfaf7` / `#3c3836`) for browser
   daylight work; Chromium's adaptive theme does not consume these exact values;
-- `[helium]` — Chromium User Color seed/variant. Current values are warm Gruvbox
-  `#b47109`, `neutral`, and `system` color scheme.
+- `[helium]` — Chromium User Color seed/variant. Current values are Gruvbox
+  warm-neutral `#3c3836`, `neutral`, and `system` color scheme.
 
 After changing shared palette values run:
 
@@ -98,22 +98,30 @@ The desired state is the semantic equivalent of:
 
 ```text
 extensions.theme.id = user_color_theme_id
-browser.theme.user_color{,2} = #b47109
+browser.theme.user_color{,2} = #3c3836
 browser.theme.color_variant{,2} = neutral
 browser.theme.color_scheme{,2} = system
 browser.theme.follows_system_colors = false
 ```
 
 Both the deprecated and current `*2` preference names are written because recent
-Chromium revisions are migrating those prefs. `follows_system_colors=false`
-prevents the OS accent color from replacing the Gruvbox seed; `color_scheme =
-system` still follows the OS light/dark appearance.
+Chromium revisions are migrating those prefs. The deterministic profile state
+keeps `follows_system_colors=false`; Linux light/dark following itself comes from
+`color_scheme=system` and Chromium's native appearance signal.
 
 This is intentionally **Gruvbox-derived, not exact Gruvbox surfaces**. Chromium's
-Material color generator owns final light/dark shades. `neutral` was chosen so
-large light surfaces stay close to white and dark surfaces stay close to charcoal
-while the warm seed carries the Gruvbox identity. The benefit is native tab-state
-styling and live system-mode repainting.
+Material color generator owns final light/dark shades. Helium's vertical-tab
+frame resolves through Chromium's native frame/header colors. For a themed User
+Color palette, the header is generated from the secondary tonal palette; even the
+`neutral` variant fixes that palette to a small non-zero chroma. Consequently,
+seed saturation is not a useful way to remove a cast from the whole sidebar —
+the seed hue is the important lever.
+
+The earlier yellow seed `#b47109` therefore produced a visibly cream/brown frame
+(`~#fff8f4` light and `~#271e14` dark on the tested Helium build). The current
+seed uses Gruvbox `bg_soft` (`#3c3836`) instead: its warm-neutral hue keeps the
+native generated surfaces closer to the original neutral Gruvbox treatment while
+retaining native tab-state styling and live system-mode repainting.
 
 ### Why Helium switches live
 
@@ -153,6 +161,8 @@ The generator then:
 
 Start Helium once after that migration. This one restart activates the changed
 profile preferences; **later light/dark transitions do not require a restart**.
+Changing the User Color seed is likewise a profile preference change: close
+Helium for `dots apply` once, then subsequent solar transitions stay live.
 
 If Helium has never created an active `Preferences`, `dots apply` does not invent
 a browser profile. Launch Helium once, close it, and apply again.
@@ -185,7 +195,7 @@ Expected semantic values:
 ```text
 id = user_color_theme_id
 scheme = 0   # System
-seed = -4951799   # signed SkColor for #b47109
+seed = -12830666   # signed SkColor for #3c3836
 variant = 2  # Neutral
 follows_os_accent = false
 ```

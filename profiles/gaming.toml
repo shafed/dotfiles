@@ -1,4 +1,0 @@
-[profile]
-description = "Desktop profile marker for gaming-specific machine additions"
-includes = ["desktop"]
-capabilities = ["gaming"]

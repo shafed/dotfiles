@@ -1,7 +1,7 @@
 ---
 title: theming
 type: topic
-updated: 2026-08-30
+updated: 2026-08-31
 covers:
   - colors.toml
   - scripts/generate-theme.py
@@ -10,6 +10,7 @@ covers:
   - hypr/hyprsunset.conf
   - kitty/current-theme.conf
   - .claude/themes/gruvbox-material.json
+  - copyq/gruvbox.ini
   - quickshell/config/Colors.qml
 ---
 
@@ -38,7 +39,16 @@ The main generator writes the tracked format-specific surfaces:
 - `scripts/generated-colors.sh` (available to shell consumers);
 - `quickshell/config/Colors.qml`;
 - `.claude/themes/gruvbox-material.json`;
+- `copyq/gruvbox.ini` (applied to CopyQ's mutable live config by
+  `scripts/copyq-apply-theme.py`);
 - `yazi/flavors/gruvbox-dark.yazi/flavor.toml`.
+
+CopyQ keeps its complete bundled Font Awesome toolbar set because the available
+system icon themes only cover some of its action names. CopyQ derives the icon
+tint from the window background rather than the theme foreground; using the
+slightly teal `bg_hard` amplifies that hue into blue icons. Its surface therefore
+uses the neutral Gruvbox `bg` (`#282828`), which makes the derived icons neutral
+gray while preserving Gruvbox hover, selection, and foreground colors.
 
 Telegram Desktop is user-imported rather than symlinked by bootstrap, so its
 surface is generated separately by `telegram/generate-theme.py`. The tracked

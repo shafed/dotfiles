@@ -1,7 +1,7 @@
 ---
 title: dots
 type: topic
-updated: 2026-08-30
+updated: 2026-08-31
 covers:
   - dots
   - bootstrap.sh
@@ -75,6 +75,19 @@ component versions, managed service state, doctor failures/warnings, and by
 default recent Quickshell journal lines. It is observational only; use
 `--no-logs` before pasting output somewhere that should not receive journal
 text.
+
+Interactive use has explicit stable abbreviations: `a` (apply), `d` (doctor),
+`c` (check), `m` (migrate), `t` (theme), `rs` (restart), `rf` (refresh), `s`
+(shell), `p` (panel), `db` (debug), `ls` (commands), and `h` (help). They are
+spelled out rather than inferred from unique prefixes, so adding a future
+command cannot silently change an existing abbreviation. The zsh alias `ds`
+shortens the executable itself, for example `ds rs quickshell`.
+
+Frequently typed nested arguments are explicit too: checks accept `sh`, `py`,
+and `t`; theme accepts `s`, `l`, `d`, and `t`; restart accepts `q`, `k`, `d`,
+and `a`; refresh accepts `q`, `s`, and `a`. Shell actions use `a`, `b`, `c`,
+`h`, `s`, and `r`; panel names use `s`, `a`, `n`, `b`, `p`, `ag`, `u`, `no`,
+and `c`. Thus a routine Quickshell restart is `ds rs q`.
 
 `migrate` is intentionally idempotent and has no migration database. A migration
 exists only while obsolete state can be detected directly. Before a migration

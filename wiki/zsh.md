@@ -1,7 +1,7 @@
 ---
 title: zsh
 type: component
-updated: 2026-08-14
+updated: 2026-08-31
 covers:
   - zsh/zshrc
   - zsh/zprofile
@@ -21,6 +21,8 @@ oh-my-zsh with plugins that install themselves. Main file — `../zsh/zshrc`
   their own copy of the palette to match kitty. One of the duplication sites
   [theming](theming.md) warns about.
 - **`cd` is zoxide** (`zoxide init zsh --cmd cd`), not plain `cd`.
+- **`ds` is the interactive shorthand for `dots`**; the CLI itself owns its
+  stable abbreviated subcommands, such as `ds d` and `ds rs quickshell`.
 
 ## zsh-vi-mode: three settings that all look like the same bug
 

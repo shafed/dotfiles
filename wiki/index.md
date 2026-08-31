@@ -36,8 +36,8 @@ rules: [../CLAUDE.md](../CLAUDE.md) (`AGENTS.md` symlinks to it).
 - **[yazi](yazi.md)** — file manager.
 - **[sioyek](sioyek.md)** — PDF viewer; why every launcher must go through the
   `~/.local/bin/sioyek` wrapper.
-- **[telegram](telegram.md)** — Telegram-specific Gruvbox decisions, including
-  high-contrast chat bubbles for bright daytime conditions.
+- **[telegram](telegram.md)** — Telegram day/night palettes and the live
+  darkman-driven theme-file switch.
 
 ## Cross-cutting
 

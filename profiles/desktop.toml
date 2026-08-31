@@ -23,6 +23,24 @@ apply = ["python3", "scripts/copyq-apply-theme.py"]
 outputs = ["{config}/copyq/copyq.conf"]
 reason = "merge the generated theme into CopyQ's mutable live config"
 
+[[prerequisites]]
+kind = "system-service"
+name = "NetworkManager.service"
+required = true
+reason = "network controls and status need NetworkManager"
+
+[[prerequisites]]
+kind = "system-service"
+name = "bluetooth.service"
+required = true
+reason = "Bluetooth capability needs the BlueZ daemon"
+
+[[prerequisites]]
+kind = "system-service"
+name = "power-profiles-daemon.service"
+required = true
+reason = "power profile controls need the system daemon"
+
 [[packages]]
 command = "hyprland"
 package = "hyprland"

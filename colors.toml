@@ -75,10 +75,12 @@ diff_added_dimmed = "#eef2e8"
 diff_removed_dimmed = "#f5e9e7"
 
 # Helium uses Chromium's native User Color theme rather than an extension theme.
-# Neutral keeps large surfaces near white/charcoal while this warm Gruvbox seed
-# provides the accent. System color scheme follows darkman's XDG portal signal
-# live, without rebuilding a theme or restarting Helium.
+# In Chromium's Neutral variant the vertical-tab frame is generated from a
+# forced secondary tonal palette, so seed hue matters much more than seed
+# saturation. Use Gruvbox's warm-neutral bg_soft hue instead of a yellow accent
+# to keep the generated browser chrome closer to the original neutral surfaces.
+# System color scheme follows darkman's XDG portal signal live.
 [helium]
-user_color = "#b47109"
+user_color = "#3c3836"
 color_variant = "neutral"
 color_scheme = "system"

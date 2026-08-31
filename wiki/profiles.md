@@ -10,33 +10,53 @@ covers:
 
 # Profiles and desired machine state
 
-Profiles exist so a new machine can describe *what it is* instead of growing a
-second copy of bootstrap logic. `base` owns shared shell/editor tools;
-`desktop` adds the graphical Hyprland/Quickshell stack; `laptop`, `gaming` and
-`ai` compose on top and are the extension points for hardware/workload-specific
-requirements.
+Profiles describe *what a machine should be* rather than duplicating bootstrap
+logic. `base` owns shared shell/editor tools; `desktop` adds the graphical
+Hyprland/Quickshell stack; `laptop`, `gaming` and `ai` compose on top and are
+small extension points for hardware/workload-specific requirements.
 
 A machine file is intentionally small. `dots` looks for
-`machines/<hostname>.toml`, falling back to `machines/default.toml`, and the
-file only selects profiles plus explicit capabilities. Package, link, service
-and generator declarations stay in profiles so two machines do not drift by
-copy/paste.
+`machines/<hostname>.toml`, falling back to `machines/default.toml`; the machine
+selects profiles and can add/disable explicit capabilities. Links, managed
+files, packages, user services, runtime generators and system prerequisites stay
+in profiles so machines cannot drift through copied lists.
 
-`dots plan` resolves the same desired state as `dots apply`. It is observational:
-symlinks and managed files are compared directly, migrations run in check mode,
-and legacy runtime generators are executed against a temporary HOME before
-their declared outputs are compared. `--json` exposes the same plan for
-Quickshell or agents. Missing packages are reported with the profile reason but
-are not installed by apply.
+Capabilities are descriptive facts used to explain/extend the desired state,
+for example `desktop`, `bluetooth`, `battery`, `laptop`, `gaming` and `ai`.
+Machine-specific facts belong in `machines/`; application configuration itself
+should stay shared unless the machine genuinely needs a different value.
 
-`dots apply` consumes that plan. A run with no machine changes does not rewrite
-wrappers, rerun runtime generators, clear Quickshell cache, or restart services;
-it only runs the final doctor. A changing run is recorded under
-`$XDG_STATE_HOME/dotfiles/runs/` with the repository commit, selected profiles,
-capabilities, planned changes and any backup paths. `dots history` lists those
-runs and `dots show <run>` displays one record.
+The profile TOML files are the only desired-state manifest. The older package,
+link and service arrays were removed from `scripts/dots-lib.sh`; that file now
+only contains public CLI metadata. As a result `plan`, `apply`, `doctor` and
+`provision` cannot silently consult different dependency lists.
 
-This is the first convergence milestone only. `doctor` still uses the legacy
-package/link arrays in `scripts/dots-lib.sh`; moving those checks to the profile
-model, adding rollback, reproducibility checks and `dots provision` are later
-steps so they do not get mixed into the initial plan/apply engine change.
+`dots plan` resolves profile includes and compares the selected desired state
+with the machine. It is observational: safe migrations run in check mode and
+runtime generators are rendered in a temporary HOME. `--json` exposes the same
+state for Quickshell or agents. Each dependency/prerequisite declaration carries
+a reason so doctor/provision can explain why it exists rather than only naming a
+package.
+
+`dots apply` consumes exactly that plan. It converges both missing desired state
+and unambiguous repo-owned leftovers from profiles that are no longer selected.
+A symlink is removable as extra only while it still points to its known tracked
+source; a managed regular file is removable only while its content still equals
+the known profile-owned content. This keeps profile switching useful without
+turning it into arbitrary `$HOME` cleanup.
+
+Runtime generator declarations include explicit outputs. The engine renders the
+same seeded input twice in isolated HOMEs: a nondeterministic generator is a
+blocker, while a deterministic mismatch becomes an ordinary planned change.
+Tracked theme/Telegram generation is additionally checked by `dots check`/CI.
+
+A changing apply records profiles, capabilities, changes, backups and post-state
+under `$XDG_STATE_HOME/dotfiles/runs/`. `dots rollback <run>` can then restore
+only the dotfiles-owned paths from that run, provided those paths have not been
+changed again since the apply.
+
+External installation remains opt-in. `dots provision` reads the same package
+and prerequisite declarations but normal `dots apply` never installs packages
+or enables system services. The current provision backend is deliberately Arch
+only; a package-manager portability layer should be added only when an actual
+second distribution needs it.

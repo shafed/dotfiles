@@ -10,8 +10,27 @@ emit_zsh() {
   local -a alias_list
 
   cat <<'ZSH'
-_dots_impl() {
-  local context state line command
+_dots_profiles() {
+  local -a profiles
+  profiles=("$DOTFILES"/profiles/*.toml(N:t:r))
+  compadd -a profiles
+}
+
+_dots_machines() {
+  local -a machines
+  machines=("$DOTFILES"/machines/*.toml(N:t:r))
+  compadd -a machines
+}
+
+_dots_runs() {
+  local runs_dir="${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles/runs"
+  local -a runs
+  runs=("$runs_dir"/*.json(N:t:r))
+  compadd -a runs
+}
+
+_dots() {
+  local curcontext="$curcontext" state line command ret=1
   typeset -A opt_args
   local -a commands
   commands=(
@@ -31,15 +50,16 @@ ZSH
   )
 
   _arguments -C \
+    '(-h --help)'{-h,--help}'[show help]' \
     '1:command:->command' \
-    '*::argument:->args'
+    '*::argument:->argument' && ret=0
 
   case "$state" in
     command)
-      _describe 'dots command' commands
+      _describe -t commands 'dots command' commands && ret=0
       ;;
-    args)
-      command="${words[2]}"
+    argument)
+      command="${line[1]}"
 ZSH
 
   printf '      case "$command" in\n'
@@ -54,81 +74,114 @@ ZSH
   printf '      esac\n'
 
   cat <<'ZSH'
-      words=("${words[@]:1}")
-      (( CURRENT-- ))
+      curcontext="${curcontext%:*:*}:dots-${command}:"
 
       case "$command" in
         plan|drift|doctor)
           _arguments \
+            '(-h --help)'{-h,--help}'[show command help]' \
             '--json[machine-readable output]' \
-            '--machine[select a machine manifest]:machine:' \
-            '--profile[override selected profiles]:profiles:'
+            '--machine[select a machine manifest]:machine:_dots_machines' \
+            '--profile[override selected profiles]:profiles:_dots_profiles' && ret=0
           ;;
         apply)
           _arguments \
+            '(-h --help)'{-h,--help}'[show command help]' \
             '--check[show the plan only]' \
             '--links-only[apply only managed links and files]' \
-            '--machine[select a machine manifest]:machine:' \
-            '--profile[override selected profiles]:profiles:'
+            '--machine[select a machine manifest]:machine:_dots_machines' \
+            '--profile[override selected profiles]:profiles:_dots_profiles' && ret=0
           ;;
         provision)
           _arguments \
+            '(-h --help)'{-h,--help}'[show command help]' \
             '--dry-run[print actions without executing them]' \
             '--yes[skip interactive confirmation]' \
             '--json[machine-readable output]' \
-            '--machine[select a machine manifest]:machine:' \
-            '--profile[override selected profiles]:profiles:'
+            '--machine[select a machine manifest]:machine:_dots_machines' \
+            '--profile[override selected profiles]:profiles:_dots_profiles' && ret=0
           ;;
         check)
-          _arguments '1:check scope:(all shell lua python generated tests)'
+          _arguments \
+            '(-h --help)'{-h,--help}'[show command help]' \
+            '1:check scope:(all shell sh lua python py generated gen g tests t)' && ret=0
           ;;
         migrate)
-          _arguments '--check[detect migrations without applying them]'
+          _arguments \
+            '(-h --help)'{-h,--help}'[show command help]' \
+            '--check[detect migrations without applying them]' && ret=0
           ;;
         history)
-          _arguments '--json[machine-readable output]'
+          _arguments \
+            '(-h --help)'{-h,--help}'[show command help]' \
+            '--json[machine-readable output]' && ret=0
           ;;
         show)
           _arguments \
-            '1:run id:' \
-            '--json[machine-readable output]'
+            '(-h --help)'{-h,--help}'[show command help]' \
+            '1:run id:_dots_runs' \
+            '--json[machine-readable output]' && ret=0
           ;;
         rollback)
-          _arguments '1:run id:'
+          _arguments \
+            '(-h --help)'{-h,--help}'[show command help]' \
+            '1:run id:_dots_runs' && ret=0
           ;;
         theme)
-          _arguments '1:theme action:(status light dark toggle)'
+          _arguments \
+            '(-h --help)'{-h,--help}'[show command help]' \
+            '1:theme action:(status s light l dark d toggle t)' && ret=0
           ;;
         restart)
-          _arguments '1:service:(quickshell kanata darkman copyq all)'
+          _arguments \
+            '(-h --help)'{-h,--help}'[show command help]' \
+            '1:service:(quickshell q kanata k darkman d copyq all a)' && ret=0
           ;;
         refresh)
-          _arguments '1:target:(quickshell systemd all)'
+          _arguments \
+            '(-h --help)'{-h,--help}'[show command help]' \
+            '1:target:(quickshell q systemd s all a)' && ret=0
           ;;
         shell)
-          _arguments '1:action:(apps bookmarks clipboard hotkeys system refresh panel)'
+          _arguments \
+            '(-h --help)'{-h,--help}'[show command help]' \
+            '1:action:(apps a launcher bookmarks b clipboard c hotkeys h system s refresh r panel)' \
+            '2:panel:->shell-panel' && ret=0
+          if [[ "$state" == shell-panel && "${line[1]}" == panel ]]; then
+            _values 'panel' system s audio a network n bluetooth b power p agents ag updates u notifications no calendar c && ret=0
+          fi
           ;;
         panel)
-          _arguments '1:panel:(system audio network bluetooth power agents updates notifications calendar)'
+          _arguments \
+            '(-h --help)'{-h,--help}'[show command help]' \
+            '1:panel:(system s audio a network n bluetooth b power p agents ag updates u notifications no calendar c)' && ret=0
           ;;
         debug)
-          _arguments '--no-logs[omit journal text]'
+          _arguments \
+            '(-h --help)'{-h,--help}'[show command help]' \
+            '--no-logs[omit journal text]' && ret=0
           ;;
         commands|aliases)
-          _arguments '--json[machine-readable output]'
+          _arguments \
+            '(-h --help)'{-h,--help}'[show command help]' \
+            '--json[machine-readable output]' && ret=0
           ;;
         completion)
-          _arguments '1:shell:(zsh)'
+          _arguments \
+            '(-h --help)'{-h,--help}'[show command help]' \
+            '1:shell:(zsh)' && ret=0
           ;;
         help)
-          _describe 'dots command' commands
+          _describe -t commands 'dots command' commands && ret=0
           ;;
       esac
       ;;
   esac
+
+  return ret
 }
 
-compdef _dots_impl dots ds
+compdef _dots dots ds
 ZSH
 }
 

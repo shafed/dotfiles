@@ -132,6 +132,13 @@ required = true
 reason = "YouTube picker downloads and metadata"
 
 [[packages]]
+command = "uv"
+package = "uv"
+manager = "pacman"
+required = true
+reason = "installs isolated CLI tools declared by this profile"
+
+[[packages]]
 command = "bruvtab"
 package = "bruvtab"
 manager = "uv-tool"

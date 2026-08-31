@@ -1,14 +1,42 @@
 #!/bin/sh
-# darkman hook (unified dir): $1 is the new mode, "dark" or "light".
-# Switches GTK/Qt app theme via the system color-scheme preference
-# (prefer-dark / prefer-light). Modern GTK built-in themes render their
-# dark/light variant from this setting, so no separate theme files needed.
+# darkman hook: keep the visual theme dark/Gruvbox in both solar states.
 set -e
 
+FALLBACK_THEME="Adwaita-dark"
+
+theme_exists() {
+  theme="$1"
+  [ -d "$HOME/.themes/$theme" ] ||
+    [ -d "$HOME/.local/share/themes/$theme" ] ||
+    [ -d "/usr/local/share/themes/$theme" ] ||
+    [ -d "/usr/share/themes/$theme" ]
+}
+
+first_existing_theme() {
+  for theme in "$@"; do
+    if theme_exists "$theme"; then
+      printf '%s\n' "$theme"
+      return 0
+    fi
+  done
+  return 0
+}
+
 case "$1" in
-dark) mode="prefer-dark" ;;
-light) mode="prefer-light" ;;
+dark | light) ;;
 *) exit 0 ;;
 esac
 
-gsettings set org.gnome.desktop.interface color-scheme "$mode"
+gtk_theme="$(first_existing_theme \
+  Gruvbox-Material-Dark \
+  Gruvbox-Dark-Medium \
+  Gruvbox-Dark)"
+
+if [ -z "$gtk_theme" ]; then
+  gtk_theme="$FALLBACK_THEME"
+  printf '%s\n' \
+    "darkman: no Gruvbox dark GTK theme installed; using $FALLBACK_THEME" >&2
+fi
+
+gsettings set org.gnome.desktop.interface color-scheme "prefer-dark"
+gsettings set org.gnome.desktop.interface gtk-theme "$gtk_theme"

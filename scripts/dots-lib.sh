@@ -51,6 +51,7 @@ LINK_FILES=(
   .claude/hooks/no-coauthor.sh
   .claude/themes/gruvbox-material.json
   darkman/scripts
+  helium/apply-gruvbox-theme.py
   dots
 )
 

@@ -74,4 +74,16 @@ hl.window_rule({
   center = true,
 })
 
+hl.window_rule({
+  -- CopyQ toggled via Super+V / the top-bar CLIP button (dots-shell); tiles
+  -- by default like any other window otherwise. Sized to match the old
+  -- native Quickshell clipboard overlay it replaced.
+  name = "copyq float centered",
+  match = { class = "com.github.hluk.copyq" },
+
+  float = true,
+  size = { 760, 620 },
+  center = true,
+})
+
 hl.workspace_rule({ workspace = "2", on_created_empty = browser })

@@ -57,11 +57,6 @@ QtObject {
   readonly property int youtubePreviewHeight: 236
   readonly property int youtubeRowHeight: 64
 
-  readonly property int clipboardMaxWidth: 760
-  readonly property int clipboardMaxHeight: 620
-  readonly property int clipboardHorizontalInset: 80
-  readonly property int clipboardVerticalInset: 100
-
   readonly property int toastWidth: 390
   readonly property int toastMaxHeight: 520
   readonly property int toastTopMargin: 36

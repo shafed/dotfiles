@@ -71,7 +71,6 @@ Item {
   }
 
   function show(name) {
-    picker.shell.clipboardOpen = false
     picker.shell.openPanel = ""
     mode = name
     query = ""

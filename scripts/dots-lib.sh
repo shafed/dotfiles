@@ -18,7 +18,7 @@ REQUIRED_PKGS=(
   "brightnessctl:brightnessctl"
   "checkupdates:pacman-contrib"
   "wl-paste:wl-clipboard"
-  "cliphist:cliphist"
+  "copyq:copyq"
   "yazi:yazi"
   "nvim:neovim"
   "zsh:zsh"
@@ -71,6 +71,7 @@ DOTS_CORE_USER_SERVICES=(
   quickshell.service
   kanata.service
   darkman.service
+  copyq.service
 )
 
 # name|usage|description. Keep this small: it is both human help and the
@@ -81,7 +82,7 @@ DOTS_COMMANDS=(
   "check|dots check [all|shell|lua|python|tests]|Run repository checks"
   "migrate|dots migrate [--check]|Detect or apply safe stale-state migrations"
   "theme|dots theme [status|light|dark|toggle]|Show or switch the darkman theme"
-  "restart|dots restart <quickshell|kanata|darkman|all>|Restart managed user services"
+  "restart|dots restart <quickshell|kanata|darkman|copyq|all>|Restart managed user services"
   "refresh|dots refresh <quickshell|systemd|all>|Rebuild derived state and reload services"
   "shell|dots shell <apps|bookmarks|clipboard|hotkeys|system|refresh|panel ...>|Control stable Quickshell actions"
   "panel|dots panel <system|audio|network|bluetooth|power|agents|updates|notifications|calendar>|Toggle a Quickshell panel"

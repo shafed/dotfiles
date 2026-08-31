@@ -52,9 +52,15 @@ case "${1:-}" in
     ipc bookmarks toggle
     ;;
   clipboard)
+    # CopyQ's own window, not a Quickshell overlay — it has its own history,
+    # search and paste handling, so there's nothing left for Quickshell to
+    # own here beyond closing whatever picker is currently open first.
+    # QT_QPA_PLATFORM=xcb matches the copyq shell alias (zsh/zshrc): the
+    # client process that renders the toggled window needs it even though
+    # copyq.service's headless server does not.
     close_hotkeys
     close_pickers
-    ipc dots toggleClipboard
+    QT_QPA_PLATFORM=xcb copyq toggle >/dev/null 2>&1
     ;;
   projects|sessions)
     close_hotkeys

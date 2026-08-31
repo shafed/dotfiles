@@ -101,7 +101,6 @@ Item {
   }
 
   function show() {
-    youtube.shell.clipboardOpen = false
     youtube.shell.openPanel = ""
     source = "videos"
     query = ""

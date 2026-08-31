@@ -98,10 +98,7 @@ Variants {
 
         ClickButton {
           label: "CLIP"
-          onPressed: {
-            bars.shell.clipboardOpen = true
-            bars.shell.refreshClipboard()
-          }
+          onPressed: bars.shell.run(["bash", "-lc", "QT_QPA_PLATFORM=xcb copyq toggle"])
         }
 
         ClickButton {

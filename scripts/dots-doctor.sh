@@ -131,6 +131,21 @@ else
   else
     warn "darkman.service is $darkman_state"
   fi
+
+  # copyq.service is Type=simple around a binary that daemonizes itself: the
+  # tracked ExecStart process exits ("server already running") the moment
+  # something else (a `copyq toggle` from dots-shell, say) has already forked
+  # the actual clipboard-monitor process, so systemd reports "inactive" even
+  # though CopyQ is up and working. `is-active` is not a reliable signal here
+  # — warn rather than fail.
+  copyq_state="$(systemctl --user is-active copyq.service 2>/dev/null || true)"
+  if [ "$copyq_state" = "active" ]; then
+    ok "copyq.service active"
+  elif pgrep -x copyq >/dev/null 2>&1; then
+    ok "copyq running (server up; unit reports $copyq_state, see comment above)"
+  else
+    warn "copyq.service is $copyq_state and no copyq process is running"
+  fi
 fi
 
 section "stale config and cache"

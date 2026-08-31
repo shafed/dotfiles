@@ -176,7 +176,6 @@ Item {
 
   function show() {
     shell.openPanel = ""
-    shell.clipboardOpen = false
     query = ""
     open = true
     Qt.callLater(function() { searchInput.forceActiveFocus() })

@@ -21,7 +21,6 @@ Item {
   }
 
   function show(target) {
-    scratch.shell.clipboardOpen = false
     scratch.shell.openPanel = ""
     targetAddress = target === "none" ? "" : target
     open = true

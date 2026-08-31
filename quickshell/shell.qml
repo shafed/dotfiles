@@ -23,8 +23,6 @@ ShellRoot {
     layout: ""
   })
   property string openPanel: ""
-  property bool clipboardOpen: false
-  property var clipboardRows: []
   property date clockNow: new Date()
   property date calendarMonth: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
   property bool osdOpen: false
@@ -164,7 +162,6 @@ ShellRoot {
     if (!laptop && (name === "network" || name === "bluetooth")) return
     desktopLauncher.close()
     bookmarksPicker.close()
-    clipboardOpen = false
     openPanel = openPanel === name ? "" : name
     if (openPanel === "network") system.network.refresh()
     if (openPanel === "updates") system.updates.refresh()
@@ -175,23 +172,6 @@ ShellRoot {
     var merged = state
     merged.layout = layout
     state = Object.assign({}, merged)
-  }
-
-  function parseClipboardRows(text) {
-    var rows = []
-    var lines = String(text || "").split("\n")
-    for (var i = 0; i < lines.length && rows.length < 30; i++) {
-      var line = lines[i]
-      if (!line) continue
-      var tab = line.indexOf("\t")
-      if (tab < 0) continue
-      rows.push({ id: line.slice(0, tab), text: line.slice(tab + 1).replace(/\\n/g, " ").slice(0, 140) })
-    }
-    clipboardRows = rows
-  }
-
-  function refreshClipboard() {
-    if (!clipboardProc.running) clipboardProc.running = true
   }
 
   function showOsd(icon, label, value, hasValue) {
@@ -281,26 +261,8 @@ ShellRoot {
   ListModel { id: toastModel }
 
   Process {
-    id: clipboardProc
-    command: ["bash", "-lc",
-      "if command -v cliphist >/dev/null; then cliphist list | head -n 30; " +
-      "elif command -v copyq >/dev/null; then for i in $(seq 0 29); do v=$(copyq read \"$i\" 2>/dev/null) || break; " +
-      "v=${v//$'\\n'/ }; printf 'copyq:%s\\t%.140s\\n' \"$i\" \"$v\"; done; fi"]
-    stdout: StdioCollector {
-      waitForEnd: true
-      onStreamFinished: root.parseClipboardRows(text)
-    }
-  }
-
-  Process {
     running: true
     command: ["bash", "-lc", "for i in $(seq 1 20); do pkill -x waybar >/dev/null 2>&1 || true; sleep 0.5; done"]
-  }
-
-  Process {
-    running: true
-    command: ["bash", "-lc",
-      "if command -v cliphist >/dev/null && command -v wl-paste >/dev/null; then exec wl-paste --type text --watch cliphist store; else exec sleep infinity; fi"]
   }
 
   Timer {
@@ -337,16 +299,7 @@ ShellRoot {
     target: "dots"
     function closeOverlays(): string {
       root.openPanel = ""
-      root.clipboardOpen = false
       return "ok"
-    }
-    function toggleClipboard(): string {
-      desktopLauncher.close()
-      bookmarksPicker.close()
-      root.openPanel = ""
-      root.clipboardOpen = !root.clipboardOpen
-      if (root.clipboardOpen) root.refreshClipboard()
-      return root.clipboardOpen ? "open" : "closed"
     }
     function panel(name: string): string {
       root.togglePanel(name)
@@ -384,7 +337,7 @@ ShellRoot {
     historyModel: historyModel
   }
 
-  Components.ClipboardOverlay { shell: root; colors: colors; ui: ui }
+  Components.PickerOverlays { shell: root; colors: colors; ui: ui }
   Components.ToastOverlay { shell: root; colors: colors; ui: ui; toastModel: toastModel }
   Components.OsdOverlay { shell: root; colors: colors; ui: ui }
 }

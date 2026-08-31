@@ -1,92 +1,20 @@
 #!/usr/bin/env bash
 
 DOTS_ROOT="${DOTS_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
-DOTS_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
-DOTS_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
 
-# Legacy arrays remain for doctor/tests during the first profile-engine phase.
-# New plan/apply behavior reads packages, services, links and generators from
-# profiles/*.toml. The arrays are removed when doctor becomes profile-aware.
-REQUIRED_PKGS=(
-  "hyprland:hyprland"
-  "uwsm:uwsm"
-  "kanata:kanata-bin (AUR)"
-  "kitty:kitty"
-  "helium-browser:helium-browser-bin (AUR)"
-  "quickshell:quickshell"
-  "wpctl:wireplumber"
-  "nmcli:networkmanager"
-  "bluetoothctl:bluez-utils"
-  "powerprofilesctl:power-profiles-daemon"
-  "brightnessctl:brightnessctl"
-  "checkupdates:pacman-contrib"
-  "wl-paste:wl-clipboard"
-  "copyq:copyq"
-  "yazi:yazi"
-  "nvim:neovim"
-  "zsh:zsh"
-  "zoxide:zoxide"
-  "fzf:fzf"
-  "jq:jq"
-  "darkman:darkman (AUR)"
-  "lazygit:lazygit"
-  "sioyek:sioyek"
-  "yt-dlp:yt-dlp"
-  "bruvtab:bruvtab (uv tool/pipx)"
-  "task:taskwarrior"
-  "python3:python"
-)
-
-OPTIONAL_PKGS=(
-  "luac:lua (for dots check)"
-  "pre-commit:pre-commit (for local hooks)"
-)
-
-CONFIG_DIRS=(
-  hypr kitty nvim kanata quickshell yazi darkman lazygit sioyek zathura systemd
-)
-
-LINK_FILES=(
-  zsh/zshrc
-  zsh/zprofile
-  instructions.md
-  scripts/sudo-notify.sh
-  .claude/hooks/no-coauthor.sh
-  .claude/themes/gruvbox-material.json
-  darkman/scripts
-  helium/apply-gruvbox-theme.py
-  dots
-)
-
-DOTS_MANAGED_LINKS=(
-  "zsh/zshrc|$HOME/.zshrc"
-  "zsh/zprofile|$HOME/.zprofile"
-  "instructions.md|$HOME/.claude/CLAUDE.md"
-  "instructions.md|$DOTS_CONFIG_HOME/opencode/AGENTS.md"
-  "instructions.md|$HOME/.codex/AGENTS.md"
-  ".claude/hooks/no-coauthor.sh|$HOME/.claude/hooks/no-coauthor.sh"
-  ".claude/themes/gruvbox-material.json|$HOME/.claude/themes/gruvbox-material.json"
-  "darkman/scripts|$DOTS_DATA_HOME/darkman"
-  "dots|$HOME/.local/bin/dots"
-)
-
-DOTS_CORE_USER_SERVICES=(
-  quickshell.service
-  kanata.service
-  darkman.service
-  copyq.service
-)
-
-# name|usage|description. Keep this small: it is both human help and the
-# machine-readable command catalog used by `dots commands --json`.
+# Public CLI metadata only. Desired machine state lives exclusively in
+# profiles/*.toml and machines/*.toml; shell arrays are intentionally gone so
+# plan/apply/doctor/provision cannot drift apart.
 DOTS_COMMANDS=(
   "plan|dots plan [--json] [--profile names]|Show profile drift without changing the machine"
   "apply|dots apply [--check|--links-only] [--profile names]|Converge the machine using the same plan engine"
-  "doctor|dots doctor|Check installed dotfiles and machine state"
-  "check|dots check [all|shell|lua|python|tests]|Run repository checks"
+  "doctor|dots doctor [--json] [--profile names]|Check the machine against its selected profile"
+  "check|dots check [all|shell|lua|python|generated|tests]|Run repository and reproducibility checks"
   "migrate|dots migrate [--check]|Detect or apply safe stale-state migrations"
-  "history|dots history [--json]|List changing apply runs"
-  "show|dots show <run> [--json]|Show one recorded apply run and its backups"
+  "history|dots history [--json]|List changing apply and rollback runs"
+  "show|dots show <run> [--json]|Show one recorded run and its backups"
+  "rollback|dots rollback <run>|Restore only dotfiles-owned paths changed by a recorded apply"
+  "provision|dots provision [--check|--yes] [--profile names]|Install missing packages and system prerequisites"
   "theme|dots theme [status|light|dark|toggle]|Show or switch the darkman theme"
   "restart|dots restart <quickshell|kanata|darkman|copyq|all>|Restart managed user services"
   "refresh|dots refresh <quickshell|systemd|all>|Rebuild derived state and reload services"

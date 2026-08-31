@@ -1,0 +1,4 @@
+[profile]
+description = "Desktop profile marker for local AI-specific machine additions"
+includes = ["desktop"]
+capabilities = ["ai"]

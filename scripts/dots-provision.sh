@@ -4,17 +4,13 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 case "${1:-}" in
 help|-h|--help)
   cat <<'USAGE'
-Usage: dots provision [--check|--yes] [--machine name] [--profile names]
+Usage: dots provision [--dry-run|--yes] [--json] [--machine name] [--profile names]
 
-Opt-in provisioning for a new machine. Installs missing profile packages and
-enables declared system prerequisites; normal `dots apply` never installs them.
-Currently only the Arch Linux backend is implemented.
+Opt-in provisioning for a new machine. The dry-run and real command use the
+same calculated action list. `dots apply` never installs packages or enables
+system prerequisites.
 USAGE
   exit 0
   ;;
 esac
-if [ ! -e /etc/arch-release ]; then
-  echo "dots provision: only the Arch Linux backend is implemented" >&2
-  exit 2
-fi
-exec python3 "$ROOT/scripts/dots-state.py" provision "$@"
+exec python3 "$ROOT/scripts/dots-machine.py" provision "$@"

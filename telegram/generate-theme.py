@@ -35,7 +35,7 @@ def apply_telegram_overrides(palette: str) -> str:
     overrides = """
 
 // Telegram folder sidebar.
-sideBarBg: GB_BG;
+sideBarBg: GB_BG_HARD;
 sideBarBgActive: GB_BG_SOFT;
 sideBarBgRipple: GB_BG_HOVER;
 sideBarTextFg: GB_GRAY_DIM;

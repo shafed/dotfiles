@@ -1,7 +1,7 @@
 [profile]
 description = "Hyprland desktop session and graphical integrations"
 includes = ["base"]
-capabilities = ["desktop", "bluetooth"]
+capabilities = ["desktop"]
 config_dirs = ["hypr", "kanata", "quickshell", "darkman", "systemd"]
 sources = ["helium/apply-gruvbox-theme.py", "scripts/dots-helium-generator.sh", "scripts/copyq-apply-theme.py", "scripts/dots-telegram-generator.sh", "telegram/generate-theme.py", "telegram/_palette_renderer.py", "telegram/background.png.b64"]
 services = ["quickshell.service", "kanata.service", "darkman.service", "copyq.service"]
@@ -34,12 +34,6 @@ kind = "system-service"
 name = "NetworkManager.service"
 required = true
 reason = "network controls and status need NetworkManager"
-
-[[prerequisites]]
-kind = "system-service"
-name = "bluetooth.service"
-required = true
-reason = "Bluetooth capability needs the BlueZ daemon"
 
 [[packages]]
 command = "hyprland"
@@ -124,13 +118,6 @@ package = "networkmanager"
 manager = "pacman"
 required = true
 reason = "network status and controls"
-
-[[packages]]
-command = "bluetoothctl"
-package = "bluez-utils"
-manager = "pacman"
-required = true
-reason = "Bluetooth capability"
 
 [[packages]]
 command = "checkupdates"

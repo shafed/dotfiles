@@ -13,9 +13,11 @@ covers:
 
 Profiles describe *what a machine should be* rather than duplicating bootstrap
 logic. `base` owns shared shell/editor tools. `desktop` adds the graphical
-Hyprland/Quickshell stack and desktop-wide networking/Bluetooth state. `laptop`
-includes `desktop` and adds only laptop-specific battery, power-profile and
-brightness requirements. `ai` remains a small workload extension point.
+Hyprland/Quickshell stack and desktop-wide networking state. Bluetooth is a
+separate `bluetooth` profile because a desktop machine does not imply Bluetooth
+hardware. `laptop` includes both `desktop` and `bluetooth`, then adds only
+laptop-specific battery, power-profile and brightness requirements. `ai` remains
+a small workload extension point.
 
 There is intentionally no empty `gaming` profile. A profile should exist only
 when it owns real distinguishing desired state; a future gaming profile can be
@@ -31,6 +33,11 @@ Capabilities are descriptive facts used to explain or extend state. Current
 examples include `base`, `desktop`, `bluetooth`, `laptop`, `battery` and `ai`.
 Machine-specific facts belong in `machines/`; shared application configuration
 should stay in profiles unless a machine genuinely needs a different value.
+
+A Bluetooth-equipped desktop can select both profiles, for example
+`profiles = ["desktop", "bluetooth"]` in its machine file or temporarily with
+`dots doctor --profile desktop,bluetooth`. A plain `desktop` profile does not
+install `bluez-utils` or require `bluetooth.service`.
 
 The profile TOML files are the only desired-state manifest. Package, link and
 service arrays do not exist in `scripts/dots-lib.sh`; that file contains only

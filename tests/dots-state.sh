@@ -51,12 +51,20 @@ assert context["requested_profiles"] == ["desktop"]
 desktop_order, desktop = module.desired_for(context, ["desktop"])
 assert desktop_order == ["base", "desktop"]
 assert "desktop" in desktop["capabilities"]
-assert "bluetooth" in desktop["capabilities"]
+assert "bluetooth" not in desktop["capabilities"]
+assert "bluetoothctl" not in {item["command"] for item in desktop["packages"]}
+assert not any(item.get("name") == "bluetooth.service" for item in desktop["prerequisites"])
 assert "battery" not in desktop["capabilities"]
 assert "powerprofilesctl" not in {item["command"] for item in desktop["packages"]}
 
+bluetooth_order, bluetooth = module.desired_for(context, ["desktop", "bluetooth"])
+assert bluetooth_order == ["base", "desktop", "bluetooth"]
+assert {"desktop", "bluetooth"} <= set(bluetooth["capabilities"])
+assert "bluetoothctl" in {item["command"] for item in bluetooth["packages"]}
+assert any(item.get("name") == "bluetooth.service" for item in bluetooth["prerequisites"])
+
 laptop_order, laptop = module.desired_for(context, ["laptop"])
-assert laptop_order == ["base", "desktop", "laptop"]
+assert laptop_order == ["base", "desktop", "bluetooth", "laptop"]
 assert {"desktop", "bluetooth", "laptop", "battery"} <= set(laptop["capabilities"])
 assert {"powerprofilesctl", "brightnessctl"} <= {item["command"] for item in laptop["packages"]}
 assert not (root / "profiles/gaming.toml").exists()

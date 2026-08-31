@@ -8,8 +8,13 @@ import sqlite3
 import subprocess
 import sys
 import tempfile
+import time
+from concurrent.futures import ThreadPoolExecutor
+from html.parser import HTMLParser
 from pathlib import Path
-from urllib.parse import urlsplit
+from urllib.error import HTTPError, URLError
+from urllib.parse import urljoin, urlsplit
+from urllib.request import Request, urlopen
 
 HOME = Path.home()
 # Resolve through ~/.config/quickshell when active, so this works from either
@@ -41,8 +46,13 @@ BOOKMARK_FILES = [
 RECENT_FILE = CACHE_DIR / "recent.tsv"
 USAGE_FILE = CACHE_DIR / "usage.tsv"
 FAVICON_DIR = CACHE_DIR / "favicons"
+FAVICON_MISS_DIR = CACHE_DIR / "favicon-misses"
 RECENT_MAX = 50
 FREQUENCY_WEIGHT = float(os.environ.get("DOTFILES_BOOKMARK_FREQUENCY_WEIGHT", "0.65"))
+NETWORK_TIMEOUT = 4
+MAX_HTML_BYTES = 512 * 1024
+MAX_ICON_BYTES = 1024 * 1024
+MISS_RETRY_SECONDS = 24 * 60 * 60
 
 
 def live_bookmarks():
@@ -213,7 +223,7 @@ def _favicon_host(url: str):
     return parsed.netloc.rsplit("@", 1)[-1].casefold()
 
 
-def sync_favicons(rows):
+def _sync_local_favicons(rows):
     if not BROWSER_FAVICONS_DB.exists() or not rows:
         return
 
@@ -314,6 +324,192 @@ def sync_favicons(rows):
                         pass
         finally:
             db.close()
+
+
+class _IconLinkParser(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.urls = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag.casefold() != "link":
+            return
+        values = {str(key).casefold(): str(value or "") for key, value in attrs}
+        rel = values.get("rel", "").casefold().split()
+        href = values.get("href", "")
+        if href and "icon" in rel:
+            self.urls.append(href)
+
+
+def _read_url(url, limit, accept):
+    request = Request(
+        url,
+        headers={
+            "Accept": accept,
+            "Accept-Encoding": "identity",
+            "User-Agent": "dotfiles-bookmarks-favicon/1.0",
+        },
+    )
+    with urlopen(request, timeout=NETWORK_TIMEOUT) as response:
+        data = response.read(limit + 1)
+        if len(data) > limit:
+            return None, ""
+        return data, response.headers.get_content_charset() or "utf-8"
+
+
+def _valid_icon(data):
+    if not data:
+        return False
+    signatures = (
+        b"\x89PNG\r\n\x1a\n",
+        b"\xff\xd8\xff",
+        b"GIF87a",
+        b"GIF89a",
+        b"\x00\x00\x01\x00",
+    )
+    if any(data.startswith(signature) for signature in signatures):
+        return True
+    if data.startswith(b"RIFF") and data[8:12] == b"WEBP":
+        return True
+    return b"<svg" in data[:1024].lstrip().casefold()
+
+
+def _icon_format(data):
+    if data.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "png"
+    if data.startswith(b"\xff\xd8\xff"):
+        return "jpeg"
+    if data.startswith((b"GIF87a", b"GIF89a")):
+        return "gif"
+    if data.startswith(b"\x00\x00\x01\x00"):
+        return "ico"
+    if data.startswith(b"RIFF") and data[8:12] == b"WEBP":
+        return "webp"
+    if b"<svg" in data[:1024].lstrip().casefold():
+        return "svg"
+    return ""
+
+
+def _as_png(data):
+    source_format = _icon_format(data)
+    if source_format == "png":
+        return data
+    magick = shutil.which("magick")
+    if not source_format or not magick:
+        return None
+    try:
+        converted = subprocess.run(
+            [magick, f"{source_format}:-[0]", "png:-"],
+            input=data,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            timeout=NETWORK_TIMEOUT,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if converted.returncode != 0 or not converted.stdout.startswith(b"\x89PNG\r\n\x1a\n"):
+        return None
+    return converted.stdout
+
+
+def _download_favicon(page_url):
+    try:
+        html, charset = _read_url(page_url, MAX_HTML_BYTES, "text/html")
+    except (HTTPError, URLError, OSError, ValueError):
+        html, charset = None, "utf-8"
+
+    candidates = []
+    if html:
+        parser = _IconLinkParser()
+        try:
+            parser.feed(html.decode(charset, errors="ignore"))
+        except (LookupError, ValueError):
+            parser.feed(html.decode("utf-8", errors="ignore"))
+        candidates.extend(urljoin(page_url, href) for href in parser.urls)
+
+    parsed = urlsplit(page_url)
+    candidates.append(f"{parsed.scheme}://{parsed.netloc}/favicon.ico")
+    for candidate in dict.fromkeys(candidates):
+        if urlsplit(candidate).scheme not in ("http", "https"):
+            continue
+        try:
+            data, _charset = _read_url(candidate, MAX_ICON_BYTES, "image/*")
+        except (HTTPError, URLError, OSError, ValueError):
+            continue
+        if _valid_icon(data):
+            png = _as_png(data)
+            if png is not None:
+                return png
+    return None
+
+
+def _miss_path(host):
+    digest = hashlib.sha1(host.encode("utf-8")).hexdigest()
+    return FAVICON_MISS_DIR / digest
+
+
+def _miss_is_fresh(host):
+    marker = _miss_path(host)
+    try:
+        return time.time() - marker.stat().st_mtime < MISS_RETRY_SECONDS
+    except OSError:
+        return False
+
+
+def _sync_network_host(host, urls):
+    if _miss_is_fresh(host):
+        return
+    data = _download_favicon(urls[0])
+    if data is None:
+        try:
+            FAVICON_MISS_DIR.mkdir(parents=True, exist_ok=True)
+            _miss_path(host).touch()
+        except OSError:
+            pass
+        return
+    for url in urls:
+        target = favicon_path(url)
+        try:
+            target.write_bytes(data)
+        except OSError:
+            pass
+
+
+def sync_favicons(rows):
+    _sync_local_favicons(rows)
+    missing_by_host = {}
+    for row in rows:
+        url = row.get("url", "")
+        target = favicon_path(url)
+        if not target or target.exists():
+            continue
+        host = _favicon_host(url)
+        if host:
+            missing_by_host.setdefault(host, []).append(url)
+    if not missing_by_host:
+        return
+    FAVICON_DIR.mkdir(parents=True, exist_ok=True)
+    with ThreadPoolExecutor(max_workers=min(6, len(missing_by_host))) as pool:
+        futures = [
+            pool.submit(_sync_network_host, host, urls)
+            for host, urls in missing_by_host.items()
+        ]
+        for future in futures:
+            try:
+                future.result()
+            except Exception:
+                pass
+
+
+def fetch_favicon(url):
+    host = _favicon_host(url)
+    if not host:
+        return False
+    FAVICON_DIR.mkdir(parents=True, exist_ok=True)
+    _sync_network_host(host, [url])
+    target = favicon_path(url)
+    return bool(target and target.exists())
 
 
 def sync_browser_bookmarks():
@@ -438,6 +634,8 @@ def main():
         search_bookmarks(sys.argv[2] if len(sys.argv) >= 3 else "")
     elif action == "sync-bookmarks":
         sync_browser_bookmarks()
+    elif action == "fetch-favicon" and len(sys.argv) >= 3:
+        raise SystemExit(0 if fetch_favicon(sys.argv[2]) else 1)
     elif action == "open-bookmark" and len(sys.argv) >= 4:
         open_bookmark(sys.argv[2], sys.argv[3])
     else:

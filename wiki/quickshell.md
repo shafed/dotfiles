@@ -39,7 +39,7 @@ Tracked QML is the runtime source and `start.sh` runs that tree directly with
   Bookmarks, the shared Projects/Sessions picker, the dedicated YouTube picker
   and the scratch editor;
 - `services/DesktopServices.qml` — PipeWire outputs/streams/volume/mute,
-  Hyprland keyboard layout events and sysfs backlight sampling;
+  Hyprland keyboard layout startup snapshot/events and sysfs backlight sampling;
 - `services/SystemServices.qml` — composition of native UPower/Bluetooth plus
   the slower QML services;
 - `services/NetworkService.qml` — NetworkManager state/actions through `nmcli`
@@ -62,8 +62,8 @@ the normal bar/system-panel/Applications runtime path.
 Latency-sensitive state stays inside Quickshell:
 
 - workspaces use `Quickshell.Hyprland` objects directly;
-- keyboard layout follows `Hyprland.rawEvent` / `activelayout`, ignoring
-  `hl-virtual-keyboard`;
+- keyboard layout hydrates once from `hyprctl -j devices`, then follows
+  `Hyprland.rawEvent` / `activelayout`, ignoring `hl-virtual-keyboard`;
 - audio devices and application streams use `Quickshell.Services.Pipewire` with
   `PwObjectTracker`; changing the default output and stream volume no longer
   shells out to `wpctl`;

@@ -1,0 +1,13 @@
+#!/bin/sh
+# darkman hook: keep Telegram on the day/night palette that matches solar state.
+set -e
+
+case "$1" in
+dark | light) ;;
+*) exit 0 ;;
+esac
+
+script="$(readlink -f "$0")"
+repo_root="$(dirname "$(dirname "$(dirname "$script")")")"
+
+python3 "$repo_root/telegram/generate-theme.py" --runtime "$1" >/dev/null

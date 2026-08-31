@@ -37,18 +37,18 @@ chmod +x "$fake_bin/darkman" "$fake_bin/quickshell" "$fake_bin/systemctl"
 export PATH="$fake_bin:$PATH"
 
 "$ROOT/dots" help >"$tmp/help.out"
-for command in plan apply doctor history rollback provision; do
+for command in plan apply drift provision stage doctor history rollback; do
   grep -q "^  $command" "$tmp/help.out"
 done
-"$ROOT/dots" help rollback >"$tmp/rollback-help.out"
-grep -q '^Usage: dots rollback' "$tmp/rollback-help.out"
-"$ROOT/dots" help provision >"$tmp/provision-help.out"
-grep -q '^Usage: dots provision' "$tmp/provision-help.out"
+for command in drift provision stage rollback; do
+  "$ROOT/dots" help "$command" >"$tmp/$command-help.out"
+  grep -q "^Usage: dots $command" "$tmp/$command-help.out"
+done
 "$ROOT/dots" commands --json >"$tmp/commands.json"
 "$REAL_PYTHON" - "$tmp/commands.json" <<'PY'
 import json, sys
 names = {item["name"] for item in json.load(open(sys.argv[1], encoding="utf-8"))}
-assert {"plan", "apply", "doctor", "history", "show", "rollback", "provision"} <= names
+assert {"plan", "apply", "drift", "provision", "stage", "doctor", "history", "show", "rollback"} <= names
 PY
 
 "$ROOT/dots" theme >"$tmp/theme.out"

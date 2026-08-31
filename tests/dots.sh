@@ -81,12 +81,59 @@ PY
 
 "$ROOT/dots" completion zsh >"$tmp/dots-completion.zsh"
 grep -q "'pl:alias for plan'" "$tmp/dots-completion.zsh"
-grep -q 'compdef _dots_impl dots ds' "$tmp/dots-completion.zsh"
+grep -q 'compdef _dots dots ds' "$tmp/dots-completion.zsh"
 ! grep -q 'stage' "$tmp/dots-completion.zsh"
-if command -v zsh >/dev/null 2>&1; then
-  zsh -n "$tmp/dots-completion.zsh"
-  zsh -n "$ROOT/zsh/completions/_dots"
+if ! command -v zsh >/dev/null 2>&1; then
+  echo "zsh is required for dots completion tests" >&2
+  exit 1
 fi
+zsh -n "$tmp/dots-completion.zsh"
+
+zsh - "$tmp/dots-completion.zsh" "$tmp" <<'ZSH'
+set -e
+completion_file="$1"
+out_dir="$2"
+autoload -Uz compinit
+compinit -D
+source "$completion_file"
+[[ "${_comps[dots]}" == _dots ]]
+[[ "${_comps[ds]}" == _dots ]]
+
+capture_command() {
+  local wanted="$1"
+  local output="$2"
+  integer calls=0
+
+  _arguments() {
+    (( calls++ ))
+    if (( calls == 1 )); then
+      state=argument
+      line=("$wanted" "")
+      return 1
+    fi
+    print -rl -- "$@" >"$output"
+    return 0
+  }
+
+  _dots || true
+  unfunction _arguments
+}
+
+capture_command plan "$out_dir/complete-plan"
+capture_command check "$out_dir/complete-check"
+capture_command theme "$out_dir/complete-theme"
+capture_command panel "$out_dir/complete-panel"
+ZSH
+
+grep -q -- '--json\[machine-readable output\]' "$tmp/complete-plan"
+grep -q -- '--machine\[select a machine manifest\]' "$tmp/complete-plan"
+grep -q -- '--profile\[override selected profiles\]' "$tmp/complete-plan"
+grep -q 'all shell sh lua python py generated gen g tests t' "$tmp/complete-check"
+grep -q 'status s light l dark d toggle t' "$tmp/complete-theme"
+grep -q 'system s audio a network n bluetooth b power p agents ag updates u notifications no calendar c' "$tmp/complete-panel"
+
+grep -q 'eval "$("\$DOTFILES/dots" completion zsh)"' "$ROOT/zsh/zshrc"
+[ ! -e "$ROOT/zsh/completions/_dots" ]
 [ ! -e "$ROOT/scripts/dots-stage.sh" ]
 if "$ROOT/dots" stage >"$tmp/stage.out" 2>&1; then
   echo "removed stage command unexpectedly succeeded" >&2

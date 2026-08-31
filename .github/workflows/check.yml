@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install Lua parser
-        run: sudo apt-get update && sudo apt-get install -y lua5.4
+      - name: Install syntax and completion runtimes
+        run: sudo apt-get update && sudo apt-get install -y lua5.4 zsh
       - name: Run checks
         run: ./dots check

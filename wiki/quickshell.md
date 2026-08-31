@@ -160,8 +160,10 @@ remaining Projects, Sessions, YouTube, and Scratch overlays.
 System-tray items use their exported StatusNotifier menu as the normal click
 action: left or right click opens that menu when available, middle click keeps
 the item's secondary activation, and only menu-less items fall back to primary
-activation. This prevents a normal tray click from raising the application when
-tray controls are available.
+activation. `TopBar.qml` opens the platform menu through
+`SystemTrayItem.display()` and positions it with `QsWindow.itemRect()`; do not
+route this through a delegate-local `QsMenuAnchor`, which did not open menus on
+the current Quickshell 0.3.x runtime.
 
 `components/ScratchOverlay.qml` is a focused multiline editor. `Esc` hides while
 preserving the draft and `Ctrl+Enter` closes, copies and pastes back into the

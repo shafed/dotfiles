@@ -59,16 +59,59 @@ the Material color generator and cannot preserve all exact Gruvbox surfaces.
 `colors.toml`. The palette mapping is intentionally the same as the very first
 Helium Gruvbox theme added to this repo:
 
-- main frame / omnibox / NTP background: `bg (#282828)`;
-- toolbar / inactive frame / buttons: `bg_alt (#32302f)`;
+- main frame / toolbar / vertical tab strip / omnibox / NTP background:
+  `bg (#282828)`;
+- "+ New Tab" control: `bg (#282828)`, i.e. deliberately equal to the strip;
+- inactive frame / buttons: `bg_alt (#32302f)`;
 - NTP header: `bg_soft (#3c3836)`;
 - text: `fg (#d4be98)`;
 - links: `blue (#7daea3)`.
 
-Do not add explicit `background_tab` colors or tints to this theme. The original
-setup left tab-state surfaces to Chromium's own fallback behavior, and that is
-part of the palette rollback. The helper only reproduces the original colors;
-it does not revert the safer automatic deployment added later.
+### Which theme key paints which vertical-tab surface
+
+This is easy to get wrong and expensive to guess at, so it was measured off
+pixels in a running Helium rather than reasoned from key names. With
+`frame=#282828`, `toolbar=#504945`, `background_tab=#282828` loaded, a screenshot
+of the strip gives:
+
+| surface                | measured  |
+| ---------------------- | --------- |
+| empty strip background | `#3c3836` |
+| inactive tab row       | `#3c3836` |
+| active tab row         | `#3c3836` |
+| "+ New Tab" control    | `#282828` |
+
+`#3c3836` is exactly `mix(toolbar, frame, 50%)`. So, for the vertical tab strip:
+
+- the strip background is **`mix(toolbar, frame, 50%)`**;
+- the **active tab has no color of its own** — it renders as exactly that strip
+  background, so it can never be separated from it via the theme;
+- **inactive tabs** likewise render as the strip background;
+- **`background_tab` paints only the "+ New Tab" control**;
+- `omnibox_background` plays no part in the tab strip at all.
+
+**A lighter active-tab "pill" is therefore not achievable through an extension
+theme.** Raising `toolbar` to try to lighten the active tab only lightens the
+whole strip (and the toolbar row) with the tab still merged into it. This is the
+Chromium behavior a custom theme opts into: the Material tab-state treatment that
+draws a distinct selected-tab surface applies to Helium's _native_ colors, and
+loading a custom theme flattens it. Getting the pill back means either dropping
+this custom theme (and accepting non-exact Gruvbox surfaces from Helium's
+Material generator) or patching the C++ mixer — which is what the abandoned
+`helium/gruvbox-exact-tabs.patch` did.
+
+Note also that the comment inside that patch claims Helium wires the active tab
+to the location-bar surface and "+ New Tab" to `toolbar`. The measurements above
+contradict it. **Do not re-litigate this mapping from color-key names, from that
+patch, or from Chromium source — re-measure.**
+
+Contrast is also less available than it looks: `bg_alt (#32302f)` and
+`bg_soft (#3c3836)` are close enough to `bg (#282828)` that at that delta only
+the full-strength `tab_text` vs `tab_background_text` difference registers, which
+reads as "the active tab only highlights its text".
+
+Note that `toolbar` also paints the main toolbar row, so it cannot be raised for
+the tab strip alone without also lightening that row.
 
 There is one important update gotcha. Chromium's `ThemeService` skips reapplying
 an already-current unpacked theme when it is loaded again with the same extension
@@ -98,6 +141,37 @@ resolves them from its launch directory and shows a misleading "Manifest file is
 missing or unreadable" dialog. The generated theme directory is validated for a
 readable `manifest.json` before the flags file is changed. `dots apply` runs the
 helper automatically; restart Helium completely after applying changes.
+
+### The wrapper's tilde bug (why the path is written `/home/./<user>/...`)
+
+`/opt/helium-browser-bin/helium-wrapper` sanitizes each flags line with
+
+```sh
+safe_line=${safe_line//~/\\~}
+```
+
+intending to stop `~` from expanding. In Bash the _pattern_ half of
+`${var//pattern/repl}` is itself tilde-expanded, so the pattern is really
+`$HOME`: the line rewrites any absolute path under the home directory back into
+a literal `~` path, which then never expands. Helium is launched with
+`--load-extension=~/.local/share/dotfiles/helium-gruvbox`, that directory does
+not exist, the theme extension fails to load, and Chromium eventually drops the
+theme altogether — `extensions.theme` in `Preferences` resets to
+`{"id": "", "system_theme": 1}` and the browser silently falls back to its
+native colors. This is **not** cosmetic, and it makes theming changes look like
+they intermittently "do nothing".
+
+`wrapper_safe_path()` in the helper therefore writes the directory as
+`/home/./<user>/.local/share/dotfiles/helium-gruvbox`. That resolves identically
+for the kernel and Chromium but no longer contains the literal `$HOME`
+substring, so the wrapper's replacement does not match it.
+
+To verify a theme actually loaded, check that
+`$XDG_DATA_HOME/dotfiles/helium-gruvbox/Cached Theme.pak` has an mtime _newer_
+than `manifest.json` after a restart. Chromium rebuilds that pack when it picks
+up a new manifest version; a pack older than the manifest means the theme did
+not load. Do not rely on the browser merely looking themed — the previously
+compiled pack can survive in the profile.
 
 ## Light/dark
 

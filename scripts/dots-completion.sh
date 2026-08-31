@@ -6,129 +6,163 @@ DOTS_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "$DOTS_ROOT/scripts/dots-lib.sh"
 
 emit_zsh() {
-  local entry name aliases usage description alias
-  local -a alias_list
+  local entry name aliases usage description
 
   cat <<'ZSH'
-_dots_impl() {
-  local context state line command
+_dots_profiles() {
+  local -a profiles
+  profiles=("$DOTFILES"/profiles/*.toml(N:t:r))
+  compadd -a profiles
+}
+
+_dots_machines() {
+  local -a machines
+  machines=("$DOTFILES"/machines/*.toml(N:t:r))
+  compadd -a machines
+}
+
+_dots_runs() {
+  local runs_dir="${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles/runs"
+  local -a runs
+  runs=("$runs_dir"/*.json(N:t:r))
+  compadd -a runs
+}
+
+_dots() {
+  local curcontext="$curcontext" state line command ret=1
   typeset -A opt_args
   local -a commands
   commands=(
 ZSH
 
+  # Completion intentionally exposes only canonical command names. CLI aliases
+  # remain valid and discoverable via `dots aliases`, but they do not clutter
+  # interactive completion menus.
   for entry in "${DOTS_COMMANDS[@]}"; do
     IFS='|' read -r name aliases usage description <<<"$entry"
     printf "    '%s:%s'\n" "$name" "$description"
-    IFS=',' read -r -a alias_list <<<"$aliases"
-    for alias in "${alias_list[@]}"; do
-      [ -n "$alias" ] || continue
-      printf "    '%s:alias for %s'\n" "$alias" "$name"
-    done
   done
 
   cat <<'ZSH'
   )
 
   _arguments -C \
+    '--help[show help]' \
     '1:command:->command' \
-    '*::argument:->args'
+    '*::argument:->argument' && ret=0
 
   case "$state" in
     command)
-      _describe 'dots command' commands
+      _describe -t commands 'dots command' commands && ret=0
       ;;
-    args)
-      command="${words[2]}"
-ZSH
-
-  printf '      case "$command" in\n'
-  for entry in "${DOTS_COMMANDS[@]}"; do
-    IFS='|' read -r name aliases usage description <<<"$entry"
-    IFS=',' read -r -a alias_list <<<"$aliases"
-    for alias in "${alias_list[@]}"; do
-      [ -n "$alias" ] || continue
-      printf '        %s) command=%s ;;\n' "$alias" "$name"
-    done
-  done
-  printf '      esac\n'
-
-  cat <<'ZSH'
-      words=("${words[@]:1}")
-      (( CURRENT-- ))
+    argument)
+      command="${line[1]}"
+      curcontext="${curcontext%:*:*}:dots-${command}:"
 
       case "$command" in
         plan|drift|doctor)
           _arguments \
+            '--help[show command help]' \
             '--json[machine-readable output]' \
-            '--machine[select a machine manifest]:machine:' \
-            '--profile[override selected profiles]:profiles:'
+            '--machine[select a machine manifest]:machine:_dots_machines' \
+            '--profile[override selected profiles]:profiles:_dots_profiles' && ret=0
           ;;
         apply)
           _arguments \
+            '--help[show command help]' \
             '--check[show the plan only]' \
             '--links-only[apply only managed links and files]' \
-            '--machine[select a machine manifest]:machine:' \
-            '--profile[override selected profiles]:profiles:'
+            '--machine[select a machine manifest]:machine:_dots_machines' \
+            '--profile[override selected profiles]:profiles:_dots_profiles' && ret=0
           ;;
         provision)
           _arguments \
+            '--help[show command help]' \
             '--dry-run[print actions without executing them]' \
             '--yes[skip interactive confirmation]' \
             '--json[machine-readable output]' \
-            '--machine[select a machine manifest]:machine:' \
-            '--profile[override selected profiles]:profiles:'
+            '--machine[select a machine manifest]:machine:_dots_machines' \
+            '--profile[override selected profiles]:profiles:_dots_profiles' && ret=0
           ;;
         check)
-          _arguments '1:check scope:(all shell lua python generated tests)'
+          _arguments \
+            '--help[show command help]' \
+            '1:check scope:(all shell lua python generated tests)' && ret=0
           ;;
         migrate)
-          _arguments '--check[detect migrations without applying them]'
+          _arguments \
+            '--help[show command help]' \
+            '--check[detect migrations without applying them]' && ret=0
           ;;
         history)
-          _arguments '--json[machine-readable output]'
+          _arguments \
+            '--help[show command help]' \
+            '--json[machine-readable output]' && ret=0
           ;;
         show)
           _arguments \
-            '1:run id:' \
-            '--json[machine-readable output]'
+            '--help[show command help]' \
+            '1:run id:_dots_runs' \
+            '--json[machine-readable output]' && ret=0
           ;;
         rollback)
-          _arguments '1:run id:'
+          _arguments \
+            '--help[show command help]' \
+            '1:run id:_dots_runs' && ret=0
           ;;
         theme)
-          _arguments '1:theme action:(status light dark toggle)'
+          _arguments \
+            '--help[show command help]' \
+            '1:theme action:(status light dark toggle)' && ret=0
           ;;
         restart)
-          _arguments '1:service:(quickshell kanata darkman copyq all)'
+          _arguments \
+            '--help[show command help]' \
+            '1:service:(quickshell kanata darkman copyq all)' && ret=0
           ;;
         refresh)
-          _arguments '1:target:(quickshell systemd all)'
+          _arguments \
+            '--help[show command help]' \
+            '1:target:(quickshell systemd all)' && ret=0
           ;;
         shell)
-          _arguments '1:action:(apps bookmarks clipboard hotkeys system refresh panel)'
+          _arguments \
+            '--help[show command help]' \
+            '1:action:(apps bookmarks clipboard hotkeys system refresh panel)' \
+            '2:panel:->shell-panel' && ret=0
+          if [[ "$state" == shell-panel && "${line[1]}" == panel ]]; then
+            _values 'panel' system audio network bluetooth power agents updates notifications calendar && ret=0
+          fi
           ;;
         panel)
-          _arguments '1:panel:(system audio network bluetooth power agents updates notifications calendar)'
+          _arguments \
+            '--help[show command help]' \
+            '1:panel:(system audio network bluetooth power agents updates notifications calendar)' && ret=0
           ;;
         debug)
-          _arguments '--no-logs[omit journal text]'
+          _arguments \
+            '--help[show command help]' \
+            '--no-logs[omit journal text]' && ret=0
           ;;
         commands|aliases)
-          _arguments '--json[machine-readable output]'
+          _arguments \
+            '--help[show command help]' \
+            '--json[machine-readable output]' && ret=0
           ;;
         completion)
-          _arguments '1:shell:(zsh)'
+          _arguments \
+            '--help[show command help]' \
+            '1:shell:(zsh)' && ret=0
           ;;
         help)
-          _describe 'dots command' commands
+          _describe -t commands 'dots command' commands && ret=0
           ;;
       esac
       ;;
   esac
-}
 
-compdef _dots_impl dots ds
+  return ret
+}
 ZSH
 }
 

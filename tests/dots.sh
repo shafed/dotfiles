@@ -80,13 +80,33 @@ assert all(command != "stage" for _, command in pairs)
 PY
 
 "$ROOT/dots" completion zsh >"$tmp/dots-completion.zsh"
-grep -q "'pl:alias for plan'" "$tmp/dots-completion.zsh"
-grep -q 'compdef _dots_impl dots ds' "$tmp/dots-completion.zsh"
+grep -q "'plan:Preview exactly what apply would change'" "$tmp/dots-completion.zsh"
+! grep -q "'pl:" "$tmp/dots-completion.zsh"
+! grep -q 'alias for' "$tmp/dots-completion.zsh"
+! grep -q 'compdef _dots dots ds' "$tmp/dots-completion.zsh"
 ! grep -q 'stage' "$tmp/dots-completion.zsh"
-if command -v zsh >/dev/null 2>&1; then
-  zsh -n "$tmp/dots-completion.zsh"
-  zsh -n "$ROOT/zsh/completions/_dots"
+if ! command -v zsh >/dev/null 2>&1; then
+  echo "zsh is required for dots completion tests" >&2
+  exit 1
 fi
+
+zsh - "$tmp/dots-completion.zsh" <<'ZSH'
+set -e
+source "$1"
+(( $+functions[_dots] ))
+ZSH
+
+grep -q -- '--json\[machine-readable output\]' "$tmp/dots-completion.zsh"
+grep -q -- '--machine\[select a machine manifest\]' "$tmp/dots-completion.zsh"
+grep -q -- '--profile\[override selected profiles\]' "$tmp/dots-completion.zsh"
+grep -q '1:check scope:(all shell lua python generated tests)' "$tmp/dots-completion.zsh"
+grep -q '1:theme action:(status light dark toggle)' "$tmp/dots-completion.zsh"
+grep -q '1:panel:(system audio network bluetooth power agents updates notifications calendar)' "$tmp/dots-completion.zsh"
+! grep -q "'(-h --help)'" "$tmp/dots-completion.zsh"
+
+grep -q 'eval "$("\$DOTFILES/dots" completion zsh)"' "$ROOT/zsh/zshrc"
+grep -q 'compdef _dots dots ds' "$ROOT/zsh/zshrc"
+[ ! -e "$ROOT/zsh/completions/_dots" ]
 [ ! -e "$ROOT/scripts/dots-stage.sh" ]
 if "$ROOT/dots" stage >"$tmp/stage.out" 2>&1; then
   echo "removed stage command unexpectedly succeeded" >&2

@@ -5,7 +5,6 @@ updated: 2026-08-31
 covers:
   - zsh/zshrc
   - zsh/zprofile
-  - zsh/completions/_dots
 ---
 
 # zsh
@@ -24,13 +23,12 @@ oh-my-zsh with plugins that install themselves. Main file — `../zsh/zshrc`
 - **`cd` is zoxide** (`zoxide init zsh --cmd cd`), not plain `cd`.
 - **`ds` is the interactive shorthand for `dots`**; the CLI itself owns its
   abbreviated subcommands. `dots aliases`/`ds al` is the authoritative list.
-- **`dots` completion stays repo-owned.** `zshrc` adds
-  `$DOTFILES/zsh/completions` to `fpath` before Oh My Zsh runs `compinit`, so it
-  discovers `zsh/completions/_dots` without creating anything inside
-  `~/.oh-my-zsh`. The loader asks `dots completion zsh` for the actual function,
-  so canonical command names and abbreviations come from the same
-  `scripts/dots-lib.sh` metadata as dispatch and help. Completion is registered
-  for both `dots` and the `ds` alias.
+- **`dots` completion is registered directly after Oh My Zsh initializes
+  `compinit`.** `zshrc` evaluates `dots completion zsh`, which defines one
+  command-aware `_dots` function and registers it for both `dots` and `ds`.
+  Completion deliberately suggests only canonical command names, long flags and
+  canonical fixed subcommands. CLI abbreviations remain executable and visible
+  through `dots aliases`, but do not clutter interactive completion menus.
 
 ## zsh-vi-mode: three settings that all look like the same bug
 

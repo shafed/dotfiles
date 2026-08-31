@@ -11,7 +11,7 @@ import tempfile
 ROOT = Path(__file__).resolve().parents[1]
 HELPER = ROOT / "helium/apply-gruvbox-theme.py"
 USER_COLOR_THEME_ID = "user_color_theme_id"
-EXPECTED_SEED = -4951799  # signed SkColor for #b47109
+EXPECTED_SEED = -12830666  # signed SkColor for #3c3836
 
 
 def run_helper(home: Path, *, expect: int = 0) -> subprocess.CompletedProcess[str]:
@@ -149,7 +149,7 @@ def main() -> int:
         first = run_helper(home)
         assert "net.imput.helium/Profile 2/Preferences" in first.stdout
         assert "Helium adaptive theme: updated" in first.stdout
-        assert "#b47109 (neutral, system scheme)" in first.stdout
+        assert "#3c3836 (neutral, system scheme)" in first.stdout
         assert_native_theme(home)
 
         # Applying again is a no-op for Preferences and does not recreate the

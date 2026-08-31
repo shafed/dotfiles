@@ -148,10 +148,12 @@ emojiPanSearchFg: GB_FG;
 emojiPanSearchPlaceholderFg: GB_GRAY;
 emojiPanSearchIconFg: GB_GRAY_DIM;
 
-// Chat history and message bubbles.
-historyTextInFg: GB_FG;
+// Chat history and message bubbles. Message text intentionally uses the
+// brightest Gruvbox foreground: Telegram is often read in bright ambient light,
+// where the normal shared foreground loses too much perceived contrast.
+historyTextInFg: GB_FG_BRIGHT;
 historyTextInFgSelected: GB_FG_BRIGHT;
-historyTextOutFg: GB_FG;
+historyTextOutFg: GB_FG_BRIGHT;
 historyTextOutFgSelected: GB_FG_BRIGHT;
 historyLinkInFg: GB_BLUE;
 historyLinkInFgSelected: GB_AQUA;
@@ -162,7 +164,10 @@ historyFileNameInFgSelected: GB_AQUA;
 historyFileNameOutFg: GB_AQUA;
 historyFileNameOutFgSelected: GB_BLUE;
 
-msgInBg: GB_BG_ALT;
+// Incoming bubbles are darker than the shared surface so body text stays easy
+// to read in daylight. Outgoing bubbles keep GB_BG_SOFT so direction remains
+// visually obvious without introducing non-Gruvbox colors.
+msgInBg: GB_BG_HARD;
 msgInBgSelected: GB_BG_HOVER;
 msgOutBg: GB_BG_SOFT;
 msgOutBgSelected: GB_BG_MUTED;
@@ -172,10 +177,10 @@ msgInShadow: #00000020;
 msgInShadowSelected: #00000030;
 msgOutShadow: #00000020;
 msgOutShadowSelected: #00000030;
-msgInDateFg: GB_GRAY_DIM;
-msgInDateFgSelected: GB_FG_SOFT;
-msgOutDateFg: GB_GRAY_DIM;
-msgOutDateFgSelected: GB_FG_SOFT;
+msgInDateFg: GB_FG_SOFT;
+msgInDateFgSelected: GB_FG_BRIGHT;
+msgOutDateFg: GB_FG_SOFT;
+msgOutDateFgSelected: GB_FG_BRIGHT;
 msgServiceFg: GB_FG_SOFT;
 msgServiceBg: #1d2021cc;
 msgServiceBgSelected: #504945dd;

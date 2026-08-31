@@ -50,6 +50,7 @@ def load_colors() -> dict[str, str]:
         "bg",
         "bg_alt",
         "bg_soft",
+        "bg_hover",
         "fg",
         "gray",
         "gray_dim",
@@ -72,17 +73,37 @@ def rgb(value: str) -> list[int]:
 
 
 def theme_payload(colors: dict[str, str]) -> dict[str, object]:
-    # Keep the original Helium Gruvbox mapping from the first local theme:
-    # #282828 for the main frame/omnibox/NTP background, #32302f for toolbar,
-    # inactive frame and buttons, and #3c3836 only for the NTP header surface.
-    # Do not add explicit background_tab overrides here; the first theme relied
-    # on Chromium's native tab-state fallbacks.
+    # Vertical-tab-strip mapping, measured off pixels in a running Helium (see
+    # wiki/theming.md for the numbers). Only three surfaces are reachable from
+    # an extension theme, and they are NOT the ones either the Chromium docs or
+    # the abandoned helium/gruvbox-exact-tabs.patch comment suggest:
+    #
+    #   - the strip background is mix(`toolbar`, `frame`, 50%);
+    #   - the ACTIVE tab has no color of its own: it renders as exactly that
+    #     strip background, so it can never be separated from it here;
+    #   - inactive tabs likewise render as the strip background;
+    #   - `background_tab` paints ONLY the "+ New Tab" control.
+    #
+    # `omnibox_background` plays no part in the tab strip at all.
+    #
+    # Consequence: a lighter active-tab "pill" is NOT achievable through the
+    # extension theme. Raising `toolbar` to lighten the active tab only lightens
+    # the whole strip (and the toolbar row) with the tab still merged into it.
+    # Delivering the pill requires Helium's native Material tab colors, i.e.
+    # either dropping this custom theme or patching the C++ mixer. Do not
+    # re-litigate this from color-key names; re-measure instead.
+    #
+    # So `toolbar` is kept equal to `frame` (`bg`) to hold the strip at the exact
+    # Gruvbox background, and `background_tab` matches it so "+ New Tab" stays
+    # quiet instead of showing as a dark box.
     theme_colors = {
         "frame": rgb(colors["bg"]),
         "frame_inactive": rgb(colors["bg_alt"]),
         "frame_incognito": rgb(colors["bg"]),
         "frame_incognito_inactive": rgb(colors["bg_alt"]),
-        "toolbar": rgb(colors["bg_alt"]),
+        "toolbar": rgb(colors["bg"]),
+        "background_tab": rgb(colors["bg"]),
+        "background_tab_inactive": rgb(colors["bg"]),
         "tab_text": rgb(colors["fg"]),
         "tab_background_text": rgb(colors["gray"]),
         "tab_background_text_inactive": rgb(colors["gray_dim"]),
@@ -105,6 +126,7 @@ def theme_payload(colors: dict[str, str]) -> dict[str, object]:
             "frame_inactive": identity_tint,
             "frame_incognito": identity_tint,
             "frame_incognito_inactive": identity_tint,
+            "background_tab": identity_tint,
         },
         "properties": {"ntp_logo_alternate": 1},
     }
@@ -192,6 +214,32 @@ def valid_extension_dir(value: str) -> bool:
     return path.is_absolute() and path.is_dir() and (path / "manifest.json").is_file()
 
 
+def wrapper_safe_path(path: str) -> str:
+    """Return `path` in a form /opt/helium-browser-bin/helium-wrapper cannot mangle.
+
+    The Arch wrapper sanitizes every flags line with
+
+        safe_line=${safe_line//~/\\~}
+
+    intending to stop `~` from being expanded. In Bash the *pattern* half of
+    `${var//pattern/repl}` is itself tilde-expanded, so the pattern is really
+    $HOME: the line rewrites any absolute path under the home directory back
+    into a literal `~` path, which then never expands. Helium is launched with
+    `--load-extension=~/.local/share/...`, the directory does not exist, the
+    theme extension fails to load, and Chromium drops the theme entirely
+    (extensions.theme in Preferences resets to {"id": "", "system_theme": 1}).
+
+    Writing the same directory as /home/./<user>/... resolves identically for
+    the kernel and Chromium but no longer contains the literal $HOME substring,
+    so the wrapper's replacement does not match and the path survives intact.
+    """
+    home = str(Path.home())
+    if path == home or path.startswith(home + "/"):
+        parent = str(Path.home().parent).rstrip("/")
+        return f"{parent}/./{Path.home().name}{path[len(home):]}"
+    return path
+
+
 def update_flags(flags_path: Path, theme_dir: Path) -> list[str]:
     if flags_path.is_symlink():
         target = os.readlink(flags_path)
@@ -254,8 +302,10 @@ def update_flags(flags_path: Path, theme_dir: Path) -> list[str]:
         [
             MANAGED_START,
             # helium-browser-bin's Arch wrapper parses one argument per line.
-            # The managed data path has no shell expansion and is absolute.
-            f'--load-extension={",".join(load_extensions)}',
+            # The managed data path has no shell expansion and is absolute, and
+            # is written through wrapper_safe_path() so the wrapper's broken
+            # tilde sanitization cannot rewrite it back into a literal `~`.
+            f'--load-extension={",".join(wrapper_safe_path(p) for p in load_extensions)}',
             MANAGED_END,
             "",
         ]

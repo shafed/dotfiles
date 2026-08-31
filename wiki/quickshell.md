@@ -183,10 +183,10 @@ workspaces remain hidden.
 
 The AI panel shows account rate limits only: **Current session** and **Weekly
 limits**, with utilization bars and reset times. `services/AgentsService.qml`
-refreshes at shell startup, when the panel is opened, from the compact `↻`
-control and from the shell refresh IPC. The header shows `Last updated: just
-now` and then minute/hour/day-relative age; the refresh control is disabled and
-dimmed while a refresh is running.
+refreshes every ten minutes, at shell startup, when the panel is opened, from
+the compact `↻` control and from the shell refresh IPC. The header shows `Last
+updated: just now` and then minute/hour/day-relative age; the refresh control is
+disabled and dimmed while a refresh is running.
 
 Claude credentials are read from `CLAUDE_CONFIG_DIR` or `~/.claude`; the OAuth
 usage endpoint is requested directly from QML. Weekly follows the web Usage

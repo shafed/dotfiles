@@ -19,8 +19,9 @@ fpath=("$HOME/.local/share/zsh/site-functions" $fpath)
 ZSH_THEME="gruvbox-material"
 
 # Set list of themes to pick from when loading at random
-# Setting this variable when ZSH_THEME=random will cause it to override
-# the normal theme search path.
+# Setting this variable when ZSH_THEME=random will cause zsh to load
+# a theme from this variable instead of looking in $ZSH/themes/
+# If set to an empty array, this variable will have no effect.
 # ZSH_THEME_RANDOM_CANDIDATES=( "robbyrussell" "agnoster" )
 
 # Uncomment the following line to use case-sensitive completion.

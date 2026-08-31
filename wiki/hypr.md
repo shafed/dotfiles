@@ -148,6 +148,15 @@ script itself polls `hyprctl hyprpaper listactive` in a short retry loop
 before setting the wallpaper, since hyprpaper's IPC socket isn't up the
 instant it's launched.
 
+`misc.disable_hyprland_logo` in `hypr/modules/appearance.lua` must stay
+`true`. Hyprland draws its own corner logo and a random joke caption (e.g.
+"Hyprland only gives you up on -git") as a decoration on top of _any_
+wallpaper, independent of what hyprpaper is actually displaying — it is not
+part of the wallpaper image. `misc.force_default_wallpaper` is set to `0`
+rather than `-1` for the same reason: hyprpaper always sets a real wallpaper
+here, so there is no scenario where Hyprland's own built-in mascot background
+should ever be picked.
+
 ## Session launch: uwsm
 
 Hyprland starts via `uwsm start hyprland-uwsm.desktop` from `../zsh/zprofile`,

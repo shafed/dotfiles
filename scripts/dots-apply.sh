@@ -8,7 +8,7 @@ Usage: dots apply [--check|--links-only] [--machine name] [--profile names]
 
 Bring this machine in line with the selected profile.
   --check       Show the plan only; do not change the machine
-  --links-only  Apply managed links/files/generators, but skip migrations/refresh/doctor
+  --links-only  Apply only managed links/files; skip generators, migrations, services and doctor
   --machine     Select machines/<name>.toml instead of hostname/default
   --profile     Comma-separated profile override for testing
 USAGE

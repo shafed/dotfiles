@@ -93,8 +93,14 @@ zsh - "$tmp/dots-completion.zsh" "$tmp" <<'ZSH'
 set -e
 completion_file="$1"
 out_dir="$2"
-autoload -Uz compinit
-compinit -D
+typeset -A _comps
+compdef() {
+  local function="$1" name
+  shift
+  for name in "$@"; do
+    _comps[$name]="$function"
+  done
+}
 source "$completion_file"
 [[ "${_comps[dots]}" == _dots ]]
 [[ "${_comps[ds]}" == _dots ]]

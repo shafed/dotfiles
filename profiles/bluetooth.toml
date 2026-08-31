@@ -1,0 +1,17 @@
+[profile]
+description = "Bluetooth userspace tools and BlueZ daemon"
+includes = ["base"]
+capabilities = ["bluetooth"]
+
+[[prerequisites]]
+kind = "system-service"
+name = "bluetooth.service"
+required = true
+reason = "Bluetooth capability needs the BlueZ daemon"
+
+[[packages]]
+command = "bluetoothctl"
+package = "bluez-utils"
+manager = "pacman"
+required = true
+reason = "Bluetooth controls"

@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Install an exact Gruvbox Chromium theme for Helium on Arch Linux."""
+"""Configure Helium's built-in adaptive Chromium User Color theme."""
 
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 import os
 import shutil
@@ -12,19 +13,42 @@ import tomllib
 
 ROOT = Path(__file__).resolve().parent.parent
 PALETTE = ROOT / "colors.toml"
-MANAGED_START = "# >>> dotfiles: helium gruvbox >>>"
-MANAGED_END = "# <<< dotfiles: helium gruvbox <<<"
-THEME_VERSION_MAJOR = 2
+USER_COLOR_THEME_ID = "user_color_theme_id"
+BROWSER_COLOR_SCHEMES = {"system": 0, "light": 1, "dark": 2}
+COLOR_VARIANTS = {
+    "system": 0,
+    "tonal-spot": 1,
+    "neutral": 2,
+    "vibrant": 3,
+    "expressive": 4,
+}
+MANAGED_BLOCKS = (
+    ("# >>> dotfiles: helium gruvbox >>>", "# <<< dotfiles: helium gruvbox <<<"),
+    (
+        "# >>> dotfiles: helium web color-scheme >>>",
+        "# <<< dotfiles: helium web color-scheme <<<",
+    ),
+)
+LEGACY_FORCE_FLAGS = {"--force-light-mode", "--force-dark-mode"}
 OLD_THEME_MARKERS = (
     "helium-gruvbox-theme",
     "/helium/gruvbox-material",
     "/dotfiles/helium-gruvbox",
 )
+OLD_THEME_DIRS = (
+    "helium-gruvbox",
+    "helium-gruvbox-dark",
+    "helium-gruvbox-light",
+)
+USER_DATA_DIR_NAMES = ("net.imput.helium", "helium", "helium-browser")
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Generate and configure the repo's exact Gruvbox theme for Helium."
+        description=(
+            "Configure Helium to use Chromium's native adaptive User Color theme. "
+            "The browser then follows the system light/dark portal live."
+        )
     )
     parser.add_argument(
         "--config-home",
@@ -39,164 +63,129 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def load_colors() -> dict[str, str]:
+def load_helium_config() -> dict[str, str]:
     with PALETTE.open("rb") as handle:
         data = tomllib.load(handle)
-    colors = data.get("colors")
-    if not isinstance(colors, dict):
-        raise ValueError(f"missing [colors] in {PALETTE}")
-    required = (
-        "bg_hard",
-        "bg",
-        "bg_alt",
-        "bg_soft",
-        "bg_hover",
-        "fg",
-        "gray",
-        "gray_dim",
-        "blue",
-    )
-    for name in required:
-        value = colors.get(name)
-        if (
-            not isinstance(value, str)
-            or len(value) != 7
-            or not value.startswith("#")
-        ):
-            raise ValueError(f"invalid colors.{name} in {PALETTE}: {value!r}")
-    return colors
+    config = data.get("helium")
+    if not isinstance(config, dict):
+        raise ValueError(f"missing [helium] in {PALETTE}")
 
+    user_color = config.get("user_color")
+    if (
+        not isinstance(user_color, str)
+        or len(user_color) != 7
+        or not user_color.startswith("#")
+    ):
+        raise ValueError(f"invalid helium.user_color in {PALETTE}: {user_color!r}")
+    try:
+        int(user_color[1:], 16)
+    except ValueError as error:
+        raise ValueError(
+            f"invalid helium.user_color in {PALETTE}: {user_color!r}"
+        ) from error
 
-def rgb(value: str) -> list[int]:
-    value = value.removeprefix("#")
-    return [int(value[index : index + 2], 16) for index in (0, 2, 4)]
-
-
-def theme_payload(colors: dict[str, str]) -> dict[str, object]:
-    # Vertical-tab-strip mapping, measured off pixels in a running Helium (see
-    # wiki/theming.md for the numbers). Only three surfaces are reachable from
-    # an extension theme, and they are NOT the ones either the Chromium docs or
-    # the abandoned helium/gruvbox-exact-tabs.patch comment suggest:
-    #
-    #   - the strip background is mix(`toolbar`, `frame`, 50%);
-    #   - the ACTIVE tab has no color of its own: it renders as exactly that
-    #     strip background, so it can never be separated from it here;
-    #   - inactive tabs likewise render as the strip background;
-    #   - `background_tab` paints ONLY the "+ New Tab" control.
-    #
-    # `omnibox_background` plays no part in the tab strip at all.
-    #
-    # Consequence: a lighter active-tab "pill" is NOT achievable through the
-    # extension theme. Raising `toolbar` to lighten the active tab only lightens
-    # the whole strip (and the toolbar row) with the tab still merged into it.
-    # Delivering the pill requires Helium's native Material tab colors, i.e.
-    # either dropping this custom theme or patching the C++ mixer. Do not
-    # re-litigate this from color-key names; re-measure instead.
-    #
-    # So `toolbar` is kept equal to `frame` (`bg`) to hold the strip at the exact
-    # Gruvbox background, and `background_tab` matches it so "+ New Tab" stays
-    # quiet instead of showing as a dark box.
-    theme_colors = {
-        "frame": rgb(colors["bg"]),
-        "frame_inactive": rgb(colors["bg_alt"]),
-        "frame_incognito": rgb(colors["bg"]),
-        "frame_incognito_inactive": rgb(colors["bg_alt"]),
-        "toolbar": rgb(colors["bg"]),
-        "background_tab": rgb(colors["bg"]),
-        "background_tab_inactive": rgb(colors["bg"]),
-        "tab_text": rgb(colors["fg"]),
-        "tab_background_text": rgb(colors["gray"]),
-        "tab_background_text_inactive": rgb(colors["gray_dim"]),
-        "bookmark_text": rgb(colors["fg"]),
-        "toolbar_button_icon": rgb(colors["fg"]),
-        "omnibox_background": rgb(colors["bg"]),
-        "omnibox_text": rgb(colors["fg"]),
-        "ntp_background": rgb(colors["bg"]),
-        "ntp_text": rgb(colors["fg"]),
-        "ntp_link": rgb(colors["blue"]),
-        "ntp_header": rgb(colors["bg_soft"]),
-        "button_background": rgb(colors["bg_alt"]),
-    }
-    identity_tint = [-1, -1, -1]
+    color_variant = config.get("color_variant")
+    if color_variant not in COLOR_VARIANTS:
+        raise ValueError(
+            f"invalid helium.color_variant in {PALETTE}: {color_variant!r}"
+        )
+    color_scheme = config.get("color_scheme")
+    if color_scheme not in BROWSER_COLOR_SCHEMES:
+        raise ValueError(
+            f"invalid helium.color_scheme in {PALETTE}: {color_scheme!r}"
+        )
     return {
-        "colors": theme_colors,
-        "tints": {
-            "buttons": identity_tint,
-            "frame": identity_tint,
-            "frame_inactive": identity_tint,
-            "frame_incognito": identity_tint,
-            "frame_incognito_inactive": identity_tint,
-            "background_tab": identity_tint,
-        },
-        "properties": {"ntp_logo_alternate": 1},
+        "user_color": user_color,
+        "color_variant": str(color_variant),
+        "color_scheme": str(color_scheme),
     }
 
 
-def parse_managed_version(value: object) -> tuple[int, int, int, int] | None:
-    if not isinstance(value, str):
-        return None
-    parts = value.split(".")
-    if not 1 <= len(parts) <= 4:
-        return None
-    try:
-        numbers = [int(part) for part in parts]
-    except ValueError:
-        return None
-    if any(number < 0 or number > 65535 for number in numbers):
-        return None
-    numbers.extend([0] * (4 - len(numbers)))
-    return tuple(numbers)  # type: ignore[return-value]
+def sk_color(value: str) -> int:
+    """Convert #RRGGBB to Chromium's signed int representation of SkColor."""
+    unsigned = 0xFF000000 | int(value.removeprefix("#"), 16)
+    return unsigned - (1 << 32) if unsigned >= (1 << 31) else unsigned
 
 
-def bump_managed_version(version: tuple[int, int, int, int] | None) -> str:
-    if version is None or version[0] != THEME_VERSION_MAJOR:
-        return f"{THEME_VERSION_MAJOR}.0.0.1"
-
-    major, high, middle, low = version
-    low += 1
-    if low > 65535:
-        low = 0
-        middle += 1
-    if middle > 65535:
-        middle = 0
-        high += 1
-    if high > 65535:
-        raise ValueError("Helium theme version counter exhausted")
-    return f"{major}.{high}.{middle}.{low}"
+def nested_dict(root: dict, *keys: str) -> dict:
+    current = root
+    for key in keys:
+        value = current.get(key)
+        if not isinstance(value, dict):
+            value = {}
+            current[key] = value
+        current = value
+    return current
 
 
-def choose_manifest_version(manifest_path: Path, theme: dict[str, object]) -> str:
-    # ThemeService does not re-apply a loaded theme when the same extension ID is
-    # already current. A real extension update does, so bump the unpacked theme
-    # version only when its generated theme payload changes. This is the
-    # programmatic equivalent of pressing Reload on chrome://extensions.
-    if not manifest_path.exists():
-        return f"{THEME_VERSION_MAJOR}.0.0.1"
-
-    try:
-        previous = json.loads(manifest_path.read_text())
-    except (OSError, json.JSONDecodeError):
-        return f"{THEME_VERSION_MAJOR}.0.0.1"
-    if not isinstance(previous, dict):
-        return f"{THEME_VERSION_MAJOR}.0.0.1"
-
-    previous_version = parse_managed_version(previous.get("version"))
-    if previous.get("theme") == theme and previous_version is not None:
-        if previous_version[0] == THEME_VERSION_MAJOR:
-            return ".".join(str(part) for part in previous_version)
-    return bump_managed_version(previous_version)
+def remove_key(root: dict, *keys: str) -> None:
+    if not keys:
+        return
+    current = root
+    for key in keys[:-1]:
+        value = current.get(key)
+        if not isinstance(value, dict):
+            return
+        current = value
+    current.pop(keys[-1], None)
 
 
-def render_manifest(colors: dict[str, str], manifest_path: Path) -> str:
-    theme = theme_payload(colors)
-    manifest = {
-        "manifest_version": 3,
-        "name": "Gruvbox Material Dark Medium — dotfiles",
-        "version": choose_manifest_version(manifest_path, theme),
-        "description": "Generated from dotfiles/colors.toml for Helium.",
-        "theme": theme,
-    }
-    return json.dumps(manifest, indent=2) + "\n"
+def desired_preferences(preferences: dict, config: dict[str, str]) -> dict:
+    result = copy.deepcopy(preferences)
+    browser_theme = nested_dict(result, "browser", "theme")
+    extensions_theme = nested_dict(result, "extensions", "theme")
+
+    color = sk_color(config["user_color"])
+    variant = COLOR_VARIANTS[config["color_variant"]]
+    scheme = BROWSER_COLOR_SCHEMES[config["color_scheme"]]
+
+    # Chromium currently migrates these prefs to the *2 variants. Writing both
+    # keeps Helium compatible across nearby Chromium revisions while the old
+    # names still exist as migration inputs.
+    browser_theme["color_scheme"] = scheme
+    browser_theme["color_scheme2"] = scheme
+    browser_theme["user_color"] = color
+    browser_theme["user_color2"] = color
+    browser_theme["color_variant"] = variant
+    browser_theme["color_variant2"] = variant
+    browser_theme["follows_system_colors"] = False
+    browser_theme["is_grayscale"] = False
+    browser_theme["is_grayscale2"] = False
+
+    # This is Chromium's special built-in theme ID, not an installed extension.
+    extensions_theme["id"] = USER_COLOR_THEME_ID
+    for key in ("pack", "colors", "images", "tints", "properties"):
+        extensions_theme.pop(key, None)
+
+    # Remove the older autogenerated-theme seed so it cannot win on startup.
+    remove_key(result, "autogenerated", "theme", "color")
+    return result
+
+
+def sandboxed() -> bool:
+    real_home = os.environ.get("DOTS_REAL_HOME")
+    return bool(real_home and Path(real_home).expanduser() != Path.home())
+
+
+def helium_running() -> bool:
+    """Detect a real Helium process without depending on pgrep."""
+    proc = Path("/proc")
+    if not proc.is_dir():
+        return False
+    for entry in proc.iterdir():
+        if not entry.name.isdigit():
+            continue
+        try:
+            argv = (entry / "cmdline").read_bytes().split(b"\0")
+        except (OSError, PermissionError):
+            continue
+        if not argv or not argv[0]:
+            continue
+        first = argv[0].decode(errors="ignore")
+        joined = b" ".join(argv).decode(errors="ignore")
+        if "helium-browser" in first or "/opt/helium-browser" in joined or "/helium" in first:
+            return True
+    return False
 
 
 def strip_quotes(value: str) -> str:
@@ -206,123 +195,167 @@ def strip_quotes(value: str) -> str:
     return value
 
 
-def valid_extension_dir(value: str) -> bool:
-    # Relative paths are resolved from Helium's launcher working directory and
-    # can become '.', producing the misleading "Manifest missing" startup
-    # dialog. Persistent flags should only contain real absolute extension dirs.
-    path = Path(value)
-    return path.is_absolute() and path.is_dir() and (path / "manifest.json").is_file()
+def configured_user_data_dir(config_home: Path, flags_path: Path) -> Path | None:
+    """Return an explicit --user-data-dir from the persistent flags, if present."""
+    if not flags_path.is_file():
+        return None
+    for line in flags_path.read_text().splitlines():
+        stripped = line.strip()
+        if not stripped.startswith("--user-data-dir="):
+            continue
+        raw = strip_quotes(stripped.split("=", 1)[1])
+        if not raw:
+            continue
+        path = Path(os.path.expandvars(os.path.expanduser(raw)))
+        if not path.is_absolute():
+            path = config_home / path
+        return path
+    return None
 
 
-def wrapper_safe_path(path: str) -> str:
-    """Return `path` in a form /opt/helium-browser-bin/helium-wrapper cannot mangle.
-
-    The Arch wrapper sanitizes every flags line with
-
-        safe_line=${safe_line//~/\\~}
-
-    intending to stop `~` from being expanded. In Bash the *pattern* half of
-    `${var//pattern/repl}` is itself tilde-expanded, so the pattern is really
-    $HOME: the line rewrites any absolute path under the home directory back
-    into a literal `~` path, which then never expands. Helium is launched with
-    `--load-extension=~/.local/share/...`, the directory does not exist, the
-    theme extension fails to load, and Chromium drops the theme entirely
-    (extensions.theme in Preferences resets to {"id": "", "system_theme": 1}).
-
-    Writing the same directory as /home/./<user>/... resolves identically for
-    the kernel and Chromium but no longer contains the literal $HOME substring,
-    so the wrapper's replacement does not match and the path survives intact.
-    """
-    home = str(Path.home())
-    if path == home or path.startswith(home + "/"):
-        parent = str(Path.home().parent).rstrip("/")
-        return f"{parent}/./{Path.home().name}{path[len(home):]}"
-    return path
+def active_profile_name(user_data_dir: Path) -> str:
+    """Read Chromium's last-used profile name, falling back to Default."""
+    local_state = user_data_dir / "Local State"
+    if local_state.is_file():
+        try:
+            state = json.loads(local_state.read_text())
+        except (OSError, json.JSONDecodeError):
+            state = None
+        if isinstance(state, dict):
+            profile = state.get("profile")
+            if isinstance(profile, dict):
+                last_used = profile.get("last_used")
+                if isinstance(last_used, str) and last_used and "/" not in last_used:
+                    return last_used
+    return "Default"
 
 
-def update_flags(flags_path: Path, theme_dir: Path) -> list[str]:
+def find_preferences(config_home: Path, flags_path: Path) -> Path:
+    """Locate the active Helium Preferences file without assuming its profile name."""
+    roots: list[Path] = []
+    explicit = configured_user_data_dir(config_home, flags_path)
+    if explicit is not None:
+        roots.append(explicit)
+    roots.extend(config_home / name for name in USER_DATA_DIR_NAMES)
+
+    seen: set[Path] = set()
+    for root in roots:
+        root = root.expanduser()
+        if root in seen:
+            continue
+        seen.add(root)
+        active = root / active_profile_name(root) / "Preferences"
+        if active.is_file():
+            return active
+        default = root / "Default" / "Preferences"
+        if default.is_file():
+            return default
+
+    # Use the upstream reverse-DNS user-data directory for the diagnostic path.
+    return config_home / "net.imput.helium" / "Default" / "Preferences"
+
+
+def write_json_atomic(path: Path, data: dict) -> None:
+    temp = path.with_name(path.name + ".dotfiles-tmp")
+    temp.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")))
+    os.replace(temp, path)
+
+
+def configure_profile(preferences_path: Path, config: dict[str, str]) -> str:
+    if not preferences_path.exists():
+        return "missing"
+    try:
+        current = json.loads(preferences_path.read_text())
+    except json.JSONDecodeError as error:
+        raise ValueError(f"invalid Helium Preferences JSON: {preferences_path}") from error
+    if not isinstance(current, dict):
+        raise ValueError(f"invalid Helium Preferences root: {preferences_path}")
+
+    desired = desired_preferences(current, config)
+    if desired == current:
+        return "unchanged"
+    if not sandboxed() and helium_running():
+        raise RuntimeError(
+            "Helium is running. Quit it once before the first adaptive-theme migration, "
+            "then rerun `./dots apply`. Future light/dark switches do not need a restart."
+        )
+    write_json_atomic(preferences_path, desired)
+    return "updated"
+
+
+def clean_flags(flags_path: Path) -> bool:
+    if not flags_path.exists() and not flags_path.is_symlink():
+        return False
     if flags_path.is_symlink():
         target = os.readlink(flags_path)
         if "/helium/helium-browser-flags.conf" in target:
             flags_path.unlink()
-        else:
-            raise RuntimeError(
-                f"refusing to replace user-managed symlink {flags_path} -> {target}"
-            )
+            return True
+        raise RuntimeError(
+            f"refusing to replace user-managed symlink {flags_path} -> {target}"
+        )
 
-    original = flags_path.read_text() if flags_path.exists() else ""
+    original = flags_path.read_text()
     backup = flags_path.with_suffix(flags_path.suffix + ".gruvbox-backup")
-    if original and not backup.exists():
+    if original and not backup.exists() and not sandboxed():
         shutil.copy2(flags_path, backup)
 
+    starts = {start: end for start, end in MANAGED_BLOCKS}
+    ends = {end for _, end in MANAGED_BLOCKS}
     output: list[str] = []
-    load_extensions: list[str] = []
-    dropped: list[str] = []
-    in_managed_block = False
+    active_end: str | None = None
 
     for line in original.splitlines():
         stripped = line.strip()
-        if stripped == MANAGED_START:
-            in_managed_block = True
+        if active_end is not None:
+            if stripped == active_end:
+                active_end = None
             continue
-        if stripped == MANAGED_END:
-            in_managed_block = False
+        if stripped in starts:
+            active_end = starts[stripped]
             continue
-        if in_managed_block:
+        if stripped in ends or stripped in LEGACY_FORCE_FLAGS:
             continue
 
         if stripped.startswith("--load-extension="):
-            value = strip_quotes(stripped.split("=", 1)[1])
-            for entry in value.split(","):
-                entry = strip_quotes(entry.strip())
-                if not entry:
-                    continue
-                if any(marker in entry for marker in OLD_THEME_MARKERS):
-                    continue
-                if not valid_extension_dir(entry):
-                    dropped.append(entry)
-                    continue
-                if entry not in load_extensions:
-                    load_extensions.append(entry)
+            raw = strip_quotes(stripped.split("=", 1)[1])
+            kept = []
+            for entry in raw.split(","):
+                candidate = strip_quotes(entry.strip())
+                if candidate and not any(marker in candidate for marker in OLD_THEME_MARKERS):
+                    kept.append(candidate)
+            if kept:
+                output.append("--load-extension=" + ",".join(kept))
             continue
-
         output.append(line)
-
-    theme_path = str(theme_dir.resolve())
-    if not valid_extension_dir(theme_path):
-        raise RuntimeError(f"generated theme is missing a readable manifest: {theme_path}")
-    if theme_path not in load_extensions:
-        load_extensions.append(theme_path)
 
     while output and not output[-1].strip():
         output.pop()
-    if output:
-        output.append("")
-    output.extend(
-        [
-            MANAGED_START,
-            # helium-browser-bin's Arch wrapper parses one argument per line.
-            # The managed data path has no shell expansion and is absolute, and
-            # is written through wrapper_safe_path() so the wrapper's broken
-            # tilde sanitization cannot rewrite it back into a literal `~`.
-            f'--load-extension={",".join(wrapper_safe_path(p) for p in load_extensions)}',
-            MANAGED_END,
-            "",
-        ]
-    )
+    rendered = "\n".join(output)
+    if rendered:
+        rendered += "\n"
 
-    flags_path.parent.mkdir(parents=True, exist_ok=True)
-    flags_path.write_text("\n".join(output))
-    return dropped
+    if rendered == original:
+        return False
+    if rendered:
+        flags_path.write_text(rendered)
+    else:
+        flags_path.unlink()
+    return True
 
 
-def cleanup_old_theme_link(config_home: Path) -> None:
-    old_link = config_home / "helium-gruvbox-theme"
-    if not old_link.is_symlink():
-        return
-    target = os.readlink(old_link)
-    if "helium/gruvbox-material" in target:
-        old_link.unlink()
+def clean_old_runtime(data_home: Path) -> list[Path]:
+    removed: list[Path] = []
+    root = data_home / "dotfiles"
+    for name in OLD_THEME_DIRS:
+        path = root / name
+        if path.is_dir() and not path.is_symlink():
+            shutil.rmtree(path)
+            removed.append(path)
+        elif path.exists() or path.is_symlink():
+            path.unlink()
+            removed.append(path)
+    return removed
 
 
 def main() -> int:
@@ -337,31 +370,31 @@ def main() -> int:
         if args.data_home
         else Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local/share"))
     )
-    theme_dir = data_home / "dotfiles" / "helium-gruvbox"
-    flags_path = config_home / "helium-browser-flags.conf"
+    flags = config_home / "helium-browser-flags.conf"
+    preferences = find_preferences(config_home, flags)
 
     try:
-        colors = load_colors()
-        theme_dir.mkdir(parents=True, exist_ok=True)
-        manifest_path = theme_dir / "manifest.json"
-        manifest_path.write_text(render_manifest(colors, manifest_path))
-        # Read it back so a partial/corrupt write is caught before touching the
-        # browser flags file.
-        manifest = json.loads(manifest_path.read_text())
-        if not isinstance(manifest.get("theme", {}).get("colors"), dict):
-            raise ValueError(f"generated manifest has no theme colors: {manifest_path}")
-        cleanup_old_theme_link(config_home)
-        dropped = update_flags(flags_path, theme_dir)
-    except (OSError, json.JSONDecodeError, ValueError, RuntimeError) as error:
-        print(f"helium-gruvbox-theme: {error}")
+        config = load_helium_config()
+        status = configure_profile(preferences, config)
+        flags_changed = clean_flags(flags)
+        removed = clean_old_runtime(data_home)
+    except (OSError, ValueError, RuntimeError) as error:
+        print(f"helium-adaptive-theme: {error}")
         return 1
 
-    print(f"Helium Gruvbox theme: {theme_dir}")
-    print(f"Helium theme version: {manifest['version']}")
-    print(f"Helium flags: {flags_path}")
-    for entry in dropped:
-        print(f"Dropped stale --load-extension entry: {entry}")
-    print("Restart Helium completely to load the updated theme.")
+    print(f"Helium Preferences: {preferences}")
+    if status == "missing":
+        print("Helium profile not found. Launch Helium once, quit it, then rerun `./dots apply`.")
+    else:
+        print(f"Helium adaptive theme: {status}")
+        print(
+            f"Helium seed: {config['user_color']} ({config['color_variant']}, "
+            f"{config['color_scheme']} scheme)"
+        )
+    if flags_changed:
+        print(f"Removed legacy Helium theme/scheme flags from: {flags}")
+    for path in removed:
+        print(f"Removed legacy Helium runtime theme: {path}")
     return 0
 
 

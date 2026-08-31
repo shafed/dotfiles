@@ -1,6 +1,6 @@
 [profile]
-description = "Desktop profile plus laptop-only power and brightness controls"
-includes = ["desktop"]
+description = "Desktop profile plus laptop-only power, brightness and Bluetooth controls"
+includes = ["desktop", "bluetooth"]
 capabilities = ["laptop", "battery"]
 
 [[prerequisites]]

@@ -15,298 +15,232 @@ covers:
   - quickshell/config/Colors.qml
 ---
 
-# theming — Gruvbox base with a Telegram daylight exception
+# theming — Gruvbox base with solar exceptions
 
 The desktop base uses **Gruvbox Material Dark Medium**, anchored to `#282828`
 background / `#d4be98` foreground. Neovim's gruvbox-material setup remains the
-visual reference. Telegram is the deliberate exception: its `light` solar state
-uses a warmer olive/taupe palette for daylight readability while its `dark`
-state stays Gruvbox.
+visual reference. Most application surfaces stay dark; Telegram, wallpaper and
+Helium deliberately react to the solar state in different ways.
 
 ## Palette source of truth
 
-`colors.toml` is the only editable repository palette for shared surfaces. After
-changing it, run:
+`colors.toml` is the only editable repository palette/config source for shared
+surfaces:
+
+- `[colors]` — Gruvbox Material Dark Medium used by the tracked desktop
+  generators;
+- `[colors_light]` — warm-white reference (`#fbfaf7` / `#3c3836`) for browser
+  daylight work; Chromium's adaptive theme does not consume these exact values;
+- `[helium]` — Chromium User Color seed/variant. Current values are Gruvbox
+  warm-neutral `#3c3836`, `neutral`, and `system` color scheme.
+
+After changing shared palette values run:
 
 ```sh
 python3 scripts/generate-theme.py
 python3 scripts/generate-theme.py --check
-python3 telegram/generate-theme.py
-python3 telegram/generate-theme.py --check
+python3 scripts/generate-theme.py --mode light --check
+./dots check
 ```
 
-The main generator writes the tracked format-specific surfaces:
+The main generator writes Kitty, Waybar, Hyprlock, shell colors, Quickshell,
+Claude Code, CopyQ and Yazi surfaces. Those remain pinned dark. Do not hand-edit
+generated files.
 
-- `kitty/current-theme.conf` and `kitty/quick-access-terminal-center.conf`;
-- `waybar/colors.css` (imported by `style.css`);
-- `hypr/colors.conf` (sourced by `hyprlock.conf`);
-- `scripts/generated-colors.sh` (available to shell consumers);
-- `quickshell/config/Colors.qml`;
-- `.claude/themes/gruvbox-material.json`;
-- `copyq/gruvbox.ini` (applied to CopyQ's mutable live config by
-  `scripts/copyq-apply-theme.py`, which also enforces the repo-owned behavior
-  options);
-- `yazi/flavors/gruvbox-dark.yazi/flavor.toml`.
+CopyQ deliberately uses the neutral Gruvbox `bg` (`#282828`) as its main surface:
+its bundled Font Awesome icons derive tint from the window background, and a
+teal-shifted background made those icons visibly blue. The bundled icon set is
+kept because system icon themes do not cover all CopyQ actions.
 
-CopyQ keeps its complete bundled Font Awesome toolbar set because the available
-system icon themes only cover some of its action names. CopyQ derives the icon
-tint from the window background rather than the theme foreground; using the
-slightly teal `bg_hard` amplifies that hue into blue icons. Its surface therefore
-uses the neutral Gruvbox `bg` (`#282828`), which makes the derived icons neutral
-gray while preserving Gruvbox hover, selection, and foreground colors.
+## Telegram
 
-Telegram Desktop is generated separately by `telegram/generate-theme.py`. The
-night variant comes from the shared Gruvbox palette, while the day variant
-re-maps Telegram's whole local alias layer to muted olive/taupe surfaces and
-warmer accents. These Telegram-only daylight values stay in the Telegram
-generator rather than `colors.toml`, because the readability problem is specific
-to its dense chat UI and should not recolor the rest of the desktop.
+Telegram is independently solar-aware. `telegram/generate-theme.py` builds a
+Gruvbox night variant and a warmer olive/taupe day variant. Telegram-specific
+daylight values live in that generator rather than recoloring the shared desktop
+palette.
 
-The preferred botanical wallpaper is stored as text-safe
-`telegram/background.png.b64`; the generator decodes it to local
-`telegram/background-primary.png` and embeds the decoded bytes in both generated
-variant archives. Day/night palettes and archives are local build artifacts and
-are ignored by git. The legacy
-`telegram/gruvbox-material-dark-medium.tdesktop-theme` output remains a night
-alias for compatibility with the older manual workflow.
+The desktop profile keeps one stable runtime path:
 
-For the live setup, the desktop profile runs
-`telegram/generate-theme.py --runtime auto`, which writes one stable file at
-`$XDG_DATA_HOME/dotfiles/telegram/current.tdesktop-theme`. Import that file in
-Telegram and press **Apply Theme** once. Telegram Desktop watches the native path
-of a loaded local theme and reapplies it when the file changes, so
-`darkman/scripts/telegram` can switch the contents between day and night on each
-solar transition without editing `tdata` or automating UI clicks. See
-[telegram](telegram.md) for the palette and bootstrap decision.
+```text
+$XDG_DATA_HOME/dotfiles/telegram/current.tdesktop-theme
+```
 
-The wallpaper is PNG, not JPEG: an earlier JPEG source got silently bit-corrupted
-somewhere in git history (mid-stream, not just a truncated tail — every JPEG
-blob across that history failed independent decode with `djpeg`/`jpegtran`/
-ImageMagick, each erroring at the same offset). The generator's own validation
-only checked for a JPEG start-of-image marker, so the corruption shipped for
-several commits and silently failed to apply in Telegram, which uses a strict
-decoder. PNG's checksummed chunks make that class of silent corruption far less
-likely to reoccur unnoticed.
+Import that file in Telegram and press **Apply Theme** once. Telegram watches the
+loaded local theme path, so `darkman/scripts/telegram` can rewrite the same file
+between day and night without touching `tdata` or automating UI clicks. See
+[telegram](telegram.md) for bootstrap details.
 
-The artwork itself is inset on a taller dark canvas so Telegram's cover-style
-wallpaper scaling crops and zooms it less in a narrow chat pane.
+The botanical wallpaper source is stored as text-safe
+`telegram/background.png.b64`, decoded locally and embedded into both variants.
+PNG is intentional because an older JPEG source was corrupted in git history and
+failed strict Telegram decoding. The procedural backup remains reproducible from
+the generator.
 
-Regardless of source format, verify a new wallpaper source decodes with a real
-decoder (`python3 -c "from PIL import Image; Image.open(...).load()"` or
-`magick identify`) before committing it — `generate-theme.py` only checks the
-container's magic bytes, not that the pixel data is intact.
+Telegram's theme API cannot independently recolor an unread stopped voice message
+versus a listened stopped message; the unread state is the small duration dot.
+The theme therefore keeps the waveform neutral and uses the active variant's
+accent for the shared play-button/unread-dot surface.
 
-The alternate procedural wallpaper is intentionally retained as a backup. Each
-Telegram generation writes it to `telegram/background-backup.png`; that file is
-also a local build artifact. The implementation stays in
-`telegram/generate-theme.py`, so the backup is reproducible from `colors.toml`
-without storing a second large binary in git.
+## Helium: native User Color, not an extension theme
 
-Telegram-specific semantic overrides live in `telegram/generate-theme.py` when
-a palette surface has no useful cross-application equivalent. The vertical chat
-folder sidebar uses Telegram's `sideBar*` keys explicitly and inherits whichever
-Telegram variant is active rather than leaking Telegram's built-in blue defaults.
+The old Helium implementation used an unpacked Chromium theme extension with a
+`manifest.json`. That gives exact RGB control but is static: changing its colors
+requires Chromium to rebuild/reload compiled theme state, so reliable dark/light
+switching needs a browser restart. It also flattens part of Helium's native
+active/inactive vertical-tab treatment.
 
-Voice messages also have Telegram-specific overrides. The idle waveform is kept
-neutral rather than being used as an unread/read signal. Telegram's theme API
-does not expose separate colors for an unread idle voice message and a
-listened-but-stopped one: unread media is represented by the small dot after the
-duration. That dot shares `msgFileInBg` with the incoming play button, so the
-theme gives both the active variant's yellow accent. Exact whole-message
-unread/read recoloring would require patching Telegram Desktop itself.
+The current implementation instead uses Chromium's built-in **User Color** theme.
+On Linux Helium's upstream user-data directory is
+`$XDG_CONFIG_HOME/net.imput.helium`. `helium/apply-gruvbox-theme.py` reads
+`Local State` there and updates the active profile's `Preferences` (falling back
+to `Default`). An explicit persistent `--user-data-dir=...` takes precedence.
+The desired state is the semantic equivalent of:
 
-Do not hand-edit generated Telegram day/night palette files. The source is the
-shared renderer plus Telegram's variant transformation in
-`telegram/generate-theme.py`. Other generated configs consume shared palette
-surfaces rather than maintaining independent values. Yazi's existing
-classic-Gruvbox accents are intentionally preserved as compatibility entries in
-`colors.toml`; regeneration therefore does not restyle Yazi. Its vendored
-`tmtheme.xml` is syntax-highlighting metadata from the upstream flavor and is
-not used as the desktop palette source.
+```text
+extensions.theme.id = user_color_theme_id
+browser.theme.user_color{,2} = #3c3836
+browser.theme.color_variant{,2} = neutral
+browser.theme.color_scheme{,2} = system
+browser.theme.follows_system_colors = false
+```
 
-The Claude Code theme deliberately leaves `claudeShimmer` at its built-in color;
-overriding it made the thinking animation harder to distinguish.
+Both the deprecated and current `*2` preference names are written because recent
+Chromium revisions are migrating those prefs. The deterministic profile state
+keeps `follows_system_colors=false`; Linux light/dark following itself comes from
+`color_scheme=system` and Chromium's native appearance signal.
 
-## Helium
+This is intentionally **Gruvbox-derived, not exact Gruvbox surfaces**. Chromium's
+Material color generator owns final light/dark shades. Helium's vertical-tab
+frame resolves through Chromium's native frame/header colors. For a themed User
+Color palette, the header is generated from the secondary tonal palette; even the
+`neutral` variant fixes that palette to a small non-zero chroma. Consequently,
+seed saturation is not a useful way to remove a cast from the whole sidebar —
+the seed hue is the important lever.
 
-Helium is intentionally not themed through GTK or Chromium's autogenerated/User
-Color theme. GTK gives poor vertical-tab contrast, while User Color goes through
-the Material color generator and cannot preserve all exact Gruvbox surfaces.
+The earlier yellow seed `#b47109` therefore produced a visibly cream/brown frame
+(`~#fff8f4` light and `~#271e14` dark on the tested Helium build). The current
+seed uses Gruvbox `bg_soft` (`#3c3836`) instead: its warm-neutral hue keeps the
+native generated surfaces closer to the original neutral Gruvbox treatment while
+retaining native tab-state styling and live system-mode repainting.
 
-`helium/apply-gruvbox-theme.py` generates an unpacked Chromium theme at
-`$XDG_DATA_HOME/dotfiles/helium-gruvbox/manifest.json` directly from
-`colors.toml`. The palette mapping is intentionally the same as the very first
-Helium Gruvbox theme added to this repo:
+### Why Helium switches live
 
-- main frame / toolbar / vertical tab strip / omnibox / NTP background:
-  `bg (#282828)`;
-- "+ New Tab" control: `bg (#282828)`, i.e. deliberately equal to the strip;
-- inactive frame / buttons: `bg_alt (#32302f)`;
-- NTP header: `bg_soft (#3c3836)`;
-- text: `fg (#d4be98)`;
-- links: `blue (#7daea3)`.
+Darkman already publishes `org.freedesktop.appearance/color-scheme` through the
+XDG Desktop Portal. Current Chromium on Linux feeds that appearance signal into
+its native theme/ColorProvider path. With browser scheme set to `System`, the
+runtime path is:
 
-### Which theme key paints which vertical-tab surface
+```text
+darkman -> XDG appearance portal -> Chromium NativeTheme/ColorProvider -> repaint
+```
 
-This is easy to get wrong and expensive to guess at, so it was measured off
-pixels in a running Helium rather than reasoned from key names. With
-`frame=#282828`, `toolbar=#504945`, `background_tab=#282828` loaded, a screenshot
-of the strip gives:
+There is therefore **no Helium-specific darkman hook** and no
+`--force-light-mode` / `--force-dark-mode` launch flag. `dots theme light`,
+`dots theme dark`, automatic sunrise and automatic sunset all use the same portal
+signal and should update an already-running Helium.
 
-| surface                | measured  |
-| ---------------------- | --------- |
-| empty strip background | `#3c3836` |
-| inactive tab row       | `#3c3836` |
-| active tab row         | `#3c3836` |
-| "+ New Tab" control    | `#282828` |
+### One-time migration from the unpacked theme
 
-`#3c3836` is exactly `mix(toolbar, frame, 50%)`. So, for the vertical tab strip:
-
-- the strip background is **`mix(toolbar, frame, 50%)`**;
-- the **active tab has no color of its own** — it renders as exactly that strip
-  background, so it can never be separated from it via the theme;
-- **inactive tabs** likewise render as the strip background;
-- **`background_tab` paints only the "+ New Tab" control**;
-- `omnibox_background` plays no part in the tab strip at all.
-
-**A lighter active-tab "pill" is therefore not achievable through an extension
-theme.** Raising `toolbar` to try to lighten the active tab only lightens the
-whole strip (and the toolbar row) with the tab still merged into it. This is the
-Chromium behavior a custom theme opts into: the Material tab-state treatment that
-draws a distinct selected-tab surface applies to Helium's _native_ colors, and
-loading a custom theme flattens it. Getting the pill back means either dropping
-this custom theme (and accepting non-exact Gruvbox surfaces from Helium's
-Material generator) or patching the C++ mixer — which is what the abandoned
-`helium/gruvbox-exact-tabs.patch` did.
-
-Note also that the comment inside that patch claims Helium wires the active tab
-to the location-bar surface and "+ New Tab" to `toolbar`. The measurements above
-contradict it. **Do not re-litigate this mapping from color-key names, from that
-patch, or from Chromium source — re-measure.**
-
-Contrast is also less available than it looks: `bg_alt (#32302f)` and
-`bg_soft (#3c3836)` are close enough to `bg (#282828)` that at that delta only
-the full-strength `tab_text` vs `tab_background_text` difference registers, which
-reads as "the active tab only highlights its text".
-
-Note that `toolbar` also paints the main toolbar row, so it cannot be raised for
-the tab strip alone without also lightening that row.
-
-There is one important update gotcha. Chromium's `ThemeService` skips reapplying
-an already-current unpacked theme when it is loaded again with the same extension
-ID and is not seen as an update. The original manual setup avoided this by using
-**Reload** in the extensions page after edits. A generated manifest with a fixed
-`version = 1.0.0` can therefore leave an older compiled theme pack active even
-though the manifest on disk has changed.
-
-The helper manages this automatically: whenever the generated `theme` payload
-changes it bumps the unpacked extension version; an unchanged payload keeps the
-same version. On the next complete Helium restart this makes the changed theme an
-extension update and causes `ThemeService` to rebuild/reapply the theme pack. The
-version is runtime metadata only; Gruvbox values still come exclusively from
-`colors.toml`.
-
-No custom Helium/Chromium source build is part of the theming setup. Do not add a
-browser fork or native color patch unless the extension-theme approach has first
-been visually disproved — as it has been for the active-tab pill specifically
-(see above); the abandoned `helium/gruvbox-exact-tabs.patch` is what that would
-look like if it becomes worth doing.
-
-On Arch, `helium-browser-bin` reads `$XDG_CONFIG_HOME/helium-browser-flags.conf`.
-Its launcher deliberately does not expand `~` or `$HOME`, so the theme helper
-writes a managed `--load-extension=<absolute path>` block while preserving valid
-unrelated loaded extensions. It removes stale/relative/nonexistent extension
-entries such as `.` before writing the managed block; otherwise Chromium
-resolves them from its launch directory and shows a misleading "Manifest file is
-missing or unreadable" dialog. The generated theme directory is validated for a
-readable `manifest.json` before the flags file is changed. `dots apply` runs the
-helper automatically; restart Helium completely after applying changes.
-
-### The wrapper's tilde bug (why the path is written `/home/./<user>/...`)
-
-`/opt/helium-browser-bin/helium-wrapper` sanitizes each flags line with
+Helium writes `Preferences` on shutdown, so the first migration must not edit a
+running profile. Close Helium once and run:
 
 ```sh
-safe_line=${safe_line//~/\\~}
+./dots apply
 ```
 
-intending to stop `~` from expanding. In Bash the _pattern_ half of
-`${var//pattern/repl}` is itself tilde-expanded, so the pattern is really
-`$HOME`: the line rewrites any absolute path under the home directory back into
-a literal `~` path, which then never expands. Helium is launched with
-`--load-extension=~/.local/share/dotfiles/helium-gruvbox`, that directory does
-not exist, the theme extension fails to load, and Chromium eventually drops the
-theme altogether — `extensions.theme` in `Preferences` resets to
-`{"id": "", "system_theme": 1}` and the browser silently falls back to its
-native colors. This is **not** cosmetic, and it makes theming changes look like
-they intermittently "do nothing".
+The generator then:
 
-`wrapper_safe_path()` in the helper therefore writes the directory as
-`/home/./<user>/.local/share/dotfiles/helium-gruvbox`. That resolves identically
-for the kernel and Chromium but no longer contains the literal `$HOME`
-substring, so the wrapper's replacement does not match it.
+- discovers the active profile from `net.imput.helium/Local State`;
+- selects Chromium's special `user_color_theme_id`;
+- sets the Gruvbox seed, Neutral variant and System scheme;
+- removes dotfiles-owned Gruvbox `--load-extension`, both old managed blocks and
+  stray standalone `--force-light-mode` / `--force-dark-mode` lines while
+  preserving unrelated browser flags/extensions;
+- removes the old dotfiles-owned `helium-gruvbox`, `helium-gruvbox-dark` and
+  `helium-gruvbox-light` runtime directories.
 
-To verify a theme actually loaded, check that
-`$XDG_DATA_HOME/dotfiles/helium-gruvbox/Cached Theme.pak` has an mtime _newer_
-than `manifest.json` after a restart. Chromium rebuilds that pack when it picks
-up a new manifest version; a pack older than the manifest means the theme did
-not load. Do not rely on the browser merely looking themed — the previously
-compiled pack can survive in the profile.
+Start Helium once after that migration. This one restart activates the changed
+profile preferences; **later light/dark transitions do not require a restart**.
+Changing the User Color seed is likewise a profile preference change: close
+Helium for `dots apply` once, then subsequent solar transitions stay live.
 
-## Light/dark
+If Helium has never created an active `Preferences`, `dots apply` does not invent
+a browser profile. Launch Helium once, close it, and apply again.
 
-Darkman's solar state becomes `dark` or `light`. Most application surfaces stay
-pinned to Gruvbox dark in both states. There are now two intentional visual
-exceptions: the Hyprland wallpaper and Telegram Desktop.
+### Verification
 
-The GTK hook still always sets `color-scheme=prefer-dark` and selects the first
-installed theme from:
+First resolve the active profile the same way Chromium does:
 
-1. `Gruvbox-Material-Dark`
-2. `Gruvbox-Dark-Medium`
-3. `Gruvbox-Dark`
+```sh
+HELIUM_ROOT="${XDG_CONFIG_HOME:-$HOME/.config}/net.imput.helium"
+PROFILE="$(jq -r '.profile.last_used // "Default"' "$HELIUM_ROOT/Local State")"
+PREFS="$HELIUM_ROOT/$PROFILE/Preferences"
+echo "$PREFS"
+```
 
-If none exists it falls back to `Adwaita-dark` and prints a warning. Hooks live
-in the XDG data dir (`~/.local/share/darkman` via `dots apply`), not
-`~/.config`. GTK4/libadwaita is not fully controlled by `gtk-theme`, but the
-system color-scheme remains dark. Telegram does not depend on this system value;
-it switches through its watched local theme file instead.
+Then check the built-in theme state:
 
-`hypr/hyprsunset.conf` is independent screen gamma/temperature control and does
-not switch application themes.
+```sh
+jq '{
+  id: .extensions.theme.id,
+  scheme: .browser.theme.color_scheme2,
+  seed: .browser.theme.user_color2,
+  variant: .browser.theme.color_variant2,
+  follows_os_accent: .browser.theme.follows_system_colors
+}' "$PREFS"
+```
 
-### Wallpaper and Telegram switch with the solar state
+Expected semantic values:
 
-`darkman/scripts/wallpaper` swaps the Hyprland wallpaper between
-`hypr/wallpapers/light.png` and `hypr/wallpapers/dark.png` on every darkman
-transition, over `hyprpaper`'s IPC (`hyprctl hyprpaper wallpaper`) — not
-through a `hyprpaper.conf`, which this build ignores. See
-[hypr](hypr.md#wallpaper-hyprpaper-driven-entirely-over-ipc) for the mechanism
-and the config-file gotcha; `hypr/modules/autostart.lua` also resyncs it to
-the current `darkman get` state on every Hyprland start, since restarting only
-`hyprpaper` doesn't make `darkman.service` refire its hooks.
+```text
+id = user_color_theme_id
+scheme = 0   # System
+seed = -12830666   # signed SkColor for #3c3836
+variant = 2  # Neutral
+follows_os_accent = false
+```
 
-`darkman/scripts/telegram` maps `light` to the full olive/taupe Telegram day
-variant and `dark` to the Gruvbox night variant. It rewrites
-`$XDG_DATA_HOME/dotfiles/telegram/current.tdesktop-theme`; Telegram's own file
-watcher reloads the active custom theme from that stable path. `dots apply`
-creates/resyncs that runtime file through the desktop profile generator, but the
-first Telegram import still requires one manual **Apply Theme** confirmation.
+The legacy flags check should print nothing:
 
-### Fixing a stale `~/.local/share/darkman` on an existing machine
+```sh
+grep -E 'helium-gruvbox|force-(light|dark)-mode' \
+  ~/.config/helium-browser-flags.conf
+```
 
-`darkman/scripts` is meant to be symlinked wholesale to `$XDG_DATA_HOME/darkman`
-(`DOTS_MANAGED_LINKS` in `scripts/dots-lib.sh`) — darkman scans that directory's
-entries directly as hook scripts (not a further `scripts/` subdirectory; see
-`darkman(1)`). A machine set up before this mapping existed can have a real
-`~/.local/share/darkman` directory instead (containing unmanaged scripts),
-which makes every hook — including the always-dark GTK one — silently fail to
-run (`fork/exec ...: no such file or directory` for the directory-shaped entry,
-and the unmanaged scripts run instead). `dots doctor` reports this as
-`$XDG_DATA_HOME/darkman does not point to .../darkman/scripts`; `dots migrate`
-now backs up and removes the stale directory (preserving any unmanaged scripts
-in the backup under `$XDG_STATE_HOME/dotfiles/backups/`) so a subsequent
-`dots apply` can create the correct symlink. `dots apply` cannot fix this by
-itself in one pass: it runs `install_links` (which refuses to clobber a real,
-non-symlink directory) before `dots migrate` — run `dots migrate` first on an
-affected machine.
+Check the portal itself when live switching is suspect:
+
+```sh
+gdbus call --session \
+  --dest org.freedesktop.portal.Desktop \
+  --object-path /org/freedesktop/portal/desktop \
+  --method org.freedesktop.portal.Settings.ReadOne \
+  org.freedesktop.appearance color-scheme
+```
+
+The XDG values are `1 = dark`, `2 = light`. Run `dots theme toggle`; the Helium
+chrome and web `prefers-color-scheme` should follow without restarting.
+
+## Light/dark scope
+
+GTK, Kitty, Hyprlock, Waybar, Quickshell, Yazi, CopyQ and Claude Code stay pinned
+dark. The GTK darkman hook always keeps a dark GTK theme; Helium does **not** use
+that GTK theme as its light/dark source. Its authoritative source is the XDG
+appearance portal.
+
+Solar-state exceptions are:
+
+1. Hyprland wallpaper — `darkman/scripts/wallpaper` switches light/dark images
+   through hyprpaper IPC;
+2. Telegram — `darkman/scripts/telegram` rewrites the stable watched theme file;
+3. Helium — Chromium itself follows the portal with the built-in adaptive User
+   Color theme.
+
+`hypr/hyprsunset.conf` is independent gamma/temperature control.
+
+### Stale darkman directory
+
+`darkman/scripts` is symlinked wholesale to `$XDG_DATA_HOME/darkman`; darkman
+scans that directory's entries directly. An older machine may have a real
+`~/.local/share/darkman` directory with unmanaged hooks. `dots doctor` reports
+that mismatch and `dots migrate` backs it up/removes it so `dots apply` can
+install the tracked symlink.

@@ -11,6 +11,8 @@ covers:
   - scripts/dots-apply.sh
   - scripts/dots-history.sh
   - scripts/dots-show.sh
+  - scripts/dots-rollback.sh
+  - scripts/dots-provision.sh
   - scripts/dots-doctor.sh
   - scripts/dots-check.sh
   - scripts/dots-migrate.sh
@@ -28,96 +30,122 @@ covers:
 
 # dots — one entrypoint for repository operations
 
-`dots` is executable directly from the checkout, so there is no bootstrap
-chicken-and-egg problem. `./dots apply` remains the deployment/convergence
-entrypoint; `bootstrap.sh` is only a compatibility wrapper around it.
+`dots` is executable directly from the checkout. `./dots apply` is the normal
+convergence entrypoint; `bootstrap.sh` remains only as a compatibility wrapper.
+Desired machine state lives in [profiles](profiles.md), not in shell arrays.
+`scripts/dots-lib.sh` now contains only public CLI metadata, so packages, links,
+services, generators and prerequisites have one source of truth.
 
-Desired machine state now comes from [profiles](profiles.md). `dots plan` and
-`dots apply` both resolve that state through `scripts/dots-state.py`, so preview
-and mutation cannot grow separate lists of links, runtime generators or
-services. `dots plan --json` is the machine-readable form intended for
-Quickshell and agents.
+## Plan and apply
 
-The apply flow is deliberately ordered as preflight/plan → backup → changes →
-refresh → doctor. Safe stale-state migrations are part of the plan and run
-before managed symlinks are installed, so an old real
-`$XDG_DATA_HOME/darkman` can be backed up and removed before the desired
-`darkman/scripts` link is created. An unmanaged real Waybar config is still a
-blocker because the repository cannot know whether it is safe to delete.
+`dots plan` and `dots apply` resolve state through the same
+`scripts/dots-state.py` engine. `dots plan --json` is the read-only form for
+Quickshell and agents. It reports profile selection, capabilities, dependency
+reasons, blockers and each file/link/generator/service/migration change.
 
-Package installation deliberately remains outside `apply`. The selected
-profiles report required and optional commands, packages and reasons, but
-missing packages are not installed. A later `dots provision` command is the
-place for opt-in package/system prerequisite changes.
+Apply is ordered as plan/preflight → backup → changes → refresh → doctor. Safe
+migrations therefore happen before a colliding desired symlink is installed.
+An unmanaged real file or directory remains a blocker unless an explicit
+migration owns it. A managed component from another known profile is removed
+only when ownership is unambiguous: a symlink must still resolve to the tracked
+repo source, and a generated managed file must still exactly equal the content
+owned by that profile. Unrelated user files are not garbage-collected.
 
-Managed symlinks may repair a wrong symlink, but an unrelated real file or
-directory is a blocker unless an explicit safe migration owns it. Generated
-runtime state such as Helium and CopyQ is checked without touching the real
-machine: the generator runs against a temporary HOME and its declared outputs
-are compared with current outputs. Only stale generators run during apply.
+A repeated apply is a real no-op. With no primary drift it does not rewrite
+wrappers, rerun generators, clear Quickshell cache, restart services or create a
+history entry. A normal full no-op still runs doctor, because external packages
+or system prerequisites may have drifted independently of dotfiles files.
 
-This makes repeated convergence a real no-op. If the plan contains no machine
-changes, apply does not rewrite wrappers, rerun runtime generators, invalidate
-Quickshell cache, or restart services. A normal full apply still ends with
-`doctor` so a converged repository can report missing external prerequisites.
+`--links-only` exists for bootstrap/testing and applies only managed links/files;
+it deliberately skips runtime generators, migrations, service operations and
+doctor.
 
-Service refresh uses `systemctl --user try-restart`, not `restart`. On a newly
-provisioned TTY this avoids starting Quickshell before the graphical session has
-exported its Wayland/session environment. Quickshell derived cache is removed
-only when the plan actually changes managed state.
+## History and rollback
 
-Changing applies are recorded under
+Every changing apply creates a JSON run under
 `$XDG_STATE_HOME/dotfiles/runs/` (normally
-`~/.local/state/dotfiles/runs/`). A run records the repository commit, selected
-machine/profiles/capabilities, the applied plan, status and backup paths.
-`dots history` lists changing runs; `dots show <run>` explains one. No-op runs
-do not create history entries.
+`~/.local/state/dotfiles/runs/`). The record is created before mutation and
+contains commit, machine, profiles, capabilities, planned changes, backups,
+post-apply snapshots and status. Migration/generator failures are therefore
+recorded as failed runs instead of disappearing between plan and history.
 
-Migration backups live under `$XDG_STATE_HOME/dotfiles/backups/`. When a
-migration is executed as part of apply it receives the apply run's backup
-directory, so files touched by links/generators and files touched by migrations
-belong to one understandable run. Direct `dots migrate` keeps its standalone,
-lazily-created backup-directory behavior. Cache cleanup and service operations
-do not get backups because they are derived/operational state.
+`dots history` lists apply and rollback runs; `dots show <run>` shows one record.
+Existing managed paths that will be replaced or deleted are copied to the same
+run ID under `$XDG_STATE_HOME/dotfiles/backups/`. Direct `dots migrate` keeps its
+standalone lazy backup behavior.
 
-There is not yet an automatic rollback command in this milestone. The history
-format and shared backup paths are intentionally the foundation for the next
-`dots rollback <run>` step; until then backups remain transparent manual
-recovery copies rather than a promise to restore the whole operating system.
+`dots rollback <run>` restores only dotfiles-owned paths represented by that
+apply: files, symlinks and declared generator outputs. It deliberately does not
+try to uninstall packages, reverse arbitrary OS state or provide a filesystem
+snapshot. Before restoring anything it compares the current path with the
+post-apply snapshot; if the path changed later, rollback refuses rather than
+overwriting a newer manual edit. A successful rollback is itself recorded and
+the original apply is marked with its rollback run ID.
 
-`doctor` checks machine state; `check` checks repository state. During this first
-profile-engine milestone, doctor still reads the legacy arrays in
-`scripts/dots-lib.sh`; moving doctor to the resolved profile and explaining
-profile drift is a later step. Pre-commit and CI continue to run Shell, Lua,
-Python and CLI tests through `dots check`, now including the state-engine no-op
-and history test.
+## Doctor
 
-The command catalog is also data: `dots commands --json` exposes the same names,
-usage strings and descriptions used by human help. Stable abbreviations include
-`pl` (plan), `a` (apply), `d` (doctor), `c` (check), `m` (migrate), `hist`
-(history), `t` (theme), `rs` (restart), `rf` (refresh), `s` (shell), `p`
-(panel), `db` (debug), `ls` (commands), and `h` (help). They are explicit rather
-than inferred from prefixes, so a future command cannot silently change an
-existing abbreviation.
+`dots doctor` is profile-aware. It reuses the same resolved state as plan and
+reports both directions of drift: missing/wrong desired components and known
+repo-owned components left behind from an unselected profile. Required package
+or prerequisite failures include the profile reason; optional developer tools
+are warnings. `dots doctor --json` exposes the same report for UI/agents.
 
-`restart` owns routine user-service restarts for Quickshell, Kanata, darkman and
-CopyQ. `refresh` rebuilds derived state instead of restoring tracked configs.
-Manual shell control goes through `dots shell` / `dots panel`; arbitrary raw
-Quickshell IPC is intentionally not part of the public `dots` contract.
+User-service checks remain runtime-aware. When the systemd user manager is
+available, selected services must be enabled and the core graphical services
+must be active during an active graphical session. If the user manager is not
+available (for example from a minimal test HOME/CI context), runtime service
+state is a warning rather than fabricated success.
 
-`debug` remains observational: it prints repository revision, session/component
-information, managed service state, doctor failures/warnings and optionally
-recent Quickshell journal lines. Use `--no-logs` when journal text should not be
-included in a support bundle.
+## Generated state and repository checks
 
-Waybar remains the primary retired-component migration. An old managed Waybar
-symlink is backed up before removal; stale cache is derived state and removed
-without backup; an unmanaged real config is reported and left untouched.
-Tracked `waybar/colors.css` and `waybar/style.css` can remain compatibility
-outputs of the palette generator without making Waybar an active profile
-component.
+Runtime generators declare their outputs in profiles. Plan verifies them in an
+isolated temporary HOME without touching the real machine. The same seeded input
+is rendered twice; different results are a blocker because apply could never
+converge reliably. If the result is deterministic but differs from the real
+output, only that stale generator is scheduled.
 
-⚠️ `dots doctor` treats missing required commands and broken managed links as
-errors, while developer-only tools such as `luac` and `pre-commit` are warnings.
-`dots check` is stricter: if a requested source check needs a missing tool, that
-check fails instead of pretending the source was validated.
+`dots check generated` also verifies tracked generation. The shared Gruvbox
+palette generator must match its tracked outputs, and both it and the Telegram
+renderer are checked for deterministic output. `dots check all` includes these
+checks, so the existing CI workflow gains reproducibility/stale-generated
+coverage without a separate CI implementation.
+
+## Provisioning
+
+Package installation is intentionally outside normal apply. `dots provision` is
+an explicit new-machine operation that consumes the same profile package and
+system-prerequisite declarations. `dots provision --check` only reports what is
+missing; `--yes` skips the interactive confirmation.
+
+Only the real Arch backend is implemented now: repository packages use pacman,
+AUR packages use an installed `paru` or `yay`, and isolated CLI tools use
+`uv tool`. System prerequisites currently use `systemctl enable --now`. Other
+distribution backends are intentionally deferred until a real second OS needs
+them; application configs do not depend on a package-manager portability layer.
+
+The intended fresh-machine flow is therefore:
+
+```text
+dots provision   # opt-in external packages/system prerequisites
+dots plan        # inspect dotfiles drift
+dots apply       # converge dotfiles-owned state
+dots doctor      # verify final profile state
+```
+
+## Other commands
+
+The command catalog is data: `dots commands --json` exposes the same stable
+public names/usage strings as help. Useful explicit abbreviations include `pl`
+(plan), `a` (apply), `d` (doctor), `c` (check), `hist` (history), `rb`
+(rollback), `pv` (provision), `rs` (restart), `rf` (refresh), `s` (shell), `p`
+(panel), `db` (debug), `ls` (commands), and `h` (help).
+
+`restart` owns routine managed user-service restarts. `refresh` rebuilds derived
+state. `dots shell` / `dots panel` expose the stable Quickshell control surface;
+raw arbitrary Quickshell IPC is not public `dots` API. `debug` remains
+observational and can omit journal text with `--no-logs`.
+
+Waybar remains a retired-component migration. An old managed Waybar symlink is
+backed up before removal; stale cache is derived state and removed without
+backup; an unmanaged real config remains untouched and blocks automatic
+convergence.

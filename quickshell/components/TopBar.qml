@@ -118,6 +118,15 @@ Variants {
             color: trayMouse.containsMouse ? bars.colors.bgHover : "transparent"
             radius: bars.ui.barButtonRadius
 
+            function openMenu() {
+              const rect = trayItem.QsWindow.itemRect(trayItem)
+              trayItem.modelData.display(
+                trayItem.QsWindow.window,
+                Math.round(rect.x),
+                Math.round(rect.y + rect.height)
+              )
+            }
+
             Image {
               anchors.centerIn: parent
               width: 17
@@ -126,23 +135,17 @@ Variants {
               fillMode: Image.PreserveAspectFit
             }
 
-            QsMenuAnchor {
-              id: trayMenu
-              menu: trayItem.modelData.menu
-              anchor.item: trayItem
-            }
-
             MouseArea {
               id: trayMouse
               anchors.fill: parent
               hoverEnabled: true
               acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
               onClicked: function(mouse) {
-                if (mouse.button === Qt.MiddleButton && typeof trayItem.modelData.secondaryActivate === "function") {
+                if (mouse.button === Qt.MiddleButton) {
                   trayItem.modelData.secondaryActivate()
                 } else if (trayItem.modelData.hasMenu) {
-                  trayMenu.open()
-                } else if (typeof trayItem.modelData.activate === "function") {
+                  trayItem.openMenu()
+                } else {
                   trayItem.modelData.activate()
                 }
               }

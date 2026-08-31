@@ -195,6 +195,140 @@ def render_claude(c: dict[str, str]) -> str:
     return json.dumps({"name": "gruvbox-material", "base": "dark", "overrides": overrides}, indent=2) + "\n"
 
 
+def render_copyq(c: dict[str, str]) -> str:
+    # Full Gruvbox Material theme for CopyQ, matching the shape of bundled
+    # presets like nord.ini and onedark.ini. Includes CSS templates for menus,
+    # toolbar, tabs, search bar, and item styling.
+    return f"""[General]
+css_template_items=items
+css_template_main_window=main_window
+css_template_menu=menu
+css_template_notification=notification
+
+style_main_window=true
+show_number=true
+show_scrollbars=false
+font_antialiasing=true
+use_system_icons=false
+
+icon_size=8
+item_spacing=0
+num_margin=2
+
+font="Sans,11,-1,5,50,0,0,0,0,0"
+find_font="Sans,11,-1,5,50,0,0,0,0,0"
+num_font="Sans,8,-1,5,50,0,0,0,0,0"
+edit_font="Sans,11,-1,5,50,0,0,0,0,0"
+notes_font="Sans,11,-1,5,50,0,0,0,0,0"
+notification_font="Sans,11,-1,5,50,0,0,0,0,0"
+
+bg={c['bg']}
+fg={c['fg']}
+alt_bg={c['bg_soft']}
+sel_bg={c['bg_hover']}
+sel_fg={c['fg_ui']}
+find_bg={c['yellow']}
+find_fg={c['bg']}
+edit_bg={c['bg_soft']}
+edit_fg={c['fg_ui']}
+notes_bg={c['bg_soft']}
+notes_fg={c['fg']}
+num_fg={c['gray_dim']}
+num_sel_fg={c['fg_ui']}
+notification_bg={c['bg_soft']}
+notification_fg={c['fg']}
+
+css=
+
+menu_bar_css="
+    ;background: ${{bg}}
+    ;color: ${{fg}}
+    ;padding: 0.15em
+    ;border-radius: 5%"
+menu_bar_disabled_css=
+menu_bar_selected_css="
+    ;background: ${{sel_bg}}
+    ;color: ${{fg}}"
+menu_css="
+    ;background: ${{alt_bg}}
+    ;color: ${{fg}}
+    ;border: 1px solid ${{sel_bg}}"
+
+tool_bar_css="
+    ;background: ${{bg}}
+    ;color: ${{fg}}
+    ;border: 0"
+tool_button_css="
+    ;background: ${{bg}}
+    ;color: ${{fg}}
+    ;font-weight: normal
+    ;border: 0
+    ;border-radius: 5%"
+tool_button_pressed_css="
+    ;background: ${{num_fg}}"
+tool_button_selected_css="
+    ;background: ${{sel_bg}}
+    ;color: ${{fg}}"
+
+search_bar="
+    ;background: ${{find_bg}}
+    ;color: ${{find_fg}}
+    ;margin: 0.2em 0 0.1em 0
+    ;padding: 0.2em 0 0.2em 0
+    ;border: 1px solid ${{find_bg}}"
+search_bar_focused="
+    ;margin: 0.2em 0 0.1em 0
+    ;padding: 0.2em 0 0.2em 0
+    ;border: 1px solid ${{sel_bg}}"
+
+tab_bar_css="
+    ;background: ${{bg}}"
+tab_bar_item_counter="
+    ;color: ${{red}}
+    ;font-size: 6pt"
+tab_bar_scroll_buttons_css="
+    ;background: ${{bg}}
+    ;color: ${{fg}}
+    ;border: 0"
+tab_bar_sel_item_counter="
+    ;color: ${{red}}"
+tab_bar_tab_unselected_css="
+    ;background: ${{bg}}
+    ;color: ${{num_fg}}
+    ;padding: 0.2em
+    ;border: 1px solid ${{bg}}"
+tab_bar_tab_selected_css="
+    ;background: ${{alt_bg}}
+    ;color: ${{fg}}
+    ;padding: 0.2em
+    ;border: 1px solid ${{num_fg}}
+    ;border-radius: 5%"
+
+tab_tree_css="
+    ;background: ${{bg}}
+    ;color: ${{num_fg}}"
+tab_tree_item_counter="
+    ;color: ${{red}}
+    ;font-size: 6pt"
+tab_tree_sel_item_counter="
+    ;color: ${{red}}"
+tab_tree_sel_item_css="
+    ;background: ${{bg}}
+    ;color: ${{fg}}
+    ;text-decoration: underline"
+
+item_css="
+    ;padding: 0.3em 0.5em 0.5em 0.5em"
+alt_item_css=
+sel_item_css=
+cur_item_css="
+    ;border: 1px solid ${{sel_bg}}"
+hover_item_css="
+    ;background: ${{bg_hover}}"
+notes_css=
+"""
+
+
 def render_yazi(c: dict[str, str]) -> str:
     # Keep the current classic-Gruvbox Yazi flavor byte-for-byte in structure;
     # only its color values come from the shared palette.
@@ -328,6 +462,7 @@ def generated_files(c: dict[str, str]) -> dict[Path, str]:
         ROOT / "scripts/generated-colors.sh": render_shell(c),
         ROOT / "quickshell/config/Colors.qml": render_shell_colors(c),
         ROOT / ".claude/themes/gruvbox-material.json": render_claude(c),
+        ROOT / "copyq/gruvbox.ini": render_copyq(c),
         ROOT / "yazi/flavors/gruvbox-dark.yazi/flavor.toml": render_yazi(c),
     }
 

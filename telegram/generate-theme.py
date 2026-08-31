@@ -31,7 +31,27 @@ def zip_entry(name: str) -> zipfile.ZipInfo:
 
 
 def apply_telegram_overrides(palette: str) -> str:
-    """Add Telegram-only colors that are not part of the shared surfaces."""
+    """Apply Telegram-only readability tweaks and semantic colors."""
+    daylight_replacements = {
+        "msgInBgSelected: GB_BG_HOVER;": "msgInBgSelected: GB_BG_ALT;",
+        "msgOutBg: GB_BG_SOFT;": "msgOutBg: GB_BG;",
+        "msgOutBgSelected: GB_BG_MUTED;": "msgOutBgSelected: GB_BG_SOFT;",
+        "msgServiceFg: GB_FG_SOFT;": "msgServiceFg: GB_FG_BRIGHT;",
+        "msgServiceBg: #1d2021cc;": "msgServiceBg: #1d2021f0;",
+        "msgServiceBgSelected: #504945dd;": "msgServiceBgSelected: #282828f0;",
+        "historySystemBg: #1d2021cc;": "historySystemBg: #1d2021f0;",
+        "historySystemBgSelected: #504945dd;": "historySystemBgSelected: #282828f0;",
+        "historySystemFg: GB_FG_SOFT;": "historySystemFg: GB_FG_BRIGHT;",
+        "mediaInFg: GB_GRAY_DIM;": "mediaInFg: GB_FG_SOFT;",
+        "mediaInFgSelected: GB_FG_SOFT;": "mediaInFgSelected: GB_FG_BRIGHT;",
+        "mediaOutFg: GB_GRAY_DIM;": "mediaOutFg: GB_FG_SOFT;",
+        "mediaOutFgSelected: GB_FG_SOFT;": "mediaOutFgSelected: GB_FG_BRIGHT;",
+    }
+    for old, new in daylight_replacements.items():
+        if old not in palette:
+            raise ValueError(f"Telegram daylight replacement anchor not found: {old}")
+        palette = palette.replace(old, new, 1)
+
     overrides = """
 
 // Telegram folder sidebar.

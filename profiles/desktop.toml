@@ -50,6 +50,41 @@ required = true
 reason = "starts and manages the Hyprland session"
 
 [[packages]]
+command = "hypridle"
+package = "hypridle"
+manager = "pacman"
+required = true
+reason = "idle daemon started by hypr/modules/autostart.lua"
+
+[[packages]]
+command = "hyprlock"
+package = "hyprlock"
+manager = "pacman"
+required = true
+reason = "screen locker used by hypridle.conf and the SUPER+Home bind"
+
+[[packages]]
+command = "hyprpaper"
+package = "hyprpaper"
+manager = "pacman"
+required = true
+reason = "wallpaper daemon started by autostart and driven by darkman's wallpaper hook"
+
+[[packages]]
+command = "hyprpicker"
+package = "hyprpicker"
+manager = "pacman"
+required = true
+reason = "cursor freeze used by kanata screenshot-region.sh"
+
+[[packages]]
+command = "hyprland-per-window-layout"
+package = "hyprland-per-window-layout"
+manager = "aur"
+required = true
+reason = "per-window keyboard layout daemon started by autostart.lua"
+
+[[packages]]
 command = "kanata"
 package = "kanata-bin"
 manager = "aur"
@@ -118,3 +153,10 @@ package = "darkman"
 manager = "aur"
 required = true
 reason = "theme switching service"
+
+[[packages]]
+command = "rofimoji"
+package = "rofimoji"
+manager = "pacman"
+required = true
+reason = "emoji picker bound in kanata/config.kbd"

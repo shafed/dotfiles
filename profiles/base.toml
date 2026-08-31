@@ -2,7 +2,7 @@
 description = "CLI, editor and shared dotfiles used on every machine"
 includes = []
 capabilities = ["base"]
-config_dirs = ["kitty", "nvim", "yazi", "lazygit", "sioyek", "zathura"]
+config_dirs = ["kitty", "nvim", "yazi", "lazygit", "sioyek"]
 sources = ["scripts/sudo-notify.sh"]
 
 [[links]]
@@ -90,6 +90,13 @@ required = true
 reason = "directory navigation used by zsh"
 
 [[packages]]
+command = "eza"
+package = "eza"
+manager = "pacman"
+required = true
+reason = "ls alias in zsh/zshrc"
+
+[[packages]]
 command = "fzf"
 package = "fzf"
 manager = "pacman"
@@ -172,3 +179,10 @@ package = "pre-commit"
 manager = "pacman"
 required = false
 reason = "local repository hooks"
+
+[[packages]]
+command = "notify-send"
+package = "libnotify"
+manager = "pacman"
+required = false
+reason = "best-effort desktop notifications in sudo-notify.sh, nvim-edit-handler.sh and obsidian-sync.sh"

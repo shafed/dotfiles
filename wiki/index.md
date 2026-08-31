@@ -1,7 +1,7 @@
 ---
 title: index
 type: index
-updated: 2026-08-30
+updated: 2026-08-31
 ---
 
 # Dotfiles wiki — index
@@ -12,8 +12,7 @@ rules: [../CLAUDE.md](../CLAUDE.md) (`AGENTS.md` symlinks to it).
 
 ## Setup
 
-- **[bootstrap](bootstrap.md)** — deploying on a new machine; `./dots apply` is
-  the primary entrypoint and `bootstrap.sh` is only a compatibility wrapper.
+- **[bootstrap](bootstrap.md)** — deploying on a new machine via `./dots apply`.
 - **[dots](dots.md)** — installed CLI for apply/doctor/check, migrations,
   desktop controls and diagnostics.
 

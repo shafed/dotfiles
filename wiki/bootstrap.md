@@ -1,9 +1,8 @@
 ---
 title: bootstrap
 type: topic
-updated: 2026-08-30
+updated: 2026-08-31
 covers:
-  - bootstrap.sh
   - dots
   - scripts/dots-apply.sh
   - scripts/dots-lib.sh
@@ -12,12 +11,13 @@ covers:
 
 # Bootstrap — deploying on a new machine
 
-Arch Linux + Hyprland. The primary fresh-machine command is now `./dots apply`
-from the repo root. `dots` is already executable inside the checkout, so a
-separate installer is unnecessary; the apply pass links itself into
-`~/.local/bin` for subsequent use. `bootstrap.sh` remains only so old muscle
-memory/scripts keep working — it forwards its arguments to `dots apply`, and
-legacy `--check` / `--link` are accepted there.
+Arch Linux + Hyprland. The fresh-machine command is `./dots apply` from the
+repo root. `dots` is already executable inside the checkout, so no separate
+installer is needed; the apply pass links itself into `~/.local/bin` for
+subsequent use. Legacy `--check` / `--link` flags are accepted directly by
+`apply` — a holdover from the `bootstrap.sh` wrapper it replaced, removed
+2026-08-31 once nothing depended on the old script name
+([decisions](decisions.md)).
 
 `apply` reports missing required packages but never installs them
 ([decisions](decisions.md)). It then converges managed symlinks, migrations and
@@ -44,7 +44,7 @@ current list. Three things are not obvious from the link list itself:
 
 - ⚠️ **The `no-coauthor` hook is only half-installed by design.** `apply` links
   `.claude/hooks/no-coauthor.sh` into `~/.claude/hooks/`, but the `hooks` block
-  that *registers* it lives in `~/.claude/settings.json` — machine state,
+  that _registers_ it lives in `~/.claude/settings.json` — machine state,
   untracked, a real file rather than a symlink. A fresh machine gets the script
   and no registration, so the guard silently never fires ([global](global.md)).
 - ⚠️ **`~/.local/bin` is on the interactive shell's `PATH` but not the systemd
@@ -83,7 +83,7 @@ whether new files get committed until someone noticed by hand.
 
 ⚠️ **Gotcha**: `.agents/` is Codex's namespace and easy to miss because
 `~/.codex/skills/` also works. Prefer the in-repo path — the global one makes
-every skill visible in *every* repo, where a taxonomy built for this flat layout
+every skill visible in _every_ repo, where a taxonomy built for this flat layout
 is wrong.
 
 ## Manual setup outside the repo

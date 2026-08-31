@@ -1,19 +1,20 @@
 ---
 title: sioyek
 type: component
-updated: 2026-08-15
+updated: 2026-08-31
 covers:
   - sioyek/
-  - bootstrap.sh
+  - scripts/dots-apply.sh
 ---
 
 # sioyek
 
 PDF viewer for papers/technical books. Config in `../sioyek/` is only
 `prefs_user.config` (inverse search into nvim, `always_copy_selected_text`)
-+ `keys_user.config` (vim-style rebinds, deliberately overriding stock keys —
-the startup "Warning: key overwritten by keys_user.config" lines are
-expected, not an error).
+
+- `keys_user.config` (vim-style rebinds, deliberately overriding stock keys —
+  the startup "Warning: key overwritten by keys_user.config" lines are
+  expected, not an error).
 
 The non-trivial part is **not** the config — it's getting the window to appear
 at all on this machine.
@@ -41,7 +42,7 @@ matrix (same PDF, all four combinations):
 
 ⚠️ **Gotcha**: the long-standing `LIBGL_ALWAYS_SOFTWARE=1` workaround was
 **itself a second bug**, not a fix — it breaks sioyek even on xcb. That variable
-only redirects *Mesa's* GL to llvmpipe, while EGL still resolves to the nvidia
+only redirects _Mesa's_ GL to llvmpipe, while EGL still resolves to the nvidia
 vendor library through libglvnd. GL and EGL then come from different drivers →
 `EGL_BAD_MATCH`. It was carried in four separate places until 2026-08-09.
 
@@ -50,13 +51,13 @@ vendor library through libglvnd. GL and EGL then come from different drivers →
 A `zsh` alias only covers the interactive shell. sioyek is launched from five
 places, four of which never see it:
 
-| launcher                                     | how it invokes sioyek                    |
-| -------------------------------------------- | ---------------------------------------- |
-| interactive shell                            | `sioyek` from `PATH`                     |
-| [yazi](yazi.md) `view_pdf` opener            | `sioyek %s1` from `PATH`                 |
-| [kanata](kanata.md) apps-layer `z`           | `switchApp.sh sioyek '$HOME/.local/bin/sioyek'` |
-| nvim vimtex (`vimtex_view_method = "sioyek"`) | `sioyek` from `PATH`                     |
-| `xdg-open` (nvim mini.files `<leader>o`)     | `~/.local/share/applications/sioyek.desktop` |
+| launcher                                      | how it invokes sioyek                           |
+| --------------------------------------------- | ----------------------------------------------- |
+| interactive shell                             | `sioyek` from `PATH`                            |
+| [yazi](yazi.md) `view_pdf` opener             | `sioyek %s1` from `PATH`                        |
+| [kanata](kanata.md) apps-layer `z`            | `switchApp.sh sioyek '$HOME/.local/bin/sioyek'` |
+| nvim vimtex (`vimtex_view_method = "sioyek"`) | `sioyek` from `PATH`                            |
+| `xdg-open` (nvim mini.files `<leader>o`)      | `~/.local/share/applications/sioyek.desktop`    |
 
 ⚠️ **The kanata row used bare `sioyek` until 2026-08-15** — same bug class as
 the alias: `(cmd zsh -lc ...)` is a non-interactive login shell, so `.zshrc`
@@ -66,7 +67,7 @@ so the `z` key hit the EGL_BAD_MATCH bug below on every launch even though
 the wrapper existed. See [kanata](kanata.md) for the full trace. Fixed by
 hardcoding the wrapper's path in `config.kbd` rather than relying on `PATH`.
 
-So `bootstrap.sh` writes a wrapper next to the existing `sudo` one:
+So `dots apply` writes a wrapper next to the existing `sudo` one:
 
 ```bash
 exec env -u LIBGL_ALWAYS_SOFTWARE QT_QPA_PLATFORM=xcb /usr/bin/sioyek "$@"
@@ -92,7 +93,7 @@ this repo** — the fix won't survive a fresh machine. Also note the two disagre
 sioyek is single-instance — a second launch hands the file to the running one
 over a local socket and exits (~0.07 s). When the GL failure hits, **the process
 does not die**: it stays alive with no window. Every later launch then forwards
-into that zombie and silently does nothing, so the *original* error scrolls past
+into that zombie and silently does nothing, so the _original_ error scrolls past
 only once and never reappears.
 
 Symptom: `pgrep sioyek` shows a process, `hyprctl clients` shows no `sioyek`

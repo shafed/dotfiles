@@ -1,7 +1,7 @@
 ---
 title: global
 type: topic
-updated: 2026-08-14
+updated: 2026-08-31
 covers:
   - instructions.md
   - .claude/skills/commit/SKILL.md
@@ -19,7 +19,7 @@ way".
 ## Global agent instructions (`instructions.md`)
 
 `instructions.md` at the repo root is the **single source** of what every CLI
-agent loads in every project. `bootstrap.sh` symlinks it under the name each
+agent loads in every project. `dots apply` symlinks it under the name each
 tool expects: `~/.claude/CLAUDE.md`, `~/.config/opencode/AGENTS.md`,
 `~/.codex/AGENTS.md`.
 
@@ -51,7 +51,7 @@ All three symlinks and the hook script are in place again as of 2026-08-14, and
 `instructions.md` is tracked once more. ⚠️ **The one piece still missing is the
 hook's registration** in `~/.claude/settings.json` — the script is linked but
 nothing invokes it, so the guard never fires (see below for why that file is
-the one thing `bootstrap.sh` cannot repair).
+the one thing `dots apply` cannot repair).
 
 ### The one rule that was also enforced, not just stated
 
@@ -70,7 +70,7 @@ nothing enforces it right now.
   and double-fire here.
 - ⚠️ **Gotcha**: the `hooks` block in `~/.claude/settings.json` is **not tracked
   by this repo** — that file holds machine state (plugins, marketplaces) and is
-  a real file, not a symlink. `bootstrap.sh` restores the script but not its
+  a real file, not a symlink. `dots apply` restores the script but not its
   registration; on a fresh machine the block has to be re-added by hand. This is
   exactly how it went missing here.
 - The guard only sees an agent's `Bash` calls. A commit typed directly in a

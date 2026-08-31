@@ -4,7 +4,6 @@ type: topic
 updated: 2026-08-31
 covers:
   - dots
-  - bootstrap.sh
   - scripts/dots-lib.sh
   - scripts/dots-apply.sh
   - scripts/dots-doctor.sh
@@ -28,8 +27,7 @@ chicken-and-egg problem. `./dots apply` is the deployment entrypoint on a fresh
 machine and also the convergence command on an existing one. It installs the
 managed links (including `~/.local/bin/dots`), applies migrations, invalidates
 derived Quickshell state, refreshes already-running managed user services, then
-finishes with `doctor`. `bootstrap.sh` is only a compatibility wrapper around
-that command.
+finishes with `doctor`.
 
 Package installation deliberately remains outside `apply`. Missing required
 commands are reported before changes and remain `doctor` errors at the end; this

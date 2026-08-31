@@ -126,10 +126,10 @@ emojiPanSearchIconFg: GB_GRAY_DIM;
 // Chat history and message bubbles. Message text intentionally uses the
 // brightest Gruvbox foreground: Telegram is often read in bright ambient light,
 // where the normal shared foreground loses too much perceived contrast.
-historyTextInFg: GB_FG_BRIGHT;
-historyTextInFgSelected: GB_FG_BRIGHT;
-historyTextOutFg: GB_FG_BRIGHT;
-historyTextOutFgSelected: GB_FG_BRIGHT;
+historyTextInFg: #f3f0e6;
+historyTextInFgSelected: #fffaf0;
+historyTextOutFg: #f3f0e6;
+historyTextOutFgSelected: #fffaf0;
 historyLinkInFg: GB_BLUE;
 historyLinkInFgSelected: GB_AQUA;
 historyLinkOutFg: GB_AQUA;
@@ -142,23 +142,23 @@ historyFileNameOutFgSelected: GB_BLUE;
 // Incoming bubbles are darker than the shared surface so body text stays easy
 // to read in daylight. Outgoing bubbles keep GB_BG_SOFT so direction remains
 // visually obvious without introducing non-Gruvbox colors.
-msgInBg: GB_BG_HARD;
-msgInBgSelected: GB_BG_HOVER;
-msgOutBg: GB_BG_SOFT;
-msgOutBgSelected: GB_BG_MUTED;
+msgInBg: #41423b;
+msgInBgSelected: #55564d;
+msgOutBg: #5b5c52;
+msgOutBgSelected: #6b6c60;
 msgSelectOverlay: #d8a6574c;
 msgStickerOverlay: #d8a65740;
 msgInShadow: #00000020;
 msgInShadowSelected: #00000030;
 msgOutShadow: #00000020;
 msgOutShadowSelected: #00000030;
-msgInDateFg: GB_FG_SOFT;
-msgInDateFgSelected: GB_FG_BRIGHT;
-msgOutDateFg: GB_FG_SOFT;
-msgOutDateFgSelected: GB_FG_BRIGHT;
-msgServiceFg: GB_FG_SOFT;
-msgServiceBg: #1d2021cc;
-msgServiceBgSelected: #504945dd;
+msgInDateFg: #d8d4c8;
+msgInDateFgSelected: #f3f0e6;
+msgOutDateFg: #d8d4c8;
+msgOutDateFgSelected: #f3f0e6;
+msgServiceFg: #f3f0e6;
+msgServiceBg: #41423bf0;
+msgServiceBgSelected: #55564df0;
 msgInServiceFg: GB_BLUE;
 msgInServiceFgSelected: GB_AQUA;
 msgOutServiceFg: GB_AQUA;
@@ -195,9 +195,9 @@ historyUnreadBarBorder: GB_BG_MUTED;
 historyUnreadBarFg: GB_YELLOW;
 historyForwardChooseBg: #1d2021aa;
 historyForwardChooseFg: GB_FG_BRIGHT;
-historySystemBg: #1d2021cc;
-historySystemBgSelected: #504945dd;
-historySystemFg: GB_FG_SOFT;
+historySystemBg: #41423bf0;
+historySystemBgSelected: #55564df0;
+historySystemFg: #f3f0e6;
 
 // Peer accents and avatars.
 historyPeer1NameFg: GB_RED;
@@ -219,10 +219,10 @@ historyPeer8UserpicBg: GB_BG_MUTED;
 historyPeerUserpicFg: GB_BG_HARD;
 
 // Media, files and playback.
-mediaInFg: GB_GRAY_DIM;
-mediaInFgSelected: GB_FG_SOFT;
-mediaOutFg: GB_GRAY_DIM;
-mediaOutFgSelected: GB_FG_SOFT;
+mediaInFg: #d8d4c8;
+mediaInFgSelected: #f3f0e6;
+mediaOutFg: #d8d4c8;
+mediaOutFgSelected: #f3f0e6;
 mediaPlayerBg: GB_BG_ALT;
 mediaPlayerActiveFg: GB_YELLOW;
 mediaPlayerInactiveFg: GB_GRAY_DIM;

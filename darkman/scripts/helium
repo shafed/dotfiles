@@ -1,0 +1,13 @@
+#!/bin/sh
+# darkman hook: rewrite and live-reload Helium's exact Gruvbox theme.
+set -e
+
+case "$1" in
+dark | light) ;;
+*) exit 0 ;;
+esac
+
+script="$(readlink -f "$0")"
+repo_root="$(dirname "$(dirname "$(dirname "$script")")")"
+
+python3 "$repo_root/helium/switch-gruvbox-theme.py" "$1" >/dev/null

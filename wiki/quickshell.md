@@ -1,7 +1,7 @@
 ---
 title: quickshell
 type: component
-updated: 2026-08-30
+updated: 2026-08-31
 covers:
   - quickshell/shell.qml
   - quickshell/components/
@@ -143,6 +143,11 @@ channel loading and a right-side thumbnail preview. Search ranking keeps
 provider/fuzzy relevance primary and adds a bounded logarithmic usage bonus;
 matched query characters are rendered with the generated Gruvbox accent. The
 picker has its own `youtube` IPC target.
+
+Search match highlighting in Applications and Bookmarks reads their local
+`Colors` object directly. Projects/Sessions and YouTube instead receive the
+same palette as a required component property; keeping those ownership models
+distinct prevents a match-only QML exception from blanking result text.
 
 `components/ClipboardOverlay.qml` uses the same keyboard contract and adds
 inline filtering. Clipboard paste is scheduled shortly after hiding the

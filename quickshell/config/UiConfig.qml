@@ -23,7 +23,7 @@ QtObject {
   readonly property int panelOuterGap: 12
   readonly property int panelWidth: 430
   readonly property int panelHeight: 560
-  readonly property int systemOverviewHeight: 360
+  readonly property int systemOverviewHeight: 390
   readonly property int panelPadding: 14
   readonly property int panelSpacing: 8
   readonly property int panelRadius: 8

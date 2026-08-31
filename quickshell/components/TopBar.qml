@@ -97,11 +97,6 @@ Variants {
         }
 
         ClickButton {
-          label: "CLIP"
-          onPressed: bars.shell.run(["bash", "-lc", "QT_QPA_PLATFORM=xcb copyq toggle"])
-        }
-
-        ClickButton {
           label: bars.notifications.dnd ? "DND" : "BELL"
           active: bars.shell.openPanel === "notifications"
           onPressed: bars.shell.togglePanel("notifications")
@@ -116,28 +111,40 @@ Variants {
         Repeater {
           model: SystemTray.items
           delegate: Rectangle {
+            id: trayItem
             required property var modelData
             width: bars.ui.barButtonMinWidth
             height: bars.ui.barButtonHeight
             color: trayMouse.containsMouse ? bars.colors.bgHover : "transparent"
             radius: bars.ui.barButtonRadius
+
             Image {
               anchors.centerIn: parent
               width: 17
               height: 17
-              source: modelData.icon
+              source: trayItem.modelData.icon
               fillMode: Image.PreserveAspectFit
             }
+
+            QsMenuAnchor {
+              id: trayMenu
+              menu: trayItem.modelData.menu
+              anchor.item: trayItem
+            }
+
             MouseArea {
               id: trayMouse
               anchors.fill: parent
               hoverEnabled: true
-              acceptedButtons: Qt.LeftButton | Qt.RightButton
+              acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
               onClicked: function(mouse) {
-                if (mouse.button === Qt.RightButton && typeof modelData.secondaryActivate === "function")
-                  modelData.secondaryActivate()
-                else if (typeof modelData.activate === "function")
-                  modelData.activate()
+                if (mouse.button === Qt.MiddleButton && typeof trayItem.modelData.secondaryActivate === "function") {
+                  trayItem.modelData.secondaryActivate()
+                } else if (trayItem.modelData.hasMenu) {
+                  trayMenu.open()
+                } else if (typeof trayItem.modelData.activate === "function") {
+                  trayItem.modelData.activate()
+                }
               }
             }
           }

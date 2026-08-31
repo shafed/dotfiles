@@ -79,6 +79,26 @@ Item {
     return String(node.description || node.nickname || node.name || "Audio")
   }
 
+  function applyLayoutSnapshot(raw) {
+    var payload = null
+    try { payload = JSON.parse(String(raw || "")) } catch (e) { return }
+    var keyboards = payload && payload.keyboards ? payload.keyboards : []
+    var fallback = ""
+    for (var i = 0; i < keyboards.length; i++) {
+      var keyboard = keyboards[i] || {}
+      var name = String(keyboard.name || "")
+      if (name.indexOf("hl-virtual-keyboard") === 0) continue
+      var layout = String(keyboard.active_keymap || "")
+      if (!layout) continue
+      if (keyboard.main === true) {
+        layoutChanged(layout)
+        return
+      }
+      if (!fallback) fallback = layout
+    }
+    if (fallback) layoutChanged(fallback)
+  }
+
   function applyLayoutEvent(event) {
     if (!event || String(event.name || "") !== "activelayout") return
     var parts = null
@@ -120,6 +140,15 @@ Item {
   Connections {
     target: Hyprland
     function onRawEvent(event) { service.applyLayoutEvent(event) }
+  }
+
+  Process {
+    running: true
+    command: ["hyprctl", "-j", "devices"]
+    stdout: StdioCollector {
+      waitForEnd: true
+      onStreamFinished: service.applyLayoutSnapshot(text)
+    }
   }
 
   Process {

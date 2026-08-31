@@ -1,7 +1,7 @@
 ---
 title: decisions
 type: topic
-updated: 2026-08-15
+updated: 2026-08-31
 ---
 
 # decisions — major decisions and rejected alternatives
@@ -12,6 +12,7 @@ Key "why it's done this way" page. Each entry:
 ## Recorded
 
 ### brotab → BruvTab fork (2026-08-15)
+
 - **Decision**: replace `brotab` with `bruvtab`
   (https://github.com/pschmitt/bruvtab) — a maintained fork of brotab — as the
   tab-focus mechanism behind `bookmarks.sh`/`search.sh`. In `scripts/lib.sh`
@@ -36,12 +37,13 @@ Key "why it's done this way" page. Each entry:
   the drop-in path with the least churn.
 
 ### The wiki is ablation-tested, not just written (2026-08-14)
+
 - **Decision**: every line must survive the question **"could an agent recover
   this by opening the config?"** If yes, it's duplication and gets deleted. The
   rule is stated in [CONVENTIONS](CONVENTIONS.md); the whole wiki was passed
   through it once on this date.
 - **Reason**: adapted from Anthropic's Opus 5 prompting guidance, which is half
-  about *removing* inherited instructions. But the criterion had to change on
+  about _removing_ inherited instructions. But the criterion had to change on
   the way over: a system-prompt line is paid for in **every** session, while a
   wiki page is paid for only when read. So the test isn't "does this line earn
   permanent context" but "is this line recoverable" — which is why the wiki can
@@ -51,7 +53,7 @@ Key "why it's done this way" page. Each entry:
   above them, `index.md` entries that summarized pages instead of routing to
   them, and history entries about code that no longer exists.
 - **What it deliberately kept**: every `⚠️ Gotcha`, every rejected alternative,
-  and anything describing a *third-party* behavior (darkman's XDG scan, kitty's
+  and anything describing a _third-party_ behavior (darkman's XDG scan, kitty's
   layout naming, yazi's config renames) — none of that is in this repo's code.
 - **Surprise finding**: roughly a third of the changes were not deletions but
   **replacing a description with its reason**. "JetBrains Mono Nerd Font (Mono)
@@ -61,6 +63,7 @@ Key "why it's done this way" page. Each entry:
   pages turned out to have almost nothing to cut.
 
 ### `scripts.md` and `nvim.md` became maps of content (2026-08-14)
+
 - **Decision**: the two 400-line pages are now short hub pages that route to
   `scripts-{pickers,scratch,logbook,misc}.md` and
   `nvim-{ui,obsidian,clipboard,layout}.md`. [CONVENTIONS](CONVENTIONS.md) was
@@ -79,6 +82,7 @@ Key "why it's done this way" page. Each entry:
   that spans siblings.
 
 ### Page-status markers (🌱/🚧/✅) removed from the wiki (2026-08-14)
+
 - **Decision**: pages and `index.md` rows no longer carry a completeness marker.
 - **Reason**: the marker stopped discriminating. 15 of 18 pages were 🚧 —
   `scripts.md` (417 lines, a dozen hard-won gotchas) and `waybar.md` (61 lines of
@@ -93,9 +97,10 @@ Key "why it's done this way" page. Each entry:
   edit, and the payoff is a badge — the agent already learns a page's depth by
   reading it, which it must do anyway.
 - **Aligned with**: Anthropic's Opus 5 prompting guidance, which is half about
-  *removing* inherited scaffolding rather than adding rules.
+  _removing_ inherited scaffolding rather than adding rules.
 
 ### Mechanizable rules go into hooks, judgment stays prose (2026-08-09)
+
 - **Decision**: a rule leaves `CLAUDE.md` for a `.claude/hooks/` script only when
   it is checkable **without judgment**. Two moved:
   [../.claude/hooks/wiki-date.sh](../.claude/hooks/wiki-date.sh) (`PostToolUse`
@@ -107,13 +112,13 @@ Key "why it's done this way" page. Each entry:
 - **Scope follows the rule, not the file**: the wiki hooks are repo-scoped
   (`.claude/settings.json`), while `no-coauthor.sh` enforces a line from
   `instructions.md` that holds everywhere, so it is registered in
-  `~/.claude/settings.json` and linked into `$HOME` by `bootstrap.sh` —
+  `~/.claude/settings.json` and linked into `$HOME` by `dots apply` —
   [global](global.md). Registering it in both places would just fire it twice.
 - **Reason**: **determinism, not token economy**. An instruction competes for
   attention and loses it on a long task; a hook fires every time. The date bump
   fixes something prose cannot: the agent does not reliably know today's date,
   `date +%F` does.
-- **Cost**: a hook is free until it *prints*. Definitions never enter the
+- **Cost**: a hook is free until it _prints_. Definitions never enter the
   model's context — only `additionalContext` and a deny `reason` do. Both new
   hooks are silent on the happy path, so they cost 0 tokens.
   `wiki-reminder.sh` is the opposite: ~70–80 tokens per firing (its message is
@@ -124,14 +129,15 @@ Key "why it's done this way" page. Each entry:
   opencode don't execute Claude Code hooks, so those rules would silently
   vanish for them while `AGENTS.md` keeps promising them — against this repo's
   own one-source rule ([cli-agents](cli-agents.md)). Prose also carries the
-  *why*, which a one-line reminder cannot.
+  _why_, which a one-line reminder cannot.
 - ⚠️ **Gotcha**: a commit guard must anchor on the **command segment** (start,
   or after `&&`/`;`/`|`), not on a substring — the first version blocked its own
-  test case, because the test merely *contained* the words `git commit`. It also
+  test case, because the test merely _contained_ the words `git commit`. It also
   requires the colon in `Co-Authored-By:`; without it, the commit documenting
   this very rule would block itself.
 
 ### `component: subject` commits, driven by a `/commit` skill (2026-08-08)
+
 - **Decision**: commit messages are `component: subject`, where the component is
   the first path segment of the change. Enforced by the `/commit` skill
   ([global](global.md)), which splits the tree one commit per component and runs
@@ -151,7 +157,7 @@ Key "why it's done this way" page. Each entry:
   **why** a change was made, and the why is what this wiki exists for. The
   `model:` key in a skill's frontmatter gets the cheap model without that cost —
   it is a turn-scoped model switch, and only `context: fork` actually forks a
-  subagent. Cheap *and* in-context, so the trade-off that motivated the subagent
+  subagent. Cheap _and_ in-context, so the trade-off that motivated the subagent
   was never real.
 - **Rejected**: `effort: low` on Sonnet, briefly in place while the above was
   misunderstood. From the Claude Code model registry: Haiku 4.5 is ~3.75× cheaper
@@ -163,6 +169,7 @@ Key "why it's done this way" page. Each entry:
   more often, not to make the splitting smarter.
 
 ### Removal of the yazi autosession plugin (2026-07-18)
+
 - **Decision**: drop `barbanevosa/autosession` from yazi entirely — `package.toml`
   dep, `plugins/autosession.yazi/`, the `init.lua` `:setup()` call, and the `q`
   → `save-and-quit` binding in `keymap.toml`.
@@ -177,6 +184,7 @@ Key "why it's done this way" page. Each entry:
   worker fields, fetcher `id` → `group`) — see [yazi](yazi.md).
 
 ### Firefox → Helium as the default browser (2026-07-09)
+
 - **Decision**: use Helium as the default browser in Hyprland, kanata, zsh, and
   the fzf picker scripts. Browser-specific script behavior is centralized in
   `scripts/lib.sh` (`helium-browser`, class `helium`, profile
@@ -194,6 +202,7 @@ Key "why it's done this way" page. Each entry:
   [scripts-pickers](scripts-pickers.md), [hypr](hypr.md), [keymap](keymap.md).
 
 ### tmux → kitty native sessions (2026-06)
+
 - **Decision**: remove tmux; do multiplexing and splits with native kitty
   (windows/tabs/layouts). Navigation hotkeys are sent by kanata as `C-S-*`.
 - **Reason**: tmux duplicated terminal functionality — its own prefix (`C-s`), its
@@ -207,6 +216,7 @@ Key "why it's done this way" page. Each entry:
   [kitty](kitty.md).
 
 ### kanata as the single keymap engine
+
 - **Decision**: home-row mods, chords, layers, and force-layout — all in kanata,
   rather than spread across hypr `bind`, kitty `map`, zsh `bindkey`.
 - **Reason**: kanata operates at the input-device level, so one layout works
@@ -218,14 +228,16 @@ Key "why it's done this way" page. Each entry:
 - See [kanata](kanata.md), [keymap](keymap.md).
 
 ### Removal of Windows/WSL legacy (2026-07-01)
+
 - Removed `autohotkey/`, `glazewm/`, `wezterm/`, `start.bat`; cleaned up glazewm/WSL
   aliases and `winuser`/`explorer.exe`/`powershell.exe` from zshrc; `TERMCMD` → kitty.
 - Reason: the machine is now Arch/Hyprland only; the Windows part is no longer needed.
 - `awesome/` left as legacy but not yet removed (deliberately).
 
 ### Manual symlinks instead of stow/an install script (2026-07-01, superseded 2026-07-04)
+
 - **Decision**: wire up configs manually via symlinks `~/.config/<tool> →
-  ~/github/dotfiles/<tool>` (list — [bootstrap](bootstrap.md)).
+~/github/dotfiles/<tool>` (list — [bootstrap](bootstrap.md)).
 - **Reason**: one personal machine, few symlinks created only once —
   an install script/`stow` would be extra infrastructure with no payoff. It's
   transparently visible what links where.
@@ -235,6 +247,7 @@ Key "why it's done this way" page. Each entry:
   "revisit when" trigger (second machine / growing symlink count) was hit.
 
 ### Bootstrap script with plain symlinks, not GNU Stow (2026-07-04)
+
 - **Decision**: `bootstrap.sh` at repo root checks for required commands/packages
   (report-only, no auto-install), then `ln -sfvn`s each top-level config dir
   into `~/.config/<name>` (whole-directory symlinks: `hypr`, `kitty`, `nvim`,
@@ -256,11 +269,26 @@ Key "why it's done this way" page. Each entry:
   Also rejected: auto-installing missing packages via pacman/yay — more
   invasive and requires sudo; left as a manual step so the user reviews
   what's installed.
+- **Superseded 2026-08-31**: `./dots apply` had long since become the actual
+  implementation, with `bootstrap.sh` reduced to a one-line forwarder kept
+  only for old muscle memory. Removed once nothing still depended on the old
+  script name — see next entry.
 - See [bootstrap](bootstrap.md).
 
+### Removal of the `bootstrap.sh` compatibility wrapper (2026-08-31)
+
+- **Decision**: delete `bootstrap.sh`. `./dots apply` — which already accepted
+  the legacy `--check`/`--link` flags directly — is the only fresh-machine
+  entrypoint now.
+- **Reason**: the wrapper had held no logic of its own for a while, only
+  forwarding its arguments to `dots apply`; nothing in the repo, its tests, or
+  external scripts required the old name specifically.
+- See [bootstrap](bootstrap.md), [dots](dots.md).
+
 ### Repo rules in one file: AGENTS.md is a symlink to CLAUDE.md (2026-08-08)
+
 - **Decision**: `CLAUDE.md` holds this repo's agent rules; `AGENTS.md` is a
-  symlink to it (relative target, tracked by git). `bootstrap.sh` re-creates it
+  symlink to it (relative target, tracked by git). `dots apply` re-creates it
   only as repair.
 - **Reason**: `CLAUDE.md` used to be a note ("the main instructions are in
   AGENTS.md, read it"). Claude Code auto-loads only `CLAUDE.md`, so a session

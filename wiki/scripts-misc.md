@@ -1,7 +1,7 @@
 ---
 title: scripts-misc
 type: component
-updated: 2026-08-16
+updated: 2026-08-31
 covers:
   - scripts/watch-downloads.sh
   - scripts/sudo-notify.sh
@@ -37,10 +37,9 @@ The unit intentionally starts the script from `~/github/dotfiles/scripts/` rathe
 same shape as `nvim-edit-handler`) that shadows `/usr/bin/sudo` earlier in
 `$PATH` (`zsh/zshrc` puts `~/.local/bin` first). The real logic lives here so
 it's versioned with the rest of the dotfiles instead of only existing as an
-unversioned file in `~/.local/bin`. `bootstrap.sh` writes this wrapper (see
-`link_configs`'s "Installing ~/.local/bin wrappers" step), so a fresh
-`git clone` + `./bootstrap.sh` gets the notification working with no manual
-step.
+unversioned file in `~/.local/bin`. `dots apply`'s `install_links` step writes
+this wrapper, so a fresh `git clone` + `./dots apply` gets the notification
+working with no manual step.
 
 Sends a `notify-send` if a sudo call is about to block on a password **and** the
 terminal window it's running in isn't currently focused (Hyprland-only, via

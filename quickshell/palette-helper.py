@@ -263,29 +263,33 @@ def sync_favicons(rows):
             # exact URL has no mapping, without making a network request.
             by_host = {}
             for url in urls:
-                if url in best:
-                    continue
                 host = _favicon_host(url)
                 if host:
                     by_host.setdefault(host, []).append(url)
 
             host_query = """
-                SELECT m.page_url, b.image_data, b.width, b.height
+                SELECT m.page_url, f.url, b.image_data, b.width, b.height
                 FROM icon_mapping AS m
+                JOIN favicons AS f ON f.id = m.icon_id
                 JOIN favicon_bitmaps AS b ON b.icon_id = m.icon_id
                 WHERE (
                     m.page_url = ? OR instr(m.page_url, ?) = 1 OR
                     m.page_url = ? OR instr(m.page_url, ?) = 1
                 )
                   AND b.image_data IS NOT NULL
-                ORDER BY b.width DESC, b.height DESC
+                -- Prefer a site's dark-theme asset when Chromium has both.
+                -- The picker background is dark, and GitHub's default PNG is
+                -- a black transparent mark that otherwise looks invisible.
+                ORDER BY
+                    CASE WHEN lower(f.url) LIKE '%dark%' THEN 0 ELSE 1 END,
+                    b.width DESC, b.height DESC
             """
             for host, host_urls in by_host.items():
                 https_base = f"https://{host}"
                 http_base = f"http://{host}"
                 try:
                     fallback = None
-                    for page_url, image_data, width, height in db.execute(
+                    for page_url, _favicon_url, image_data, width, height in db.execute(
                         host_query,
                         (https_base, https_base + "/", http_base, http_base + "/"),
                     ):

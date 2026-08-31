@@ -1,7 +1,7 @@
 ---
 title: keymap
 type: topic
-updated: 2026-08-30
+updated: 2026-08-31
 covers:
   - kanata/config.kbd
   - hypr/hyprland.lua
@@ -43,14 +43,29 @@ keys go to Hyprland, and workspace chords arrive as normal Super+digit events.
   `b` Bookmarks, `e` Projects (named sessions + zoxide + SSH), `c` open Kitty
   Sessions and `u` YouTube. These active picker routes are all Quickshell now;
   the old QAT/fzf scripts are manual fallbacks only. The browser sub-layer
-  remains on hold `s`. System chords are `u+i` volume down, `i+o` volume up,
-  `o+p` mute, `j+k` brightness down, `k+l` brightness up, and `w+e` the compact
-  Quickshell system overview. The volume/brightness chords emit standard XF86
-  keycodes instead of running system commands themselves. ⚠️ `q` here runs
-  [close-window.sh](kanata.md), which is `hl.dsp.window.close()` for most apps —
-  **not** kill, so tray apps minimize instead of being SIGKILL'd — except
-  Telegram, which is force-killed since a graceful close just minimizes it to
-  tray instead of quitting.
+  remains on hold `s`.
+
+  System controls use adjacent-key chords with a spatial mnemonic rather than
+  unrelated letters:
+
+  - **top-right = sound:** `y+u` Audio, `u+i` volume down, `i+o` volume up,
+    `o+p` mute;
+  - **home-right = hardware/connectivity:** `h+j` Wi-Fi, `j+k` brightness down,
+    `k+l` brightness up, `l+;` Bluetooth;
+  - **top-left = software/system:** `w+e` overview, `e+r` AI limits, `r+t`
+    Updates;
+  - **bottom-left = quieter utilities:** `d+f` Notifications, `x+c` Calendar,
+    `c+v` Power.
+
+  `j+k`, `k+l`, `w+e` and `d+f` already have global meanings, so each keeps a
+  single `defchordsv2` definition and branches on the active layer. Outside
+  `apps` their previous behavior is unchanged. Volume/brightness chords emit
+  standard XF86 keycodes instead of running system commands themselves.
+
+  ⚠️ `q` here runs [close-window.sh](kanata.md), which is
+  `hl.dsp.window.close()` for most apps — **not** kill, so tray apps minimize
+  instead of being SIGKILL'd — except Telegram, which is force-killed since a
+  graceful close just minimizes it to tray instead of quitting.
 - **symbols / symbols2** (hold `e`/`r`, or chords `s+d` / `s+d+f`) — programmer
   symbols on the right hand, with xkb forced to US ([kanata](kanata.md)).
 - **navi** (hold `w`, or toggle via caps-hold) — arrows and navigation on the
@@ -68,7 +83,14 @@ thumb-layer routes above. `Super+F1` toggles the searchable Hotkeys panel,
 toggles the self-pasting Quickshell scratch editor. `Super+Shift+A/W/B/P/I/U/N`
 open Audio, Network, Bluetooth, Power, Agents, Updates and Notifications
 respectively. `apps+w+e` toggles the compact system overview through
-`dots-shell system`.
+`dots-shell system`; every overview destination also has the adjacent-key apps
+chord listed above.
+
+The System overview is also the mnemonic card: its left column contains
+software/information, its right column sound/hardware, and every entry shows its
+apps chord. The header reminds that `W+E` is the overview itself. Explicit
+Network/Bluetooth panel commands are allowed on desktops as well as laptops;
+only their top-bar visibility remains device-dependent.
 
 Clipboard is keyboard-first: opening gives its search input focus, typing
 filters history, arrows or `Ctrl-J/K` move the selected row, `Enter` pastes and
@@ -98,10 +120,10 @@ a kanata-layer rule, so its implementation belongs to
 | `h j k l`           | kanata HRM / navi / hypr `Super+hjkl`           | HRM fires only on opposite-hand hold; kanata never consumes a real Super                             |
 | digits `1-0`        | numplain / hypr `Super+N`                       | numplain emits **plain** digits; workspace switching only via numws                                  |
 | `C-tab` / `C-S-tab` | navi (browser tabs) / kitty                     | kitty only catches `C-S-*` while focused                                                             |
-| one-handed `C-S`    | HRM can't (same-hand = tap)                     | `j+k` keeps its Enter/C-S behavior outside `apps`; inside `apps` it is brightness down                |
-| `w+e`               | Tab chord / requested system overview           | one chord uses `switch` on active layer: `apps` = system overview, otherwise Tab                     |
-| `k+l`               | numplain / requested brightness up              | one chord uses `switch` on active layer: `apps` = brightness up, otherwise `numplain`                |
-| `j+k/k+l/w+e`       | global chords / apps actions                    | duplicate chord sets are forbidden, so each pair has one definition with an active-layer branch     |
+| one-handed `C-S`    | HRM can't (same-hand = tap)                     | `d+f`/`j+k` keep Esc/Enter+C-S behavior outside `apps`; inside `apps` they open Notifications / dim   |
+| `w+e`               | Tab chord / system overview                     | one chord uses `switch` on active layer: `apps` = system overview, otherwise Tab                     |
+| `k+l`               | numplain / brightness up                        | one chord uses `switch` on active layer: `apps` = brightness up, otherwise `numplain`                |
+| reused chord pairs  | global chords / apps system actions             | duplicate chord sets are forbidden, so reused pairs have one definition with an active-layer branch |
 | `Alt-t` / `^[t`     | kitty / zsh / nvim companion toggle             | zsh needs three zsh-vi-mode settings before this fires reliably — [zsh](zsh.md)                      |
 
 ## Forcing the US layout

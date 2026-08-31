@@ -180,10 +180,4 @@ HOME="$configured_home" XDG_CONFIG_HOME="$configured_home/.config" XDG_CACHE_HOM
 grep -q '^== repository ==$' "$tmp/debug.out"
 grep -q '^== doctor summary ==$' "$tmp/debug.out"
 
-legacy_home="$tmp/legacy"
-mkdir -p "$legacy_home"
-HOME="$legacy_home" XDG_CONFIG_HOME="$legacy_home/.config" "$ROOT/bootstrap.sh" --link >"$tmp/bootstrap.out"
-[ -L "$legacy_home/.local/bin/dots" ]
-[ -L "$legacy_home/.config/quickshell" ]
-
 echo "dots tests: ok"

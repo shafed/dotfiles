@@ -35,7 +35,7 @@ Item {
     var marked = ({})
     for (var i = 0; i < matches.length; i++)
       marked[Number(matches[i])] = true
-    var accent = String(picker.colors.yellow)
+    var accent = String(colors.yellow)
     var out = ""
     var active = false
     for (var j = 0; j < text.length; j++) {

@@ -14,7 +14,7 @@ rules: [../CLAUDE.md](../CLAUDE.md) (`AGENTS.md` symlinks to it).
 
 - **[bootstrap](bootstrap.md)** — deploying on a new machine via `./dots apply`.
 - **[dots](dots.md)** — CLI for plan/apply, drift, dry-run provisioning,
-  staging, doctor, history/rollback and desktop controls.
+  doctor, history/rollback, aliases/completion and desktop controls.
 - **[profiles](profiles.md)** — desired-state composition (`base`, `desktop`,
   `laptop`, `ai`), per-machine selection and capabilities.
 
@@ -32,10 +32,12 @@ rules: [../CLAUDE.md](../CLAUDE.md) (`AGENTS.md` symlinks to it).
   kittens and remote control.
 - **[nvim](nvim.md)** — map of content: which LazyVim behavior was overridden
   and why — window UI, vault workflows, clipboard, Russian layout.
-- **[zsh](zsh.md)** — shell config, aliases, functions.
+- **[zsh](zsh.md)** — shell config, aliases, functions and `dots` completion.
 - **[yazi](yazi.md)** — file manager.
 - **[sioyek](sioyek.md)** — PDF viewer; why every launcher must go through the
   `~/.local/bin/sioyek` wrapper.
+- **[telegram](telegram.md)** — Telegram day/night palettes and the live
+  darkman-driven theme-file switch.
 
 ## Cross-cutting
 

@@ -12,7 +12,6 @@ covers:
   - scripts/dots-apply.sh
   - scripts/dots-drift.sh
   - scripts/dots-provision.sh
-  - scripts/dots-stage.sh
   - scripts/dots-history.sh
   - scripts/dots-show.sh
   - scripts/dots-rollback.sh
@@ -21,10 +20,13 @@ covers:
   - scripts/dots-migrate.sh
   - scripts/dots-theme.sh
   - scripts/dots-commands.sh
+  - scripts/dots-aliases.sh
+  - scripts/dots-completion.sh
   - scripts/dots-restart.sh
   - scripts/dots-refresh.sh
   - scripts/dots-shell.sh
   - scripts/dots-debug.sh
+  - zsh/completions/_dots
   - tests/dots.sh
   - tests/dots-state.sh
   - tests/dots-machine.sh
@@ -37,8 +39,10 @@ covers:
 `dots` is executable directly from the checkout. `./dots apply` is the normal
 convergence entrypoint and no separate bootstrap wrapper is required. Desired
 machine state lives in [profiles](profiles.md), not in shell arrays.
-`scripts/dots-lib.sh` contains only public CLI metadata, so packages, links,
-services, generators and prerequisites have one source of truth.
+`scripts/dots-lib.sh` contains public CLI metadata, including canonical command
+names and aliases, so help, alias lookup and shell completion share one source
+of truth. Packages, links, services, generators and prerequisites remain in the
+profile manifests.
 
 ## Plan and apply
 
@@ -162,26 +166,33 @@ output, only that stale generator is scheduled.
 Shell, Lua, Python, generated-state and integration tests. Tests cover profile
 inheritance/machine selection/capabilities, JSON plan schema, read-only planning,
 blockers, apply no-op, backup-before-replacement, history plan/doctor metadata,
-rollback safety, user-service convergence, drift and provision dry-run.
+rollback safety, user-service convergence, drift, provisioning, command aliases,
+Zsh completion generation and the absence of the removed `stage` command.
 
-## Staging updates
+## Commands, aliases and completion
 
-`dots stage [ref]` creates a detached temporary Git worktree and a temporary HOME,
-then runs the candidate checkout's `dots check` and `dots plan`. The returned
-candidate is ready only if both succeed and plan JSON is valid.
+Every public abbreviation is declared next to its canonical command in
+`scripts/dots-lib.sh`. `dots help` shows aliases beside commands, `dots aliases`
+prints an alias → command table, and both `dots commands --json` and
+`dots aliases --json` expose the same metadata to tools.
 
-Staging never switches active `~/.config/*` links and never activates the
-candidate. Activation remains an explicit later decision by running `dots apply`
-from the checkout/commit chosen by the user. `dots stage --json` exposes the
-check result and candidate plan to agents.
+Useful short forms include `pl` (plan), `a` (apply), `dr` (drift), `pv`
+(provision), `d` (doctor), `c` (check), `hi`/`hist` (history), `sh` (show), `rb`
+(rollback), `rs` (restart), `rf` (refresh), `s` (shell), `p` (panel), `db`
+(debug), `ls` (commands), `al` (aliases), `comp` (completion) and `h` (help).
+Aliases are resolved from the metadata before dispatch, so `dots help hi` and
+`dots hi --json` use exactly the same implementation as `history`.
 
-## Other commands
+`dots completion zsh` prints the native completion function. `zshrc` adds
+`$DOTFILES/zsh/completions` to `fpath` before Oh My Zsh runs `compinit`, so new
+shells discover the repo-owned `_dots` loader without a separate installation
+step. It completes canonical commands, abbreviations, common options and fixed
+subcommand values for both `dots` and the existing `ds=dots` alias.
 
-The command catalog is data: `dots commands --json` exposes the same stable
-public names/usage strings as help. Useful explicit abbreviations include `pl`
-(plan), `a` (apply), `dr` (drift), `pv` (provision), `st` (stage), `d` (doctor),
-`c` (check), `hist` (history), `rb` (rollback), `rs` (restart), `rf` (refresh),
-`s` (shell), `p` (panel), `db` (debug), `ls` (commands), and `h` (help).
+`stage` is intentionally not a public or internal dots feature anymore. Testing
+a candidate branch should use an explicitly created Git worktree and run
+`./dots check all` / `./dots plan` there rather than hiding that lifecycle behind
+a CLI command.
 
 `restart` owns routine managed user-service restarts. `refresh` rebuilds derived
 state. `dots shell` / `dots panel` expose the stable Quickshell control surface;

@@ -18,6 +18,8 @@ esac
 config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
 cache_home="${XDG_CACHE_HOME:-$HOME/.cache}"
 state_home="${XDG_STATE_HOME:-$HOME/.local/state}"
+data_home="${XDG_DATA_HOME:-$HOME/.local/share}"
+root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 backup_root="$state_home/dotfiles/backups"
 backup_run_dir=""
 pending=0
@@ -64,6 +66,20 @@ elif [ -e "$waybar_config" ]; then
   if [ "$CHECK_ONLY" -eq 0 ]; then
     echo "  kept unmanaged Waybar config; remove or archive it manually" >&2
     unresolved=1
+  fi
+fi
+
+darkman_scripts_link="$data_home/darkman"
+darkman_scripts_source="$root/darkman/scripts"
+if [ -e "$darkman_scripts_link" ] || [ -L "$darkman_scripts_link" ]; then
+  if ! [ -L "$darkman_scripts_link" ] ||
+    [ "$(readlink -f "$darkman_scripts_link" 2>/dev/null || true)" != "$(readlink -f "$darkman_scripts_source" 2>/dev/null || true)" ]; then
+    note_pending "$darkman_scripts_link does not point at $darkman_scripts_source"
+    if [ "$CHECK_ONLY" -eq 0 ]; then
+      backup_path "$darkman_scripts_link"
+      rm -rf "$darkman_scripts_link"
+      echo "  removed stale $darkman_scripts_link so dots apply can relink it"
+    fi
   fi
 fi
 

@@ -1,0 +1,26 @@
+#!/bin/sh
+# darkman hook: swap the Hyprland wallpaper with the solar state. Everything
+# else in the theme stays pinned dark (see wiki/theming.md); the wallpaper is
+# the one surface that is meant to actually change with light/dark.
+set -e
+
+WALLPAPER_DIR="$HOME/.config/hypr/wallpapers"
+
+case "$1" in
+dark | light) ;;
+*) exit 0 ;;
+esac
+
+target="$WALLPAPER_DIR/$1.png"
+[ -f "$target" ] || exit 0
+
+# hyprpaper's IPC socket may not be up yet if this runs right after it was
+# just launched from hypr/modules/autostart.lua.
+i=0
+while ! hyprctl hyprpaper listactive >/dev/null 2>&1; do
+  i=$((i + 1))
+  [ "$i" -ge 50 ] && exit 0
+  sleep 0.1
+done
+
+hyprctl hyprpaper wallpaper ",$target" >/dev/null 2>&1 || true

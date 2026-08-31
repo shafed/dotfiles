@@ -3,6 +3,10 @@ local terminal = "kitty"
 hl.on("hyprland.start", function()
   hl.exec_cmd(terminal)
   hl.exec_cmd("hyprpaper")
+  -- Sync the wallpaper to the current darkman state on every Hyprland start:
+  -- darkman.service usually outlives a Hyprland reload, so it won't refire
+  -- its hooks just because hyprpaper restarted.
+  hl.exec_cmd("$HOME/.local/share/darkman/wallpaper \"$(darkman get)\"")
   hl.exec_cmd("hyprland-per-window-layout")
   -- OpenWhispr keeps its session token encrypted with a master key in the OS
   -- keyring (KWallet here), so Secret Service must be up before it starts, or

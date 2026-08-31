@@ -22,15 +22,48 @@ for item in profile.get("packages", []):
 PY
 export PATH="$fake_bin:$PATH"
 
+python3 - "$ROOT" <<'PY'
+from importlib.util import module_from_spec, spec_from_file_location
+from pathlib import Path
+import sys
+
+root = Path(sys.argv[1])
+spec = spec_from_file_location("dots_state", root / "scripts/dots-state.py")
+module = module_from_spec(spec)
+spec.loader.exec_module(module)
+context = module.ctx("default")
+assert context["requested_profiles"] == ["desktop"]
+
+desktop_order, desktop = module.desired_for(context, ["desktop"])
+assert desktop_order == ["base", "desktop"]
+assert "desktop" in desktop["capabilities"]
+assert "bluetooth" in desktop["capabilities"]
+assert "battery" not in desktop["capabilities"]
+assert "powerprofilesctl" not in {item["command"] for item in desktop["packages"]}
+
+laptop_order, laptop = module.desired_for(context, ["laptop"])
+assert laptop_order == ["base", "desktop", "laptop"]
+assert {"desktop", "bluetooth", "laptop", "battery"} <= set(laptop["capabilities"])
+assert {"powerprofilesctl", "brightnessctl"} <= {item["command"] for item in laptop["packages"]}
+assert not (root / "profiles/gaming.toml").exists()
+PY
+
 env_base=(HOME="$home" XDG_CONFIG_HOME="$home/.config" XDG_DATA_HOME="$home/.local/share" XDG_CACHE_HOME="$home/.cache" XDG_STATE_HOME="$home/.local/state")
 
+[ -z "$(find "$home" -mindepth 1 -print -quit)" ]
 env "${env_base[@]}" "$ROOT/dots" plan --profile base --json >"$tmp/plan-before.json"
+[ -z "$(find "$home" -mindepth 1 -print -quit)" ]
 python3 - "$tmp/plan-before.json" <<'PY'
 import json, sys
 plan = json.load(open(sys.argv[1], encoding="utf-8"))
+assert plan["schema"] == 2
 assert plan["profiles"] == ["base"]
+assert isinstance(plan["dependencies"], list)
+assert isinstance(plan["changes"], list)
+assert isinstance(plan["blockers"], list)
 assert plan["summary"]["drift_changes"] > 0
 assert not plan["blockers"]
+assert "no_op" in plan["summary"]
 PY
 [ ! -e "$home/.local/state/dotfiles/runs" ]
 
@@ -47,7 +80,15 @@ mapfile -t runs < <(find "$home/.local/state/dotfiles/runs" -type f -name '*.jso
 [ "${#runs[@]}" -eq 1 ]
 first_run="$(basename "${runs[0]}" .json)"
 env "${env_base[@]}" "$ROOT/dots" show "$first_run" --json >"$tmp/show.json"
-grep -q '"status": "applied"' "$tmp/show.json"
+python3 - "$tmp/show.json" <<'PY'
+import json, sys
+record = json.load(open(sys.argv[1], encoding="utf-8"))
+assert record["status"] == "applied"
+for key in ("commit", "machine", "profiles", "capabilities", "timestamp", "changes", "backups", "plan", "doctor"):
+    assert key in record, key
+assert record["plan"]["summary"]["drift_changes"] > 0
+assert record["doctor"]["result"]["summary"]["errors"] == 0, record["doctor"]
+PY
 
 env "${env_base[@]}" "$ROOT/dots" apply --links-only --profile base >/dev/null
 mapfile -t runs_after_noop < <(find "$home/.local/state/dotfiles/runs" -type f -name '*.json' -print)
@@ -94,6 +135,32 @@ plan=json.load(open(sys.argv[1], encoding='utf-8'))
 removed={item.get('path','') for item in plan['changes'] if item['action']=='remove'}
 assert any(path.endswith('/.config/hypr') for path in removed), removed
 assert any(path.endswith('/.config/quickshell') for path in removed), removed
+PY
+
+backup_home="$tmp/backup-home"
+backup_env=(HOME="$backup_home" XDG_CONFIG_HOME="$backup_home/.config" XDG_DATA_HOME="$backup_home/.local/share" XDG_CACHE_HOME="$backup_home/.cache" XDG_STATE_HOME="$backup_home/.local/state")
+mkdir -p "$backup_home"
+env "${backup_env[@]}" "$ROOT/dots" apply --links-only --profile base >/dev/null
+printf 'local managed edit\n' >"$backup_home/.local/bin/sudo"
+env "${backup_env[@]}" "$ROOT/dots" apply --links-only --profile base >/dev/null
+latest_apply="$(python3 - "$backup_home/.local/state/dotfiles/runs" <<'PY'
+from pathlib import Path
+import json, sys
+items=[]
+for path in Path(sys.argv[1]).glob('*.json'):
+    data=json.loads(path.read_text())
+    if data.get('operation','apply') == 'apply':
+        items.append((data['timestamp'], path))
+print(max(items)[1])
+PY
+)"
+python3 - "$latest_apply" "$backup_home/.local/bin/sudo" <<'PY'
+import json, sys
+from pathlib import Path
+record=json.loads(Path(sys.argv[1]).read_text())
+source=sys.argv[2]
+backup=next(item['backup'] for item in record['backups'] if item['source'] == source)
+assert Path(backup).read_text() == 'local managed edit\n'
 PY
 
 echo "dots state tests: ok"

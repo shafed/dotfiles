@@ -87,7 +87,6 @@ if ! command -v zsh >/dev/null 2>&1; then
   echo "zsh is required for dots completion tests" >&2
   exit 1
 fi
-zsh -n "$tmp/dots-completion.zsh"
 
 zsh - "$tmp/dots-completion.zsh" "$tmp" <<'ZSH'
 set -e

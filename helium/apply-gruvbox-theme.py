@@ -29,6 +29,7 @@ MANAGED_BLOCKS = (
         "# <<< dotfiles: helium web color-scheme <<<",
     ),
 )
+LEGACY_FORCE_FLAGS = {"--force-light-mode", "--force-dark-mode"}
 OLD_THEME_MARKERS = (
     "helium-gruvbox-theme",
     "/helium/gruvbox-material",
@@ -39,6 +40,7 @@ OLD_THEME_DIRS = (
     "helium-gruvbox-dark",
     "helium-gruvbox-light",
 )
+USER_DATA_DIR_NAMES = ("net.imput.helium", "helium", "helium-browser")
 
 
 def parse_args() -> argparse.Namespace:
@@ -181,9 +183,76 @@ def helium_running() -> bool:
             continue
         first = argv[0].decode(errors="ignore")
         joined = b" ".join(argv).decode(errors="ignore")
-        if "helium-browser" in first or "/opt/helium-browser" in joined:
+        if "helium-browser" in first or "/opt/helium-browser" in joined or "/helium" in first:
             return True
     return False
+
+
+def strip_quotes(value: str) -> str:
+    value = value.strip()
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in "'\"":
+        return value[1:-1]
+    return value
+
+
+def configured_user_data_dir(config_home: Path, flags_path: Path) -> Path | None:
+    """Return an explicit --user-data-dir from the persistent flags, if present."""
+    if not flags_path.is_file():
+        return None
+    for line in flags_path.read_text().splitlines():
+        stripped = line.strip()
+        if not stripped.startswith("--user-data-dir="):
+            continue
+        raw = strip_quotes(stripped.split("=", 1)[1])
+        if not raw:
+            continue
+        path = Path(os.path.expandvars(os.path.expanduser(raw)))
+        if not path.is_absolute():
+            path = config_home / path
+        return path
+    return None
+
+
+def active_profile_name(user_data_dir: Path) -> str:
+    """Read Chromium's last-used profile name, falling back to Default."""
+    local_state = user_data_dir / "Local State"
+    if local_state.is_file():
+        try:
+            state = json.loads(local_state.read_text())
+        except (OSError, json.JSONDecodeError):
+            state = None
+        if isinstance(state, dict):
+            profile = state.get("profile")
+            if isinstance(profile, dict):
+                last_used = profile.get("last_used")
+                if isinstance(last_used, str) and last_used and "/" not in last_used:
+                    return last_used
+    return "Default"
+
+
+def find_preferences(config_home: Path, flags_path: Path) -> Path:
+    """Locate the active Helium Preferences file without assuming its profile name."""
+    roots: list[Path] = []
+    explicit = configured_user_data_dir(config_home, flags_path)
+    if explicit is not None:
+        roots.append(explicit)
+    roots.extend(config_home / name for name in USER_DATA_DIR_NAMES)
+
+    seen: set[Path] = set()
+    for root in roots:
+        root = root.expanduser()
+        if root in seen:
+            continue
+        seen.add(root)
+        active = root / active_profile_name(root) / "Preferences"
+        if active.is_file():
+            return active
+        default = root / "Default" / "Preferences"
+        if default.is_file():
+            return default
+
+    # Use the upstream reverse-DNS user-data directory for the diagnostic path.
+    return config_home / "net.imput.helium" / "Default" / "Preferences"
 
 
 def write_json_atomic(path: Path, data: dict) -> None:
@@ -212,13 +281,6 @@ def configure_profile(preferences_path: Path, config: dict[str, str]) -> str:
         )
     write_json_atomic(preferences_path, desired)
     return "updated"
-
-
-def strip_quotes(value: str) -> str:
-    value = value.strip()
-    if len(value) >= 2 and value[0] == value[-1] and value[0] in "'\"":
-        return value[1:-1]
-    return value
 
 
 def clean_flags(flags_path: Path) -> bool:
@@ -252,7 +314,7 @@ def clean_flags(flags_path: Path) -> bool:
         if stripped in starts:
             active_end = starts[stripped]
             continue
-        if stripped in ends:
+        if stripped in ends or stripped in LEGACY_FORCE_FLAGS:
             continue
 
         if stripped.startswith("--load-extension="):
@@ -308,8 +370,8 @@ def main() -> int:
         if args.data_home
         else Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local/share"))
     )
-    preferences = config_home / "helium" / "Default" / "Preferences"
     flags = config_home / "helium-browser-flags.conf"
+    preferences = find_preferences(config_home, flags)
 
     try:
         config = load_helium_config()
@@ -320,23 +382,19 @@ def main() -> int:
         print(f"helium-adaptive-theme: {error}")
         return 1
 
-    print("Helium theme: Chromium User Color (adaptive)")
-    print(f"Helium seed: {config['user_color']} ({config['color_variant']})")
-    print(f"Helium color scheme: {config['color_scheme']}")
+    print(f"Helium Preferences: {preferences}")
     if status == "missing":
-        print(
-            f"Helium Preferences not found: {preferences}\n"
-            "Launch Helium once, close it, then rerun `./dots apply`."
-        )
-    elif status == "updated":
-        print(f"Configured: {preferences}")
-        print("Start Helium once. After that, darkman light/dark changes are live.")
+        print("Helium profile not found. Launch Helium once, quit it, then rerun `./dots apply`.")
     else:
-        print(f"Already configured: {preferences}")
+        print(f"Helium adaptive theme: {status}")
+        print(
+            f"Helium seed: {config['user_color']} ({config['color_variant']}, "
+            f"{config['color_scheme']} scheme)"
+        )
     if flags_changed:
-        print(f"Removed legacy Gruvbox extension flags: {flags}")
+        print(f"Removed legacy Helium theme/scheme flags from: {flags}")
     for path in removed:
-        print(f"Removed legacy Gruvbox runtime: {path}")
+        print(f"Removed legacy Helium runtime theme: {path}")
     return 0
 
 

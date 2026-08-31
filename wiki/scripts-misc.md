@@ -58,20 +58,18 @@ terminal goes unnoticed. Design:
 
 ## obsidian-sync.sh
 
-Shared git sync for `~/github/obsidian`, single source of truth for pull-on-entry and
-push-on-exit so call sites stop inlining their own `git pull`/`git push`.
-`{pull|push} [silent]`:
+Shared git sync for `~/github/obsidian`.
 
-- `pull` — `git pull --rebase --autostash` on every session entry. A former
-  30-second marker saved an occasional fetch but introduced state that could
-  skip a just-published remote update, so the simpler unconditional pull won.
-- `push` — `git add -A`, commit as `Vault backup: <timestamp>` if there's
-  anything staged, then `git push`; `silent` suppresses the success message.
-- Both commands take the same vault-specific `flock`, because Neovim exit and
-  focus events can overlap with each other or with a session-entry pull. Waiting
-  for the active sync avoids Git index-lock races without dropping a push.
-- Unattended failures are printed and sent as critical desktop notifications
-  with a requested three-second lifetime, so they are visible without lingering.
+- `pull` — `git pull --rebase --autostash`.
+- `push` — runs that pull first, then `git add -A`, commits any changes, and
+  pushes. Pull-before-commit keeps remote edits and removed lines from being
+  overwritten by a stale local copy when the changes do not conflict.
+- If the rebase leaves an actual Git conflict, sync stops before staging it.
+- Pull and push share one vault-specific `flock` so overlapping Neovim events
+  cannot race over the Git index.
+
+Android's Termux helper should use the same simple order: pull/rebase first,
+then add → commit → push.
 
 Call sites:
 [`../kitty/sessions/obsidian.kitty-session`](../kitty/sessions/obsidian.kitty-session)

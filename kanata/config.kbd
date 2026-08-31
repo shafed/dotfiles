@@ -9,7 +9,7 @@
 ;; the other hand, so fast same-hand rolls stay taps without manual key lists.
 (defhands
   (left  grv tab q w e r t caps a s d f g z x c v b esc)
-  (right - = bspc y u i o p [ ] \ h j k l ; ' n m , . /)
+  (right - = bspc y u i o p [ ] \\ h j k l ; ' n m , . /)
 )
 
 (defvar
@@ -147,8 +147,8 @@
 ;; second symbol set, momentary (s+d+f held); longer chord beats (s d).
 (deflayermap (symbols2)
   y S-grv u S-[ i S-] o S-7  p XX      ;; ~ { } &
-  h S-1 j S-3 k S-8 l S-\  ; ; ' ' ;; ! # * |
-  n \ m S-5  , S-6 . S-4 / /          ;; \ % ^ $
+  h S-1 j S-3 k S-8 l S-\\  ; ; ' ' ;; ! # * |
+  n \\ m S-5  , S-6 . S-4 / /          ;; \\ % ^ $
 )
 
 ;; workspace numbers, momentary (apps+l held): Super+digit.
@@ -199,8 +199,9 @@
   ;; one-handed Ctrl+Shift (d+f, j+k): press both together after a >=80ms idle
   ;; (chords-v2-min-idle) for a held Ctrl+Shift; all-released keeps the mods
   ;; down until both keys lift, so you can add a third key (e.g. C-S-tab).
+  ;; In apps, d+f and j+k are reused for system controls via layer-aware switch.
   (lsft rsft) (multi (layer-switch base) (cmd notify-send -t 1000 "⌨ base layer")) $chord-time first-release ()
-  (d f) (tap-hold $tap-time $hold-time esc (multi lctl lsft)) $mod-chord-time all-released () ;; tap=esc hold=C-S
+  (d f) (switch ((layer apps)) (cmd zsh -lc "$HOME/.config/quickshell/dots-shell panel notifications") break () (tap-hold $tap-time $hold-time esc (multi lctl lsft)) break) $mod-chord-time all-released () ;; apps=notifications, otherwise esc/C-S
   (j k) (switch ((layer apps)) brdn break () (tap-hold $tap-time $hold-time ret (multi lctl lsft)) break) $mod-chord-time all-released () ;; apps=brightness -, otherwise enter/C-S
   (s f) (multi lmet lsft) $mod-chord-time all-released () ;; Super+Shift
   (k l) (switch ((layer apps)) brup break () (layer-while-held numplain) break) $mod-chord-time all-released () ;; apps=brightness +, otherwise number layer
@@ -210,11 +211,20 @@
   (j l) (layer-while-held movews) $mod-chord-time all-released () ;; move window to workspace
   (w e) (switch ((layer apps)) (cmd zsh -lc "$HOME/.config/quickshell/dots-shell system") break () tab break) $mod-chord-time all-released () ;; apps=system popover, otherwise tab
 
-  ;; system controls are intentionally apps-only. Free pairs are disabled on
-  ;; every other layer; globally-used j+k, k+l and w+e branch on active layer.
+  ;; apps system map: top-right is sound, home-right is hardware/connectivity,
+  ;; top-left is system/software, bottom-left holds less frequent utilities.
+  ;; Free pairs are disabled on every non-apps layer; reused global pairs above
+  ;; branch on the active layer instead of duplicating their key sets.
+  (y u) (cmd zsh -lc "$HOME/.config/quickshell/dots-shell panel audio") $mod-chord-time all-released (base normal browser symbols symbols2 numws movews numplain numplain2 navi) ;; audio
   (u i) vold $mod-chord-time all-released (base normal browser symbols symbols2 numws movews numplain numplain2 navi) ;; volume -
   (i o) volu $mod-chord-time all-released (base normal browser symbols symbols2 numws movews numplain numplain2 navi) ;; volume +
   (o p) mute $mod-chord-time all-released (base normal browser symbols symbols2 numws movews numplain numplain2 navi) ;; mute
+  (h j) (cmd zsh -lc "$HOME/.config/quickshell/dots-shell panel network") $mod-chord-time all-released (base normal browser symbols symbols2 numws movews numplain numplain2 navi) ;; Wi-Fi
+  (l ;) (cmd zsh -lc "$HOME/.config/quickshell/dots-shell panel bluetooth") $mod-chord-time all-released (base normal browser symbols symbols2 numws movews numplain numplain2 navi) ;; Bluetooth
+  (e r) (cmd zsh -lc "$HOME/.config/quickshell/dots-shell panel agents") $mod-chord-time all-released (base normal browser symbols symbols2 numws movews numplain numplain2 navi) ;; AI limits
+  (r t) (cmd zsh -lc "$HOME/.config/quickshell/dots-shell panel updates") $mod-chord-time all-released (base normal browser symbols symbols2 numws movews numplain numplain2 navi) ;; updates
+  (x c) (cmd zsh -lc "$HOME/.config/quickshell/dots-shell panel calendar") $mod-chord-time all-released (base normal browser symbols symbols2 numws movews numplain numplain2 navi) ;; calendar
+  (c v) (cmd zsh -lc "$HOME/.config/quickshell/dots-shell panel power") $mod-chord-time all-released (base normal browser symbols symbols2 numws movews numplain numplain2 navi) ;; power
 )
 
 (deflayermap (normal)

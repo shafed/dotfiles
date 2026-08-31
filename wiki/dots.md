@@ -183,11 +183,11 @@ Useful short forms include `pl` (plan), `a` (apply), `dr` (drift), `pv`
 Aliases are resolved from the metadata before dispatch, so `dots help hi` and
 `dots hi --json` use exactly the same implementation as `history`.
 
-`dots completion zsh` prints the native completion function. The base profile
-links `zsh/completions/_dots` into Oh My Zsh's custom completion directory, so
-new shells complete canonical commands, abbreviations, common options and fixed
-subcommand values. The existing shell alias `ds=dots` is registered with the
-same completion function.
+`dots completion zsh` prints the native completion function. `zshrc` adds
+`$DOTFILES/zsh/completions` to `fpath` before Oh My Zsh runs `compinit`, so new
+shells discover the repo-owned `_dots` loader without a separate installation
+step. It completes canonical commands, abbreviations, common options and fixed
+subcommand values for both `dots` and the existing `ds=dots` alias.
 
 `stage` is intentionally not a public or internal dots feature anymore. Testing
 a candidate branch should use an explicitly created Git worktree and run

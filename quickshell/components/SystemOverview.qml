@@ -93,11 +93,8 @@ GridLayout {
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
         onClicked: {
-          if (modelData.key === "calendar") {
-            overview.shell.openCalendar()
-          } else {
-            overview.shell.openPanel = modelData.key
-          }
+          if (modelData.key === "calendar") overview.shell.openCalendar()
+          else overview.shell.togglePanel(modelData.key)
         }
       }
     }

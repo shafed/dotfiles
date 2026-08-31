@@ -1,13 +1,13 @@
 ---
 title: quickshell-pickers
 type: component
-updated: 2026-08-30
+updated: 2026-08-31
 covers:
   - quickshell/components/DesktopLauncher.qml
   - quickshell/components/BookmarksPicker.qml
   - quickshell/components/QuickPicker.qml
   - quickshell/components/YoutubePicker.qml
-  - quickshell/components/ClipboardOverlay.qml
+  - quickshell/components/PickerOverlays.qml
   - quickshell/picker-helper.py
   - quickshell/youtube-helper.py
   - quickshell/palette-helper.py
@@ -176,25 +176,11 @@ fzf/QAT frontend for search, history, Watch later or channel browsing.
 
 ## Clipboard
 
-`Super+V` opens `components/ClipboardOverlay.qml`. The input receives active
-focus as soon as the layer-shell surface opens, so the clipboard is fully usable
-without a mouse. Selection starts on the first row and a stationary pointer does
-not steal it. The first pointer-position event after the surface appears is used
-only as the baseline because Qt may synthesize it when a new surface opens under
-the cursor; hover selection is enabled only after the pointer moves at least four
-pixels from that baseline. A direct click still activates the clicked row
-immediately.
-
-- type to filter visible history rows;
-- arrows or `Ctrl-J/K` move selection;
-- `Enter` pastes the selected item;
-- `Esc` closes.
-
-Paste is deliberately dispatched about 160 ms after the overlay is hidden. The
-clipboard window has exclusive layer-shell keyboard focus; sending `Ctrl+V`
-immediately can race surface teardown and feed the synthetic paste back into the
-closing overlay instead of the previously focused app. `cliphist` remains the
-preferred source and CopyQ remains the fallback.
+`Super+V`, the top-bar `CLIP` button, and `dots-shell clipboard` toggle CopyQ's
+native window. Clipboard history is no longer a Quickshell picker: the deleted
+`ClipboardOverlay.qml` duplicated CopyQ's history, filtering, selection, and
+paste semantics while requiring a separate `cliphist` watcher. Hyprland floats
+and centers the CopyQ window at the former overlay size.
 
 ## Scratch note
 
@@ -206,8 +192,9 @@ provider list.
 
 Tracked QML is run directly; there is no `prepare.py` runtime-copy step.
 `dots-shell` centralizes overlay routing and exposes `launcher`, `bookmarks`,
-`projects`, `sessions`, `youtube`, `clipboard` and `scratch`. YouTube has its own
-IPC target; Projects and Sessions continue through `quickpicker`. The wrapper
+`projects`, `sessions`, `youtube`, `clipboard` and `scratch`; the clipboard route
+launches CopyQ rather than QML IPC. YouTube has its own IPC target; Projects and
+Sessions continue through `quickpicker`. The wrapper
 closes competing IPC targets before opening the requested surface, preserving
 the single-overlay contract.
 

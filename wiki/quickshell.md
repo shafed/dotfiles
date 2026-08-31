@@ -21,8 +21,9 @@ Quickshell is the active Hyprland bar and desktop shell. Desktop state belongs
 in the long-running QML process; a general Python snapshot/backend is deliberately
 avoided so UI state and actions do not cross a Python/JSON IPC boundary.
 
-All active desktop-facing pickers belong to Quickshell: Applications,
-Bookmarks, Projects, open Kitty Sessions, YouTube and Clipboard. `Super+N` also
+Active desktop-facing pickers for Applications, Bookmarks, Projects, open Kitty
+Sessions and YouTube belong to Quickshell. Clipboard history belongs to CopyQ;
+`Super+N` also
 uses a native Quickshell scratch editor instead of a terminal QAT. Data and
 ranking contracts remain separate from the bar; see
 [quickshell-pickers](quickshell-pickers.md).
@@ -149,13 +150,11 @@ Search match highlighting in Applications and Bookmarks reads their local
 same palette as a required component property; keeping those ownership models
 distinct prevents a match-only QML exception from blanking result text.
 
-`components/ClipboardOverlay.qml` uses the same keyboard contract and adds
-inline filtering. Clipboard paste is scheduled shortly after hiding the
-exclusive layer-shell surface so the synthetic `Ctrl+V` reaches the previously
-focused application rather than racing the overlay teardown. `cliphist` is the
-preferred source; CopyQ remains a fallback. A pointer already under the centered
-surface does not steal the initial first-row selection; mouse hover is armed only
-after at least 4 px of actual movement.
+The old native `components/ClipboardOverlay.qml` and its `cliphist` watcher were
+removed. `Super+V`, the top-bar `CLIP` button, and `dots-shell clipboard` now
+toggle CopyQ's own window, preserving its native history, search, and paste
+handling. `components/PickerOverlays.qml` only groups the remaining Projects,
+Sessions, YouTube, and Scratch overlays.
 
 `components/ScratchOverlay.qml` is a focused multiline editor. `Esc` hides while
 preserving the draft and `Ctrl+Enter` closes, copies and pastes back into the

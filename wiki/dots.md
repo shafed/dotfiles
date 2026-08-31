@@ -60,6 +60,12 @@ from another known profile is removed only when ownership is unambiguous: a
 symlink must still point to the tracked source and a managed regular file must
 still equal the content owned by that profile.
 
+Selected user services are part of convergence, not just doctor diagnostics. If
+a profile service is not enabled, plan shows a `service enable` action; full
+apply reloads the user manager and runs `systemctl --user enable --now`. Services
+owned only by a profile that is no longer selected are disabled. This lets a
+fresh machine reach the same service state without a separate bootstrap step.
+
 A repeated apply is a real no-op. With no primary drift it does not rewrite
 wrappers, rerun generators, clear Quickshell cache, restart services or create a
 history entry. A normal full no-op still runs doctor because packages or system
@@ -156,7 +162,7 @@ output, only that stale generator is scheduled.
 Shell, Lua, Python, generated-state and integration tests. Tests cover profile
 inheritance/machine selection/capabilities, JSON plan schema, read-only planning,
 blockers, apply no-op, backup-before-replacement, history plan/doctor metadata,
-rollback safety, drift and provision dry-run.
+rollback safety, user-service convergence, drift and provision dry-run.
 
 ## Staging updates
 

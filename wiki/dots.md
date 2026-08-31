@@ -110,6 +110,14 @@ derived state, while an unmanaged real config is reported and left untouched.
 palette generator still owns them as generated compatibility/theme surfaces;
 they are not linked by `dots apply` and do not make Waybar an active component.
 
+The second migration backs up and removes a stale, non-symlink
+`$XDG_DATA_HOME/darkman` — see
+[theming](theming.md#fixing-a-stale-localsharedarkman-on-an-existing-machine).
+⚠️ Unlike Waybar, this one _can_ collide with `dots apply`'s own
+`install_links` step (`darkman/scripts` is a real `DOTS_MANAGED_LINKS` target,
+not a retired one), and `dots apply` runs links before migrations — so on an
+affected machine, run `dots migrate` before `dots apply`, not after.
+
 ⚠️ `dots doctor` treats missing required commands and broken managed links as
 errors, while developer-only tools such as `luac` and `pre-commit` are warnings.
 `dots check` is stricter: if the tool needed for a requested source check is

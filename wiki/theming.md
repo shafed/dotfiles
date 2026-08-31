@@ -240,8 +240,9 @@ compiled pack can survive in the profile.
 
 ## Light/dark
 
-Darkman's solar state may still become `dark` or `light`, but visual appearance
-is deliberately pinned dark in both states. The GTK hook always sets
+Darkman's solar state becomes `dark` or `light`, but visual appearance is
+deliberately pinned dark in both states for every application surface — the
+**wallpaper is the sole exception**, see below. The GTK hook always sets
 `color-scheme=prefer-dark` and selects the first installed theme from:
 
 1. `Gruvbox-Material-Dark`
@@ -255,3 +256,32 @@ system color-scheme remains dark.
 
 `hypr/hyprsunset.conf` is independent screen gamma/temperature control and does
 not switch application themes.
+
+### Wallpaper is the one thing that does switch
+
+`darkman/scripts/wallpaper` swaps the Hyprland wallpaper between
+`hypr/wallpapers/light.png` and `hypr/wallpapers/dark.png` on every darkman
+transition, over `hyprpaper`'s IPC (`hyprctl hyprpaper wallpaper`) — not
+through a `hyprpaper.conf`, which this build ignores. See
+[hypr](hypr.md#wallpaper-hyprpaper-driven-entirely-over-ipc) for the mechanism
+and the config-file gotcha; `hypr/modules/autostart.lua` also resyncs it to
+the current `darkman get` state on every Hyprland start, since restarting only
+`hyprpaper` doesn't make `darkman.service` refire its hooks.
+
+### Fixing a stale `~/.local/share/darkman` on an existing machine
+
+`darkman/scripts` is meant to be symlinked wholesale to `$XDG_DATA_HOME/darkman`
+(`DOTS_MANAGED_LINKS` in `scripts/dots-lib.sh`) — darkman scans that directory's
+entries directly as hook scripts (not a further `scripts/` subdirectory; see
+`darkman(1)`). A machine set up before this mapping existed can have a real
+`~/.local/share/darkman` directory instead (containing unmanaged scripts),
+which makes every hook — including the always-dark GTK one — silently fail to
+run (`fork/exec ...: no such file or directory` for the directory-shaped entry,
+and the unmanaged scripts run instead). `dots doctor` reports this as
+`$XDG_DATA_HOME/darkman does not point to .../darkman/scripts`; `dots migrate`
+now backs up and removes the stale directory (preserving any unmanaged scripts
+in the backup under `$XDG_STATE_HOME/dotfiles/backups/`) so a subsequent
+`dots apply` can create the correct symlink. `dots apply` cannot fix this by
+itself in one pass: it runs `install_links` (which refuses to clobber a real,
+non-symlink directory) before `dots migrate` — run `dots migrate` first on an
+affected machine.

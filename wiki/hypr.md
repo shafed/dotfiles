@@ -9,6 +9,8 @@ covers:
   - hypr/hypridle.conf
   - hypr/hyprlock.conf
   - hypr/hyprsunset.conf
+  - hypr/wallpapers/
+  - darkman/scripts/wallpaper
 ---
 
 # hypr
@@ -121,6 +123,30 @@ those rest on file permissions (`0600`) alone.
 Verify after a cold boot: `busctl --user list | grep org.freedesktop.secrets`
 and `secret-tool search service OpenWhispr` (should return the entry with no
 prompt).
+
+### Wallpaper: hyprpaper, driven entirely over IPC
+
+`hypr/wallpapers/{light,dark}.png` are the two wallpaper sources; there is
+**no `hyprpaper.conf`** — the installed `hyprpaper` build (v0.8.4, linked
+against `hyprtoolkit`) silently ignores a config file's `preload =` /
+`wallpaper =` lines. Verified directly: `hyprpaper --config <file> --verbose`
+produces no "preload"/"wallpaper" log line at all and
+`hyprctl hyprpaper listactive` stays empty, regardless of `~` expansion,
+quoting, or absolute paths. Do not re-add a config file expecting it to set
+the initial wallpaper — it will silently do nothing on this build.
+
+The working mechanism is IPC only: `darkman/scripts/wallpaper` (a normal
+darkman hook, see [theming](theming.md#lightdark)) runs
+`hyprctl hyprpaper wallpaper ",<path>"` for the given mode — no separate
+`preload` call is needed; `wallpaper` loads the texture itself if it isn't
+already loaded. `autostart.lua` calls that same script with
+`$(darkman get)` right after launching `hyprpaper`, because `darkman.service`
+is long-running and normally does **not** re-fire its hooks just from
+`hyprpaper` restarting (e.g. a Hyprland reload) — without this explicit sync
+call the wallpaper would only update at the next actual sunrise/sundown. The
+script itself polls `hyprctl hyprpaper listactive` in a short retry loop
+before setting the wallpaper, since hyprpaper's IPC socket isn't up the
+instant it's launched.
 
 ## Session launch: uwsm
 

@@ -34,16 +34,23 @@ def run_helper(home: Path, *, expect: int = 0) -> subprocess.CompletedProcess[st
     return process
 
 
-def read_preferences(home: Path) -> dict:
-    path = home / ".config/helium/Default/Preferences"
-    return json.loads(path.read_text())
+def profile_path(home: Path, profile: str = "Profile 2") -> Path:
+    return home / ".config/net.imput.helium" / profile / "Preferences"
+
+
+def read_preferences(home: Path, profile: str = "Profile 2") -> dict:
+    return json.loads(profile_path(home, profile).read_text())
 
 
 def make_legacy_state(home: Path) -> None:
     config = home / ".config"
     data = home / ".local/share"
-    preferences = config / "helium/Default/Preferences"
+    user_data = config / "net.imput.helium"
+    preferences = user_data / "Profile 2/Preferences"
     preferences.parent.mkdir(parents=True)
+    (user_data / "Local State").write_text(
+        json.dumps({"profile": {"last_used": "Profile 2"}})
+    )
     preferences.write_text(
         json.dumps(
             {
@@ -80,6 +87,7 @@ def make_legacy_state(home: Path) -> None:
     flags.parent.mkdir(parents=True, exist_ok=True)
     flags.write_text(
         "--enable-features=SomethingUseful\n"
+        "--force-light-mode\n"  # legacy standalone flag: must be removed too
         "--load-extension=/tmp/user-extension,/home/test/.local/share/dotfiles/helium-gruvbox\n"
         "\n"
         "# >>> dotfiles: helium gruvbox >>>\n"
@@ -87,7 +95,7 @@ def make_legacy_state(home: Path) -> None:
         "# <<< dotfiles: helium gruvbox <<<\n"
         "\n"
         "# >>> dotfiles: helium web color-scheme >>>\n"
-        "--force-light-mode\n"
+        "--force-dark-mode\n"
         "# <<< dotfiles: helium web color-scheme <<<\n"
     )
 
@@ -139,21 +147,22 @@ def main() -> int:
         make_legacy_state(home)
 
         first = run_helper(home)
-        assert "Chromium User Color (adaptive)" in first.stdout
-        assert "#b47109 (neutral)" in first.stdout
+        assert "net.imput.helium/Profile 2/Preferences" in first.stdout
+        assert "Helium adaptive theme: updated" in first.stdout
+        assert "#b47109 (neutral, system scheme)" in first.stdout
         assert_native_theme(home)
 
         # Applying again is a no-op for Preferences and does not recreate the
         # removed extension state.
-        before = (home / ".config/helium/Default/Preferences").read_bytes()
+        before = profile_path(home).read_bytes()
         second = run_helper(home)
-        after = (home / ".config/helium/Default/Preferences").read_bytes()
+        after = profile_path(home).read_bytes()
         assert before == after
-        assert "Already configured" in second.stdout
+        assert "Helium adaptive theme: unchanged" in second.stdout
         assert_native_theme(home)
 
-    # A fresh machine may not have launched Helium yet. The generator remains
-    # reproducible and simply waits for the profile to exist on a later apply.
+    # A fresh machine may not have launched Helium yet. Cleanup still happens,
+    # but the helper does not invent a browser profile.
     with tempfile.TemporaryDirectory(prefix="dots-helium-missing-") as temp:
         home = Path(temp) / "home"
         home.mkdir()
@@ -163,25 +172,45 @@ def main() -> int:
         data.mkdir(parents=True)
         (data / "manifest.json").write_text("{}\n")
         (config / "helium-browser-flags.conf").write_text(
+            "--force-light-mode\n"
             "# >>> dotfiles: helium gruvbox >>>\n"
             "--load-extension=/tmp/dotfiles/helium-gruvbox\n"
             "# <<< dotfiles: helium gruvbox <<<\n"
         )
         process = run_helper(home)
-        assert "Preferences not found" in process.stdout
-        assert not (home / ".config/helium/Default/Preferences").exists()
+        assert "net.imput.helium/Default/Preferences" in process.stdout
+        assert "Helium profile not found" in process.stdout
+        assert not profile_path(home, "Default").exists()
         assert not (home / ".config/helium-browser-flags.conf").exists()
         assert not data.exists()
 
-    # Never clobber a malformed browser profile.
+    # Never clobber a malformed active browser profile.
     with tempfile.TemporaryDirectory(prefix="dots-helium-invalid-") as temp:
         home = Path(temp) / "home"
-        prefs = home / ".config/helium/Default/Preferences"
+        user_data = home / ".config/net.imput.helium"
+        prefs = user_data / "Profile 1/Preferences"
         prefs.parent.mkdir(parents=True)
+        (user_data / "Local State").write_text(json.dumps({"profile": {"last_used": "Profile 1"}}))
         prefs.write_text("{not json")
         process = run_helper(home, expect=1)
         assert "invalid Helium Preferences JSON" in process.stdout
         assert prefs.read_text() == "{not json"
+
+    # Respect an explicit persistent --user-data-dir before standard locations.
+    with tempfile.TemporaryDirectory(prefix="dots-helium-explicit-") as temp:
+        home = Path(temp) / "home"
+        custom = home / "custom-helium"
+        prefs = custom / "Default/Preferences"
+        prefs.parent.mkdir(parents=True)
+        prefs.write_text(json.dumps({"extensions": {"theme": {}}, "browser": {"theme": {}}}))
+        flags = home / ".config/helium-browser-flags.conf"
+        flags.parent.mkdir(parents=True)
+        flags.write_text(f"--user-data-dir={custom}\n")
+        process = run_helper(home)
+        assert str(prefs) in process.stdout
+        configured = json.loads(prefs.read_text())
+        assert configured["extensions"]["theme"]["id"] == USER_COLOR_THEME_ID
+        assert f"--user-data-dir={custom}" in flags.read_text()
 
     return 0
 

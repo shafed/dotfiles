@@ -1,7 +1,7 @@
 ---
 title: sessions
 type: topic
-updated: 2026-08-24
+updated: 2026-08-31
 covers:
   - kitty/sessions
   - kitty/scripts
@@ -92,17 +92,12 @@ often the wrong thing appeared. A daily note has to be a guarantee rather than
 `C-h/j/k/l` navigate contextually via `pass_keys.py` ([kitty](kitty.md)). The
 former `M-t` split toggle no longer exists in kitty.conf.
 
-⚠️ Gotcha (`tall` vs `horizontal`, and kitty's counter-intuitive names): session
-files used `layout tall`, under which `--location=vsplit` only affects the
-_second_ window — a third window joins the stack top-to-bottom, ignoring the
-requested direction, because `tall`'s placement algorithm
-(`/usr/lib/kitty/kitty/layout/tall.py`) stops consulting `--location` past that.
-Every session file now uses `layout horizontal`, so each new window is a column
-to the right regardless of count. ⚠️ kitty's names describe the axis windows are
-_distributed along_, not the divider: `horizontal` tiles side-by-side (neighbors
-left/right), `vertical` stacks top-to-bottom — the opposite of what they
-suggest. Apply to already-open tabs with
-`kitten @ goto-layout --match all horizontal`.
+⚠️ `--location=vsplit` is honored only by kitty's `splits` layout. The former
+`layout horizontal` session default ignored the binding's requested location
+and placed new windows according to its own tiling algorithm. Every static and
+generated session now uses `layout splits`, so `kitty_mod+enter` reliably opens
+the new window to the right of the focused one. Apply this to already-open tabs
+with `kitten @ goto-layout --match all splits`.
 
 ⚠️ Gotcha (`kitty_mod+t` / new tab scope): `session_name` is assigned only to
 tabs created _inside_ a session — from a `.kitty-session` file or via

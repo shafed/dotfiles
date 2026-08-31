@@ -1,7 +1,7 @@
 ---
 title: kanata
 type: component
-updated: 2026-08-30
+updated: 2026-08-31
 covers:
   - kanata/config.kbd
   - kanata/switchApp.sh
@@ -103,22 +103,31 @@ on purpose. Tuned empirically — change with care.
   join (e.g. `C-S-tab`).
 
 `defchordsv2` is global and Kanata rejects duplicate participating-key sets.
-The requested reuse of existing `j+k`, `k+l` and `w+e` is therefore implemented
-with one definition per pair and a `switch` on the active layer:
+System controls therefore use one definition per physical pair. Existing global
+pairs branch on the active layer so their old behavior remains outside `apps`:
 
+- `d+f`: on `apps` → Notifications; elsewhere → the existing Esc/C-S action;
 - `j+k`: on `apps` → brightness down; elsewhere → the existing Enter/C-S action;
 - `k+l`: on `apps` → brightness up; elsewhere → the existing `numplain` layer;
-- `w+e`: on `apps` → `dots-shell system`; elsewhere → the existing Tab chord.
+- `w+e`: on `apps` → system overview; elsewhere → the existing Tab chord.
 
-The remaining free apps-only pairs are `u+i` volume down, `i+o` volume up and
-`o+p` mute. Their disabled-layer lists include every non-`apps` layer, so normal
-typing and the existing base/navi/symbol/number behavior do not see them.
+The rest of the system map uses free pairs disabled on every non-`apps` layer.
+The layout is intentionally spatial rather than acronym-driven:
+
+- **top-right / sound:** `y+u` Audio, `u+i` volume down, `i+o` volume up,
+  `o+p` mute;
+- **home-right / hardware:** `h+j` Wi-Fi, `j+k` brightness down, `k+l`
+  brightness up, `l+;` Bluetooth;
+- **top-left / software:** `w+e` overview, `e+r` AI limits, `r+t` Updates;
+- **bottom-left / utilities:** `d+f` Notifications, `x+c` Calendar, `c+v`
+  Power.
 
 Volume/brightness chords emit Kanata's standard `vold`/`volu`/`mute` and
 `brdn`/`brup` keycodes. They do **not** call `wpctl` or `brightnessctl`; the
 Hyprland XF86 bindings are the single owner of those actions and of repeat
-behavior. The old direct `Super+=`, `Super+-`, `Super+M`, `Super+]` and `Super+[` shortcuts were removed. Because chord participants are physical keycodes, these
-apps-layer gestures are the same under US and RU xkb layouts.
+behavior. The panel chords call `dots-shell panel ...`, so Quickshell remains
+the owner of panel lifecycle and refresh behavior. Because chord participants
+are physical keycodes, the gestures are the same under US and RU xkb layouts.
 
 ⚠️ Related trade-off: press-decided layer-holds on frequent letters (`n`, `e`,
 `r`, `w`) are instant, but "letter + bigram" can misfire. Deliberate, in
@@ -191,9 +200,10 @@ Holding the thumb key gives the `apps` launcher layer. ⚠️ The layer itself d
 rofimoji always start in English while a bare hold/release stays harmless.
 
 The apps-only system chords are deliberately different: they operate on
-physical keycodes and do not need the force-English helper. `w+e` invokes
-`dots-shell system`; the media/backlight pairs emit XF86-equivalent keycodes for
-Hyprland to handle.
+physical keycodes and do not need the force-English helper. Media/backlight
+pairs emit XF86-equivalent keycodes for Hyprland; panel pairs call the existing
+Quickshell IPC. `w+e` is the overview entry point, and that overview displays the
+same chords as a memory aid.
 
 ## Screenshots
 

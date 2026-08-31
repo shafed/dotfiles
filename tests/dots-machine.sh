@@ -2,14 +2,14 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 tmp="$(mktemp -d)"
-trap 'rm -rf "$tmp"' EXIT
+provision_profile="$ROOT/profiles/test-provision-ci.toml"
+trap 'rm -f "$provision_profile"; rm -rf "$tmp"' EXIT
 fake_bin="$tmp/bin"
 home="$tmp/home"
 mkdir -p "$fake_bin" "$home"
 
-# Make all required base commands appear installed except bruvtab. Keeping only
-# the uv-tool missing lets provision dry-run be tested on non-Arch CI without
-# pretending that pacman is available as an installer.
+# Make all required base commands appear installed. Provisioning is tested with
+# a dedicated CI-only missing command so host-installed tools cannot affect it.
 python3 - "$ROOT/profiles/base.toml" "$fake_bin" <<'PY'
 from pathlib import Path
 import sys, tomllib
@@ -19,7 +19,7 @@ for item in profile.get("packages", []):
     if not item.get("required", True):
         continue
     command = item["command"]
-    if command in {"python3", "bruvtab", "uv"}:
+    if command in {"python3", "uv"}:
         continue
     path = bin_dir / command
     path.write_text("#!/usr/bin/env bash\nexit 0\n")
@@ -54,12 +54,26 @@ esac
 EOF
 chmod +x "$fake_bin/systemctl"
 
+cat >"$provision_profile" <<'EOF'
+[profile]
+description = "CI-only provisioning profile"
+includes = ["base"]
+capabilities = []
+
+[[packages]]
+command = "dots-ci-missing-tool"
+package = "dots-ci-missing-tool"
+manager = "uv-tool"
+required = true
+reason = "CI-only missing tool used to test provisioning"
+EOF
+
 export PATH="$fake_bin:$PATH"
 export DOTS_UV_MARKER="$tmp/uv-called"
 env_base=(HOME="$home" XDG_CONFIG_HOME="$home/.config" XDG_DATA_HOME="$home/.local/share" XDG_CACHE_HOME="$home/.cache" XDG_STATE_HOME="$home/.local/state")
 
 # Dry-run emits an exact action and never invokes the installer.
-env "${env_base[@]}" "$ROOT/dots" provision --dry-run --profile base --json >"$tmp/provision.json"
+env "${env_base[@]}" "$ROOT/dots" provision --dry-run --profile test-provision-ci --json >"$tmp/provision.json"
 [ ! -e "$DOTS_UV_MARKER" ]
 python3 - "$tmp/provision.json" <<'PY'
 import json, sys
@@ -67,10 +81,10 @@ result=json.load(open(sys.argv[1], encoding='utf-8'))
 assert result['type'] == 'provision'
 assert result['dry_run'] is True
 assert result['summary']['blockers'] == 0, result['blockers']
-assert [item['package'] for item in result['missing']] == ['bruvtab']
-assert len(result['actions']) == 1
+assert [item['package'] for item in result['missing']] == ['dots-ci-missing-tool'], result['missing']
+assert len(result['actions']) == 1, result['actions']
 argv=result['actions'][0]['argv']
-assert argv[-3:] == ['tool', 'install', 'bruvtab'], argv
+assert argv[-3:] == ['tool', 'install', 'dots-ci-missing-tool'], argv
 PY
 
 # Converge only base-managed files, then show that package/service extras are
@@ -78,13 +92,6 @@ PY
 env "${env_base[@]}" "$ROOT/dots" apply --links-only --profile base >/dev/null
 mkdir -p "$home/.config/systemd/user"
 printf '[Unit]\nDescription=test\n' >"$home/.config/systemd/user/forgotten-test.service"
-# The missing bruvtab command would be required drift; expose it after apply so
-# drift can test the fully-converged required path while keeping dry-run above.
-cat >"$fake_bin/bruvtab" <<'EOF'
-#!/usr/bin/env bash
-exit 0
-EOF
-chmod +x "$fake_bin/bruvtab"
 
 env "${env_base[@]}" "$ROOT/dots" drift --profile base --json >"$tmp/drift.json"
 python3 - "$tmp/drift.json" <<'PY'
@@ -92,7 +99,7 @@ import json, sys
 result=json.load(open(sys.argv[1], encoding='utf-8'))
 assert result['summary']['required_drift'] is False, result
 assert result['extra_explicit_packages'] == ['old-test-package'], result['extra_explicit_packages']
-assert result['unexpected_user_services'] == ['forgotten-test.service']
+assert result['unexpected_user_services'] == ['forgotten-test.service'], result['unexpected_user_services']
 PY
 
 # A real unmanaged file is a blocker, and plan must leave it untouched.

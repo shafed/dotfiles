@@ -53,8 +53,8 @@
 
 (defalias
   aterm (cmd zsh -lc "$HOME/.config/kanata/switchApp.sh kitty kitty")
-  sshot-region (cmd zsh -lc "$HOME/.config/kanata/hyprshot-region.sh")
-  sshot-full (cmd hyprshot -m output --clipboard-only --silent)
+  sshot-region (cmd zsh -lc "$HOME/.config/kanata/screenshot-region.sh")
+  sshot-full (cmd zsh -lc "$HOME/.config/kanata/screenshot-full.sh")
   sw (cmd hyprctl switchxkblayout kanata next)
   k-navi (fork up C-S-tab (lalt ralt))
   j-navi (fork down C-tab (lalt ralt))

@@ -4,6 +4,9 @@ DOTS_ROOT="${DOTS_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 DOTS_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
 DOTS_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
 
+# Legacy arrays remain for doctor/tests during the first profile-engine phase.
+# New plan/apply behavior reads packages, services, links and generators from
+# profiles/*.toml. The arrays are removed when doctor becomes profile-aware.
 REQUIRED_PKGS=(
   "hyprland:hyprland"
   "uwsm:uwsm"
@@ -77,10 +80,13 @@ DOTS_CORE_USER_SERVICES=(
 # name|usage|description. Keep this small: it is both human help and the
 # machine-readable command catalog used by `dots commands --json`.
 DOTS_COMMANDS=(
-  "apply|dots apply [--check|--links-only]|Apply the current checkout to this machine"
+  "plan|dots plan [--json] [--profile names]|Show profile drift without changing the machine"
+  "apply|dots apply [--check|--links-only] [--profile names]|Converge the machine using the same plan engine"
   "doctor|dots doctor|Check installed dotfiles and machine state"
   "check|dots check [all|shell|lua|python|tests]|Run repository checks"
   "migrate|dots migrate [--check]|Detect or apply safe stale-state migrations"
+  "history|dots history [--json]|List changing apply runs"
+  "show|dots show <run> [--json]|Show one recorded apply run and its backups"
   "theme|dots theme [status|light|dark|toggle]|Show or switch the darkman theme"
   "restart|dots restart <quickshell|kanata|darkman|copyq|all>|Restart managed user services"
   "refresh|dots refresh <quickshell|systemd|all>|Rebuild derived state and reload services"

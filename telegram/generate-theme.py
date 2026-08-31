@@ -33,7 +33,6 @@ def zip_entry(name: str) -> zipfile.ZipInfo:
 def apply_telegram_overrides(palette: str) -> str:
     """Add Telegram-only colors that are not part of the shared surfaces."""
     overrides = """
-
 // Telegram folder sidebar.
 sideBarBg: GB_BG;
 sideBarBgActive: GB_BG_SOFT;

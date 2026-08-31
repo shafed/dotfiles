@@ -12,9 +12,7 @@ rules: [../CLAUDE.md](../CLAUDE.md) (`AGENTS.md` symlinks to it).
 
 ## Setup
 
-- **[bootstrap](bootstrap.md)** — deploying on a new machine; `./dots apply` is
-  the primary convergence entrypoint and `bootstrap.sh` is only a compatibility
-  wrapper.
+- **[bootstrap](bootstrap.md)** — deploying on a new machine via `./dots apply`.
 - **[dots](dots.md)** — CLI for plan/apply, drift, dry-run provisioning,
   staging, doctor, history/rollback and desktop controls.
 - **[profiles](profiles.md)** — desired-state composition (`base`, `desktop`,

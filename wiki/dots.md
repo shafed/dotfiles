@@ -4,7 +4,6 @@ type: topic
 updated: 2026-08-31
 covers:
   - dots
-  - bootstrap.sh
   - scripts/dots-state.py
   - scripts/dots-machine.py
   - scripts/dots-run-enrich.py
@@ -36,8 +35,8 @@ covers:
 # dots — one entrypoint for repository operations
 
 `dots` is executable directly from the checkout. `./dots apply` is the normal
-convergence entrypoint; `bootstrap.sh` remains only as a compatibility wrapper.
-Desired machine state lives in [profiles](profiles.md), not in shell arrays.
+convergence entrypoint and no separate bootstrap wrapper is required. Desired
+machine state lives in [profiles](profiles.md), not in shell arrays.
 `scripts/dots-lib.sh` contains only public CLI metadata, so packages, links,
 services, generators and prerequisites have one source of truth.
 
@@ -71,8 +70,9 @@ wrappers, rerun generators, clear Quickshell cache, restart services or create a
 history entry. A normal full no-op still runs doctor because packages or system
 prerequisites may drift independently of dotfiles-owned files.
 
-`--links-only` exists for bootstrap/testing and applies only managed links/files;
-it deliberately skips runtime generators, migrations and service operations.
+`--links-only` exists for testing and targeted convergence and applies only
+managed links/files; it deliberately skips runtime generators, migrations and
+service operations.
 
 ## Drift
 

@@ -284,8 +284,9 @@ overviewCheckBgActive: GB_YELLOW;
 overviewCheckFgActive: GB_BG_HARD;
 overviewPhotoSelectOverlay: #d8a65740;
 
+
 // Telegram folder sidebar.
-sideBarBg: GB_BG;
+sideBarBg: GB_BG_HARD;
 sideBarBgActive: GB_BG_SOFT;
 sideBarBgRipple: GB_BG_HOVER;
 sideBarTextFg: GB_GRAY_DIM;

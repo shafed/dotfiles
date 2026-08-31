@@ -3,7 +3,6 @@ title: bootstrap
 type: topic
 updated: 2026-08-31
 covers:
-  - bootstrap.sh
   - dots
   - profiles/
   - machines/
@@ -16,9 +15,9 @@ covers:
 # Bootstrap — deploying on a new machine
 
 The checkout does not need a separate installer: `./dots` runs directly from the
-repo and `dots apply` links itself into `~/.local/bin`. `bootstrap.sh` is only a
-compatibility wrapper around `dots apply`; legacy `--check` / `--link` continue
-to map to the apply surface.
+repo and `dots apply` links itself into `~/.local/bin`. The old `bootstrap.sh`
+compatibility wrapper has been removed; legacy `--check` / `--link` flags are
+accepted directly by `dots apply`.
 
 A fresh Arch machine has two deliberately separate phases. External packages
 and system prerequisites are opt-in through `./dots provision`; dotfiles-owned
@@ -44,7 +43,7 @@ backends are deferred until another real machine needs them.
 
 Desired state comes from `profiles/*.toml` plus a small machine selector in
 `machines/<hostname>.toml` (falling back to `machines/default.toml`). Packages,
-links, services, generators and prerequisites are not duplicated in bootstrap or
+links, services, generators and prerequisites are not duplicated in apply or
 doctor. See [profiles](profiles.md) and [dots](dots.md).
 
 `apply` refuses to replace unrelated real files/directories at managed

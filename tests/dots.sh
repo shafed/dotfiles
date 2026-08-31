@@ -82,12 +82,6 @@ fi
 [ -f "$conflict_home/.config/kitty/local.conf" ]
 grep -q 'exists and is not a symlink' "$tmp/conflict.out"
 
-legacy_home="$tmp/legacy"
-mkdir -p "$legacy_home"
-HOME="$legacy_home" XDG_CONFIG_HOME="$legacy_home/.config" XDG_DATA_HOME="$legacy_home/.local/share" "$ROOT/bootstrap.sh" --link >/dev/null
-[ -L "$legacy_home/.local/bin/dots" ]
-[ -L "$legacy_home/.config/quickshell" ]
-
 migration_home="$tmp/migration"
 mkdir -p "$migration_home/.config"
 ln -s "$ROOT/waybar" "$migration_home/.config/waybar"

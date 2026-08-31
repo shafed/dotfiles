@@ -58,7 +58,7 @@ hl.config({
 
   misc = {
     force_default_wallpaper = 0, -- No mascot wallpaper; hyprpaper always sets a real one anyway
-    disable_hyprland_logo = true, -- Kills the corner logo + random caption drawn over any wallpaper
+    disable_hyprland_logo = true, -- Kills the corner logo drawn over any wallpaper
   },
 })
 

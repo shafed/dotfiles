@@ -16,6 +16,11 @@ destination = "{home}/.zprofile"
 reason = "shared login shell configuration"
 
 [[links]]
+source = "zsh/completions/_dots"
+destination = "{home}/.oh-my-zsh/custom/completions/_dots"
+reason = "native zsh completion for dots commands, aliases and options"
+
+[[links]]
 source = "instructions.md"
 destination = "{home}/.claude/CLAUDE.md"
 reason = "shared agent instructions"

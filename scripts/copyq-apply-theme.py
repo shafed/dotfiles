@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""Apply the generated Gruvbox theme (copyq/gruvbox.ini) to CopyQ's live config.
+"""Apply managed settings and the generated theme to CopyQ's live config.
 
 CopyQ has no external-theme-file reference at runtime: [Theme] lives inline in
 copyq.conf, normally populated by hand ("Load theme" in Preferences). This does
 the same merge from the CLI, but only rewrites [Theme]'s key=value lines in
-place -- everything else in copyq.conf (tabs, items, shortcuts, window
-geometry) is left untouched.
+place. It also enforces the small set of behavior options owned by this repo;
+everything else in copyq.conf (tabs, items, shortcuts, window geometry) is
+left untouched.
 
 copyq.conf is live, mutable app state, so ~/.config/copyq is intentionally not
 a tracked symlink like the other CONFIG_DIRS; re-run this (and restart
@@ -20,6 +21,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 THEME_INI = ROOT / "copyq/gruvbox.ini"
 CONF = Path.home() / ".config/copyq/copyq.conf"
+MANAGED_OPTIONS = {"close_on_unfocus": "true"}
 
 
 def parse_theme(text: str) -> dict[str, str]:
@@ -69,8 +71,8 @@ def main() -> int:
         print(f"missing {THEME_INI}; run scripts/generate-theme.py first", file=sys.stderr)
         return 1
     if not CONF.exists():
-        print(f"missing {CONF}; run CopyQ at least once first", file=sys.stderr)
-        return 1
+        print(f"skipped CopyQ config: {CONF} does not exist yet")
+        return 0
 
     theme = parse_theme(THEME_INI.read_text())
     lines = CONF.read_text().splitlines()
@@ -138,8 +140,32 @@ def main() -> int:
             new_lines.insert(insert_at, f"{key}={value}")
             insert_at += 1
 
+    try:
+        options_start = new_lines.index("[Options]")
+    except ValueError:
+        print(f"{CONF} has no [Options] section", file=sys.stderr)
+        return 1
+
+    options_end = len(new_lines)
+    for i in range(options_start + 1, len(new_lines)):
+        if new_lines[i].startswith("["):
+            options_end = i
+            break
+
+    for key, value in MANAGED_OPTIONS.items():
+        prefix = f"{key}="
+        for i in range(options_start + 1, options_end):
+            if new_lines[i].startswith(prefix):
+                new_lines[i] = f"{key}={value}"
+                break
+        else:
+            new_lines.insert(options_end, f"{key}={value}")
+            options_end += 1
+
     CONF.write_text("\n".join(new_lines) + "\n")
-    print(f"applied {len(theme.keys())} theme keys to {CONF}")
+    print(
+        f"applied {len(theme)} theme keys and {len(MANAGED_OPTIONS)} behavior option(s) to {CONF}"
+    )
     print("restart copyq for it to take effect: dots restart copyq")
     return 0
 

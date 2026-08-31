@@ -118,6 +118,9 @@ EOF_WRAPPER
   echo "== Helium Gruvbox theme =="
   python3 "$ROOT/helium/apply-gruvbox-theme.py"
 
+  echo "== CopyQ config =="
+  python3 "$ROOT/scripts/copyq-apply-theme.py"
+
   if command -v systemctl >/dev/null 2>&1 && systemctl --user show-environment >/dev/null 2>&1; then
     if systemctl --user list-unit-files dunst.service >/dev/null 2>&1; then
       systemctl --user mask --now dunst.service >/dev/null 2>&1 || true

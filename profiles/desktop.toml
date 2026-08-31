@@ -14,7 +14,7 @@ reason = "darkman hooks generated from the tracked theme"
 [[generators]]
 name = "helium-theme"
 apply = ["bash", "scripts/dots-helium-generator.sh"]
-outputs = ["{config}/helium/Default/Preferences", "{config}/helium-browser-flags.conf", "{data}/dotfiles/helium-gruvbox", "{data}/dotfiles/helium-gruvbox-dark", "{data}/dotfiles/helium-gruvbox-light"]
+outputs = ["{config}/net.imput.helium/Default/Preferences", "{config}/helium-browser-flags.conf", "{data}/dotfiles/helium-gruvbox", "{data}/dotfiles/helium-gruvbox-dark", "{data}/dotfiles/helium-gruvbox-light"]
 reason = "activate Chromium's native Gruvbox-seeded User Color theme and retire unpacked theme state"
 
 [[generators]]

@@ -166,7 +166,7 @@ Shell, Lua, Python, generated-state and integration tests. Tests cover profile
 inheritance/machine selection/capabilities, JSON plan schema, read-only planning,
 blockers, apply no-op, backup-before-replacement, history plan/doctor metadata,
 rollback safety, user-service convergence, drift, provisioning, command aliases,
-Zsh completion generation/registration, command-aware completion routing and the
+Zsh completion generation/registration, canonical-only completion menus and the
 absence of the removed `stage` command.
 
 ## Commands, aliases and completion
@@ -185,10 +185,10 @@ Aliases are resolved from the metadata before dispatch, so `dots help hi` and
 
 `dots completion zsh` prints one native, command-aware completion function.
 After Oh My Zsh has initialized `compinit`, `zshrc` evaluates that output
-directly and registers `_dots` for both `dots` and `ds`. Completion covers the
-canonical commands and aliases, command-specific flags (`plan --json`,
-`apply --check`, etc.), fixed subcommands (`check`, `theme`, `restart`, `panel`,
-...) and values from the repo such as machine/profile/run identifiers where
+directly and registers `_dots` for both `dots` and `ds`. Completion deliberately
+suggests only canonical command names, long flags and canonical fixed
+subcommands; aliases remain valid when typed manually but are not shown by
+`<Tab>`. It also completes repo-derived machine/profile/run identifiers where
 appropriate. No extra `fpath` loader or completion installation is required.
 
 `stage` is intentionally not a public or internal dots feature anymore. Testing

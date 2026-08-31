@@ -97,11 +97,6 @@ Variants {
         }
 
         ClickButton {
-          label: "CLIP"
-          onPressed: bars.shell.run(["bash", "-lc", "QT_QPA_PLATFORM=xcb copyq toggle"])
-        }
-
-        ClickButton {
           label: bars.notifications.dnd ? "DND" : "BELL"
           active: bars.shell.openPanel === "notifications"
           onPressed: bars.shell.togglePanel("notifications")

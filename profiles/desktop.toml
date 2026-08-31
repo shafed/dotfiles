@@ -3,7 +3,7 @@ description = "Hyprland desktop session and graphical integrations"
 includes = ["base"]
 capabilities = ["desktop", "bluetooth", "battery"]
 config_dirs = ["hypr", "kanata", "quickshell", "darkman", "systemd"]
-sources = ["helium/apply-gruvbox-theme.py", "scripts/copyq-apply-theme.py"]
+sources = ["helium/apply-gruvbox-theme.py", "scripts/dots-helium-generator.sh", "scripts/copyq-apply-theme.py"]
 services = ["quickshell.service", "kanata.service", "darkman.service", "copyq.service"]
 
 [[links]]
@@ -13,7 +13,7 @@ reason = "darkman hooks generated from the tracked theme"
 
 [[generators]]
 name = "helium-theme"
-apply = ["python3", "helium/apply-gruvbox-theme.py"]
+apply = ["bash", "scripts/dots-helium-generator.sh"]
 outputs = ["{data}/dotfiles/helium-gruvbox/manifest.json", "{config}/helium-browser-flags.conf"]
 reason = "keep Helium's generated Gruvbox extension and flags in sync"
 

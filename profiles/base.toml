@@ -1,0 +1,167 @@
+[profile]
+description = "CLI, editor and shared dotfiles used on every machine"
+includes = []
+capabilities = ["base"]
+config_dirs = ["kitty", "nvim", "yazi", "lazygit", "sioyek", "zathura"]
+sources = ["scripts/sudo-notify.sh"]
+
+[[links]]
+source = "zsh/zshrc"
+destination = "{home}/.zshrc"
+reason = "shared interactive shell configuration"
+
+[[links]]
+source = "zsh/zprofile"
+destination = "{home}/.zprofile"
+reason = "shared login shell configuration"
+
+[[links]]
+source = "instructions.md"
+destination = "{home}/.claude/CLAUDE.md"
+reason = "shared agent instructions"
+
+[[links]]
+source = "instructions.md"
+destination = "{config}/opencode/AGENTS.md"
+reason = "shared agent instructions"
+
+[[links]]
+source = "instructions.md"
+destination = "{home}/.codex/AGENTS.md"
+reason = "shared agent instructions"
+
+[[links]]
+source = ".claude/hooks/no-coauthor.sh"
+destination = "{home}/.claude/hooks/no-coauthor.sh"
+reason = "shared Claude hook"
+
+[[links]]
+source = ".claude/themes/gruvbox-material.json"
+destination = "{home}/.claude/themes/gruvbox-material.json"
+reason = "shared Claude theme"
+
+[[links]]
+source = "dots"
+destination = "{home}/.local/bin/dots"
+reason = "install the dotfiles CLI"
+
+[[files]]
+destination = "{home}/.local/bin/sudo"
+mode = "0755"
+reason = "notify after sudo completes"
+content = '''#!/usr/bin/env bash
+exec "{root}/scripts/sudo-notify.sh" "$@"
+'''
+
+[[files]]
+destination = "{home}/.local/bin/sioyek"
+mode = "0755"
+reason = "start Sioyek with the repository's known-good environment"
+content = '''#!/usr/bin/env bash
+exec env -u LIBGL_ALWAYS_SOFTWARE QT_QPA_PLATFORM=xcb /usr/bin/sioyek "$@"
+'''
+
+[[packages]]
+command = "kitty"
+package = "kitty"
+manager = "pacman"
+required = true
+reason = "terminal used by sessions and launchers"
+
+[[packages]]
+command = "nvim"
+package = "neovim"
+manager = "pacman"
+required = true
+reason = "editor configuration"
+
+[[packages]]
+command = "zsh"
+package = "zsh"
+manager = "pacman"
+required = true
+reason = "interactive shell"
+
+[[packages]]
+command = "zoxide"
+package = "zoxide"
+manager = "pacman"
+required = true
+reason = "directory navigation used by zsh"
+
+[[packages]]
+command = "fzf"
+package = "fzf"
+manager = "pacman"
+required = true
+reason = "fallback pickers and shell workflows"
+
+[[packages]]
+command = "jq"
+package = "jq"
+manager = "pacman"
+required = true
+reason = "JSON plumbing used by scripts"
+
+[[packages]]
+command = "yazi"
+package = "yazi"
+manager = "pacman"
+required = true
+reason = "file manager configuration"
+
+[[packages]]
+command = "lazygit"
+package = "lazygit"
+manager = "pacman"
+required = true
+reason = "Git TUI configuration"
+
+[[packages]]
+command = "sioyek"
+package = "sioyek"
+manager = "pacman"
+required = true
+reason = "PDF viewer configuration"
+
+[[packages]]
+command = "yt-dlp"
+package = "yt-dlp"
+manager = "pacman"
+required = true
+reason = "YouTube picker downloads and metadata"
+
+[[packages]]
+command = "bruvtab"
+package = "bruvtab"
+manager = "uv-tool"
+required = true
+reason = "browser tab integration"
+
+[[packages]]
+command = "task"
+package = "taskwarrior"
+manager = "pacman"
+required = true
+reason = "task workflows"
+
+[[packages]]
+command = "python3"
+package = "python"
+manager = "pacman"
+required = true
+reason = "dotfiles generators and state engine"
+
+[[packages]]
+command = "luac"
+package = "lua"
+manager = "pacman"
+required = false
+reason = "Lua syntax checks in dots check"
+
+[[packages]]
+command = "pre-commit"
+package = "pre-commit"
+manager = "pacman"
+required = false
+reason = "local repository hooks"

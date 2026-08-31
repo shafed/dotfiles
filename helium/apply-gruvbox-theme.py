@@ -75,30 +75,43 @@ def update_flags(flags_path: Path, runtime: Path) -> bool:
     active_end: str | None = None
     debugging_port: str | None = None
 
+    def collect_switch(stripped: str) -> bool:
+        nonlocal debugging_port
+        if stripped.startswith("--load-extension="):
+            raw = strip_quotes(stripped.split("=", 1)[1])
+            for entry in raw.split(","):
+                candidate = strip_quotes(entry.strip())
+                if candidate and not any(
+                    marker in candidate for marker in DOTFILES_THEME_MARKERS
+                ):
+                    load_extensions.append(candidate)
+            return True
+        if stripped.startswith("--remote-debugging-port="):
+            # Preserve an existing explicit port, including one from our own
+            # previous managed block. Port 0 asks Chromium for a free loopback
+            # port and publishes it through DevToolsActivePort.
+            if debugging_port is None:
+                debugging_port = stripped
+            return True
+        return False
+
     for line in original.splitlines():
         stripped = line.strip()
         if active_end is not None:
             if stripped == active_end:
                 active_end = None
+                continue
+            # A previous managed block may contain user-owned extensions folded
+            # into the comma-separated switch. Recover those before dropping the
+            # old block so repeated `dots apply` remains lossless/idempotent.
+            collect_switch(stripped)
             continue
         if stripped in starts:
             active_end = starts[stripped]
             continue
         if stripped in ends or stripped in LEGACY_FORCE_FLAGS:
             continue
-
-        if stripped.startswith("--load-extension="):
-            raw = strip_quotes(stripped.split("=", 1)[1])
-            for entry in raw.split(","):
-                candidate = strip_quotes(entry.strip())
-                if candidate and not any(marker in candidate for marker in DOTFILES_THEME_MARKERS):
-                    load_extensions.append(candidate)
-            continue
-        if stripped.startswith("--remote-debugging-port="):
-            # Respect an existing explicit debugging port. If none exists, the
-            # managed block uses port 0 so Chromium publishes DevToolsActivePort.
-            if debugging_port is None:
-                debugging_port = stripped
+        if collect_switch(stripped):
             continue
         output.append(line)
 
@@ -120,7 +133,9 @@ def update_flags(flags_path: Path, runtime: Path) -> bool:
     output.extend(
         [
             MANAGED_START,
-            "--load-extension=" + ",".join(wrapper_safe_path(path) for path in deduped),
+            "--load-extension=" + ",".join(
+                wrapper_safe_path(path) for path in deduped
+            ),
             debugging_port or "--remote-debugging-port=0",
             MANAGED_END,
             "",
@@ -168,7 +183,10 @@ def main() -> int:
         return 1
 
     print(f"Helium flags: {flags} ({'updated' if flags_changed else 'unchanged'})")
-    print("Restart Helium once after first setup; later darkman changes reload the exact theme live.")
+    print(
+        "Restart Helium once after first setup; later darkman changes reload "
+        "the exact theme live."
+    )
     return 0
 
 

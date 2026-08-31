@@ -24,9 +24,9 @@ fi
 case "$command_name" in
 plan | pl) exec bash "$ROOT/scripts/dots-plan.sh" "$@" ;;
 apply | a) exec bash "$ROOT/scripts/dots-apply.sh" "$@" ;;
-drift | dr) exec python3 "$ROOT/scripts/dots-machine.py" drift "$@" ;;
-provision | pv) exec python3 "$ROOT/scripts/dots-machine.py" provision "$@" ;;
-stage | st) exec python3 "$ROOT/scripts/dots-machine.py" stage "$@" ;;
+drift | dr) exec bash "$ROOT/scripts/dots-drift.sh" "$@" ;;
+provision | pv) exec bash "$ROOT/scripts/dots-provision.sh" "$@" ;;
+stage | st) exec bash "$ROOT/scripts/dots-stage.sh" "$@" ;;
 doctor | d) exec bash "$ROOT/scripts/dots-doctor.sh" "$@" ;;
 check | c) exec bash "$ROOT/scripts/dots-check.sh" "$@" ;;
 migrate | m) exec bash "$ROOT/scripts/dots-migrate.sh" "$@" ;;

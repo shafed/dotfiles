@@ -159,7 +159,6 @@ ShellRoot {
   }
 
   function togglePanel(name) {
-    if (!laptop && (name === "network" || name === "bluetooth")) return
     desktopLauncher.close()
     bookmarksPicker.close()
     openPanel = openPanel === name ? "" : name
@@ -302,7 +301,8 @@ ShellRoot {
       return "ok"
     }
     function panel(name: string): string {
-      root.togglePanel(name)
+      if (name === "calendar") root.openCalendar()
+      else root.togglePanel(name)
       return root.openPanel
     }
     function refresh(): string {

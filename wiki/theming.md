@@ -90,8 +90,11 @@ switching needs a browser restart. It also flattens part of Helium's native
 active/inactive vertical-tab treatment.
 
 The current implementation instead uses Chromium's built-in **User Color** theme.
-`helium/apply-gruvbox-theme.py` configures the default profile at
-`$XDG_CONFIG_HOME/helium/Default/Preferences` with the semantic equivalent of:
+On Linux Helium's upstream user-data directory is
+`$XDG_CONFIG_HOME/net.imput.helium`. `helium/apply-gruvbox-theme.py` reads
+`Local State` there and updates the active profile's `Preferences` (falling back
+to `Default`). An explicit persistent `--user-data-dir=...` takes precedence.
+The desired state is the semantic equivalent of:
 
 ```text
 extensions.theme.id = user_color_theme_id
@@ -139,22 +142,33 @@ running profile. Close Helium once and run:
 
 The generator then:
 
+- discovers the active profile from `net.imput.helium/Local State`;
 - selects Chromium's special `user_color_theme_id`;
 - sets the Gruvbox seed, Neutral variant and System scheme;
-- removes only dotfiles-owned Gruvbox `--load-extension` and managed
-  force-color-scheme blocks while preserving unrelated browser flags/extensions;
+- removes dotfiles-owned Gruvbox `--load-extension`, both old managed blocks and
+  stray standalone `--force-light-mode` / `--force-dark-mode` lines while
+  preserving unrelated browser flags/extensions;
 - removes the old dotfiles-owned `helium-gruvbox`, `helium-gruvbox-dark` and
   `helium-gruvbox-light` runtime directories.
 
 Start Helium once after that migration. This one restart activates the changed
 profile preferences; **later light/dark transitions do not require a restart**.
 
-If Helium has never created `Default/Preferences`, `dots apply` does not invent a
-browser profile. Launch Helium once, close it, and apply again.
+If Helium has never created an active `Preferences`, `dots apply` does not invent
+a browser profile. Launch Helium once, close it, and apply again.
 
 ### Verification
 
-Check the built-in theme state:
+First resolve the active profile the same way Chromium does:
+
+```sh
+HELIUM_ROOT="${XDG_CONFIG_HOME:-$HOME/.config}/net.imput.helium"
+PROFILE="$(jq -r '.profile.last_used // "Default"' "$HELIUM_ROOT/Local State")"
+PREFS="$HELIUM_ROOT/$PROFILE/Preferences"
+echo "$PREFS"
+```
+
+Then check the built-in theme state:
 
 ```sh
 jq '{
@@ -163,7 +177,7 @@ jq '{
   seed: .browser.theme.user_color2,
   variant: .browser.theme.color_variant2,
   follows_os_accent: .browser.theme.follows_system_colors
-}' ~/.config/helium/Default/Preferences
+}' "$PREFS"
 ```
 
 Expected semantic values:
@@ -174,6 +188,13 @@ scheme = 0   # System
 seed = -4951799   # signed SkColor for #b47109
 variant = 2  # Neutral
 follows_os_accent = false
+```
+
+The legacy flags check should print nothing:
+
+```sh
+grep -E 'helium-gruvbox|force-(light|dark)-mode' \
+  ~/.config/helium-browser-flags.conf
 ```
 
 Check the portal itself when live switching is suspect:

@@ -71,7 +71,7 @@ if light["bg"] != "#fbfaf7" or light["fg"] != "#3c3836":
 palette = tomllib.loads((root / "colors.toml").read_text())
 helium = palette.get("helium", {})
 if helium != {
-    "user_color": "#b47109",
+    "user_color": "#3c3836",
     "color_variant": "neutral",
     "color_scheme": "system",
 }:

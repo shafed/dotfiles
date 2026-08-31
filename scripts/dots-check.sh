@@ -42,6 +42,7 @@ PY
 check_tests() {
   echo "== tests =="
   tests/dots.sh
+  tests/dots-state.sh
 }
 
 case "${1:-all}" in

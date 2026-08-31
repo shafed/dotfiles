@@ -21,6 +21,19 @@ for item in profile.get("packages", []):
     path.write_text("#!/usr/bin/env bash\nexit 0\n")
     path.chmod(0o755)
 PY
+
+# An isolated HOME must never inspect the real logged-in user's systemd state.
+# Keep the user manager unavailable until the explicit service-convergence test
+# below replaces this stub with a stateful fake systemctl.
+cat >"$fake_bin/systemctl" <<'EOF'
+#!/usr/bin/env bash
+case "$*" in
+  "--user show-environment") exit 1 ;;
+  *) exit 1 ;;
+esac
+EOF
+chmod +x "$fake_bin/systemctl"
+
 export PATH="$fake_bin:$PATH"
 
 python3 - "$ROOT" <<'PY'

@@ -86,6 +86,7 @@ check_tests() {
   echo "== tests =="
   bash tests/dots.sh
   bash tests/dots-state.sh
+  bash tests/dots-machine.sh
 }
 
 case "${1:-all}" in

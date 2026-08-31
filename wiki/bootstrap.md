@@ -1,106 +1,93 @@
 ---
 title: bootstrap
 type: topic
-updated: 2026-08-30
+updated: 2026-08-31
 covers:
   - bootstrap.sh
   - dots
+  - profiles/
+  - machines/
+  - scripts/dots-state.py
   - scripts/dots-apply.sh
-  - scripts/dots-lib.sh
+  - scripts/dots-provision.sh
   - zsh/zprofile
 ---
 
 # Bootstrap — deploying on a new machine
 
-Arch Linux + Hyprland. The primary fresh-machine command is now `./dots apply`
-from the repo root. `dots` is already executable inside the checkout, so a
-separate installer is unnecessary; the apply pass links itself into
-`~/.local/bin` for subsequent use. `bootstrap.sh` remains only so old muscle
-memory/scripts keep working — it forwards its arguments to `dots apply`, and
-legacy `--check` / `--link` are accepted there.
+The checkout does not need a separate installer: `./dots` runs directly from the
+repo and `dots apply` links itself into `~/.local/bin`. `bootstrap.sh` is only a
+compatibility wrapper around `dots apply`; legacy `--check` / `--link` continue
+to map to the apply surface.
 
-`apply` reports missing required packages but never installs them
-([decisions](decisions.md)). It then converges managed symlinks, migrations and
-derived runtime state and finishes with [dots doctor](dots.md). Existing real
-files/directories at managed destinations are never deleted or overwritten;
-move/archive such a conflict explicitly and rerun.
+A fresh Arch machine has two deliberately separate phases. External packages
+and system prerequisites are opt-in through `./dots provision`; dotfiles-owned
+state is converged through `./dots apply`. Keeping those operations separate
+means routine apply never unexpectedly invokes sudo, installs packages or
+changes system services.
 
-The required-package and managed-link manifests are shared with `dots doctor`.
-This is intentional: adding a deployment-managed component in one place must not
-leave diagnostics describing a different machine. XDG config/data roots are
-honored rather than assuming `~/.config` and `~/.local/share` for those classes
-of link.
+Recommended fresh-machine sequence:
 
-Session autostart is `../zsh/zprofile`: on tty1 with no `$DISPLAY` it runs
-`exec uwsm start hyprland-uwsm.desktop` rather than the raw `start-hyprland`
-binary, because uwsm wraps Hyprland in a real systemd user session — without it
-`graphical-session.target` and the session environment never become available to
-user services ([hypr](hypr.md)).
+```text
+./dots provision --check   # inspect missing external prerequisites
+./dots provision           # optional: install/enable them on Arch
+./dots plan                # inspect file/link/service/generator drift
+./dots apply               # converge dotfiles-owned state
+./dots doctor              # verify selected profile including prerequisites
+```
 
-## What apply manages beyond the config dirs
+The current provisioning backend intentionally supports Arch only. Pacman
+packages use `sudo pacman -S --needed`, AUR entries require `paru` or `yay`, and
+isolated CLI tools use `uv tool`. Declared system prerequisites such as
+NetworkManager/BlueZ/power-profiles-daemon are enabled with systemd. Other distro
+backends are deferred until another real machine needs them.
 
-Read `scripts/dots-apply.sh` and the manifests in `scripts/dots-lib.sh` for the
-current list. Three things are not obvious from the link list itself:
+Desired state comes from `profiles/*.toml` plus a small machine selector in
+`machines/<hostname>.toml` (falling back to `machines/default.toml`). Packages,
+links, services, generators and prerequisites are not duplicated in bootstrap or
+doctor. See [profiles](profiles.md) and [dots](dots.md).
 
-- ⚠️ **The `no-coauthor` hook is only half-installed by design.** `apply` links
-  `.claude/hooks/no-coauthor.sh` into `~/.claude/hooks/`, but the `hooks` block
-  that *registers* it lives in `~/.claude/settings.json` — machine state,
-  untracked, a real file rather than a symlink. A fresh machine gets the script
-  and no registration, so the guard silently never fires ([global](global.md)).
-- ⚠️ **`~/.local/bin` is on the interactive shell's `PATH` but not the systemd
-  user session's.** `apply` installs `dots` there and generates two wrappers —
-  `sudo` (notifies on a background password prompt) and `sioyek` (pins the
-  viewer to XWayland, [sioyek](sioyek.md)). Anything launched from a `.desktop`
-  entry must call wrappers by absolute path or it silently gets the unwrapped
-  binary.
-- oh-my-zsh and its plugins are **not** checked or installed here — zshrc clones
-  them on first run ([zsh](zsh.md)).
+`apply` refuses to replace unrelated real files/directories at managed
+locations. Safe explicit migrations are planned/backed up before links are
+created; otherwise move/archive a blocker yourself and rerun. Repeated apply is
+a true no-op when managed state already matches.
 
-`apply` invalidates the generated Quickshell runtime but only **try-restarts**
-managed services. This prevents a deployment from starting Quickshell outside a
-graphical session with no Wayland environment; inactive services consume the
-new config on their next normal start.
+Changing applies are recorded in `~/.local/state/dotfiles/runs/`, with backups
+under `~/.local/state/dotfiles/backups/`. `dots rollback <run>` can restore only
+files, symlinks and declared generated outputs owned by that run. It refuses to
+overwrite a path that changed after the apply and does not attempt to uninstall
+packages or revert the whole operating system.
 
-## Skills reach all three agents without leaving the repo
+## Session launch
 
-Claude Code and opencode both scan the project's `.claude/skills/`; Codex scans
-`.agents/skills/`. Verified per tool rather than assumed (`opencode debug skill`,
-`codex debug prompt-input`). So deployment links nothing into `$HOME` for
-skills.
+Session autostart remains `../zsh/zprofile`: on tty1 with no `$DISPLAY` it runs
+`exec uwsm start hyprland-uwsm.desktop`. uwsm wraps Hyprland in a systemd user
+session so `graphical-session.target` and the session environment are available
+to user services ([hypr](hypr.md)).
 
-The two trees hold **separate copies, not symlinks**, because the frontmatter
-differs — `.claude/skills/commit` declares `model: haiku` and Codex has no
-equivalent. Codex would load the Claude file fine (unknown keys are ignored,
-tested), so the copies buy honesty, not function.
+## Important state outside automatic convergence
 
-⚠️ **Gotcha**: the bodies must be edited together and nothing enforces it. They
-are identical except for one paragraph — the Claude copy names `$ARGUMENTS`,
-which Codex does not expand. Diff the two with the frontmatter and that
-paragraph excluded; anything else is drift. This is not hypothetical: `1ee2d84`
-taught the skill to stage untracked files in the Claude copy only, git reported
-no conflict because only one side touched that path, and the two disagreed about
-whether new files get committed until someone noticed by hand.
+Some state remains intentionally manual or application-owned:
 
-⚠️ **Gotcha**: `.agents/` is Codex's namespace and easy to miss because
-`~/.codex/skills/` also works. Prefer the in-repo path — the global one makes
-every skill visible in *every* repo, where a taxonomy built for this flat layout
-is wrong.
+- The `no-coauthor` script is linked into `~/.claude/hooks/`, but registering it
+  in `~/.claude/settings.json` is still mutable Claude machine state
+  ([global](global.md)).
+- `~/.local/bin` is available to the interactive shell but should not be assumed
+  to be on every systemd user service PATH. Desktop/service callers that require
+  a wrapper should use its absolute path.
+- oh-my-zsh and its plugins are still first-run shell state rather than profile
+  packages ([zsh](zsh.md)).
+- Helium native messaging for `bruvtab` and XDG default-browser selection remain
+  application/system integration steps not represented by the current profile.
 
-## Manual setup outside the repo
+Tracked systemd user units are linked as part of the desktop profile. A full
+apply only try-restarts already-running managed services; it does not start
+Quickshell from a non-graphical TTY. Doctor verifies the selected profile after
+convergence.
 
-These do not survive a fresh machine and `dots apply` does not cover them:
+## Agent skills
 
-- Helium extension + native-messaging manifest for `bruvtab` (what lets
-  `bookmarks.sh` focus an existing tab, [scripts-pickers](scripts-pickers.md)).
-  `bruvtab install` only writes the standard Chromium/Chrome/Brave paths, so
-  Helium likely needs `bruvtab_mediator.json` copied into
-  `~/.config/net.imput.helium/NativeMessagingHosts/`.
-- XDG default browser — set `helium.desktop` for `http`, `https`, `text/html`.
-- The `hooks` block in `~/.claude/settings.json` (see above).
-
-Tracked systemd wants are deployed with the `systemd/` config directory;
-`dots doctor` verifies the core user units and the Quickshell/Dunst ownership
-contract after apply.
-
-TODO: exact pacman vs AUR package names and versions are not fully recorded —
-confirm during the next real deployment.
+Claude Code and opencode scan `.claude/skills/`; Codex scans `.agents/skills/`.
+The trees remain separate copies because their frontmatter differs. When a skill
+body changes, update both copies; nothing currently enforces their semantic
+parity.

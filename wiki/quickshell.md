@@ -165,6 +165,12 @@ activation. `TopBar.qml` opens the platform menu through
 route this through a delegate-local `QsMenuAnchor`, which did not open menus on
 the current Quickshell 0.3.x runtime.
 
+`shell.qml` needs `//@ pragma UseQApplication` as its first line for
+`SystemTrayItem.display()` to work at all: without it, Quickshell isn't
+started in QApplication mode and every `display()` call silently fails with
+`Cannot display PlatformMenuEntry as quickshell was not started in
+QApplication mode` in the logs — tray clicks then do nothing.
+
 `components/ScratchOverlay.qml` is a focused multiline editor. `Esc` hides while
 preserving the draft and `Ctrl+Enter` closes, copies and pastes back into the
 window that was focused before scratch opened. Details and the retained legacy

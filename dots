@@ -22,10 +22,13 @@ if [ "$#" -gt 0 ]; then
 fi
 
 case "$command_name" in
+plan | pl) exec "$ROOT/scripts/dots-plan.sh" "$@" ;;
 apply | a) exec "$ROOT/scripts/dots-apply.sh" "$@" ;;
 doctor | d) exec "$ROOT/scripts/dots-doctor.sh" "$@" ;;
 check | c) exec "$ROOT/scripts/dots-check.sh" "$@" ;;
 migrate | m) exec "$ROOT/scripts/dots-migrate.sh" "$@" ;;
+history | hist) exec "$ROOT/scripts/dots-history.sh" "$@" ;;
+show) exec "$ROOT/scripts/dots-show.sh" "$@" ;;
 theme | t) exec "$ROOT/scripts/dots-theme.sh" "$@" ;;
 restart | rs) exec "$ROOT/scripts/dots-restart.sh" "$@" ;;
 refresh | rf) exec "$ROOT/scripts/dots-refresh.sh" "$@" ;;
@@ -40,10 +43,12 @@ help | h | -h | --help)
       usage
       exit 0
       ;;
+    pl) command_name="plan" ;;
     a) command_name="apply" ;;
     d) command_name="doctor" ;;
     c) command_name="check" ;;
     m) command_name="migrate" ;;
+    hist) command_name="history" ;;
     t) command_name="theme" ;;
     rs) command_name="restart" ;;
     rf) command_name="refresh" ;;

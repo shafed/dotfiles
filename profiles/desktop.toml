@@ -14,8 +14,8 @@ reason = "darkman hooks generated from the tracked theme"
 [[generators]]
 name = "helium-theme"
 apply = ["bash", "scripts/dots-helium-generator.sh"]
-outputs = ["{data}/dotfiles/helium-gruvbox/manifest.json", "{config}/helium-browser-flags.conf"]
-reason = "keep Helium's generated Gruvbox extension and flags in sync"
+outputs = ["{config}/helium/Default/Preferences", "{config}/helium-browser-flags.conf", "{data}/dotfiles/helium-gruvbox", "{data}/dotfiles/helium-gruvbox-dark", "{data}/dotfiles/helium-gruvbox-light"]
+reason = "activate Chromium's native Gruvbox-seeded User Color theme and retire unpacked theme state"
 
 [[generators]]
 name = "copyq-live-config"
@@ -102,7 +102,7 @@ command = "helium-browser"
 package = "helium-browser-bin"
 manager = "aur"
 required = true
-reason = "browser configuration and generated theme"
+reason = "browser configuration and native adaptive theme"
 
 [[packages]]
 command = "quickshell"

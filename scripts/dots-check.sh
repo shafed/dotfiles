@@ -41,10 +41,12 @@ PY
 check_generated() {
   echo "== generated / reproducibility =="
   python3 scripts/generate-theme.py --check
+  python3 scripts/generate-theme.py --mode light --check
   python3 - <<'PY'
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 import sys
+import tomllib
 
 root = Path.cwd()
 
@@ -61,6 +63,19 @@ first = theme.generated_files(theme.load_colors())
 second = theme.generated_files(theme.load_colors())
 if first != second:
     raise SystemExit("scripts/generate-theme.py is not reproducible")
+
+light = theme.load_colors("light")
+if light["bg"] != "#fbfaf7" or light["fg"] != "#3c3836":
+    raise SystemExit("Helium daylight reference palette anchors drifted")
+
+palette = tomllib.loads((root / "colors.toml").read_text())
+helium = palette.get("helium", {})
+if helium != {
+    "user_color": "#b47109",
+    "color_variant": "neutral",
+    "color_scheme": "system",
+}:
+    raise SystemExit("Helium native adaptive theme configuration drifted")
 
 sys.path.insert(0, str(root / "telegram"))
 telegram = load("dots_telegram_theme", root / "telegram/generate-theme.py")
@@ -85,6 +100,7 @@ if any(palette_a != palette_b or archive_a != archive_b for palette_a, palette_b
 if pairs[0][0] == pairs[1][0]:
     raise SystemExit("Telegram day and night palettes unexpectedly match")
 PY
+  python3 tests/helium-theme.py
   python3 scripts/dots-state.py verify-generators --profile desktop
 }
 

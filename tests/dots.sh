@@ -81,10 +81,11 @@ PY
 
 "$ROOT/dots" completion zsh >"$tmp/dots-completion.zsh"
 grep -q "'pl:alias for plan'" "$tmp/dots-completion.zsh"
-grep -q 'compdef _dots dots ds' "$tmp/dots-completion.zsh"
+grep -q 'compdef _dots_impl dots ds' "$tmp/dots-completion.zsh"
 ! grep -q 'stage' "$tmp/dots-completion.zsh"
 if command -v zsh >/dev/null 2>&1; then
   zsh -n "$tmp/dots-completion.zsh"
+  zsh -n "$ROOT/zsh/completions/_dots"
 fi
 [ ! -e "$ROOT/scripts/dots-stage.sh" ]
 if "$ROOT/dots" stage >"$tmp/stage.out" 2>&1; then

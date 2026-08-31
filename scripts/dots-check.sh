@@ -65,19 +65,25 @@ if first != second:
 sys.path.insert(0, str(root / "telegram"))
 telegram = load("dots_telegram_theme", root / "telegram/generate-theme.py")
 colors = telegram.load_colors()
-palette_a = telegram.apply_telegram_overrides(telegram.render(colors))
-palette_b = telegram.apply_telegram_overrides(telegram.render(colors))
 primary_a = telegram.read_primary_background()
 primary_b = telegram.read_primary_background()
 backup_a = telegram.render_backup_background(colors)
 backup_b = telegram.render_backup_background(colors)
-archive_a = telegram.build_archive(palette_a, primary_a)
-archive_b = telegram.build_archive(palette_b, primary_b)
-if (palette_a, primary_a, backup_a, archive_a) != (palette_b, primary_b, backup_b, archive_b):
-    raise SystemExit("telegram/generate-theme.py is not reproducible")
-tracked_palette = root / "telegram/colors.tdesktop-theme"
-if not tracked_palette.exists() or tracked_palette.read_text() != palette_a:
-    raise SystemExit("stale generated Telegram palette: telegram/colors.tdesktop-theme")
+
+pairs = []
+for variant in ("day", "night"):
+    palette_a = telegram.render_variant(colors, variant)
+    palette_b = telegram.render_variant(colors, variant)
+    archive_a = telegram.build_archive(palette_a, primary_a)
+    archive_b = telegram.build_archive(palette_b, primary_b)
+    pairs.append((palette_a, palette_b, archive_a, archive_b))
+
+if primary_a != primary_b or backup_a != backup_b:
+    raise SystemExit("telegram/generate-theme.py backgrounds are not reproducible")
+if any(palette_a != palette_b or archive_a != archive_b for palette_a, palette_b, archive_a, archive_b in pairs):
+    raise SystemExit("telegram/generate-theme.py variants are not reproducible")
+if pairs[0][0] == pairs[1][0]:
+    raise SystemExit("Telegram day and night palettes unexpectedly match")
 PY
   python3 scripts/dots-state.py verify-generators --profile desktop
 }
@@ -87,6 +93,7 @@ check_tests() {
   bash tests/dots.sh
   bash tests/dots-state.sh
   bash tests/dots-machine.sh
+  bash tests/telegram-theme.sh
 }
 
 case "${1:-all}" in

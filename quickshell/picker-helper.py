@@ -395,7 +395,7 @@ def open_project(ident):
             suffix += 1
         path = TRANSIENT_SESSIONS / f"{name}.kitty-session"
         path.write_text(
-            f'layout horizontal\nlaunch --title "ssh-{host}" ssh {host}\nfocus\nfocus_os_window\n'
+            f'layout splits\nlaunch --title "ssh-{host}" ssh {host}\nfocus\nfocus_os_window\n'
         )
         return goto_session(sock, path)
 
@@ -420,7 +420,7 @@ def open_project(ident):
             suffix += 1
         path = TRANSIENT_SESSIONS / f"{name}.kitty-session"
         path.write_text(
-            f"layout horizontal\ncd {real}\nlaunch --title {shlex.quote(base)}\nfocus\nfocus_os_window\n"
+            f"layout splits\ncd {real}\nlaunch --title {shlex.quote(base)}\nfocus\nfocus_os_window\n"
         )
         if shutil.which("zoxide"):
             run(["zoxide", "add", real], timeout=3)

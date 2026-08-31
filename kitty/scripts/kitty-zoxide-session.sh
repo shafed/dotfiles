@@ -305,7 +305,7 @@ focus_or_launch_dir() {
   session_file="${transient_sessions_dir}/${session_name}.kitty-session"
 
   cat >"$session_file" <<EOF
-layout horizontal
+layout splits
 cd ${selected_real}
 launch --title "${base}"
 focus
@@ -345,7 +345,7 @@ focus_or_launch_ssh() {
   session_file="${transient_sessions_dir}/${session_name}.kitty-session"
 
   cat >"$session_file" <<EOF
-layout horizontal
+layout splits
 launch --title "ssh-${host}" ssh ${host}
 focus
 focus_os_window

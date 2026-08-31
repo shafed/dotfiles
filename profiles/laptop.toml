@@ -1,4 +1,24 @@
 [profile]
-description = "Desktop profile with explicit laptop hardware intent"
+description = "Desktop profile plus laptop-only power and brightness controls"
 includes = ["desktop"]
 capabilities = ["laptop", "battery"]
+
+[[prerequisites]]
+kind = "system-service"
+name = "power-profiles-daemon.service"
+required = true
+reason = "laptop power profile controls need the system daemon"
+
+[[packages]]
+command = "powerprofilesctl"
+package = "power-profiles-daemon"
+manager = "pacman"
+required = true
+reason = "laptop power profile capability"
+
+[[packages]]
+command = "brightnessctl"
+package = "brightnessctl"
+manager = "pacman"
+required = true
+reason = "laptop display brightness controls"

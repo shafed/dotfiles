@@ -495,6 +495,16 @@ def plan(context: dict, mode: str = "full") -> dict:
 
         if systemd_user():
             desired_services = set(data["services"])
+            for unit in data["services"]:
+                enabled = user_unit_state(unit, "is-enabled")
+                if enabled not in {"enabled", "static", "indirect"}:
+                    add(
+                        changes,
+                        "service",
+                        "enable",
+                        unit=unit,
+                        reason="selected profile requires this user service",
+                    )
             for unit in known["services"]:
                 if unit in desired_services:
                     continue
@@ -761,10 +771,41 @@ def apply(context: dict, plan_data: dict, mode: str) -> int:
         os.chmod(destination, modebits)
         print(f"  wrote   {destination}")
 
+    service_changes = [
+        item
+        for item in plan_data["changes"]
+        if item["kind"] == "service" and item["action"] in {"enable", "disable", "mask"}
+    ]
+    if mode == "full" and service_changes and systemd_user():
+        reload_process = subprocess.run(
+            ["systemctl", "--user", "daemon-reload"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        )
+        if reload_process.returncode:
+            return fail("could not reload systemd user manager", reload_process.returncode)
+
     for item in plan_data["changes"]:
         if item["kind"] != "service" or not systemd_user():
             continue
-        if item["action"] == "mask":
+        if item["action"] == "enable":
+            subprocess.run(
+                ["systemctl", "--user", "unmask", item["unit"]],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                check=False,
+            )
+            process = subprocess.run(
+                ["systemctl", "--user", "enable", "--now", item["unit"]],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                check=False,
+            )
+            if process.returncode:
+                return fail(f"could not enable {item['unit']}", process.returncode)
+            print(f"  enabled {item['unit']}")
+        elif item["action"] == "mask":
             process = subprocess.run(
                 ["systemctl", "--user", "mask", "--now", item["unit"]],
                 stdout=subprocess.DEVNULL,

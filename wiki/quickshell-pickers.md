@@ -77,8 +77,12 @@ handling. Quickshell owns the window, input and row rendering;
 Favicons come from Helium's local Chromium `Favicons` SQLite database via a
 temporary snapshot; extracted PNGs are cached under
 `~/.cache/bookmarks-fzf/favicons/`. Missing favicons fall back to the first
-letter and never trigger a network request. This SQLite/binary extraction is
-intentionally still a bounded Python helper rather than QML shell state.
+letter and never trigger a network request. When an exact URL has no mapping,
+the host fallback prefers a locally cached dark-theme favicon variant: this is
+necessary for sites such as GitHub whose default transparent favicon is nearly
+black and disappears against the picker's dark surface. This SQLite/binary
+extraction is intentionally still a bounded Python helper rather than QML shell
+state.
 
 `palette-helper.py` also returns the character positions its own greedy scan
 found in `name`/`url` (`nameMatches`/`urlMatches`) — the same best-effort

@@ -1,3 +1,39 @@
+---
+title: dots
+type: topic
+updated: 2026-08-31
+covers:
+  - dots
+  - scripts/dots-state.py
+  - scripts/dots-machine.py
+  - scripts/dots-run-enrich.py
+  - scripts/dots-lib.sh
+  - scripts/dots-plan.sh
+  - scripts/dots-apply.sh
+  - scripts/dots-drift.sh
+  - scripts/dots-provision.sh
+  - scripts/dots-history.sh
+  - scripts/dots-show.sh
+  - scripts/dots-rollback.sh
+  - scripts/dots-doctor.sh
+  - scripts/dots-check.sh
+  - scripts/dots-migrate.sh
+  - scripts/dots-theme.sh
+  - scripts/dots-commands.sh
+  - scripts/dots-aliases.sh
+  - scripts/dots-completion.sh
+  - scripts/dots-restart.sh
+  - scripts/dots-refresh.sh
+  - scripts/dots-shell.sh
+  - scripts/dots-debug.sh
+  - zsh/completions/_dots
+  - tests/dots.sh
+  - tests/dots-state.sh
+  - tests/dots-machine.sh
+  - .pre-commit-config.yaml
+  - .github/workflows/check.yml
+---
+
 # dots — one entrypoint for repository operations
 
 `dots` is executable directly from the checkout. `./dots apply` is the normal
@@ -162,3 +198,8 @@ a CLI command.
 state. `dots shell` / `dots panel` expose the stable Quickshell control surface;
 raw arbitrary Quickshell IPC is not public `dots` API. `debug` remains
 observational and can omit journal text with `--no-logs`.
+
+Waybar remains a retired-component migration. An old managed Waybar symlink is
+backed up before removal; stale cache is derived state and removed without
+backup; an unmanaged real config remains untouched and blocks automatic
+convergence.

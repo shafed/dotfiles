@@ -1,7 +1,7 @@
 ---
 title: quickshell-pickers
 type: component
-updated: 2026-08-31
+updated: 2026-09-01
 covers:
   - quickshell/components/DesktopLauncher.qml
   - quickshell/components/BookmarksPicker.qml
@@ -147,8 +147,15 @@ state while `youtube-helper.py` adapts the existing `scripts/youtube.sh`
 subcommands, so yt-dlp, browser cookies, caches and workspace-4 placement are not
 reimplemented in QML.
 
-The native picker supports the interactive behavior that previously required the
-QAT/fzf surface:
+The native picker now preserves the complete interactive behavior of the old
+`youtube-qat.sh` → `youtube.sh -s` flow. Opening `apps+u` forces Hyprland layout
+index `0` (`us`) just as the QAT wrapper did, so a Russian layout cannot leak
+into a YouTube query. The picker starts in INSERT mode. `Esc` enters NORMAL;
+in NORMAL, `j/k` move, `g/G` jump to first/last, `i` or `/` returns to INSERT,
+and `q` or a second `Esc` closes or backs out of a channel view. Arrows,
+`Ctrl-J/K` and `Enter` work in both modes.
+
+Source and channel controls remain the same as QAT:
 
 - `Ctrl-V` → video search;
 - `Ctrl-C` → channel search;
@@ -157,9 +164,15 @@ QAT/fzf surface:
 - `Enter` on a channel → drill into that channel without opening the browser;
 - `Ctrl-S` inside a channel → toggle uploads / streams;
 - `Ctrl-A` inside a channel → load the deep videos cache (up to 2000 rows);
-- `Esc` inside a channel → return to the previous search/source;
+- `Esc` in NORMAL inside a channel → return to the previous search/source;
 - `Enter` on a video/page → open through the existing browser-placement logic on
   workspace 4.
+
+`Ctrl-R` is a real force refresh. For History/Watch Later it removes the short
+Quickshell feed cache before calling the existing `--ythistory`/
+`--ytwatchlater` path; for channel videos/streams/deep mode it removes that
+specific per-tab cache before `--yttab`. Merely re-running the helper against a
+fresh cache is not considered a refresh.
 
 YouTube ranking follows the same principle as Applications and Bookmarks: the
 provider/fuzzy order stays primary, then frequency may move a result only a few
@@ -186,8 +199,8 @@ channel enrichment fills in channel names. Channel videos/streams reuse
 40-row cache cannot satisfy a 2000-row request accidentally.
 
 The standalone `youtube.sh` remains useful for direct CLI channel/playlist calls,
-manual refreshes and custom `-n` limits, but normal `apps+u` no longer needs its
-fzf/QAT frontend for search, history, Watch later or channel browsing.
+manual `-n` limits and scripted use. Those were not part of the `youtube-qat.sh`
+hotkey path itself: that wrapper always launched `youtube.sh -s`.
 
 ## Clipboard
 

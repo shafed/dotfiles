@@ -6,8 +6,6 @@ bookmarks/helium-bookmarks.tsv
 __pycache__/
 
 # Built locally by telegram/generate-theme.py
-telegram/background-primary.png
-telegram/background-backup.png
 telegram/colors-day.tdesktop-theme
 telegram/colors-night.tdesktop-theme
 telegram/gruvbox-material-day.tdesktop-theme

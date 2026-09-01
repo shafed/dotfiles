@@ -3,6 +3,8 @@ import "../config" as Config
 
 Rectangle {
   id: button
+  property string icon: ""
+  property real iconYOffset: 0
   property string label: ""
   property bool active: false
   property color textColor: colors.fgBright
@@ -12,17 +14,31 @@ Rectangle {
   Config.UiConfig { id: ui }
 
   implicitHeight: ui.barButtonHeight
-  implicitWidth: Math.max(ui.barButtonMinWidth, textItem.implicitWidth + ui.barButtonPadding)
+  implicitWidth: Math.max(ui.barButtonMinWidth, contentRow.implicitWidth + ui.barButtonPadding)
   radius: ui.barButtonRadius
   color: mouse.containsMouse || active ? colors.bgHover : "transparent"
 
-  Text {
-    id: textItem
+  Row {
+    id: contentRow
     anchors.centerIn: parent
-    text: button.label
-    color: button.textColor
-    font.family: ui.barFont
-    font.pixelSize: ui.barFontSize
+    spacing: button.icon && button.label ? 5 : 0
+
+    Text {
+      visible: button.icon.length > 0
+      y: button.iconYOffset
+      text: button.icon
+      color: button.textColor
+      font.family: "Symbols Nerd Font"
+      font.pixelSize: ui.barFontSize
+    }
+
+    Text {
+      visible: button.label.length > 0
+      text: button.label
+      color: button.textColor
+      font.family: ui.barFont
+      font.pixelSize: ui.barFontSize
+    }
   }
 
   MouseArea {

@@ -14,6 +14,29 @@ Variants {
   required property var colors
   required property var ui
 
+  function batteryIcon(percent, charging) {
+    var value = Math.max(0, Math.min(100, Number(percent) || 0))
+    if (charging) {
+      if (value <= 25) return "󰂆"
+      if (value <= 35) return "󰂇"
+      if (value <= 50) return "󰂈"
+      if (value <= 70) return "󰂉"
+      if (value <= 85) return "󰂊"
+      if (value <= 95) return "󰂋"
+      return "󰂅"
+    }
+    if (value <= 10) return "󰁺"
+    if (value <= 20) return "󰁻"
+    if (value <= 30) return "󰁼"
+    if (value <= 40) return "󰁽"
+    if (value <= 50) return "󰁾"
+    if (value <= 60) return "󰁿"
+    if (value <= 70) return "󰂀"
+    if (value <= 80) return "󰂁"
+    if (value <= 90) return "󰂂"
+    return "󰁹"
+  }
+
   model: Quickshell.screens
 
   PanelWindow {
@@ -62,7 +85,7 @@ Variants {
         }
 
         ClickButton {
-          visible: bars.shell.state.agents && bars.shell.state.agents.length > 0
+          visible: bars.shell.aiLimitWarning()
           label: "AI"
           textColor: bars.shell.aiLimitColor()
           active: bars.shell.openPanel === "agents"
@@ -70,34 +93,43 @@ Variants {
         }
 
         ClickButton {
-          visible: bars.shell.laptop
+          visible: bars.system.bluetoothConnected
           label: "BT"
           active: bars.shell.openPanel === "bluetooth"
           onPressed: bars.shell.togglePanel("bluetooth")
         }
 
         ClickButton {
-          visible: bars.shell.laptop
-          label: bars.system.network.connected ? "NET" : "NET!"
+          visible: !bars.system.network.connected
+          label: "NET!"
           active: bars.shell.openPanel === "network"
           onPressed: bars.shell.togglePanel("network")
         }
 
         ClickButton {
-          label: bars.services.muted ? "MUTE" : "VOL " + String(bars.services.volume) + "%"
+          visible: bars.services.muted
+          icon: bars.services.muted ? "󰖁" : "󰕾"
+          iconYOffset: bars.services.muted ? 0 : 2
+          label: bars.services.muted ? "" : String(bars.services.volume) + "%"
           active: bars.shell.openPanel === "audio"
           onPressed: bars.shell.togglePanel("audio")
         }
 
         ClickButton {
           visible: bars.shell.laptop
-          label: "BAT " + String(bars.system.batteryPercent >= 0 ? bars.system.batteryPercent : "--") + "%"
+          icon: bars.batteryIcon(bars.system.batteryPercent,
+                                 bars.system.batteryStatus === "Charging")
+          iconYOffset: 2
+          label: String(bars.system.batteryPercent >= 0 ? bars.system.batteryPercent : "--") + "%"
           active: bars.shell.openPanel === "power"
           onPressed: bars.shell.togglePanel("power")
         }
 
         ClickButton {
-          label: bars.notifications.dnd ? "DND" : "BELL"
+          visible: bars.notifications.dnd || bars.notifications.unreadCount > 0
+          icon: bars.notifications.dnd ? "" : "󰂚"
+          iconYOffset: 1
+          label: bars.notifications.dnd ? "DND" : String(bars.notifications.unreadCount)
           active: bars.shell.openPanel === "notifications"
           onPressed: bars.shell.togglePanel("notifications")
         }

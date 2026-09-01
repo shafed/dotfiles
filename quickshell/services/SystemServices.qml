@@ -17,6 +17,12 @@ Item {
                                               return device && device.paired
                                             })
                                           : []
+  readonly property bool bluetoothConnected: {
+    var values = bluetoothDevices || []
+    for (var i = 0; i < values.length; i++)
+      if (values[i] && values[i].connected) return true
+    return false
+  }
 
   readonly property var batteryDevice: UPower.displayDevice
   readonly property bool hasBattery: {
@@ -26,7 +32,7 @@ Item {
     return false
   }
   readonly property int batteryPercent: hasBattery && batteryDevice && batteryDevice.ready
-                                        ? Math.round(Number(batteryDevice.percentage))
+                                        ? Math.round(Number(batteryDevice.percentage) * 100)
                                         : -1
   readonly property string batteryStatus: hasBattery && batteryDevice && batteryDevice.ready
                                           ? UPowerDeviceState.toString(batteryDevice.state)

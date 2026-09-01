@@ -70,9 +70,12 @@ hover uses only a soft background. Dates outside the current month are muted but
 remain clickable and switch the visible month when selected.
 
 The header provides previous/next month navigation, manual sync, a `Today`
-action whenever another date is selected, and a `Google ↗` action that opens
-Google Calendar in the browser for creating or editing events. Quickshell keeps
-this integration read-only rather than implementing a second event editor with
+action whenever another date is selected, and a `Google ↗` action for creating
+or editing events in Google Calendar. That action goes through the repository's
+shared `scripts/open-url.sh`/`open_or_focus_url` browser path: if a matching
+Google Calendar tab is already open in Helium it is activated and its browser
+window is focused; otherwise a new tab is opened. Quickshell keeps the calendar
+integration read-only rather than implementing a second event editor with
 recurrence, permission and CalDAV write semantics.
 
 The agenda uses the remaining panel height as a scrollable list, shows the

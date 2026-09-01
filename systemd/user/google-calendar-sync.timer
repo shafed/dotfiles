@@ -1,0 +1,11 @@
+[Unit]
+Description=Sync Google Calendar every five minutes
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=5min
+Persistent=true
+Unit=google-calendar-sync.service
+
+[Install]
+WantedBy=timers.target

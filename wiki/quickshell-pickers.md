@@ -186,6 +186,10 @@ for title and subtitle. `YoutubePicker.qml` renders only those characters in the
 generated Gruvbox accent/bold style, preserving the useful match visibility of
 fzf/QAT without putting markup into underlying IDs or titles.
 
+The YouTube surface is intentionally larger than the generic pickers: up to
+`1360×800`, with a `500×281` preview pane. This leaves the applications,
+bookmarks, projects and sessions surfaces at their existing dimensions.
+
 The right side previews the selected video's YouTube thumbnail, title, duration
 and channel when available. Thumbnail loading is asynchronous and uses Qt's
 image cache. Mouse selection remains available for this visual picker, but is

@@ -73,6 +73,10 @@ handling. Quickshell owns the window, input and row rendering;
 `palette-helper.py` gives the complete `name<TAB>url` catalog to
 `fzf --filter`. Frequency is applied after fzf relevance, with the same
 `~/.cache/bookmarks-fzf/usage.tsv` and recency cache as the fallback picker.
+The picker renders that cached catalog immediately on open; browser bookmark
+and favicon synchronization runs alongside it, then refreshes the rows when it
+finishes. In particular, SQLite extraction and network favicon fallback never
+gate the initial list.
 
 Favicons come from Helium's local Chromium `Favicons` SQLite database via a
 temporary snapshot; extracted PNGs are cached under

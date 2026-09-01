@@ -1,10 +1,10 @@
 [meta]
 name = "Gruvbox Material"
-variant = "dark-medium + adaptive-browser"
-reference = "nvim gruvbox-material + Chromium User Color"
+variant = "dark-medium + exact-light-browser"
+reference = "nvim gruvbox-material"
 
-# Compatibility table: all existing generated desktop surfaces still read
-# [colors], so they stay pinned to Gruvbox Material Dark Medium.
+# Compatibility table: existing generated desktop surfaces read [colors], so
+# they stay pinned to Gruvbox Material Dark Medium.
 [colors]
 bg_hard = "#1d2021"
 bg = "#282828"
@@ -40,9 +40,8 @@ diff_removed_dimmed = "#3d0100"
 diff_added_word = "#044700"
 diff_removed_word = "#5c0200"
 
-# Reference daylight palette. Chromium's built-in adaptive User Color theme does
-# not consume these exact values; it generates its own light/dark Material
-# palettes from [helium]. This remains the visual target for white-page harmony.
+# Exact daylight palette used by Helium's light theme and available to the
+# shared generator in --mode light checks.
 [colors_light]
 bg_hard = "#f2efe8"
 bg = "#fbfaf7"
@@ -75,14 +74,3 @@ diff_added = "#e7eedc"
 diff_removed = "#f2dfdc"
 diff_added_dimmed = "#eef2e8"
 diff_removed_dimmed = "#f5e9e7"
-
-# Helium uses Chromium's native User Color theme rather than an extension theme.
-# In Chromium's Neutral variant the vertical-tab frame is generated from a
-# forced secondary tonal palette, so seed hue matters much more than seed
-# saturation. Use Gruvbox's warm-neutral bg_soft hue instead of a yellow accent
-# to keep the generated browser chrome closer to the original neutral surfaces.
-# System color scheme follows darkman's XDG portal signal live.
-[helium]
-user_color = "#3c3836"
-color_variant = "neutral"
-color_scheme = "system"

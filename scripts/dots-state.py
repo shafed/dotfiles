@@ -220,16 +220,16 @@ def tree_digest(path: Path) -> str:
     return digest.hexdigest()
 
 
-def snapshot(path: Path, replace_from: str | None = None, replace_to: str | None = None) -> dict:
+def snapshot(path: Path, replacements: list[tuple[str, str]] | None = None) -> dict:
     if path.is_symlink():
         target = os.readlink(path)
-        if replace_from and replace_to:
-            target = target.replace(replace_from, replace_to)
+        for old, new in replacements or ():
+            target = target.replace(old, new)
         return {"type": "symlink", "target": target}
     if path.is_file():
         data = path.read_bytes()
-        if replace_from and replace_to:
-            data = data.replace(replace_from.encode(), replace_to.encode())
+        for old, new in replacements or ():
+            data = data.replace(old.encode(), new.encode())
         return {
             "type": "file",
             "sha256": hashlib.sha256(data).hexdigest(),
@@ -275,10 +275,15 @@ def generator_render(item: dict, context: dict) -> tuple[int, str, list[dict]]:
         process = run(item["apply"], temp_context, env)
         if process.returncode:
             return process.returncode, (process.stderr or process.stdout).strip(), []
-        rendered = [
-            snapshot(expected, str(home), str(context["home"]))
-            for _, expected in pairs
+        real_home = context["home"]
+        # A generator may embed the home path using a "/./" separator (a
+        # workaround for tools with broken tilde sanitization) instead of the
+        # plain path, so normalize both forms back to the real home.
+        replacements = [
+            (f"{home.parent}/./{home.name}", f"{real_home.parent}/./{real_home.name}"),
+            (str(home), str(real_home)),
         ]
+        rendered = [snapshot(expected, replacements) for _, expected in pairs]
         return 0, "", rendered
 
 

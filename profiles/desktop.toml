@@ -3,7 +3,7 @@ description = "Hyprland desktop session and graphical integrations"
 includes = ["base"]
 capabilities = ["desktop"]
 config_dirs = ["hypr", "kanata", "quickshell", "darkman", "systemd"]
-sources = ["helium/apply-gruvbox-theme.py", "scripts/dots-helium-generator.sh", "scripts/copyq-apply-theme.py", "scripts/dots-telegram-generator.sh", "telegram/generate-theme.py", "telegram/_palette_renderer.py", "telegram/background.png.b64"]
+sources = ["helium/apply-gruvbox-theme.py", "helium/switch-gruvbox-theme.py", "helium/gruvbox-dark/manifest.json", "helium/gruvbox-light/manifest.json", "scripts/dots-helium-generator.sh", "scripts/copyq-apply-theme.py", "scripts/dots-telegram-generator.sh", "telegram/generate-theme.py", "telegram/_palette_renderer.py", "telegram/background.png.b64"]
 services = ["quickshell.service", "kanata.service", "darkman.service", "copyq.service"]
 
 [[links]]
@@ -14,8 +14,8 @@ reason = "darkman hooks generated from the tracked theme"
 [[generators]]
 name = "helium-theme"
 apply = ["bash", "scripts/dots-helium-generator.sh"]
-outputs = ["{config}/net.imput.helium/Default/Preferences", "{config}/helium-browser-flags.conf", "{data}/dotfiles/helium-gruvbox", "{data}/dotfiles/helium-gruvbox-dark", "{data}/dotfiles/helium-gruvbox-light"]
-reason = "activate Chromium's native Gruvbox-seeded User Color theme and retire unpacked theme state"
+outputs = ["{config}/helium-browser-flags.conf", "{data}/dotfiles/helium-gruvbox"]
+reason = "load the exact Gruvbox extension theme and let darkman reload its light/dark manifest live"
 
 [[generators]]
 name = "copyq-live-config"
@@ -96,7 +96,7 @@ command = "helium-browser"
 package = "helium-browser-bin"
 manager = "aur"
 required = true
-reason = "browser configuration and native adaptive theme"
+reason = "browser configured with exact Gruvbox light/dark themes"
 
 [[packages]]
 command = "quickshell"

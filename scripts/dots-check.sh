@@ -46,7 +46,6 @@ check_generated() {
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 import sys
-import tomllib
 
 root = Path.cwd()
 
@@ -66,16 +65,7 @@ if first != second:
 
 light = theme.load_colors("light")
 if light["bg"] != "#fbfaf7" or light["fg"] != "#3c3836":
-    raise SystemExit("Helium daylight reference palette anchors drifted")
-
-palette = tomllib.loads((root / "colors.toml").read_text())
-helium = palette.get("helium", {})
-if helium != {
-    "user_color": "#3c3836",
-    "color_variant": "neutral",
-    "color_scheme": "system",
-}:
-    raise SystemExit("Helium native adaptive theme configuration drifted")
+    raise SystemExit("Helium daylight palette anchors drifted")
 
 sys.path.insert(0, str(root / "telegram"))
 telegram = load("dots_telegram_theme", root / "telegram/generate-theme.py")

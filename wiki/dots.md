@@ -1,7 +1,7 @@
 ---
 title: dots
 type: topic
-updated: 2026-08-31
+updated: 2026-09-01
 covers:
   - dots
   - scripts/dots-state.py
@@ -160,6 +160,14 @@ isolated temporary HOME without touching the real machine. The same seeded input
 is rendered twice; different results are a blocker because apply could never
 converge reliably. If the result is deterministic but differs from the real
 output, only that stale generator is scheduled.
+
+Each verification run gets its own random temp HOME, so a generator's rendered
+output is normalized back to the real HOME before the two runs are diffed —
+otherwise every generator would look "not reproducible" purely from the temp
+dir name changing. That normalization covers both the plain temp-HOME string
+and the `{parent}/./{name}` form some generators emit deliberately (Helium's
+flags file uses it to dodge the browser's broken tilde sanitization); missing
+either form reintroduces false "not reproducible" failures for that generator.
 
 `dots check generated` verifies tracked generation too. `dots check all` runs
 Shell, Lua, Python, generated-state and integration tests. Tests cover profile

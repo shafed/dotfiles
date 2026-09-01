@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "Gruvbox Material Light — Helium",
+  "version": "1.0.0",
+  "description": "Exact Gruvbox Material Light theme managed by dotfiles and reloaded on darkman transitions.",
+  "theme": {
+    "colors": {
+      "frame": [242, 239, 232],
+      "frame_inactive": [242, 239, 232],
+      "frame_incognito": [242, 239, 232],
+      "frame_incognito_inactive": [242, 239, 232],
+      "toolbar": [236, 233, 226],
+      "background_tab": [242, 239, 232],
+      "background_tab_inactive": [242, 239, 232],
+      "tab_text": [60, 56, 54],
+      "tab_background_text": [124, 116, 107],
+      "tab_background_text_inactive": [146, 131, 116],
+      "bookmark_text": [60, 56, 54],
+      "toolbar_text": [60, 56, 54],
+      "toolbar_button_icon": [60, 56, 54],
+      "button_background": [227, 223, 213],
+      "omnibox_background": [251, 250, 247],
+      "omnibox_text": [60, 56, 54],
+      "ntp_background": [251, 250, 247],
+      "ntp_header": [236, 233, 226],
+      "ntp_text": [60, 56, 54],
+      "ntp_link": [69, 112, 122]
+    }
+  }
+}

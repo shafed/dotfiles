@@ -54,9 +54,27 @@ Item {
     }
   }
 
+  function parseKhalRows(raw) {
+    var value = String(raw || "").trim()
+    if (!value) return []
+
+    var parsed = []
+    var lines = value.split(/\r?\n/)
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i].trim()
+      if (!line) continue
+      var chunk = JSON.parse(line)
+      if (Array.isArray(chunk)) {
+        for (var j = 0; j < chunk.length; j++) parsed.push(chunk[j])
+      } else if (chunk && typeof chunk === "object") {
+        parsed.push(chunk)
+      }
+    }
+    return parsed
+  }
+
   function loadEvents(raw) {
-    var parsed = JSON.parse(raw)
-    if (!Array.isArray(parsed)) parsed = []
+    var parsed = parseKhalRows(raw)
     var rows = []
     for (var i = 0; i < parsed.length; i++) {
       var item = normalizeEvent(parsed[i])
@@ -174,8 +192,9 @@ Item {
           return
         }
         try {
-          service.loadEvents(value || "[]")
+          service.loadEvents(value)
         } catch (e) {
+          service.events = []
           service.setupState = "error"
           service.error = "invalid khal output"
         }

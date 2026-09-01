@@ -142,9 +142,11 @@ Item {
   Process {
     id: queryProc
     command: ["bash", "-lc",
-      "cred=\"${XDG_CONFIG_HOME:-$HOME/.config}/vdirsyncer/google-credentials\"; " +
+      "state=\"${XDG_STATE_HOME:-$HOME/.local/state}\"; " +
+      "client_id=\"$state/dotfiles/secrets/google-calendar/client-id\"; " +
+      "client_secret=\"$state/dotfiles/secrets/google-calendar/client-secret\"; " +
       "token=\"$HOME/.local/state/vdirsyncer/google-token\"; " +
-      "if [ ! -s \"$cred\" ]; then printf '__DOTS_CALENDAR_CREDENTIALS__'; " +
+      "if [ ! -s \"$client_id\" ] || [ ! -s \"$client_secret\" ]; then printf '__DOTS_CALENDAR_CREDENTIALS__'; " +
       "elif [ ! -s \"$token\" ]; then printf '__DOTS_CALENDAR_DISCOVER__'; " +
       "elif ! command -v khal >/dev/null 2>&1; then printf '__DOTS_CALENDAR_ERROR__:khal missing'; " +
       "elif output=$(khal list --once --json title --json start-date --json start-time --json end-date --json end-time --json all-day --json location --json calendar today 8d 2>/dev/null); then printf '%s' \"$output\"; " +

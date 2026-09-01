@@ -155,12 +155,12 @@ def provision_plan(context: dict) -> dict:
     missing = [
         dict(item)
         for item in desired["packages"]
-        if bool(item.get("required", True)) and not shutil.which(str(item["command"]))
+        if bool(item.get("required", True)) and not state.package_installed(item)
     ]
     missing_optional = [
         dict(item)
         for item in desired["packages"]
-        if not bool(item.get("required", True)) and not shutil.which(str(item["command"]))
+        if not bool(item.get("required", True)) and not state.package_installed(item)
     ]
     missing_prerequisites = []
     for item in desired["prerequisites"]:

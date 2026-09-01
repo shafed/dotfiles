@@ -101,6 +101,16 @@ module = importlib.util.module_from_spec(spec)
 assert spec.loader is not None
 spec.loader.exec_module(module)
 
+module.state.shutil.which = lambda command: "/usr/bin/pacman" if command == "pacman" else None
+class QueryResult:
+    def __init__(self, returncode):
+        self.returncode = returncode
+real_run = module.state.subprocess.run
+module.state.subprocess.run = lambda argv, **kwargs: QueryResult(0 if argv[-1] == "installed-pkg" else 1)
+assert module.state.package_installed({"command": "no-command", "package": "installed-pkg", "manager": "pacman", "check": "package"})
+assert not module.state.package_installed({"command": "no-command", "package": "missing-pkg", "manager": "pacman", "check": "package"})
+module.state.subprocess.run = real_run
+
 real_path = module.Path
 class ArchPath:
     def __init__(self, value):

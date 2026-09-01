@@ -1,0 +1,18 @@
+[profile]
+description = "Removable media and NTFS filesystem support"
+includes = ["base"]
+capabilities = ["storage", "ntfs"]
+
+[[packages]]
+command = "lowntfs-3g"
+package = "ntfs-3g"
+manager = "pacman"
+required = true
+reason = "mount and access NTFS volumes"
+
+[[packages]]
+command = "mkfs.ntfs"
+package = "ntfsprogs"
+manager = "pacman"
+required = true
+reason = "create and maintain NTFS filesystems"

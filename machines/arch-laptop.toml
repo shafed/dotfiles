@@ -1,0 +1,4 @@
+[machine]
+description = "Personal laptop"
+profiles = ["laptop", "documents", "development", "networking", "storage"]
+capabilities = []

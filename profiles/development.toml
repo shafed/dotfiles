@@ -1,0 +1,48 @@
+[profile]
+description = "Language tooling used by the editor"
+includes = ["base"]
+capabilities = ["development"]
+
+[[packages]]
+command = "base-devel"
+package = "base-devel"
+manager = "pacman"
+check = "package"
+required = true
+reason = "compiler and build toolchain for development and AUR packages"
+
+[[packages]]
+command = "linux-headers"
+package = "linux-headers"
+manager = "pacman"
+check = "package"
+required = true
+reason = "headers for building modules against the standard Arch kernel"
+
+[[packages]]
+command = "lua-language-server"
+package = "lua-language-server"
+manager = "pacman"
+required = true
+reason = "Lua language support in Neovim"
+
+[[packages]]
+command = "claude"
+package = "claude-code"
+manager = "aur"
+required = true
+reason = "Claude Code CLI"
+
+[[packages]]
+command = "codex"
+package = "openai-codex-bin"
+manager = "aur"
+required = true
+reason = "OpenAI Codex CLI"
+
+[[packages]]
+command = "opencode"
+package = "opencode"
+manager = "pacman"
+required = true
+reason = "OpenCode CLI"

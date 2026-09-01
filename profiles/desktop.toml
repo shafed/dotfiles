@@ -153,3 +153,153 @@ package = "rofimoji"
 manager = "pacman"
 required = true
 reason = "emoji picker bound in kanata/config.kbd"
+
+[[packages]]
+command = "telegram-desktop"
+package = "telegram-desktop-bin"
+manager = "aur"
+required = true
+reason = "graphical Telegram client with tracked live theme"
+
+[[packages]]
+command = "anki"
+package = "anki"
+manager = "pacman"
+required = true
+reason = "spaced-repetition study workflow"
+
+[[packages]]
+command = "libreoffice"
+package = "libreoffice-fresh"
+manager = "pacman"
+required = true
+reason = "office documents"
+
+[[packages]]
+command = "libreoffice"
+package = "libreoffice-fresh-ru"
+manager = "pacman"
+check = "package"
+required = true
+reason = "Russian LibreOffice interface and language resources"
+
+[[packages]]
+command = "openwhispr"
+package = "openwhispr-bin"
+manager = "aur"
+required = true
+reason = "voice input launched and toggled by Hyprland"
+
+[[packages]]
+command = "mpv"
+package = "mpv"
+manager = "pacman"
+required = true
+reason = "media playback"
+
+[[packages]]
+command = "localsend"
+package = "localsend-bin"
+manager = "aur"
+required = true
+reason = "local-network file transfer"
+
+[[packages]]
+command = "dolphin"
+package = "dolphin"
+manager = "pacman"
+required = true
+reason = "graphical file manager used by Hyprland bindings"
+
+[[packages]]
+command = "grim"
+package = "grim"
+manager = "pacman"
+required = true
+reason = "full and region screenshots triggered by Kanata"
+
+[[packages]]
+command = "slurp"
+package = "slurp"
+manager = "pacman"
+required = true
+reason = "interactive screenshot region selection triggered by Kanata"
+
+[[packages]]
+command = "pipewire-pulse"
+package = "pipewire-pulse"
+manager = "pacman"
+required = true
+reason = "PulseAudio-compatible audio service for the desktop"
+
+[[packages]]
+command = "hyprpolkitagent"
+package = "hyprpolkitagent"
+manager = "pacman"
+check = "package"
+required = true
+reason = "graphical authorization prompts in the Hyprland session"
+
+[[packages]]
+command = "xdg-desktop-portal"
+package = "xdg-desktop-portal"
+manager = "pacman"
+check = "package"
+required = true
+reason = "desktop portal framework for sandboxed and Wayland applications"
+
+[[packages]]
+command = "xdg-desktop-portal-hyprland"
+package = "xdg-desktop-portal-hyprland"
+manager = "pacman"
+check = "package"
+required = true
+reason = "Hyprland screen sharing and Wayland portal backend"
+
+[[packages]]
+command = "xdg-desktop-portal-gtk"
+package = "xdg-desktop-portal-gtk"
+manager = "pacman"
+check = "package"
+required = true
+reason = "GTK file chooser and desktop portal fallback"
+
+[[packages]]
+command = "gvfs"
+package = "gvfs"
+manager = "pacman"
+check = "package"
+required = true
+reason = "Dolphin access to trash and virtual filesystems"
+
+[[packages]]
+command = "gvfs-mtp"
+package = "gvfs-mtp"
+manager = "pacman"
+check = "package"
+required = true
+reason = "Dolphin access to phones and other MTP devices"
+
+[[packages]]
+command = "ttf-jetbrains-mono-nerd"
+package = "ttf-jetbrains-mono-nerd"
+manager = "pacman"
+check = "package"
+required = true
+reason = "primary desktop and terminal font with icon glyphs"
+
+[[packages]]
+command = "ttf-iosevkaterm-nerd"
+package = "ttf-iosevkaterm-nerd"
+manager = "pacman"
+check = "package"
+required = true
+reason = "alternate terminal font with icon glyphs"
+
+[[packages]]
+command = "noto-fonts-emoji"
+package = "noto-fonts-emoji"
+manager = "pacman"
+check = "package"
+required = true
+reason = "emoji rendering across desktop applications"

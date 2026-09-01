@@ -1,0 +1,52 @@
+[profile]
+description = "Intel Skylake and NVIDIA Pascal hardware support for the shafed desktop"
+includes = ["base"]
+capabilities = ["intel-skylake", "nvidia-pascal"]
+
+[[packages]]
+command = "intel-ucode"
+package = "intel-ucode"
+manager = "pacman"
+check = "package"
+required = true
+reason = "CPU microcode for the Intel Core i7-6700"
+
+[[packages]]
+command = "linux-firmware"
+package = "linux-firmware"
+manager = "pacman"
+check = "package"
+required = true
+reason = "firmware bundle for built-in desktop hardware"
+
+[[packages]]
+command = "nvidia-580xx-dkms"
+package = "nvidia-580xx-dkms"
+manager = "aur"
+check = "package"
+required = true
+reason = "kernel driver for the NVIDIA GeForce GTX 1060"
+
+[[packages]]
+command = "nvidia-580xx-utils"
+package = "nvidia-580xx-utils"
+manager = "aur"
+check = "package"
+required = true
+reason = "NVIDIA userspace, OpenGL and Vulkan libraries"
+
+[[packages]]
+command = "lib32-nvidia-580xx-utils"
+package = "lib32-nvidia-580xx-utils"
+manager = "aur"
+check = "package"
+required = true
+reason = "32-bit NVIDIA graphics libraries"
+
+[[packages]]
+command = "linux-headers"
+package = "linux-headers"
+manager = "pacman"
+check = "package"
+required = true
+reason = "headers required to build the NVIDIA DKMS module"

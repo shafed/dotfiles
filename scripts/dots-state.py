@@ -119,13 +119,18 @@ def desired_for(context: dict, requested_profiles: list[str]) -> tuple[list[str]
     for key, field in (
         ("links", "destination"),
         ("files", "destination"),
-        ("packages", "command"),
         ("generators", "name"),
     ):
         keyed = {}
         for item in out[key]:
             keyed[str(item[field])] = item
         out[key] = list(keyed.values())
+    keyed_packages = {}
+    for item in out["packages"]:
+        probe = str(item.get("check", "command"))
+        value = str(item["package"] if probe == "package" else item["command"])
+        keyed_packages[f"{probe}:{value}"] = item
+    out["packages"] = list(keyed_packages.values())
     keyed_prereqs = {}
     for item in out["prerequisites"]:
         key = f"{item.get('kind', '')}:{item.get('name', '')}"
@@ -362,6 +367,22 @@ def primary_changes(changes: list[dict]) -> list[dict]:
     ]
 
 
+def package_installed(item: dict) -> bool:
+    if str(item.get("check", "command")) != "package":
+        return shutil.which(str(item["command"])) is not None
+    if str(item.get("manager", "")) not in {"pacman", "aur"}:
+        return False
+    pacman = shutil.which("pacman")
+    if not pacman:
+        return False
+    return subprocess.run(
+        [pacman, "-Q", str(item["package"])],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    ).returncode == 0
+
+
 def plan(context: dict, mode: str = "full") -> dict:
     profiles, data = desired(context)
     known = all_known(context)
@@ -383,7 +404,7 @@ def plan(context: dict, mode: str = "full") -> dict:
                 "manager": str(item.get("manager", "unknown")),
                 "required": bool(item.get("required", True)),
                 "reason": str(item.get("reason", "profile requirement")),
-                "installed": shutil.which(str(item["command"])) is not None,
+                "installed": package_installed(item),
             }
         )
 
@@ -1157,8 +1178,8 @@ def rollback(context: dict, run_id: str) -> int:
 
 def provision(context: dict, check_only: bool, assume_yes: bool) -> int:
     profiles, data = desired(context)
-    missing = [item for item in data["packages"] if shutil.which(str(item["command"])) is None and bool(item.get("required", True))]
-    missing_optional = [item for item in data["packages"] if shutil.which(str(item["command"])) is None and not bool(item.get("required", True))]
+    missing = [item for item in data["packages"] if not package_installed(item) and bool(item.get("required", True))]
+    missing_optional = [item for item in data["packages"] if not package_installed(item) and not bool(item.get("required", True))]
     missing_prereqs = []
     for item in data["prerequisites"]:
         ok, detail = prerequisite_status(item)

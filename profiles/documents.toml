@@ -1,0 +1,113 @@
+[profile]
+description = "Document authoring with Pandoc and a complete LaTeX toolchain"
+includes = ["base"]
+capabilities = ["documents", "latex"]
+
+[[packages]]
+command = "pandoc"
+package = "pandoc-cli"
+manager = "pacman"
+required = true
+reason = "document format conversion and publishing"
+
+[[packages]]
+command = "biber"
+package = "biber"
+manager = "pacman"
+required = true
+reason = "bibliography processing for LaTeX"
+
+[[packages]]
+command = "texlab"
+package = "texlab"
+manager = "pacman"
+required = true
+reason = "LaTeX language server for Neovim"
+
+[[packages]]
+command = "texlive-bin"
+package = "texlive-bin"
+manager = "pacman"
+check = "package"
+required = true
+reason = "core TeX executables"
+
+[[packages]]
+command = "texlive-binextra"
+package = "texlive-binextra"
+manager = "pacman"
+check = "package"
+required = true
+reason = "additional TeX command-line tools"
+
+[[packages]]
+command = "texlive-fontsrecommended"
+package = "texlive-fontsrecommended"
+manager = "pacman"
+check = "package"
+required = true
+reason = "recommended LaTeX fonts"
+
+[[packages]]
+command = "texlive-langcyrillic"
+package = "texlive-langcyrillic"
+manager = "pacman"
+check = "package"
+required = true
+reason = "Russian and Cyrillic LaTeX support"
+
+[[packages]]
+command = "texlive-latex"
+package = "texlive-latex"
+manager = "pacman"
+check = "package"
+required = true
+reason = "core LaTeX packages"
+
+[[packages]]
+command = "texlive-latexextra"
+package = "texlive-latexextra"
+manager = "pacman"
+check = "package"
+required = true
+reason = "extended LaTeX packages used by document templates"
+
+[[packages]]
+command = "texlive-latexrecommended"
+package = "texlive-latexrecommended"
+manager = "pacman"
+check = "package"
+required = true
+reason = "recommended LaTeX packages"
+
+[[packages]]
+command = "texlive-luatex"
+package = "texlive-luatex"
+manager = "pacman"
+check = "package"
+required = true
+reason = "LuaLaTeX engine used by multilingual documents"
+
+[[packages]]
+command = "texlive-mathscience"
+package = "texlive-mathscience"
+manager = "pacman"
+check = "package"
+required = true
+reason = "mathematics and science LaTeX packages"
+
+[[packages]]
+command = "texlive-pictures"
+package = "texlive-pictures"
+manager = "pacman"
+check = "package"
+required = true
+reason = "TikZ and graphics packages used by document templates"
+
+[[packages]]
+command = "texlive-xetex"
+package = "texlive-xetex"
+manager = "pacman"
+check = "package"
+required = true
+reason = "XeLaTeX engine and system-font support"

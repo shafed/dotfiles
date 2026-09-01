@@ -1,0 +1,52 @@
+[profile]
+description = "Printing and scanning, including Canon MG3600 support"
+includes = ["base"]
+capabilities = ["printing", "scanning", "canon-mg3600"]
+
+[[prerequisites]]
+kind = "system-service"
+name = "cups.service"
+required = true
+reason = "local print queue and printer discovery"
+
+[[packages]]
+command = "cupsctl"
+package = "cups"
+manager = "pacman"
+required = true
+reason = "printing service and command-line tools"
+
+[[packages]]
+command = "system-config-printer"
+package = "system-config-printer"
+manager = "pacman"
+required = true
+reason = "graphical printer setup"
+
+[[packages]]
+command = "cnijlgmon3"
+package = "cnijfilter2"
+manager = "aur"
+required = true
+reason = "Canon MG3600 printer driver"
+
+[[packages]]
+command = "scanimage"
+package = "sane"
+manager = "pacman"
+required = true
+reason = "scanner backend and diagnostics"
+
+[[packages]]
+command = "airscan-discover"
+package = "sane-airscan"
+manager = "pacman"
+required = true
+reason = "driverless network scanning for the Canon MG3600"
+
+[[packages]]
+command = "simple-scan"
+package = "simple-scan"
+manager = "pacman"
+required = true
+reason = "graphical scanning application"

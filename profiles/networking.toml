@@ -1,0 +1,18 @@
+[profile]
+description = "Personal proxy clients"
+includes = ["base"]
+capabilities = ["proxy"]
+
+[[packages]]
+command = "v2raya"
+package = "v2raya"
+manager = "pacman"
+required = true
+reason = "proxy management interface"
+
+[[packages]]
+command = "xray"
+package = "xray"
+manager = "pacman"
+required = true
+reason = "proxy core used by the local network setup"

@@ -1,0 +1,4 @@
+[machine]
+description = "Primary desktop PC"
+profiles = ["desktop", "documents", "development", "networking", "storage", "printing", "hardware-shafed"]
+capabilities = []

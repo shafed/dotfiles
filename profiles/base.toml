@@ -139,6 +139,90 @@ required = true
 reason = "YouTube picker downloads and metadata"
 
 [[packages]]
+command = "rg"
+package = "ripgrep"
+manager = "pacman"
+required = true
+reason = "fast text search used in terminal and editor workflows"
+
+[[packages]]
+command = "fd"
+package = "fd"
+manager = "pacman"
+required = true
+reason = "fast file search used in terminal and editor workflows"
+
+[[packages]]
+command = "magick"
+package = "imagemagick"
+manager = "pacman"
+required = true
+reason = "image previews in Yazi and palette extraction in Quickshell"
+
+[[packages]]
+command = "gh"
+package = "github-cli"
+manager = "pacman"
+required = true
+reason = "GitHub command-line workflows"
+
+[[packages]]
+command = "npm"
+package = "npm"
+manager = "pacman"
+required = true
+reason = "Node-based development tools"
+
+[[packages]]
+command = "fastfetch"
+package = "fastfetch"
+manager = "pacman"
+required = true
+reason = "interactive system summary"
+
+[[packages]]
+command = "htop"
+package = "htop"
+manager = "pacman"
+required = true
+reason = "interactive process monitor"
+
+[[packages]]
+command = "tldr"
+package = "tldr"
+manager = "pacman"
+required = true
+reason = "concise command examples"
+
+[[packages]]
+command = "zip"
+package = "zip"
+manager = "pacman"
+required = true
+reason = "ZIP archive creation"
+
+[[packages]]
+command = "unzip"
+package = "unzip"
+manager = "pacman"
+required = true
+reason = "ZIP archive extraction"
+
+[[packages]]
+command = "git"
+package = "git"
+manager = "pacman"
+required = true
+reason = "version control and dotfiles checkout"
+
+[[packages]]
+command = "ssh"
+package = "openssh"
+manager = "pacman"
+required = true
+reason = "Git remotes and remote shell access"
+
+[[packages]]
 command = "uv"
 package = "uv"
 manager = "pacman"

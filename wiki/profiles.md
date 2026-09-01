@@ -1,7 +1,7 @@
 ---
 title: profiles
 type: topic
-updated: 2026-08-31
+updated: 2026-09-01
 covers:
   - profiles/
   - machines/
@@ -17,7 +17,17 @@ Hyprland/Quickshell stack and desktop-wide networking state. Bluetooth is a
 separate `bluetooth` profile because a desktop machine does not imply Bluetooth
 hardware. `laptop` includes both `desktop` and `bluetooth`, then adds only
 laptop-specific battery, power-profile and brightness requirements. `ai` remains
-a small workload extension point.
+a small workload extension point. `documents`, `development`, `networking` and
+`storage` keep workload and filesystem tools out of the universal base, while
+`printing` owns the CUPS/SANE stack and the Canon MG3600 driver.
+The machine-only `hardware-shafed` profile pins the Intel i7-6700 microcode and
+the NVIDIA 580xx DKMS/userspace stack required by that desktop's GTX 1060; it is
+not shared with the laptop.
+
+`development` contains the shared build toolchain, Lua language server and the
+three CLI coding agents. Rust and Kotlin language servers are deliberately not
+part of desired state until those languages are actively used; TeX tooling
+belongs to `documents` instead.
 
 There is intentionally no empty `gaming` profile. A profile should exist only
 when it owns real distinguishing desired state; a future gaming profile can be
@@ -49,6 +59,10 @@ the machine. It is observational: safe migrations run in check mode and runtime
 generators are rendered in a temporary HOME. `--json` exposes the same plan for
 Quickshell or agents. Each dependency/prerequisite declaration carries a reason
 so doctor/provision can explain why it exists instead of only naming a package.
+Most dependencies are detected by their executable command. Package collections
+without a unique executable, such as LibreOffice language resources and TeX
+Live collections, use `check = "package"` and are checked directly in the local
+pacman database.
 
 `dots apply` uses the same state engine and converges both missing desired state
 and unambiguous repo-owned leftovers from profiles that are no longer selected.
@@ -66,6 +80,11 @@ External installation remains opt-in. `dots provision --dry-run` calculates the
 exact package/system actions from the same profile declarations without running
 them. A real `dots provision` executes that action list; normal `dots apply`
 never becomes a package manager.
+
+On Arch, `pacman` and `aur` identify whether a manifest entry comes from the
+official repositories or AUR; provisioning installs both groups together with
+`yay`. This preserves useful source metadata without requiring two separate
+transactions.
 
 Runtime generator declarations include explicit outputs. The engine renders the
 same seeded input twice in isolated HOMEs: a nondeterministic generator is a

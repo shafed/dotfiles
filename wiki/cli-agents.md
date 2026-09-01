@@ -1,7 +1,7 @@
 ---
 title: cli-agents
 type: topic
-updated: 2026-08-14
+updated: 2026-09-01
 covers:
   - instructions.md
   - AGENTS.md
@@ -17,6 +17,11 @@ configure the same things (instructions, skills, hooks, MCP) and read them from
 different paths. This page is the general rule and the verified discovery table;
 the concrete wiring of this repo lives in [bootstrap](bootstrap.md), and the
 sources it wires in [global](global.md).
+
+The `development` profile installs all three CLIs: AUR `claude-code`, AUR
+`openai-codex-bin`, and repository `opencode`. `dots provision` sends both
+repository and AUR entries through `yay`; authentication remains per-machine
+state and is intentionally not tracked.
 
 ## The rule
 

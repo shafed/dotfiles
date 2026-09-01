@@ -11,7 +11,7 @@ usage() {
 check_shell() {
   echo "== shell =="
   while IFS= read -r -d '' file; do
-    bash -n "$file"
+    bash -n "$file" || return
   done < <(find . -type f \( -name '*.sh' -o -name dots \) -not -path './.git/*' -print0)
 }
 
@@ -22,13 +22,13 @@ check_lua() {
     return 1
   fi
   while IFS= read -r -d '' file; do
-    luac -p "$file"
+    luac -p "$file" || return
   done < <(find . -type f -name '*.lua' -not -path './.git/*' -print0)
 }
 
 check_python() {
   echo "== python =="
-  python3 - <<'PY'
+  if ! python3 - <<'PY'
 from pathlib import Path
 
 for path in Path('.').rglob('*.py'):
@@ -36,13 +36,16 @@ for path in Path('.').rglob('*.py'):
         continue
     compile(path.read_bytes(), str(path), 'exec')
 PY
+  then
+    return 1
+  fi
 }
 
 check_generated() {
   echo "== generated / reproducibility =="
-  python3 scripts/generate-theme.py --check
-  python3 scripts/generate-theme.py --mode light --check
-  python3 - <<'PY'
+  python3 scripts/generate-theme.py --check || return
+  python3 scripts/generate-theme.py --mode light --check || return
+  if ! python3 - <<'PY'
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 import sys
@@ -88,32 +91,51 @@ if any(palette_a != palette_b or archive_a != archive_b for palette_a, palette_b
 if pairs[0][0] == pairs[1][0]:
     raise SystemExit("Telegram day and night palettes unexpectedly match")
 PY
-  python3 tests/helium-theme.py
-  python3 scripts/dots-state.py verify-generators --profile desktop
+  then
+    return 1
+  fi
+  python3 tests/helium-theme.py || return
+  python3 scripts/dots-state.py verify-generators --profile desktop || return
 }
 
 check_tests() {
   echo "== tests =="
-  bash tests/dots.sh
-  bash tests/dots-state.sh
-  bash tests/dots-machine.sh
-  bash tests/telegram-theme.sh
-  bash tests/copyq-theme.sh
+  bash tests/dots.sh || return
+  bash tests/dots-state.sh || return
+  bash tests/dots-machine.sh || return
+  bash tests/telegram-theme.sh || return
+  bash tests/copyq-theme.sh || return
+}
+
+run_check() {
+  local output rc
+  output="$(mktemp)"
+  if "$1" >"$output" 2>&1; then
+    cat "$output"
+    rm -f "$output"
+    return 0
+  else
+    rc=$?
+  fi
+
+  cat "$output"
+  rm -f "$output"
+  return "$rc"
 }
 
 case "${1:-all}" in
   all)
-    check_shell
-    check_lua
-    check_python
-    check_generated
-    check_tests
+    run_check check_shell
+    run_check check_lua
+    run_check check_python
+    run_check check_generated
+    run_check check_tests
     ;;
-  shell|sh) check_shell ;;
-  lua) check_lua ;;
-  python|py) check_python ;;
-  generated|gen|g) check_generated ;;
-  tests|t) check_tests ;;
+  shell|sh) run_check check_shell ;;
+  lua) run_check check_lua ;;
+  python|py) run_check check_python ;;
+  generated|gen|g) run_check check_generated ;;
+  tests|t) run_check check_tests ;;
   help|-h|--help) usage ;;
   *)
     usage >&2

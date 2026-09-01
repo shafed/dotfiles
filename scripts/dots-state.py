@@ -997,18 +997,12 @@ def doctor(context: dict, as_json: bool = False, compact: bool = False) -> int:
         drift_errors = [item for item in errors if item["kind"] in {"blocker", "drift"}]
         if not drift_errors:
             print("  ok    desired profile state matches")
-        for item in drift_errors:
-            print(f"  FAIL  {item['message']}")
+        else:
+            print("  issues are listed below")
         print("\n== dependencies and prerequisites ==")
         for item in oks:
             if item["kind"] in {"dependency", "prerequisite"}:
                 print(f"  ok    {item['message']}")
-        for item in errors:
-            if item["kind"] in {"dependency", "prerequisite"}:
-                print(f"  FAIL  {item['message']}")
-        for item in warnings:
-            if item["kind"] in {"dependency", "prerequisite"}:
-                print(f"  WARN  {item['message']}")
         print("\n== user services ==")
         service_items = [item for item in oks if item["kind"] == "service"]
         service_errors = [item for item in errors if item["kind"] == "service"]
@@ -1017,9 +1011,11 @@ def doctor(context: dict, as_json: bool = False, compact: bool = False) -> int:
             print("  ok    no profile user services")
         for item in service_items:
             print(f"  ok    {item['message']}")
-        for item in service_errors:
+        if errors or warnings:
+            print("\n== issues ==")
+        for item in errors:
             print(f"  FAIL  {item['message']}")
-        for item in service_warnings:
+        for item in warnings:
             print(f"  WARN  {item['message']}")
         print(f"\nDoctor: {len(errors)} error(s), {len(warnings)} warning(s).")
     return 1 if errors else 0

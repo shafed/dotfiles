@@ -1,7 +1,7 @@
 ---
 title: telegram
 type: component
-updated: 2026-08-31
+updated: 2026-09-01
 covers:
   - telegram/
   - darkman/scripts/telegram
@@ -18,6 +18,8 @@ The daylight treatment is applied to the whole Telegram palette, not only messag
 The `dark` solar state deliberately keeps the original Gruvbox Material Dark Medium Telegram treatment instead of inheriting daylight contrast tweaks. Normal message text uses the warm shared foreground `#d4be98`, incoming bubbles use `#32302f`, and message metadata returns to the dimmer Gruvbox gray. Selected states can still use the brighter Gruvbox foreground. Daylight-only readability changes must remain variant-local so the night palette never drifts toward white text again.
 
 `telegram/generate-theme.py` renders both variants from the same base renderer. Normal generation writes local day/night palettes and archives; those outputs are build artifacts and are not tracked. The live target is one stable file at `$XDG_DATA_HOME/dotfiles/telegram/current.tdesktop-theme`.
+
+The Telegram wallpaper has one direct source of truth: `telegram/background.png`. The generator does not create, recolor, decode, or keep backup wallpapers; it embeds that PNG verbatim into both day and night theme archives. To change the chat background, replace that file with another PNG and run `./dots apply` or switch the theme with `./dots theme light` / `./dots theme dark`. The next generated runtime theme contains the new image.
 
 The stable runtime path and its inode are both intentional. Telegram Desktop uses `QFileSystemWatcher` on the local theme file and reapplies it when that watched file changes. Replacing the path atomically with a new inode drops that watch, so a first switch can work while the next one is ignored. `scripts/dots-telegram-generator.sh` therefore builds the requested variant in a temporary location and rewrites the existing runtime file in place. Both `darkman/scripts/telegram` and the desktop profile generator use that wrapper; neither edits Telegram's `tdata` or clicks UI controls.
 

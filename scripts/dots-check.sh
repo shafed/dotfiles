@@ -100,6 +100,7 @@ check_tests() {
   bash tests/dots-state.sh
   bash tests/dots-machine.sh
   bash tests/telegram-theme.sh
+  bash tests/copyq-theme.sh
 }
 
 case "${1:-all}" in

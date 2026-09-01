@@ -10,7 +10,7 @@ Item {
   required property var colors
   required property var ui
 
-  readonly property string helper: youtube.shell.home + "/github/dotfiles/quickshell/youtube-helper.py"
+  readonly property string helper: String(Qt.resolvedUrl("../youtube-helper.py")).replace(/^file:\/\//, "")
   readonly property bool channelView: source === "channel-videos" || source === "channel-streams"
   readonly property var selectedRow: rows && rows.length > 0
                                      ? rows[Math.max(0, Math.min(rows.length - 1, selectedIndex))]

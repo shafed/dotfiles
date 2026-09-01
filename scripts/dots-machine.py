@@ -186,7 +186,7 @@ def provision_plan(context: dict) -> dict:
                 actions.append(
                     {
                         "manager": "yay",
-                        "argv": [yay, "-Syu", *arch_packages],
+                        "argv": [yay, "-S", *arch_packages],
                     }
                 )
 

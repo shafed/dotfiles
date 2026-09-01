@@ -118,6 +118,7 @@ Item {
 
   function show() {
     youtube.shell.openPanel = ""
+    Quickshell.execDetached(["hyprctl", "switchxkblayout", "all", "0"])
     source = "videos"
     query = ""
     rows = []

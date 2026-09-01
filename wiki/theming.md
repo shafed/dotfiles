@@ -1,7 +1,7 @@
 ---
 title: theming
 type: topic
-updated: 2026-08-31
+updated: 2026-09-01
 covers:
   - colors.toml
   - scripts/generate-theme.py
@@ -46,6 +46,11 @@ python3 scripts/generate-theme.py --mode light --check
 The main generator writes Kitty, Waybar, Hyprlock, shell colors, Quickshell,
 Claude Code, CopyQ and Yazi surfaces. Those remain pinned dark. Do not hand-edit
 generated files.
+
+Claude Code keeps the Gruvbox UI palette, but its six diff colors deliberately
+use the dark, high-contrast appearance of Claude's ANSI-style diff (regular and
+dimmed added/removed backgrounds, plus stronger word highlights). The explicit
+RGB values make that appearance independent of the terminal ANSI palette.
 
 CopyQ deliberately uses the neutral Gruvbox `bg` (`#282828`) as its main surface:
 its bundled Font Awesome icons derive tint from the window background, and a

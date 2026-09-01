@@ -38,6 +38,7 @@ rules: [../CLAUDE.md](../CLAUDE.md) (`AGENTS.md` symlinks to it).
   `~/.local/bin/sioyek` wrapper.
 - **[telegram](telegram.md)** — Telegram day/night palettes and the live
   darkman-driven theme-file switch.
+- **[xdg](xdg.md)** — default application associations (mimeapps.list).
 
 ## Cross-cutting
 

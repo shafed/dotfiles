@@ -12,6 +12,7 @@ covers:
   - scripts/dots-apply.sh
   - scripts/dots-drift.sh
   - scripts/dots-provision.sh
+  - scripts/bootstrap-yay.sh
   - scripts/dots-history.sh
   - scripts/dots-show.sh
   - scripts/dots-rollback.sh
@@ -96,23 +97,32 @@ Package installation is intentionally outside normal apply. `dots provision`
 reads the same profile package and system-prerequisite declarations, calculates
 one action list, then either shows or executes that list.
 
-`dots provision --dry-run` is the required safe preview. It prints the exact
-`yay -S`, `uv tool` and `systemctl enable --now` commands and executes none of
-them. If the declared installer is unavailable or unsupported, provision reports
-a blocker and stops instead of guessing. `--yes` skips the interactive
-confirmation for the real run; `--json` exposes the dry-run/action plan for
-automation.
+`dots provision --dry-run` is the required safe preview. It prints the planned
+yay bootstrap when necessary plus the exact `yay -S`, `uv tool` and
+`systemctl enable --now` actions and executes none of them. If a declared
+installer is unsupported, provision reports a blocker and stops instead of
+guessing. `--yes` skips the dots-level interactive confirmation for the real
+run; `--json` exposes the dry-run/action plan for automation.
 
 Both packages marked `manager = "pacman"` and packages marked `manager = "aur"`
-are installed by one existing `yay` process. When at least one Arch package is
-missing, provision runs one `yay -S <all-missing-arch-packages...>` transaction
-before `uv tool` installs. Provision deliberately does not use `-y`, `-u` or
+are installed by one `yay` process. When at least one Arch package is missing,
+provision runs one `yay -S <all-missing-arch-packages...>` transaction before
+`uv tool` installs. Provision deliberately does not use `-y`, `-u` or
 `--needed`: installing missing packages and upgrading the whole system are
 separate operations. A full system upgrade remains an explicit `yay -Syu` when
-the user chooses to do it. `yay` itself remains a bootstrap prerequisite rather
-than something provision tries to install recursively. Isolated CLI tools still
-use `uv tool`, and declared system services use systemctl. Other backends should
-be added only when a real manifest requires them.
+the user chooses to do it.
+
+If `yay` is missing, provision no longer stops. It first runs
+`scripts/bootstrap-yay.sh`, which installs only missing `git`/`base-devel`
+bootstrap prerequisites with plain `pacman -S`, builds the AUR `yay` package in
+a temporary directory with `makepkg -si`, and then continues with the same
+planned `yay -S` transaction. The bootstrap does not refresh package databases,
+upgrade the system or use `--needed`; it exists only to cross the one dependency
+boundary before yay can manage the rest of the Arch/AUR packages.
+
+Isolated CLI tools still use `uv tool`, and declared system services use
+systemctl. Other backends should be added only when a real manifest requires
+them.
 
 The intended fresh-machine flow is:
 

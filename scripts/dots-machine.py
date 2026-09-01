@@ -174,40 +174,32 @@ def provision_plan(context: dict) -> dict:
 
     actions = []
     blockers = []
-    requires_arch = bool(groups.get("pacman") or groups.get("aur"))
-    if requires_arch and not Path("/etc/arch-release").exists():
-        blockers.append("pacman/AUR provisioning is declared, but this is not an Arch system")
-
-    pacman_packages = sorted(set(groups.get("pacman", [])))
-    if pacman_packages:
-        if not shutil.which("pacman"):
-            blockers.append("pacman packages are missing, but pacman is not available")
-        elif os.geteuid() != 0 and not shutil.which("sudo"):
-            blockers.append("pacman provisioning needs sudo, but sudo is not available")
+    arch_packages = sorted(set(groups.get("pacman", [])) | set(groups.get("aur", [])))
+    if arch_packages:
+        if not Path("/etc/arch-release").exists():
+            blockers.append("Arch package provisioning is declared, but this is not an Arch system")
         else:
-            prefix = [] if os.geteuid() == 0 else ["sudo"]
+            yay = shutil.which("yay")
+            if not yay:
+                actions.append(
+                    {
+                        "manager": "yay-bootstrap",
+                        "argv": ["bash", str(ROOT / "scripts/bootstrap-yay.sh")],
+                    }
+                )
+                yay = "yay"
             actions.append(
                 {
-                    "manager": "pacman",
-                    "argv": prefix + ["pacman", "-S", "--needed", *pacman_packages],
+                    "manager": "yay",
+                    "argv": [yay, "-S", *arch_packages],
                 }
-            )
-
-    aur_packages = sorted(set(groups.get("aur", [])))
-    if aur_packages:
-        helper = shutil.which("paru") or shutil.which("yay")
-        if not helper:
-            blockers.append("AUR packages are missing, but neither paru nor yay is available")
-        else:
-            actions.append(
-                {"manager": "aur", "argv": [helper, "-S", "--needed", *aur_packages]}
             )
 
     uv_packages = sorted(set(groups.get("uv-tool", [])))
     if uv_packages:
         uv = shutil.which("uv")
         uv_will_be_installed = any(
-            str(item.get("command")) == "uv" and str(item.get("manager")) == "pacman"
+            str(item.get("command")) == "uv" and str(item.get("manager")) in {"pacman", "aur"}
             for item in missing
         )
         if not uv and not uv_will_be_installed:

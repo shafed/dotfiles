@@ -87,6 +87,69 @@ argv=result['actions'][0]['argv']
 assert argv[-3:] == ['tool', 'install', 'dots-ci-missing-tool'], argv
 PY
 
+# Arch repository and AUR packages share one yay transaction. Provision only
+# installs the missing targets; it does not refresh databases or upgrade the system.
+# If yay itself is absent, the plan bootstraps it first and then uses plain yay -S.
+python3 - "$ROOT" <<'PY'
+from pathlib import Path
+import importlib.util
+import sys
+
+root = Path(sys.argv[1])
+spec = importlib.util.spec_from_file_location("dots_machine_test", root / "scripts/dots-machine.py")
+module = importlib.util.module_from_spec(spec)
+assert spec.loader is not None
+spec.loader.exec_module(module)
+
+real_path = module.Path
+class ArchPath:
+    def __init__(self, value):
+        self.value = value
+    def exists(self):
+        return self.value == "/etc/arch-release"
+
+module.Path = ArchPath
+module.state.desired = lambda context: (
+    ["test"],
+    {
+        "capabilities": [],
+        "prerequisites": [],
+        "packages": [
+            {"command": "repo-tool", "package": "repo-pkg", "manager": "pacman", "required": True, "reason": "test"},
+            {"command": "aur-tool", "package": "aur-pkg", "manager": "aur", "required": True, "reason": "test"},
+        ],
+    },
+)
+context = {"machine": "test", "machine_file": root / "machines/default.toml"}
+
+module.shutil.which = lambda command: "/usr/bin/yay" if command == "yay" else None
+result = module.provision_plan(context)
+assert result["blockers"] == [], result["blockers"]
+assert len(result["actions"]) == 1, result["actions"]
+action = result["actions"][0]
+assert action["manager"] == "yay", action
+assert action["argv"] == ["/usr/bin/yay", "-S", "aur-pkg", "repo-pkg"], action["argv"]
+assert "--needed" not in action["argv"], action["argv"]
+assert "-y" not in action["argv"] and "-u" not in action["argv"], action["argv"]
+
+module.shutil.which = lambda command: None
+result = module.provision_plan(context)
+assert result["blockers"] == [], result["blockers"]
+assert len(result["actions"]) == 2, result["actions"]
+bootstrap, install = result["actions"]
+assert bootstrap["manager"] == "yay-bootstrap", bootstrap
+assert bootstrap["argv"] == ["bash", str(root / "scripts/bootstrap-yay.sh")], bootstrap["argv"]
+assert install["manager"] == "yay", install
+assert install["argv"] == ["yay", "-S", "aur-pkg", "repo-pkg"], install["argv"]
+
+module.Path = real_path
+PY
+
+# The bootstrap itself must not refresh package databases or use --needed.
+grep -q 'sudo pacman -S "${bootstrap_packages\[@\]}"' "$ROOT/scripts/bootstrap-yay.sh"
+! grep -q -- '--needed' "$ROOT/scripts/bootstrap-yay.sh"
+! grep -q -- 'pacman -Sy' "$ROOT/scripts/bootstrap-yay.sh"
+
 # Converge only base-managed files, then show that package/service extras are
 # informational drift rather than a reason for a destructive cleanup.
 env "${env_base[@]}" "$ROOT/dots" apply --links-only --profile base >/dev/null

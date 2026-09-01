@@ -97,7 +97,9 @@ Network intentionally does **not** use `Quickshell.Networking` yet. Quickshell
 0.3.x has had reconnect/disconnect and NetworkManager-restart reliability issues;
 `NetworkService.qml` keeps the proven `nmcli` behavior while moving polling,
 parsing and actions out of Python and into the shell process. This is a narrow
-compatibility boundary, not a second state daemon.
+compatibility boundary, not a second state daemon. Both Wi-Fi and Ethernet
+NetworkManager connection types count as connected; otherwise a wired desktop
+would incorrectly retain the disconnected `NET!` warning.
 
 Package update checks similarly run as bounded Quickshell processes every ten
 minutes. There is no 15-second Python full snapshot anymore.

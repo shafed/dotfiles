@@ -102,7 +102,10 @@ yay bootstrap when necessary plus the exact `yay -S`, `uv tool` and
 `systemctl enable --now` actions and executes none of them. If a declared
 installer is unsupported, provision reports a blocker and stops instead of
 guessing. `--yes` skips the dots-level interactive confirmation for the real
-run; `--json` exposes the dry-run/action plan for automation.
+run; `--json` exposes the dry-run/action plan for automation. A real provision
+run primes the sudo credential timestamp once before package or system-service
+actions, so later `yay`, bootstrap and `systemctl` steps reuse that
+authentication instead of prompting separately.
 
 Both packages marked `manager = "pacman"` and packages marked `manager = "aur"`
 are installed by one `yay` process. When at least one Arch package is missing,

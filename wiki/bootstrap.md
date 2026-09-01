@@ -1,7 +1,7 @@
 ---
 title: bootstrap
 type: topic
-updated: 2026-08-31
+updated: 2026-09-01
 covers:
   - dots
   - profiles/
@@ -35,8 +35,12 @@ Recommended fresh-machine sequence:
 ./dots doctor              # verify selected profile including prerequisites
 ```
 
-The current provisioning backend intentionally supports Arch only. Pacman
-packages use `sudo pacman -S --needed`, AUR entries require `paru` or `yay`, and
+The current provisioning backend intentionally supports Arch only. Official Arch
+and AUR packages are installed together through an existing `yay` using one
+`yay -Syu <packages...>` transaction. The full sync/upgrade is intentional: it
+prevents partial upgrades such as a new Qt library being installed against an
+older glibc. `--needed` is deliberately not used. `yay` itself is the small
+bootstrap prerequisite that must already exist before package provisioning;
 isolated CLI tools use `uv tool`. Declared system prerequisites such as
 NetworkManager/BlueZ/power-profiles-daemon are enabled with systemd. Other distro
 backends are deferred until another real machine needs them.

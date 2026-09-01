@@ -170,6 +170,9 @@ system prerequisites and selected user-service runtime state.
 Required package/prerequisite failures include the manifest reason; optional
 developer tools are warnings. When the systemd user manager is unavailable,
 runtime service state is a warning rather than fabricated success.
+Human-readable output lists successful checks first and collects every `FAIL`
+and `WARN` in one issues block at the bottom, so problems do not get buried
+between successful rows.
 `dots doctor --json` exposes the same report for UI/agents.
 
 ## Generated state and repository checks
@@ -195,6 +198,10 @@ blockers, apply no-op, backup-before-replacement, history plan/doctor metadata,
 rollback safety, user-service convergence, drift, provisioning, command aliases,
 Zsh completion generation/registration, canonical-only completion menus and the
 absence of the removed `stage` command.
+
+Repository checks remain fail-fast: the first failing check stops the run. Each
+section's combined output is buffered until that section finishes, keeping the
+failure at the bottom without delaying earlier successful sections.
 
 ## Commands, aliases and completion
 

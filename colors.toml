@@ -33,10 +33,12 @@ legacy_red = "#fb4934"
 legacy_yellow = "#fabd2f"
 legacy_blue_dark = "#458588"
 legacy_green_dark = "#689d6a"
-diff_added = "#3c4a30"
-diff_removed = "#4c3432"
-diff_added_dimmed = "#333a2a"
-diff_removed_dimmed = "#3f2e2c"
+diff_added = "#022800"
+diff_removed = "#3d0100"
+diff_added_dimmed = "#022800"
+diff_removed_dimmed = "#3d0100"
+diff_added_word = "#044700"
+diff_removed_word = "#5c0200"
 
 # Reference daylight palette. Chromium's built-in adaptive User Color theme does
 # not consume these exact values; it generates its own light/dark Material

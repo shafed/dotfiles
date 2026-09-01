@@ -1,7 +1,7 @@
 ---
 title: theming
 type: topic
-updated: 2026-08-31
+updated: 2026-09-01
 covers:
   - colors.toml
   - scripts/generate-theme.py
@@ -121,12 +121,17 @@ otherwise turn a home-directory absolute path into an unusable literal `~` path.
 
 With `--remote-debugging-port=0`, Chromium writes its loopback DevTools endpoint
 to the active user-data directory's `DevToolsActivePort`. On a darkman transition
-the switcher connects locally to the browser-level DevTools WebSocket and uses
-the Chromium Extensions CDP domain to:
+the switcher connects locally to the browser-level DevTools WebSocket and calls
+`Extensions.loadUnpacked` on the stable runtime path — one call, which re-reads
+`manifest.json` from disk and keeps the same extension id, so it both installs
+and refreshes the theme.
 
-1. find the unpacked theme loaded from the stable runtime path;
-2. uninstall that runtime instance;
-3. load the same runtime directory again after its manifest changed.
+That call is deliberately **not** preceded by `Extensions.uninstall`. Chromium
+refuses to uninstall an extension that came from `--load-extension`, which is
+exactly its state after every Helium restart, so uninstalling first made the
+first switch after each start fail and demand yet another restart — an endless
+loop. Reload failures also name their cause instead of silently printing
+"restart Helium", because that message hid real CDP errors.
 
 No Helium source patch or profile `Preferences` edit is involved. The endpoint is
 only needed because extension themes otherwise have no live color-reload API.
@@ -141,8 +146,10 @@ Run:
 ```
 
 Then restart Helium **once** so the new startup flags exist in the browser
-process. After that these should switch the running chrome without another
-restart:
+process. That single restart is unavoidable: `--load-extension` and
+`--remote-debugging-port` are launch flags, and CDP — the only live-reload
+channel — cannot be enabled on an already-running Chromium. Every switch after
+it, including the first one following any later restart, needs no restart:
 
 ```sh
 ./dots theme light

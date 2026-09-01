@@ -25,7 +25,7 @@ MANAGED_OPTIONS = {"close_on_unfocus": "true"}
 
 
 def parse_theme(text: str) -> dict[str, str]:
-    """Parse INI theme file, handling multi-line CSS values."""
+    """Parse the theme and serialize multi-line CSS like CopyQ does."""
     values = {}
     current_key = None
     current_value_lines = []
@@ -38,7 +38,7 @@ def parse_theme(text: str) -> dict[str, str]:
             current_value_lines.append(line)
             if stripped.endswith('"') and len(stripped) > 1:
                 in_multiline = False
-                values[current_key] = "\n".join(current_value_lines)
+                values[current_key] = "\\n".join(current_value_lines)
                 current_key = None
                 current_value_lines = []
             continue
@@ -56,12 +56,12 @@ def parse_theme(text: str) -> dict[str, str]:
         if value.startswith('"') and not (value.endswith('"') and len(value) > 1):
             in_multiline = True
             current_key = key
-            current_value_lines = [line]
+            current_value_lines = [value]
         else:
             values[key] = value
 
     if current_key and current_value_lines:
-        values[current_key] = "\n".join(current_value_lines)
+        values[current_key] = "\\n".join(current_value_lines)
 
     return values
 
@@ -109,31 +109,32 @@ def existing_key_ranges(lines: list[str], start: int, end: int) -> dict[str, tup
 
 
 def rendered_lines(values: dict[str, str]) -> list[str]:
-    out: list[str] = []
-    for key in sorted(values):
-        value = values[key]
-        if "\n" in value:
-            out.extend(value.split("\n"))
-        else:
-            out.append(f"{key}={value}")
-    return out
+    return [f"{key}={values[key]}" for key in sorted(values)]
 
 
 def replace_managed_keys(lines: list[str], section: str, values: dict[str, str]) -> list[str]:
-    """Put managed keys directly after the section header in one stable layout."""
+    """Replace managed keys in place and insert only keys that are absent."""
     start = ensure_section(lines, section)
     end = section_end(lines, start)
     ranges = existing_key_ranges(lines, start, end)
 
-    remove = set()
-    for key in values:
-        if key not in ranges:
-            continue
-        first, last = ranges[key]
-        remove.update(range(first, last))
-
-    unmanaged_body = [lines[i] for i in range(start + 1, end) if i not in remove]
-    return lines[: start + 1] + rendered_lines(values) + unmanaged_body + lines[end:]
+    replacements = {
+        first: (last, f"{key}={values[key]}")
+        for key, (first, last) in ranges.items()
+        if key in values
+    }
+    missing = {key: value for key, value in values.items() if key not in ranges}
+    body = rendered_lines(missing)
+    i = start + 1
+    while i < end:
+        if i in replacements:
+            last, replacement = replacements[i]
+            body.append(replacement)
+            i = last
+        else:
+            body.append(lines[i])
+            i += 1
+    return lines[: start + 1] + body + lines[end:]
 
 
 def main() -> int:

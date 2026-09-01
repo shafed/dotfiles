@@ -66,6 +66,76 @@ def parse_theme(text: str) -> dict[str, str]:
     return values
 
 
+def ensure_section(lines: list[str], name: str) -> int:
+    """Return a section index, appending an empty section when CopyQ omitted it."""
+    header = f"[{name}]"
+    try:
+        return lines.index(header)
+    except ValueError:
+        if lines and lines[-1] != "":
+            lines.append("")
+        lines.append(header)
+        return len(lines) - 1
+
+
+def section_end(lines: list[str], start: int) -> int:
+    for i in range(start + 1, len(lines)):
+        if lines[i].startswith("["):
+            return i
+    return len(lines)
+
+
+def existing_key_ranges(lines: list[str], start: int, end: int) -> dict[str, tuple[int, int]]:
+    ranges: dict[str, tuple[int, int]] = {}
+    i = start + 1
+    while i < end:
+        line = lines[i]
+        if "=" not in line or line.startswith("["):
+            i += 1
+            continue
+
+        key = line.split("=", 1)[0].strip()
+        value_part = line.split("=", 1)[1].strip()
+        if value_part.startswith('"') and not (value_part.endswith('"') and len(value_part) > 1):
+            j = i + 1
+            while j < end and not lines[j].strip().endswith('"'):
+                j += 1
+            ranges[key] = (i, min(j + 1, end))
+            i = min(j + 1, end)
+        else:
+            ranges[key] = (i, i + 1)
+            i += 1
+    return ranges
+
+
+def rendered_lines(values: dict[str, str]) -> list[str]:
+    out: list[str] = []
+    for key in sorted(values):
+        value = values[key]
+        if "\n" in value:
+            out.extend(value.split("\n"))
+        else:
+            out.append(f"{key}={value}")
+    return out
+
+
+def replace_managed_keys(lines: list[str], section: str, values: dict[str, str]) -> list[str]:
+    """Put managed keys directly after the section header in one stable layout."""
+    start = ensure_section(lines, section)
+    end = section_end(lines, start)
+    ranges = existing_key_ranges(lines, start, end)
+
+    remove = set()
+    for key in values:
+        if key not in ranges:
+            continue
+        first, last = ranges[key]
+        remove.update(range(first, last))
+
+    unmanaged_body = [lines[i] for i in range(start + 1, end) if i not in remove]
+    return lines[: start + 1] + rendered_lines(values) + unmanaged_body + lines[end:]
+
+
 def main() -> int:
     if not THEME_INI.exists():
         print(f"missing {THEME_INI}; run scripts/generate-theme.py first", file=sys.stderr)
@@ -76,93 +146,10 @@ def main() -> int:
 
     theme = parse_theme(THEME_INI.read_text())
     lines = CONF.read_text().splitlines()
+    lines = replace_managed_keys(lines, "Theme", theme)
+    lines = replace_managed_keys(lines, "Options", MANAGED_OPTIONS)
 
-    try:
-        start = lines.index("[Theme]")
-    except ValueError:
-        print(f"{CONF} has no [Theme] section", file=sys.stderr)
-        return 1
-    end = len(lines)
-    for i in range(start + 1, len(lines)):
-        if lines[i].startswith("["):
-            end = i
-            break
-
-    # First pass: collect which keys exist in the [Theme] section and their line ranges
-    existing_keys: dict[str, tuple[int, int]] = {}  # key -> (start_line, end_line)
-    i = start + 1
-    while i < end:
-        line = lines[i]
-        if "=" in line and not line.startswith("["):
-            key = line.split("=", 1)[0].strip()
-            key_start = i
-            # Check for multi-line value (starts with " and doesn't end with ")
-            value_part = line.split("=", 1)[1].strip() if "=" in line else ""
-            if value_part.startswith('"') and not (value_part.endswith('"') and len(value_part) > 1):
-                # Multi-line: scan forward for closing quote
-                j = i + 1
-                while j < end and not lines[j].strip().endswith('"'):
-                    j += 1
-                existing_keys[key] = (key_start, j + 1)
-                i = j + 1
-            else:
-                existing_keys[key] = (key_start, key_start + 1)
-                i += 1
-        else:
-            i += 1
-
-    # Remove existing keys that we're going to replace
-    keys_to_remove = set(existing_keys.keys()) & set(theme.keys())
-    lines_to_remove = set()
-    for key in keys_to_remove:
-        s, e = existing_keys[key]
-        for ln in range(s, e):
-            lines_to_remove.add(ln)
-    new_lines = [ln for idx, ln in enumerate(lines) if idx not in lines_to_remove]
-
-    # Recalculate end after removal
-    end = len(new_lines)
-    for i in range(start + 1, len(new_lines)):
-        if new_lines[i].startswith("["):
-            end = i
-            break
-
-    # Insert new/updated keys
-    insert_at = end
-    for key in sorted(theme.keys()):
-        value = theme[key]
-        if "\n" in value:
-            # Multi-line value: insert each line separately
-            for line in value.split("\n"):
-                new_lines.insert(insert_at, line)
-                insert_at += 1
-        else:
-            new_lines.insert(insert_at, f"{key}={value}")
-            insert_at += 1
-
-    try:
-        options_start = new_lines.index("[Options]")
-    except ValueError:
-        print(f"{CONF} has no [Options] section", file=sys.stderr)
-        return 1
-
-    options_end = len(new_lines)
-    for i in range(options_start + 1, len(new_lines)):
-        if new_lines[i].startswith("["):
-            options_end = i
-            break
-
-    for key, value in MANAGED_OPTIONS.items():
-        prefix = f"{key}="
-        for i in range(options_start + 1, options_end):
-            if new_lines[i].startswith(prefix):
-                new_lines[i] = f"{key}={value}"
-                break
-        else:
-            new_lines.insert(options_end, f"{key}={value}")
-            options_end += 1
-
-    CONF.write_text("\n".join(new_lines) + "\n")
+    CONF.write_text("\n".join(lines) + "\n")
     print(
         f"applied {len(theme)} theme keys and {len(MANAGED_OPTIONS)} behavior option(s) to {CONF}"
     )

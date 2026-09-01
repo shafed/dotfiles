@@ -70,21 +70,19 @@ if light["bg"] != "#fbfaf7" or light["fg"] != "#3c3836":
 sys.path.insert(0, str(root / "telegram"))
 telegram = load("dots_telegram_theme", root / "telegram/generate-theme.py")
 colors = telegram.load_colors()
-primary_a = telegram.read_primary_background()
-primary_b = telegram.read_primary_background()
-backup_a = telegram.render_backup_background(colors)
-backup_b = telegram.render_backup_background(colors)
+background_a = telegram.read_background()
+background_b = telegram.read_background()
 
 pairs = []
 for variant in ("day", "night"):
     palette_a = telegram.render_variant(colors, variant)
     palette_b = telegram.render_variant(colors, variant)
-    archive_a = telegram.build_archive(palette_a, primary_a)
-    archive_b = telegram.build_archive(palette_b, primary_b)
+    archive_a = telegram.build_archive(palette_a, background_a)
+    archive_b = telegram.build_archive(palette_b, background_b)
     pairs.append((palette_a, palette_b, archive_a, archive_b))
 
-if primary_a != primary_b or backup_a != backup_b:
-    raise SystemExit("telegram/generate-theme.py backgrounds are not reproducible")
+if background_a != background_b:
+    raise SystemExit("telegram/generate-theme.py background input is not reproducible")
 if any(palette_a != palette_b or archive_a != archive_b for palette_a, palette_b, archive_a, archive_b in pairs):
     raise SystemExit("telegram/generate-theme.py variants are not reproducible")
 if pairs[0][0] == pairs[1][0]:
@@ -100,6 +98,7 @@ check_tests() {
   bash tests/dots-state.sh
   bash tests/dots-machine.sh
   bash tests/telegram-theme.sh
+  bash tests/copyq-theme.sh
 }
 
 case "${1:-all}" in

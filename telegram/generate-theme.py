@@ -4,23 +4,18 @@
 from __future__ import annotations
 
 import argparse
-import base64
 from io import BytesIO
 import os
 from pathlib import Path
-import struct
 import subprocess
 import sys
 import zipfile
-import zlib
 
 from _palette_renderer import load_colors, render
 
 ROOT = Path(__file__).resolve().parents[1]
 HERE = Path(__file__).resolve().parent
-BACKGROUND_SOURCE = HERE / "background.png.b64"
-BACKGROUND_PRIMARY_OUTPUT = HERE / "background-primary.png"
-BACKGROUND_BACKUP_OUTPUT = HERE / "background-backup.png"
+BACKGROUND_SOURCE = HERE / "background.png"
 DAY_PALETTE_OUTPUT = HERE / "colors-day.tdesktop-theme"
 NIGHT_PALETTE_OUTPUT = HERE / "colors-night.tdesktop-theme"
 DAY_OUTPUT = HERE / "gruvbox-material-day.tdesktop-theme"
@@ -178,78 +173,14 @@ def render_variant(colors: dict[str, str], variant: str) -> str:
     return apply_telegram_overrides(render(colors), variant)
 
 
-def rgb(value: str) -> tuple[int, int, int]:
-    return tuple(int(value[i : i + 2], 16) for i in (1, 3, 5))
-
-
-def blend(base: tuple[int, int, int], over: tuple[int, int, int], alpha: int) -> tuple[int, int, int]:
-    return tuple((a * (255 - alpha) + b * alpha) // 255 for a, b in zip(base, over))
-
-
-def png_chunk(kind: bytes, data: bytes) -> bytes:
-    return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data) & 0xFFFFFFFF)
-
-
-def render_backup_background(colors: dict[str, str], width: int = 1600, height: int = 1000) -> bytes:
-    """Render the alternate low-contrast Gruvbox wallpaper using stdlib only."""
-    base = rgb(colors["bg"])
-    soft = rgb(colors["bg_soft"])
-    hover = rgb(colors["bg_hover"])
-    yellow = rgb(colors["yellow"])
-    aqua = rgb(colors["aqua"])
-
-    raw = bytearray()
-    tile = 128
-    for y in range(height):
-        raw.append(0)
-        for x in range(width):
-            nx = abs(2 * x - width)
-            ny = abs(2 * y - height)
-            shade = min(18, (nx + ny) * 18 // (width + height))
-            px = blend(base, soft, shade)
-
-            tx, ty = x % tile, y % tile
-            cell = ((x // tile) + (y // tile)) % 4
-            dot = (tx - 24) ** 2 + (ty - 28) ** 2 <= 5 ** 2
-            ring_d2 = (tx - 86) ** 2 + (ty - 38) ** 2
-            ring = 15 ** 2 <= ring_d2 <= 18 ** 2
-            leaf = ((tx - 70) * 5 + (ty - 88) * 9) ** 2 <= 42 ** 2 and ((tx - 70) * 9 - (ty - 88) * 5) ** 2 <= 85 ** 2
-            sprig = abs((tx - 36) * 2 - (ty - 94)) <= 1 and 28 <= tx <= 48 and 78 <= ty <= 110
-
-            if dot:
-                px = blend(px, yellow if cell == 0 else aqua, 30)
-            elif ring:
-                px = blend(px, aqua if cell in (0, 3) else yellow, 20)
-            elif leaf:
-                px = blend(px, hover, 22)
-            elif sprig:
-                px = blend(px, yellow, 14)
-
-            grain = ((x * 17 + y * 29 + (x ^ y) * 3) & 3) - 1
-            raw.extend(max(0, min(255, channel + grain)) for channel in px)
-
-    ihdr = struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0)
-    return (
-        b"\x89PNG\r\n\x1a\n"
-        + png_chunk(b"IHDR", ihdr)
-        + png_chunk(b"IDAT", zlib.compress(bytes(raw), 9))
-        + png_chunk(b"IEND", b"")
-    )
-
-
-def read_primary_background() -> bytes:
-    """Decode the tracked, text-safe botanical wallpaper source (PNG, base64)."""
+def read_background() -> bytes:
+    """Read the tracked PNG that is embedded directly into both Telegram themes."""
     if not BACKGROUND_SOURCE.is_file():
         raise FileNotFoundError(f"Telegram background source not found: {BACKGROUND_SOURCE}")
 
-    encoded = b"".join(BACKGROUND_SOURCE.read_bytes().split())
-    try:
-        data = base64.b64decode(encoded, validate=True)
-    except (ValueError, base64.binascii.Error) as exc:
-        raise ValueError(f"Invalid base64 Telegram background source: {BACKGROUND_SOURCE}") from exc
-
+    data = BACKGROUND_SOURCE.read_bytes()
     if not data.startswith(b"\x89PNG\r\n\x1a\n"):
-        raise ValueError(f"Decoded Telegram background is not PNG: {BACKGROUND_SOURCE}")
+        raise ValueError(f"Telegram background source is not PNG: {BACKGROUND_SOURCE}")
     return data
 
 
@@ -288,7 +219,7 @@ def resolve_runtime_variant(value: str) -> str:
 
 
 def write_runtime(archive: bytes, target: Path) -> bool:
-    """Replace the watched theme atomically so Telegram never reads a partial zip."""
+    """Write the runtime theme used by direct generator invocations."""
     target.parent.mkdir(parents=True, exist_ok=True)
     if target.exists() and target.read_bytes() == archive:
         return False
@@ -326,25 +257,22 @@ def main() -> int:
         print(day_palette if args.variant == "day" else night_palette, end="")
         return 0
 
-    primary_background = read_primary_background()
+    background = read_background()
 
     if args.runtime:
         variant = resolve_runtime_variant(args.runtime)
         palette = day_palette if variant == "day" else night_palette
         target = runtime_path()
-        changed = write_runtime(build_archive(palette, primary_background), target)
+        changed = write_runtime(build_archive(palette, background), target)
         print(f"{target} ({variant}{', updated' if changed else ', unchanged'})")
         return 0
 
-    backup_background = render_backup_background(colors)
-    day_archive = build_archive(day_palette, primary_background)
-    night_archive = build_archive(night_palette, primary_background)
+    day_archive = build_archive(day_palette, background)
+    night_archive = build_archive(night_palette, background)
 
     generated = (
         (DAY_PALETTE_OUTPUT, day_palette, "day palette"),
         (NIGHT_PALETTE_OUTPUT, night_palette, "night palette"),
-        (BACKGROUND_PRIMARY_OUTPUT, primary_background, "primary wallpaper"),
-        (BACKGROUND_BACKUP_OUTPUT, backup_background, "backup wallpaper"),
         (DAY_OUTPUT, day_archive, "day archive"),
         (NIGHT_OUTPUT, night_archive, "night archive"),
         (LEGACY_OUTPUT, night_archive, "legacy night archive"),

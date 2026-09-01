@@ -16,14 +16,18 @@ bash "$ROOT/scripts/dots-telegram-generator.sh" light >/dev/null
 [[ -f "$target" ]]
 light_inode="$(stat -c %i "$target")"
 light_sum="$(sha256sum "$target" | awk '{print $1}')"
-python3 - "$target" <<'PY'
+python3 - "$target" "$ROOT/telegram/background.png" <<'PY'
 from pathlib import Path
 import sys
 import zipfile
 
 path = Path(sys.argv[1])
+background_source = Path(sys.argv[2]).read_bytes()
 with zipfile.ZipFile(path) as archive:
     palette = archive.read("colors.tdesktop-theme").decode()
+    background = archive.read("background.png")
+if background != background_source:
+    raise SystemExit("runtime theme did not embed telegram/background.png verbatim")
 if "GB_BG: #41423b;" not in palette:
     raise SystemExit("day palette was not written to runtime theme")
 if "historyTextInFg: GB_FG_BRIGHT;" not in palette:

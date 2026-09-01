@@ -1,0 +1,9 @@
+[Unit]
+Description=Sync Google Calendar into the local vdir
+Wants=network-online.target
+After=network-online.target
+ConditionPathExists=%h/.local/state/vdirsyncer/google-token
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/vdirsyncer sync google_calendar

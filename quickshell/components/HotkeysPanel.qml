@@ -22,7 +22,6 @@ Item {
       accent: "yellow",
       entries: [
         { key: "Super + F1", action: "Toggle this hotkey panel" },
-        { key: "Super + Space", action: "Applications" },
         { key: "Super + V", action: "Clipboard" },
         { key: "Super + Shift + A", action: "Audio panel" },
         { key: "Super + Shift + W", action: "Network panel" },

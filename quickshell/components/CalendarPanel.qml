@@ -9,9 +9,32 @@ ColumnLayout {
   required property var colors
   required property var ui
 
-  property var agendaEvents: view.system.calendar.upcoming(4)
+  property date selectedDate: new Date(shell.clockNow.getFullYear(), shell.clockNow.getMonth(), shell.clockNow.getDate())
+  property var agendaEvents: {
+    var revision = view.system.calendar.events
+    return view.system.calendar.eventsOn(view.selectedDate)
+  }
 
   spacing: 10
+
+  Connections {
+    target: view.shell
+
+    function onOpenPanelChanged() {
+      if (view.shell.openPanel !== "calendar") return
+      var now = view.shell.clockNow
+      view.selectedDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      view.system.calendar.loadMonth(view.shell.calendarMonth)
+    }
+
+    function onCalendarMonthChanged() {
+      if (view.selectedDate.getFullYear() !== view.shell.calendarMonth.getFullYear() ||
+          view.selectedDate.getMonth() !== view.shell.calendarMonth.getMonth()) {
+        view.selectedDate = new Date(view.shell.calendarMonth.getFullYear(), view.shell.calendarMonth.getMonth(), 1)
+      }
+      view.system.calendar.loadMonth(view.shell.calendarMonth)
+    }
+  }
 
   RowLayout {
     Layout.fillWidth: true
@@ -56,25 +79,29 @@ ColumnLayout {
       Rectangle {
         required property int index
         property date cellDate: view.shell.calendarCellDate(index)
-        property bool inMonth: cellDate.getMonth() === view.shell.calendarMonth.getMonth()
+        property bool inMonth: cellDate.getMonth() === view.shell.calendarMonth.getMonth() &&
+                               cellDate.getFullYear() === view.shell.calendarMonth.getFullYear()
         property bool today: view.shell.sameCalendarDay(cellDate, view.shell.clockNow)
+        property bool selected: view.shell.sameCalendarDay(cellDate, view.selectedDate)
         property bool hasEvent: view.system.calendar.hasEventsOn(cellDate)
         Layout.fillWidth: true
         Layout.preferredHeight: 34
         radius: 5
-        color: today ? view.colors.yellow : "transparent"
-        border.width: inMonth && !today ? 1 : 0
-        border.color: hasEvent ? view.colors.yellow : view.colors.bgSoft
+        color: selected ? view.colors.yellow : "transparent"
+        border.width: selected ? 0 : 1
+        border.color: today || hasEvent ? view.colors.yellow : (inMonth ? view.colors.bgSoft : "transparent")
+
         Text {
           anchors.centerIn: parent
           text: parent.cellDate.getDate()
-          color: parent.today ? view.colors.bgHard : (parent.inMonth ? view.colors.fgBright : view.colors.bgMuted)
+          color: parent.selected ? view.colors.bgHard : (parent.inMonth ? view.colors.fgBright : view.colors.bgMuted)
           font.family: view.ui.barFont
           font.pixelSize: 14
-          font.bold: parent.today || parent.hasEvent
+          font.bold: parent.selected || parent.today || parent.hasEvent
         }
+
         Rectangle {
-          visible: parent.hasEvent && !parent.today
+          visible: parent.hasEvent && !parent.selected
           width: 4
           height: 4
           radius: 2
@@ -82,6 +109,17 @@ ColumnLayout {
           anchors.horizontalCenter: parent.horizontalCenter
           anchors.bottom: parent.bottom
           anchors.bottomMargin: 3
+        }
+
+        MouseArea {
+          anchors.fill: parent
+          cursorShape: Qt.PointingHandCursor
+          onClicked: {
+            var picked = new Date(parent.cellDate.getFullYear(), parent.cellDate.getMonth(), parent.cellDate.getDate())
+            if (!parent.inMonth)
+              view.shell.calendarMonth = new Date(picked.getFullYear(), picked.getMonth(), 1)
+            view.selectedDate = picked
+          }
         }
       }
     }
@@ -95,7 +133,7 @@ ColumnLayout {
     font.family: view.ui.bodyFont
     font.pixelSize: 12
     text: view.system.calendar.setupState === "credentials"
-          ? "Google Calendar is not connected. Add ~/.config/vdirsyncer/google-credentials."
+          ? "Google Calendar is not connected. Add the OAuth client values under ~/.local/state/dotfiles/secrets/google-calendar/."
           : view.system.calendar.setupState === "discover"
             ? "OAuth is not finished. Run: vdirsyncer discover google_calendar"
             : view.system.calendar.setupState === "error"
@@ -105,7 +143,7 @@ ColumnLayout {
 
   Text {
     visible: view.system.calendar.setupState === "ready"
-    text: "UPCOMING"
+    text: Qt.formatDateTime(view.selectedDate, "dddd, d MMMM").toUpperCase()
     color: view.colors.yellow
     font.family: view.ui.bodyFont
     font.bold: true
@@ -115,18 +153,25 @@ ColumnLayout {
   Text {
     visible: view.system.calendar.setupState === "ready" && view.agendaEvents.length === 0
     Layout.fillWidth: true
-    text: "No upcoming events in the next 8 days"
+    text: "No events"
     color: view.colors.grayDim
     font.family: view.ui.bodyFont
     font.pixelSize: 12
   }
 
-  Repeater {
+  ListView {
+    id: agendaList
+    visible: view.system.calendar.setupState === "ready" && view.agendaEvents.length > 0
+    Layout.fillWidth: true
+    Layout.fillHeight: true
+    clip: true
+    spacing: 6
     model: view.agendaEvents
-    Rectangle {
+
+    delegate: Rectangle {
       required property var modelData
-      Layout.fillWidth: true
-      Layout.preferredHeight: 42
+      width: agendaList.width
+      height: 42
       radius: 5
       color: view.colors.bgSoft
 
@@ -138,12 +183,10 @@ ColumnLayout {
 
         Text {
           Layout.preferredWidth: 88
-          text: view.system.calendar.dayLabel(modelData, view.shell.clockNow) + "\n" +
-                view.system.calendar.timeLabel(modelData)
+          text: view.system.calendar.timeLabel(modelData)
           color: view.colors.grayDim
           font.family: view.ui.bodyFont
           font.pixelSize: 10
-          lineHeight: 0.95
         }
 
         Text {
@@ -159,5 +202,5 @@ ColumnLayout {
     }
   }
 
-  Item { Layout.fillHeight: true }
+  Item { Layout.fillHeight: true; visible: !agendaList.visible }
 }

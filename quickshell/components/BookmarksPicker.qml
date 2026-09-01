@@ -70,6 +70,10 @@ Item {
     selectedIndex = 0
     rows = []
     open = true
+    // Render the cached catalog immediately. Browser bookmark and favicon
+    // synchronization may touch SQLite and the network, so it must not gate
+    // the first visible rows.
+    requestSearch(true)
     if (!syncProc.running) syncProc.running = true
     Qt.callLater(function() { searchInput.forceActiveFocus() })
   }

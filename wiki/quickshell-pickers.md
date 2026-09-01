@@ -229,6 +229,12 @@ Sessions continue through `quickpicker`. The wrapper
 closes competing IPC targets before opening the requested surface, preserving
 the single-overlay contract.
 
+`YoutubePicker.qml` resolves `../youtube-helper.py` relative to its own loaded QML
+file rather than through `~/github/dotfiles`. This is required for isolated
+worktree testing: when Quickshell is pointed at a worktree, the picker and helper
+must come from the same checkout instead of silently mixing worktree UI with the
+helper from `main`.
+
 ⚠️ Gotcha (`dots-shell`'s IPC target must self-locate, not default to the old
 runtime-copy path): `quickshell ipc -p <path>` matches the literal _resolved_
 `shell.qml` path of a running instance, not just wherever `<path>` eventually

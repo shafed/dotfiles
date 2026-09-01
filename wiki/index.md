@@ -29,7 +29,7 @@ rules: [../CLAUDE.md](../CLAUDE.md) (`AGENTS.md` symlinks to it).
   QML, realtime services, Applications/Bookmarks/Projects/Sessions/YouTube,
   keyboard clipboard and scratch overlays.
 - **[calendar](calendar.md)** — Google Calendar via vdirsyncer/khal, local OAuth
-  boundary, sync timer, calendar panel events and the compact top-bar event.
+  boundary, sync timer, selectable month grid and per-day agenda.
 - **[kitty](kitty.md)** — terminal: sessions, legacy/manual QAT panels, custom
   kittens and remote control.
 - **[nvim](nvim.md)** — map of content: which LazyVim behavior was overridden

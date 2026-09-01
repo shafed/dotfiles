@@ -9,6 +9,7 @@ covers:
   - scripts/dots-state.py
   - scripts/dots-apply.sh
   - scripts/dots-provision.sh
+  - scripts/bootstrap-yay.sh
   - zsh/zprofile
 ---
 
@@ -36,16 +37,25 @@ Recommended fresh-machine sequence:
 ```
 
 The current provisioning backend intentionally supports Arch only. Official Arch
-and AUR packages are installed together through an existing `yay` using one
+and AUR packages are installed together through `yay` using one
 `yay -S <packages...>` transaction. Provisioning installs only the declared
 missing packages: it does not refresh package databases or upgrade the rest of
 the system, and `--needed` is deliberately not used. Full system upgrades remain
-an explicit separate operation (`yay -Syu`) when the user wants one. `yay`
-itself is the small bootstrap prerequisite that must already exist before
-package provisioning; isolated CLI tools use `uv tool`. Declared system
-prerequisites such as NetworkManager/BlueZ/power-profiles-daemon are enabled
-with systemd. Other distro backends are deferred until another real machine
-needs them.
+an explicit separate operation (`yay -Syu`) when the user wants one.
+
+`yay` no longer has to be prepared manually. If an Arch package is missing and
+`yay` is absent, provision first runs `scripts/bootstrap-yay.sh`. The bootstrap
+uses plain `pacman -S` only for missing bootstrap prerequisites (`git` and the
+`base-devel` metapackage), clones the AUR `yay` package into a temporary
+directory, runs `makepkg -si` as the regular user, removes the temporary build,
+and then continues with the planned `yay -S` transaction. It never runs
+`pacman -Sy`, `yay -Syu` or `--needed`. The bootstrap is the one unavoidable
+pre-yay exception to the normal rule that Arch/AUR application packages go
+through yay.
+
+Isolated CLI tools use `uv tool`. Declared system prerequisites such as
+NetworkManager/BlueZ/power-profiles-daemon are enabled with systemd. Other distro
+backends are deferred until another real machine needs them.
 
 Desired state comes from `profiles/*.toml` plus a small machine selector in
 `machines/<hostname>.toml` (falling back to `machines/default.toml`). Packages,

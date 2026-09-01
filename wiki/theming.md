@@ -72,11 +72,11 @@ loaded local theme path, so `darkman/scripts/telegram` can rewrite the same file
 between day and night without touching `tdata` or automating UI clicks. See
 [telegram](telegram.md) for bootstrap details.
 
-The botanical wallpaper source is stored as text-safe
-`telegram/background.png.b64`, decoded locally and embedded into both variants.
-PNG is intentional because an older JPEG source was corrupted in git history and
-failed strict Telegram decoding. The procedural backup remains reproducible from
-the generator.
+The wallpaper source is the tracked binary `telegram/background.png`. The
+Telegram generator embeds that PNG verbatim into both variants; it does not
+create, recolor, decode, or retain alternate/backup wallpapers. Replacing this
+single file and running `./dots apply` or switching the Telegram solar state is
+the supported way to change the chat background.
 
 Telegram's theme API cannot independently recolor an unread stopped voice message
 versus a listened stopped message; the unread state is the small duration dot.

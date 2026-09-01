@@ -98,6 +98,38 @@ owns the final tonal palette and therefore only approximates Gruvbox. A Chromium
 theme extension can specify the actual RGB values. The runtime therefore combines
 exact extension colors with a small darkman-driven reload mechanism.
 
+### Vertical tab strip: why the active tab has no fill of its own
+
+Helium runs a vertical tab strip, and there the strip background and the active
+tab are painted from the **same** Chromium theme key, `toolbar`. Only the
+unselected tabs have a key of their own, `background_tab`. Verified by loading a
+probe manifest with `frame` red, `toolbar` green and `background_tab` magenta:
+the strip and the active tab both came out pure green, `frame` was not used
+anywhere, and `omnibox_background` / `ntp_header` / `button_background` were not
+used either. A `theme_toolbar` image behaves the same way — it fills the strip
+and the active tab together.
+
+So an extension theme cannot give the active tab its own fill. Whatever differs
+from the strip is the *unselected* tabs, which is why they used to be the ones
+that looked highlighted. The manifests therefore set
+
+```text
+background_tab == background_tab_inactive == toolbar
+```
+
+so unselected tabs disappear into the strip, and mark the active tab by text
+instead: `tab_text` is `fg_bright` (`#1d2021` / `#fbf1c7`) against
+`tab_background_text` `gray` (`#928374`). One accepted cost: the hover highlight
+is derived as a blend of `background_tab` and `toolbar`, so making them equal
+also removes it.
+
+Helium's *default* theme does show a filled active tab (light mode: `#ffffff`
+strip, `#e8e8e8` active tab). That is not reproducible here — it comes from
+Chromium's generated Material 3 palette, where the strip and the active tab are
+separate roles, and installing any theme extension collapses both onto
+`toolbar`. Getting that look back would mean returning to the User Color
+generator and giving up exact RGB values.
+
 The stable runtime path is:
 
 ```text

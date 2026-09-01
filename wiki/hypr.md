@@ -52,11 +52,12 @@ particular laptop.
   no-op**. All repo call sites use `hl.dsp.*`. ⚠️ This is why waybar must be
   `waybar-git` — the 0.15.0 release still emits legacy dispatches, so clicking a
   workspace does nothing ([waybar](waybar.md)).
-- **OpenWhispr's own bind file is inert.** `openwhispr-binds.conf` was deleted
-  in 2026-08-03 because only `hyprland.conf` sourced it. The app may recreate
-  it; those rewrites have no effect. The `CTRL, Super_L` bind in
-  `hypr/modules/binds.lua` is the single source of truth — if OpenWhispr's
-  binding changes, copy it over by hand.
+- **OpenWhispr is isolated from the tracked config.** Since 1.9.2 the app
+  recognizes Lua configs and automatically writes `openwhispr-binds.lua` plus
+  a matching `pcall(require, ...)` into `hyprland.lua`. It is therefore launched
+  through `openwhispr-launch.sh`, which points `HYPRLAND_CONFIG` at disposable
+  state under `$XDG_RUNTIME_DIR`. The persistent `CTRL + Super_L` bind in
+  `hypr/modules/binds.lua` remains the single source of truth.
 - **`SUPER+Return` routes through `kitty-new-window.sh`, not a bare
   `exec kitty`.** A bare launch starts an independent kitty process with no
   source window, so its tabs never get tagged into a session — see the
@@ -97,13 +98,19 @@ registers the former only once started under the latter:
 hl.exec_cmd(
   "busctl --user call org.freedesktop.DBus /org/freedesktop/DBus "
     .. "org.freedesktop.DBus StartServiceByName su org.kde.secretservicecompat 0 "
-    .. "&& openwhispr"
+    .. "&& $HOME/.config/hypr/openwhispr-launch.sh"
 )
 ```
 
 ⚠️ The `&&` is load-bearing: `exec_cmd` gives no ordering between separate
 calls, so activation and launch must be one command. `busctl` (unlike
 `dbus-send`) waits for the service before returning.
+
+The launcher also keeps OpenWhispr 1.9.2+'s automatic Hyprland integration out
+of the dotfiles. `HYPRLAND_CONFIG` names an empty Lua config under
+`$XDG_RUNTIME_DIR`; OpenWhispr may write and source its managed bind beside that
+file without touching `~/.config/hypr`. Hyprland still receives the live bind
+through IPC, while `modules/binds.lua` provides persistence across reloads.
 
 ⚠️ **`pam_kwallet5` does NOT work here — don't reintroduce it.** It was tried
 first and failed for two compounding reasons: `getty@tty1` runs

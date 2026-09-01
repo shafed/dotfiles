@@ -61,11 +61,19 @@ month reloads that six-week range. `khal list --json` emits one compact JSON
 array per queried day, so the service parses each non-empty output line and
 flattens those daily arrays before normalizing and sorting the events.
 
-The clock opens the Calendar panel. Calendar days are clickable: the selected
-day is highlighted and the agenda below shows that day's events. Event days are
-marked in the grid, including events spanning into the selected date. The agenda
-uses the remaining panel height as a scrollable list so busy days are not
-truncated.
+The clock opens the Calendar panel. Calendar days are clickable and the agenda
+below always belongs to the selected day. The month grid deliberately gives each
+state one visual meaning: a filled Gruvbox-yellow circle is the selected date, a
+thin yellow ring is today when today is not selected, and one to three small
+dots indicate that the day contains events. Ordinary day cells have no border;
+hover uses only a soft background. Dates outside the current month are muted but
+remain clickable and switch the visible month when selected.
+
+The header provides previous/next month navigation, manual sync, and a `Today`
+action whenever another date is selected. The agenda uses the remaining panel
+height as a scrollable list, shows the selected date and event count, and keeps
+time, title, calendar name and location visually separated so dense study days
+remain scannable.
 
 Calendar events are deliberately not shown in the top bar; the clock remains the
 single entry point. The panel refresh button requests the oneshot systemd sync

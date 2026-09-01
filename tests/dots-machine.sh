@@ -87,8 +87,8 @@ argv=result['actions'][0]['argv']
 assert argv[-3:] == ['tool', 'install', 'dots-ci-missing-tool'], argv
 PY
 
-# Arch repository and AUR packages share one yay transaction. It performs a
-# full system sync/upgrade before installing targets and never uses --needed.
+# Arch repository and AUR packages share one yay transaction. Provision only
+# installs the missing targets; it does not refresh databases or upgrade the system.
 python3 - "$ROOT" <<'PY'
 from pathlib import Path
 import importlib.util
@@ -126,8 +126,9 @@ assert result["blockers"] == [], result["blockers"]
 assert len(result["actions"]) == 1, result["actions"]
 action = result["actions"][0]
 assert action["manager"] == "yay", action
-assert action["argv"] == ["/usr/bin/yay", "-Syu", "aur-pkg", "repo-pkg"], action["argv"]
+assert action["argv"] == ["/usr/bin/yay", "-S", "aur-pkg", "repo-pkg"], action["argv"]
 assert "--needed" not in action["argv"], action["argv"]
+assert "-y" not in action["argv"] and "-u" not in action["argv"], action["argv"]
 module.Path = real_path
 PY
 

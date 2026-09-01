@@ -34,6 +34,12 @@ Item {
     return parts
   }
 
+  function isConnectedType(type) {
+    var value = String(type || "").toLowerCase()
+    return value === "802-11-wireless" || value === "wifi"
+        || value === "802-3-ethernet" || value === "ethernet"
+  }
+
   function parseSnapshot(text) {
     var section = ""
     var nextEnabled = false
@@ -54,7 +60,7 @@ Item {
         nextEnabled = line.toLowerCase().indexOf("enabled") >= 0
       } else if (section === "__ACTIVE__") {
         var activeParts = splitEscaped(line)
-        if (activeParts.length >= 2 && (activeParts[activeParts.length - 1] === "802-11-wireless" || activeParts[activeParts.length - 1] === "wifi"))
+        if (activeParts.length >= 2 && isConnectedType(activeParts[activeParts.length - 1]))
           nextActive = activeParts.slice(0, -1).join(":")
       } else if (section === "__NETWORKS__") {
         var parts = splitEscaped(line)

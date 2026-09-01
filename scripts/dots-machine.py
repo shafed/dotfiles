@@ -310,6 +310,15 @@ def provision(context: dict, dry_run: bool, assume_yes: bool, as_json: bool) -> 
             print("Provision cancelled.")
             return 1
 
+    # Authenticate once before package/service actions. yay and makepkg invoke
+    # sudo internally, while system-service actions invoke it directly; all
+    # of them can reuse sudo's timestamp after this priming call.
+    privileged = {"yay-bootstrap", "yay", "system-service"}
+    if os.geteuid() != 0 and any(action["manager"] in privileged for action in result["actions"]):
+        auth = run(["sudo", "-v"], capture=False)
+        if auth.returncode:
+            return auth.returncode
+
     for action in result["actions"]:
         process = run(action["argv"], capture=False)
         if process.returncode:

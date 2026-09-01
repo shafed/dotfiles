@@ -28,6 +28,8 @@ if "GB_BG: #41423b;" not in palette:
     raise SystemExit("day palette was not written to runtime theme")
 if "historyTextInFg: GB_FG_BRIGHT;" not in palette:
     raise SystemExit("day palette lost its high-contrast message text")
+if "historyComposeAreaFg: GB_FG_UI;" not in palette:
+    raise SystemExit("day compose text is not using the bright UI foreground")
 if "msgInBg: #41423b;" not in palette:
     raise SystemExit("day palette lost its daylight incoming bubble")
 PY
@@ -51,6 +53,8 @@ if "GB_FG: #d4be98;" not in palette:
     raise SystemExit("night palette lost the warm Gruvbox foreground")
 if "historyTextInFg: GB_FG;" not in palette or "historyTextOutFg: GB_FG;" not in palette:
     raise SystemExit("night message text is not using the original Gruvbox foreground")
+if "historyComposeAreaFg: GB_FG;" not in palette:
+    raise SystemExit("night compose text is not using the original Gruvbox foreground")
 if "msgInBg: GB_BG_ALT;" not in palette:
     raise SystemExit("night incoming bubble is not using the original Gruvbox surface")
 if "msgInDateFg: GB_GRAY_DIM;" not in palette or "msgOutDateFg: GB_GRAY_DIM;" not in palette:

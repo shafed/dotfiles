@@ -50,6 +50,7 @@ DAY_ALIASES = {
 }
 
 DAY_REPLACEMENTS = {
+    "historyComposeAreaFg: GB_FG;": "historyComposeAreaFg: GB_FG_UI;",
     "msgInBg: GB_BG_HARD;": "msgInBg: #41423b;",
     "msgInBgSelected: GB_BG_HOVER;": "msgInBgSelected: #55564d;",
     "msgOutBg: GB_BG_SOFT;": "msgOutBg: #5b5c52;",

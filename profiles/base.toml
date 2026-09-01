@@ -153,13 +153,6 @@ required = true
 reason = "browser tab integration"
 
 [[packages]]
-command = "task"
-package = "taskwarrior"
-manager = "pacman"
-required = true
-reason = "task workflows"
-
-[[packages]]
 command = "python3"
 package = "python"
 manager = "pacman"

@@ -90,7 +90,7 @@ Item {
   Component { id: audioPanel; AudioPanel { shell: panel.shell; services: panel.services; colors: panel.colors; ui: panel.ui } }
   Component { id: networkPanel; NetworkPanel { shell: panel.shell; system: panel.system; colors: panel.colors; ui: panel.ui } }
   Component { id: bluetoothPanel; BluetoothPanel { shell: panel.shell; system: panel.system; colors: panel.colors; ui: panel.ui } }
-  Component { id: calendarPanel; CalendarPanel { shell: panel.shell; colors: panel.colors; ui: panel.ui } }
+  Component { id: calendarPanel; CalendarPanel { shell: panel.shell; system: panel.system; colors: panel.colors; ui: panel.ui } }
   Component { id: powerPanel; PowerPanel { shell: panel.shell; system: panel.system; colors: panel.colors; ui: panel.ui } }
   Component { id: agentsPanel; AgentsPanel { shell: panel.shell; agents: panel.agents; colors: panel.colors; ui: panel.ui } }
   Component { id: updatesPanel; UpdatesPanel { system: panel.system; colors: panel.colors; ui: panel.ui } }

@@ -1,7 +1,7 @@
 ---
 title: index
 type: index
-updated: 2026-08-31
+updated: 2026-09-01
 ---
 
 # Dotfiles wiki — index
@@ -28,6 +28,8 @@ rules: [../CLAUDE.md](../CLAUDE.md) (`AGENTS.md` symlinks to it).
 - **[quickshell](quickshell.md)** — active top bar and desktop shell; modular
   QML, realtime services, Applications/Bookmarks/Projects/Sessions/YouTube,
   keyboard clipboard and scratch overlays.
+- **[calendar](calendar.md)** — Google Calendar via vdirsyncer/khal, local OAuth
+  boundary, sync timer, selectable month grid and per-day agenda.
 - **[kitty](kitty.md)** — terminal: sessions, legacy/manual QAT panels, custom
   kittens and remote control.
 - **[nvim](nvim.md)** — map of content: which LazyVim behavior was overridden

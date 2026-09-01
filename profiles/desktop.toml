@@ -4,12 +4,22 @@ includes = ["base"]
 capabilities = ["desktop"]
 config_dirs = ["hypr", "kanata", "quickshell", "darkman", "systemd"]
 sources = ["helium/apply-gruvbox-theme.py", "helium/switch-gruvbox-theme.py", "helium/gruvbox-dark/manifest.json", "helium/gruvbox-light/manifest.json", "scripts/dots-helium-generator.sh", "scripts/copyq-apply-theme.py", "scripts/dots-telegram-generator.sh", "telegram/generate-theme.py", "telegram/_palette_renderer.py", "telegram/background.png"]
-services = ["quickshell.service", "kanata.service", "darkman.service", "copyq.service"]
+services = ["quickshell.service", "kanata.service", "darkman.service", "copyq.service", "google-calendar-sync.timer"]
 
 [[links]]
 source = "darkman/scripts"
 destination = "{data}/darkman"
 reason = "darkman hooks generated from the tracked theme"
+
+[[links]]
+source = "vdirsyncer/config"
+destination = "{config}/vdirsyncer/config"
+reason = "Google Calendar CalDAV sync configuration; OAuth secrets remain local and untracked"
+
+[[links]]
+source = "khal/config"
+destination = "{config}/khal/config"
+reason = "read synchronized calendar vdirs for the Quickshell calendar service"
 
 [[generators]]
 name = "helium-theme"
@@ -104,6 +114,28 @@ package = "quickshell"
 manager = "pacman"
 required = true
 reason = "top bar, panels and desktop shell"
+
+[[packages]]
+command = "vdirsyncer"
+package = "vdirsyncer"
+manager = "pacman"
+required = true
+reason = "synchronize Google Calendar through CalDAV into local vdirs"
+
+[[packages]]
+command = "khal"
+package = "khal"
+manager = "pacman"
+required = true
+reason = "normalize local iCalendar events into JSON for Quickshell"
+
+[[packages]]
+command = "python-aiohttp-oauthlib"
+package = "python-aiohttp-oauthlib"
+manager = "pacman"
+check = "package"
+required = true
+reason = "OAuth support for vdirsyncer's Google Calendar backend"
 
 [[packages]]
 command = "ttf-nerd-fonts-symbols"

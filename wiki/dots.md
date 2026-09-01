@@ -97,7 +97,7 @@ reads the same profile package and system-prerequisite declarations, calculates
 one action list, then either shows or executes that list.
 
 `dots provision --dry-run` is the required safe preview. It prints the exact
-`yay -Syu`, `uv tool` and `systemctl enable --now` commands and executes none of
+`yay -S`, `uv tool` and `systemctl enable --now` commands and executes none of
 them. If the declared installer is unavailable or unsupported, provision reports
 a blocker and stops instead of guessing. `--yes` skips the interactive
 confirmation for the real run; `--json` exposes the dry-run/action plan for
@@ -105,13 +105,14 @@ automation.
 
 Both packages marked `manager = "pacman"` and packages marked `manager = "aur"`
 are installed by one existing `yay` process. When at least one Arch package is
-missing, provision runs one `yay -Syu <all-missing-arch-packages...>` transaction
-before `uv tool` installs. The `-yu` part is mandatory: provisioning must never
-perform an Arch partial upgrade. `--needed` is intentionally omitted. `yay`
-itself remains a bootstrap prerequisite rather than something provision tries
-to install recursively. Isolated CLI tools still use `uv tool`, and declared
-system services use systemctl. Other backends should be added only when a real
-manifest requires them.
+missing, provision runs one `yay -S <all-missing-arch-packages...>` transaction
+before `uv tool` installs. Provision deliberately does not use `-y`, `-u` or
+`--needed`: installing missing packages and upgrading the whole system are
+separate operations. A full system upgrade remains an explicit `yay -Syu` when
+the user chooses to do it. `yay` itself remains a bootstrap prerequisite rather
+than something provision tries to install recursively. Isolated CLI tools still
+use `uv tool`, and declared system services use systemctl. Other backends should
+be added only when a real manifest requires them.
 
 The intended fresh-machine flow is:
 

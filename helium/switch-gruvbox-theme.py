@@ -298,34 +298,26 @@ def browser_endpoint(config_home: Path, port_file: Path | None) -> str:
     return f"ws://127.0.0.1:{port}{path}"
 
 
-def same_path(left: str, right: Path) -> bool:
-    try:
-        return Path(left).expanduser().resolve() == right.expanduser().resolve()
-    except OSError:
-        return os.path.normpath(left) == os.path.normpath(str(right))
+def reload_live_theme(config_home: Path, runtime: Path) -> tuple[str, str]:
+    """Reload the unpacked theme inside a running Helium.
 
-
-def reload_live_theme(config_home: Path, runtime: Path) -> str:
+    Extensions.loadUnpacked re-reads manifest.json from disk and keeps the same
+    extension id, so one call both installs and refreshes the theme. It is
+    deliberately not preceded by Extensions.uninstall: Chromium refuses to
+    uninstall an extension that came from --load-extension, which is exactly its
+    state after every Helium restart, so that call turned a working live reload
+    into a spurious "restart Helium" on the first switch after each start.
+    """
     port_file = devtools_port_file(config_home)
     if port_file is None and configured_debugging_port(config_home) is None:
-        return "deferred"
+        return "deferred", "no DevTools endpoint is configured"
     client: WebSocketClient | None = None
     try:
         client = WebSocketClient(browser_endpoint(config_home, port_file))
-        extensions = client.call("Extensions.getExtensions").get("extensions", [])
-        if not isinstance(extensions, list):
-            raise RuntimeError("Extensions.getExtensions returned invalid extension list")
-        for extension in extensions:
-            if not isinstance(extension, dict):
-                continue
-            extension_id = extension.get("id")
-            path = extension.get("path")
-            if isinstance(extension_id, str) and isinstance(path, str) and same_path(path, runtime):
-                client.call("Extensions.uninstall", {"id": extension_id})
         client.call("Extensions.loadUnpacked", {"path": str(runtime.resolve())})
-        return "reloaded"
-    except (ConnectionError, OSError, RuntimeError, ValueError, json.JSONDecodeError):
-        return "deferred"
+        return "reloaded", ""
+    except (ConnectionError, OSError, RuntimeError, ValueError, json.JSONDecodeError) as error:
+        return "deferred", f"{type(error).__name__}: {error}"
     finally:
         if client is not None:
             client.close()
@@ -347,9 +339,9 @@ def main() -> int:
     runtime = data_home / "dotfiles" / RUNTIME_NAME
     try:
         changed = write_runtime_theme(runtime, mode)
-        live = "unchanged"
+        live, detail = "unchanged", ""
         if changed and not args.no_live_reload:
-            live = reload_live_theme(config_home, runtime)
+            live, detail = reload_live_theme(config_home, runtime)
     except (OSError, ValueError, json.JSONDecodeError) as error:
         print(f"helium-gruvbox-theme: {error}", file=sys.stderr)
         return 1
@@ -358,7 +350,10 @@ def main() -> int:
     if live == "reloaded":
         suffix = "; running Helium reloaded"
     elif live == "deferred":
+        # Name the reason: a silent "restart Helium" hides real CDP failures.
         suffix = "; live reload deferred until Helium restart"
+        if detail:
+            suffix += f" ({detail})"
     print(f"Helium Gruvbox: {mode} ({'updated' if changed else 'unchanged'}{suffix})")
     return 0
 

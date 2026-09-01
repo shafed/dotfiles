@@ -87,6 +87,50 @@ argv=result['actions'][0]['argv']
 assert argv[-3:] == ['tool', 'install', 'dots-ci-missing-tool'], argv
 PY
 
+# Arch repository and AUR packages share one yay transaction. It performs a
+# full system sync/upgrade before installing targets and never uses --needed.
+python3 - "$ROOT" <<'PY'
+from pathlib import Path
+import importlib.util
+import sys
+
+root = Path(sys.argv[1])
+spec = importlib.util.spec_from_file_location("dots_machine_test", root / "scripts/dots-machine.py")
+module = importlib.util.module_from_spec(spec)
+assert spec.loader is not None
+spec.loader.exec_module(module)
+
+real_path = module.Path
+class ArchPath:
+    def __init__(self, value):
+        self.value = value
+    def exists(self):
+        return self.value == "/etc/arch-release"
+
+module.Path = ArchPath
+module.shutil.which = lambda command: "/usr/bin/yay" if command == "yay" else None
+module.state.desired = lambda context: (
+    ["test"],
+    {
+        "capabilities": [],
+        "prerequisites": [],
+        "packages": [
+            {"command": "repo-tool", "package": "repo-pkg", "manager": "pacman", "required": True, "reason": "test"},
+            {"command": "aur-tool", "package": "aur-pkg", "manager": "aur", "required": True, "reason": "test"},
+        ],
+    },
+)
+context = {"machine": "test", "machine_file": root / "machines/default.toml"}
+result = module.provision_plan(context)
+assert result["blockers"] == [], result["blockers"]
+assert len(result["actions"]) == 1, result["actions"]
+action = result["actions"][0]
+assert action["manager"] == "yay", action
+assert action["argv"] == ["/usr/bin/yay", "-Syu", "aur-pkg", "repo-pkg"], action["argv"]
+assert "--needed" not in action["argv"], action["argv"]
+module.Path = real_path
+PY
+
 # Converge only base-managed files, then show that package/service extras are
 # informational drift rather than a reason for a destructive cleanup.
 env "${env_base[@]}" "$ROOT/dots" apply --links-only --profile base >/dev/null

@@ -72,7 +72,8 @@ def assert_exact_palettes() -> None:
         "frame": "bg_hard",
         "toolbar": "bg_soft",
         "omnibox_background": "bg",
-        "tab_text": "fg",
+        "tab_text": "fg_bright",
+        "tab_background_text": "gray",
         "ntp_link": "blue",
     }
     for chromium_name, palette_name in mapping.items():
@@ -83,6 +84,15 @@ def assert_exact_palettes() -> None:
     assert dark["omnibox_background"] == [40, 40, 40]  # #282828
     assert light["frame"] == [242, 239, 232]  # #f2efe8
     assert light["omnibox_background"] == [251, 250, 247]  # #fbfaf7
+
+    # Helium paints the vertical tab strip and the active tab with the same
+    # Chromium key (`toolbar`), so an unselected tab that differs from it is
+    # the one that reads as highlighted. Keeping the unselected tabs equal to
+    # `toolbar` is what leaves only the active tab's text standing out.
+    for colors in (dark, light):
+        for key in ("background_tab", "background_tab_inactive"):
+            assert colors[key] == colors["toolbar"]
+        assert colors["tab_text"] != colors["tab_background_text"]
 
 
 def main() -> int:

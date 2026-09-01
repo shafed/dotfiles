@@ -19,7 +19,7 @@ hl.on("hyprland.start", function()
   hl.exec_cmd(
     "busctl --user call org.freedesktop.DBus /org/freedesktop/DBus "
       .. "org.freedesktop.DBus StartServiceByName su org.kde.secretservicecompat 0 "
-      .. "&& openwhispr"
+      .. "&& $HOME/.config/hypr/openwhispr-launch.sh"
   )
   hl.exec_cmd("hypridle")
   hl.exec_cmd("hyprsunset")

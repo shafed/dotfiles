@@ -118,11 +118,9 @@ hl.bind("XF86AudioPause", hl.dsp.exec_cmd("playerctl play-pause"), { locked = tr
 hl.bind("XF86AudioPlay", hl.dsp.exec_cmd("playerctl play-pause"), { locked = true })
 hl.bind("XF86AudioPrev", hl.dsp.exec_cmd("playerctl previous"), { locked = true })
 
--- OpenWhispr toggle. This is the single source of truth: the app also writes
--- hypr/openwhispr-binds.conf (hyprlang syntax), but that file is never loaded —
--- hyprland.conf (which source()s it) is not read when hyprland.lua exists — so
--- the app's rewrites have no effect. If OpenWhispr changes its bind, copy it
--- here by hand. (The stray file may reappear in the dir; ignore it.)
+-- OpenWhispr toggle. This is the persistent source of truth; the launcher gives
+-- OpenWhispr a private runtime Hyprland config so its automatic bind management
+-- cannot rewrite this repository.
 hl.bind(
   "CTRL + Super_L",
   hl.dsp.exec_cmd(

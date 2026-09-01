@@ -9,13 +9,36 @@ Item {
   property string setupState: "loading"
   property string error: ""
   property bool refreshing: false
+  property bool refreshPending: false
   property bool syncing: false
   property double lastUpdatedMs: 0
+  property string rangeStart: ""
+  property int rangeDays: 42
 
   readonly property bool configured: setupState === "ready"
 
-  function parseLocalDate(dateText, timeText, allDay) {
-    var dateParts = String(dateText || "").split("-")
+  function pad2(value) {
+    return String(value).padStart(2, "0")
+  }
+
+  function dateText(date) {
+    return String(date.getFullYear()) + "-" + pad2(date.getMonth() + 1) + "-" + pad2(date.getDate())
+  }
+
+  function gridStartForMonth(monthDate) {
+    var first = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1)
+    var mondayOffset = (first.getDay() + 6) % 7
+    return new Date(first.getFullYear(), first.getMonth(), 1 - mondayOffset)
+  }
+
+  function loadMonth(monthDate) {
+    rangeStart = dateText(gridStartForMonth(monthDate || new Date()))
+    rangeDays = 42
+    refresh()
+  }
+
+  function parseLocalDate(dateTextValue, timeText, allDay) {
+    var dateParts = String(dateTextValue || "").split("-")
     if (dateParts.length !== 3) return null
     var hour = 0
     var minute = 0
@@ -88,7 +111,10 @@ Item {
   }
 
   function refresh() {
-    if (queryProc.running) return
+    if (queryProc.running) {
+      refreshPending = true
+      return
+    }
     refreshing = true
     queryProc.running = true
   }
@@ -106,49 +132,25 @@ Item {
            date.getDate() === other.getDate()
   }
 
+  function eventTouchesDay(event, date) {
+    var dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime()
+    var dayEnd = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1).getTime()
+    return event.startMs < dayEnd && event.endMs > dayStart
+  }
+
   function hasEventsOn(date) {
     for (var i = 0; i < events.length; i++) {
-      if (sameDay(date, events[i].startMs)) return true
+      if (eventTouchesDay(events[i], date)) return true
     }
     return false
   }
 
-  function upcoming(limit) {
-    var now = Date.now()
+  function eventsOn(date) {
     var rows = []
     for (var i = 0; i < events.length; i++) {
-      if (events[i].endMs <= now) continue
-      rows.push(events[i])
-      if (rows.length >= limit) break
+      if (eventTouchesDay(events[i], date)) rows.push(events[i])
     }
     return rows
-  }
-
-  function shortTitle(title, limit) {
-    var value = String(title || "Untitled")
-    return value.length > limit ? value.slice(0, Math.max(1, limit - 1)) + "…" : value
-  }
-
-  function barLabel(now) {
-    var current = now || new Date()
-    var nowMs = current.getTime()
-    for (var i = 0; i < events.length; i++) {
-      var event = events[i]
-      if (event.allDay || event.endMs <= nowMs || !sameDay(current, event.startMs)) continue
-      var title = shortTitle(event.title, 26)
-      if (event.startMs <= nowMs) return "NOW " + title
-      return event.startTime + " " + title
-    }
-    return ""
-  }
-
-  function dayLabel(event, now) {
-    var current = now || new Date()
-    var start = new Date(event.startMs)
-    if (sameDay(current, event.startMs)) return "Today"
-    var tomorrow = new Date(current.getFullYear(), current.getMonth(), current.getDate() + 1)
-    if (sameDay(tomorrow, event.startMs)) return "Tomorrow"
-    return Qt.formatDateTime(start, "ddd d MMM")
   }
 
   function timeLabel(event) {
@@ -167,12 +169,18 @@ Item {
       "if [ ! -s \"$client_id\" ] || [ ! -s \"$client_secret\" ]; then printf '__DOTS_CALENDAR_CREDENTIALS__'; " +
       "elif [ ! -s \"$token\" ]; then printf '__DOTS_CALENDAR_DISCOVER__'; " +
       "elif ! command -v khal >/dev/null 2>&1; then printf '__DOTS_CALENDAR_ERROR__:khal missing'; " +
-      "elif output=$(khal list --once --json title --json start-date --json start-time --json end-date --json end-time --json all-day --json location --json calendar today 8d 2>/dev/null); then printf '%s' \"$output\"; " +
+      "elif output=$(khal list --once --json title --json start-date --json start-time --json end-date --json end-time --json all-day --json location --json calendar " + service.rangeStart + " " + String(service.rangeDays) + "d 2>/dev/null); then printf '%s' \"$output\"; " +
       "else printf '__DOTS_CALENDAR_ERROR__:khal query failed'; fi"]
+    onExited: function(exitCode, exitStatus) {
+      service.refreshing = false
+      if (service.refreshPending) {
+        service.refreshPending = false
+        service.refresh()
+      }
+    }
     stdout: StdioCollector {
       waitForEnd: true
       onStreamFinished: {
-        service.refreshing = false
         var value = text.trim()
         if (value === "__DOTS_CALENDAR_CREDENTIALS__") {
           service.events = []
@@ -228,5 +236,5 @@ Item {
     onTriggered: service.refresh()
   }
 
-  Component.onCompleted: refresh()
+  Component.onCompleted: loadMonth(new Date())
 }

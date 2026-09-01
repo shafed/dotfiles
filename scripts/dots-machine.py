@@ -181,14 +181,19 @@ def provision_plan(context: dict) -> dict:
         else:
             yay = shutil.which("yay")
             if not yay:
-                blockers.append("Arch packages are missing, but yay is not available")
-            else:
                 actions.append(
                     {
-                        "manager": "yay",
-                        "argv": [yay, "-S", *arch_packages],
+                        "manager": "yay-bootstrap",
+                        "argv": ["bash", str(ROOT / "scripts/bootstrap-yay.sh")],
                     }
                 )
+                yay = "yay"
+            actions.append(
+                {
+                    "manager": "yay",
+                    "argv": [yay, "-S", *arch_packages],
+                }
+            )
 
     uv_packages = sorted(set(groups.get("uv-tool", [])))
     if uv_packages:

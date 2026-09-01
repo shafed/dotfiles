@@ -69,11 +69,17 @@ dots indicate that the day contains events. Ordinary day cells have no border;
 hover uses only a soft background. Dates outside the current month are muted but
 remain clickable and switch the visible month when selected.
 
-The header provides previous/next month navigation, manual sync, and a `Today`
-action whenever another date is selected. The agenda uses the remaining panel
-height as a scrollable list, shows the selected date and event count, and keeps
-time, title, calendar name and location visually separated so dense study days
-remain scannable.
+The header provides previous/next month navigation, manual sync, a `Today`
+action whenever another date is selected, and a `Google ↗` action that opens
+Google Calendar in the browser for creating or editing events. Quickshell keeps
+this integration read-only rather than implementing a second event editor with
+recurrence, permission and CalDAV write semantics.
+
+The agenda uses the remaining panel height as a scrollable list, shows the
+selected date and event count, and keeps each event intentionally compact: only
+time and title are shown. Calendar IDs and other secondary metadata are omitted
+because Google/vdirsyncer collection identifiers are often technical and add
+visual noise without helping the daily scan.
 
 Calendar events are deliberately not shown in the top bar; the clock remains the
 single entry point. The panel refresh button requests the oneshot systemd sync

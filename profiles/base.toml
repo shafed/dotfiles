@@ -6,6 +6,11 @@ config_dirs = ["kitty", "nvim", "yazi", "lazygit", "sioyek"]
 sources = ["scripts/sudo-notify.sh"]
 
 [[links]]
+source = "xdg/mimeapps.list"
+destination = "{config}/mimeapps.list"
+reason = "default application associations"
+
+[[links]]
 source = "zsh/zshrc"
 destination = "{home}/.zshrc"
 reason = "shared interactive shell configuration"

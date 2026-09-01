@@ -213,6 +213,13 @@ required = true
 reason = "local-network file transfer"
 
 [[packages]]
+command = "imv"
+package = "imv"
+manager = "pacman"
+required = true
+reason = "default image viewer"
+
+[[packages]]
 command = "dolphin"
 package = "dolphin"
 manager = "pacman"

@@ -4,7 +4,6 @@ type: component
 updated: 2026-09-01
 covers:
   - vdirsyncer/config
-  - vdirsyncer/google-credentials.example
   - khal/config
   - quickshell/services/CalendarService.qml
   - quickshell/components/CalendarPanel.qml
@@ -27,18 +26,14 @@ created `~/.local/state/vdirsyncer/google-token`.
 ## One-time Google setup
 
 Create a Google OAuth **Desktop application** with the **CalDAV API** enabled.
-Then create the local untracked credentials file:
+The two OAuth client values live outside the managed config tree under
+`${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles/secrets/google-calendar/`, in
+`client-id` and `client-secret`. Keep the directory private and both files mode
+`600`.
 
-```sh
-mkdir -p ~/.config/vdirsyncer
-cp ~/github/dotfiles/vdirsyncer/google-credentials.example \
-  ~/.config/vdirsyncer/google-credentials
-chmod 600 ~/.config/vdirsyncer/google-credentials
-$EDITOR ~/.config/vdirsyncer/google-credentials
-```
-
-Fill in `client_id=` and `client_secret=`. The tracked vdirsyncer config fetches
-those two values at runtime; the secret file is not linked from the repository.
+The tracked vdirsyncer config reads those files with vdirsyncer's `command`
+fetch strategy. It deliberately does not parse a combined `key=value` file with
+`sed` or another text pipeline.
 
 Authorize and discover the calendars once:
 

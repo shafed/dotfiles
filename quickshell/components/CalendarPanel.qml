@@ -69,6 +69,11 @@ ColumnLayout {
       onPressed: view.goToday()
     }
 
+    ClickButton {
+      label: "Google ↗"
+      onPressed: view.shell.run(["xdg-open", "https://calendar.google.com/calendar/u/0/r"])
+    }
+
     ClickButton { label: "‹"; onPressed: view.shell.shiftCalendarMonth(-1) }
     ClickButton { label: "›"; onPressed: view.shell.shiftCalendarMonth(1) }
 
@@ -238,7 +243,7 @@ ColumnLayout {
     delegate: Rectangle {
       required property var modelData
       width: agendaList.width
-      height: 50
+      height: 44
       radius: 6
       color: eventMouse.containsMouse ? view.colors.bgHover : view.colors.bgSoft
 
@@ -266,30 +271,14 @@ ColumnLayout {
           font.pixelSize: 10
         }
 
-        ColumnLayout {
+        Text {
           Layout.fillWidth: true
-          spacing: 1
-
-          Text {
-            Layout.fillWidth: true
-            text: modelData.title
-            color: view.colors.fgBright
-            font.family: view.ui.barFont
-            font.pixelSize: 12
-            elide: Text.ElideRight
-          }
-
-          Text {
-            visible: Boolean(modelData.calendar || modelData.location)
-            Layout.fillWidth: true
-            text: (modelData.calendar ? modelData.calendar : "") +
-                  (modelData.calendar && modelData.location ? " · " : "") +
-                  (modelData.location ? modelData.location : "")
-            color: view.colors.grayDim
-            font.family: view.ui.bodyFont
-            font.pixelSize: 9
-            elide: Text.ElideRight
-          }
+          text: modelData.title
+          color: view.colors.fgBright
+          font.family: view.ui.barFont
+          font.pixelSize: 12
+          elide: Text.ElideRight
+          verticalAlignment: Text.AlignVCenter
         }
       }
 

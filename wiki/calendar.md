@@ -43,23 +43,33 @@ vdirsyncer sync google_calendar
 khal list today 8d
 ```
 
+Google may hide subscribed/shared calendars from CalDAV discovery until they are
+selected at `https://calendar.google.com/calendar/syncselect`. After changing
+that selection, run `vdirsyncer discover google_calendar` again and accept any
+new local collections before syncing. Google CalDAV can still fail to expose
+some shared calendars; that is an upstream Google/vdirsyncer limitation rather
+than a Quickshell filter.
+
 After that the user timer keeps the local copy current. New Google calendars may
-require running `vdirsyncer discover google_calendar` again.
+require running discovery again.
 
 ## Quickshell behavior
 
-`CalendarService.qml` reads the next eight days from `khal` as JSON every two
-minutes. `khal list --json` emits one compact JSON array per queried day, so the
-service parses each non-empty output line and flattens those daily arrays before
-normalizing and sorting the events. It keeps setup/failure states local to the
-shell and can request the oneshot systemd sync from the calendar panel's refresh
-button.
+`CalendarService.qml` reads the 42-day range represented by the visible month
+grid from `khal` as JSON and refreshes it every two minutes. Moving to another
+month reloads that six-week range. `khal list --json` emits one compact JSON
+array per queried day, so the service parses each non-empty output line and
+flattens those daily arrays before normalizing and sorting the events.
 
-The clock still opens the existing Calendar panel. Days containing events are
-marked in the month grid and the panel shows the next four upcoming events.
-The top bar adds a compact event button only for today's timed events: before the
-event it is `HH:MM title`; while it is in progress it is `NOW title`. All-day
-events remain visible in the panel but do not occupy top-bar space.
+The clock opens the Calendar panel. Calendar days are clickable: the selected
+day is highlighted and the agenda below shows that day's events. Event days are
+marked in the grid, including events spanning into the selected date. The agenda
+uses the remaining panel height as a scrollable list so busy days are not
+truncated.
+
+Calendar events are deliberately not shown in the top bar; the clock remains the
+single entry point. The panel refresh button requests the oneshot systemd sync
+and then reloads the currently visible month.
 
 The synchronization path is deliberately:
 

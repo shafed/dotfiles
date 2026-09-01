@@ -15,6 +15,7 @@ Item {
   readonly property var selectedRow: rows && rows.length > 0
                                      ? rows[Math.max(0, Math.min(rows.length - 1, selectedIndex))]
                                      : ({})
+  readonly property bool normalMode: viMode === "normal"
 
   property bool open: false
   property string source: "videos"
@@ -23,6 +24,8 @@ Item {
   property int selectedIndex: 0
   property bool busy: false
   property bool deep: false
+  property bool forceRefresh: false
+  property string viMode: "insert"
   property string channelTarget: ""
   property string channelTitle: ""
   property string returnSource: "videos"
@@ -43,6 +46,7 @@ Item {
   }
 
   function hint() {
+    if (normalMode) return "NORMAL · j/k move · g/G top/bottom · i insert · q/Esc back"
     if (source === "history") return "Filter your watch history…"
     if (source === "later") return "Filter Watch later…"
     if (source === "channel-streams") return "Filter live and past streams…"
@@ -62,8 +66,7 @@ Item {
     var text = String(value || "")
     if (!matches || matches.length === 0) return escapeStyled(text)
     var marked = ({})
-    for (var i = 0; i < matches.length; i++)
-      marked[Number(matches[i])] = true
+    for (var i = 0; i < matches.length; i++) marked[Number(matches[i])] = true
     var accent = String(youtube.colors.yellow)
     var out = ""
     var active = false
@@ -85,6 +88,17 @@ Item {
     pointerStartY = -1
   }
 
+  function enterInsert() {
+    viMode = "insert"
+    Qt.callLater(function() { searchInput.forceActiveFocus() })
+  }
+
+  function enterNormal() {
+    viMode = "normal"
+    reloadTimer.stop()
+    Qt.callLater(function() { searchInput.forceActiveFocus() })
+  }
+
   function close() {
     open = false
     query = ""
@@ -92,6 +106,8 @@ Item {
     selectedIndex = 0
     busy = false
     deep = false
+    forceRefresh = false
+    viMode = "insert"
     channelTarget = ""
     channelTitle = ""
     enrichPasses = 0
@@ -107,6 +123,8 @@ Item {
     rows = []
     selectedIndex = 0
     deep = false
+    forceRefresh = false
+    viMode = "insert"
     channelTarget = ""
     channelTitle = ""
     returnSource = "videos"
@@ -114,8 +132,8 @@ Item {
     enrichPasses = 0
     resetPointer()
     open = true
-    refreshNow()
-    Qt.callLater(function() { searchInput.forceActiveFocus() })
+    refreshNow(false)
+    enterInsert()
   }
 
   function toggle() {
@@ -129,10 +147,11 @@ Item {
     rows = []
     selectedIndex = 0
     deep = false
+    forceRefresh = false
     enrichPasses = 0
     resetPointer()
-    refreshNow()
-    Qt.callLater(function() { searchInput.forceActiveFocus() })
+    enterInsert()
+    refreshNow(false)
   }
 
   function drillChannel(row) {
@@ -146,10 +165,11 @@ Item {
     rows = []
     selectedIndex = 0
     deep = false
+    forceRefresh = true
     enrichPasses = 0
     resetPointer()
-    refreshNow()
-    Qt.callLater(function() { searchInput.forceActiveFocus() })
+    enterInsert()
+    refreshNow(true)
   }
 
   function backOrClose() {
@@ -162,47 +182,57 @@ Item {
     channelTarget = ""
     channelTitle = ""
     deep = false
+    forceRefresh = false
     rows = []
     selectedIndex = 0
     resetPointer()
-    refreshNow()
-    Qt.callLater(function() { searchInput.forceActiveFocus() })
+    enterInsert()
+    refreshNow(false)
   }
 
   function toggleStreams() {
     if (!channelView) return
     source = source === "channel-streams" ? "channel-videos" : "channel-streams"
     deep = false
+    forceRefresh = false
     query = ""
     rows = []
     selectedIndex = 0
     resetPointer()
-    refreshNow()
+    enterInsert()
+    refreshNow(false)
   }
 
   function loadDeep() {
     if (!channelView) return
     source = "channel-videos"
     deep = true
+    forceRefresh = false
     query = ""
     rows = []
     selectedIndex = 0
     resetPointer()
-    refreshNow()
+    enterInsert()
+    refreshNow(false)
   }
 
-  function refreshNow() {
+  function refreshNow(force) {
     if (!open) return
     if (listProc.running) listProc.running = false
+    forceRefresh = force === true
     busy = true
     listProc.running = true
   }
 
-  function moveSelection(delta) {
+  function selectIndex(index) {
     if (!rows || rows.length === 0) return
-    selectedIndex = Math.max(0, Math.min(rows.length - 1, selectedIndex + delta))
+    selectedIndex = Math.max(0, Math.min(rows.length - 1, index))
     resultList.currentIndex = selectedIndex
     resultList.positionViewAtIndex(selectedIndex, ListView.Contain)
+  }
+
+  function moveSelection(delta) {
+    selectIndex(selectedIndex + delta)
   }
 
   function activateSelected() {
@@ -227,18 +257,62 @@ Item {
     Quickshell.execDetached(["python3", helper, "open", ident])
   }
 
+  function handleKey(event) {
+    var ctrl = (event.modifiers & Qt.ControlModifier) !== 0
+    var shift = (event.modifiers & Qt.ShiftModifier) !== 0
+
+    if (ctrl && event.key === Qt.Key_V) {
+      setSource("videos")
+    } else if (ctrl && event.key === Qt.Key_C) {
+      setSource("channels")
+    } else if (ctrl && event.key === Qt.Key_H) {
+      setSource("history")
+    } else if (ctrl && event.key === Qt.Key_L) {
+      setSource("later")
+    } else if (ctrl && event.key === Qt.Key_S && channelView) {
+      toggleStreams()
+    } else if (ctrl && event.key === Qt.Key_A && channelView) {
+      loadDeep()
+    } else if (ctrl && event.key === Qt.Key_R) {
+      refreshNow(true)
+    } else if (event.key === Qt.Key_Down || (ctrl && event.key === Qt.Key_J)) {
+      moveSelection(1)
+    } else if (event.key === Qt.Key_Up || (ctrl && event.key === Qt.Key_K)) {
+      moveSelection(-1)
+    } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+      activateSelected()
+    } else if (event.key === Qt.Key_Escape) {
+      if (normalMode) backOrClose()
+      else enterNormal()
+    } else if (normalMode && event.key === Qt.Key_J) {
+      moveSelection(1)
+    } else if (normalMode && event.key === Qt.Key_K) {
+      moveSelection(-1)
+    } else if (normalMode && event.key === Qt.Key_G) {
+      selectIndex(shift ? rows.length - 1 : 0)
+    } else if (normalMode && event.key === Qt.Key_Q) {
+      backOrClose()
+    } else if (normalMode && (event.key === Qt.Key_I || event.key === Qt.Key_Slash)) {
+      enterInsert()
+    } else {
+      return false
+    }
+    event.accepted = true
+    return true
+  }
+
   onQueryChanged: {
     selectedIndex = 0
     resultList.currentIndex = 0
     resetPointer()
-    if (open) reloadTimer.restart()
+    if (open && !normalMode) reloadTimer.restart()
   }
 
   Timer {
     id: reloadTimer
     interval: youtube.source === "videos" || youtube.source === "channels" ? 380 : 100
     repeat: false
-    onTriggered: youtube.refreshNow()
+    onTriggered: youtube.refreshNow(false)
   }
 
   Timer {
@@ -248,7 +322,7 @@ Item {
              youtube.enrichPasses < 6
     onTriggered: {
       youtube.enrichPasses += 1
-      if (!youtube.busy) youtube.refreshNow()
+      if (!youtube.busy) youtube.refreshNow(false)
     }
   }
 
@@ -256,7 +330,8 @@ Item {
     id: listProc
     command: [
       "python3", youtube.helper, "list", youtube.source, youtube.query,
-      youtube.channelTarget, youtube.deep ? "deep" : "normal"
+      youtube.channelTarget, youtube.deep ? "deep" : "normal",
+      youtube.forceRefresh ? "force" : "cached"
     ]
     stdout: StdioCollector {
       waitForEnd: true
@@ -269,6 +344,7 @@ Item {
           console.warn("youtube picker list:", e)
         }
         youtube.busy = false
+        youtube.forceRefresh = false
         youtube.selectedIndex = 0
         resultList.currentIndex = 0
       }
@@ -343,7 +419,7 @@ Item {
             font.family: youtube.ui.sansFont
             font.pixelSize: youtube.ui.pickerRowSubtitleSize
             elide: Text.ElideRight
-            Layout.maximumWidth: 300
+            Layout.maximumWidth: 260
           }
 
           Rectangle {
@@ -353,12 +429,29 @@ Item {
             color: youtube.colors.bgSoft
             border.color: youtube.colors.bgMuted
             border.width: 1
-
             Text {
               id: sourceText
               anchors.centerIn: parent
               text: youtube.sourceLabel()
               color: youtube.colors.yellow
+              font.family: youtube.ui.bodyFont
+              font.pixelSize: 9
+              font.bold: true
+            }
+          }
+
+          Rectangle {
+            implicitWidth: modeText.implicitWidth + 16
+            implicitHeight: 24
+            radius: 5
+            color: youtube.normalMode ? youtube.colors.bgHover : youtube.colors.bgSoft
+            border.color: youtube.normalMode ? youtube.colors.yellow : youtube.colors.bgMuted
+            border.width: 1
+            Text {
+              id: modeText
+              anchors.centerIn: parent
+              text: youtube.normalMode ? "NORMAL" : "INSERT"
+              color: youtube.normalMode ? youtube.colors.yellow : youtube.colors.gray
               font.family: youtube.ui.bodyFont
               font.pixelSize: 9
               font.bold: true
@@ -393,6 +486,7 @@ Item {
               anchors.rightMargin: 12
               verticalAlignment: TextInput.AlignVCenter
               text: youtube.query
+              readOnly: youtube.normalMode
               color: youtube.colors.fgUi
               selectionColor: youtube.colors.bgHover
               selectedTextColor: youtube.colors.fgUi
@@ -400,45 +494,7 @@ Item {
               font.pixelSize: youtube.ui.pickerInputTextSize
               selectByMouse: false
               onTextChanged: youtube.query = text
-
-              Keys.onPressed: function(event) {
-                if (event.key === Qt.Key_Escape) {
-                  youtube.backOrClose()
-                  event.accepted = true
-                } else if (event.key === Qt.Key_Down ||
-                           (event.key === Qt.Key_J && (event.modifiers & Qt.ControlModifier))) {
-                  youtube.moveSelection(1)
-                  event.accepted = true
-                } else if (event.key === Qt.Key_Up ||
-                           (event.key === Qt.Key_K && (event.modifiers & Qt.ControlModifier))) {
-                  youtube.moveSelection(-1)
-                  event.accepted = true
-                } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                  youtube.activateSelected()
-                  event.accepted = true
-                } else if (event.key === Qt.Key_V && (event.modifiers & Qt.ControlModifier)) {
-                  youtube.setSource("videos")
-                  event.accepted = true
-                } else if (event.key === Qt.Key_C && (event.modifiers & Qt.ControlModifier)) {
-                  youtube.setSource("channels")
-                  event.accepted = true
-                } else if (event.key === Qt.Key_H && (event.modifiers & Qt.ControlModifier)) {
-                  youtube.setSource("history")
-                  event.accepted = true
-                } else if (event.key === Qt.Key_L && (event.modifiers & Qt.ControlModifier)) {
-                  youtube.setSource("later")
-                  event.accepted = true
-                } else if (event.key === Qt.Key_S && (event.modifiers & Qt.ControlModifier) && youtube.channelView) {
-                  youtube.toggleStreams()
-                  event.accepted = true
-                } else if (event.key === Qt.Key_A && (event.modifiers & Qt.ControlModifier) && youtube.channelView) {
-                  youtube.loadDeep()
-                  event.accepted = true
-                } else if (event.key === Qt.Key_R && (event.modifiers & Qt.ControlModifier)) {
-                  youtube.refreshNow()
-                  event.accepted = true
-                }
-              }
+              Keys.onPressed: function(event) { youtube.handleKey(event) }
             }
           }
         }
@@ -460,7 +516,6 @@ Item {
             delegate: Rectangle {
               required property var modelData
               required property int index
-
               width: resultList.width
               height: youtube.ui.youtubeRowHeight
               radius: youtube.ui.pickerRowRadius
@@ -472,8 +527,7 @@ Item {
                 anchors.fill: parent
                 hoverEnabled: true
                 onEntered: {
-                  if (youtube.mouseNavigationArmed)
-                    youtube.selectedIndex = index
+                  if (youtube.mouseNavigationArmed) youtube.selectedIndex = index
                 }
                 onPositionChanged: function(mouse) {
                   if (youtube.pointerStartX < 0 || youtube.pointerStartY < 0) {
@@ -484,8 +538,7 @@ Item {
                   if (Math.abs(mouse.x - youtube.pointerStartX) +
                       Math.abs(mouse.y - youtube.pointerStartY) >= 4)
                     youtube.mouseNavigationArmed = true
-                  if (youtube.mouseNavigationArmed)
-                    youtube.selectedIndex = index
+                  if (youtube.mouseNavigationArmed) youtube.selectedIndex = index
                 }
                 onClicked: {
                   youtube.mouseNavigationArmed = true
@@ -519,7 +572,6 @@ Item {
                 ColumnLayout {
                   Layout.fillWidth: true
                   spacing: 2
-
                   Text {
                     Layout.fillWidth: true
                     text: youtube.highlightedText(modelData.title || modelData.id || "", modelData.titleMatches || [])
@@ -530,7 +582,6 @@ Item {
                     font.pixelSize: youtube.ui.pickerRowTitleSize
                     elide: Text.ElideRight
                   }
-
                   Text {
                     Layout.fillWidth: true
                     visible: String(modelData.subtitle || "").length > 0
@@ -546,8 +597,7 @@ Item {
                 Text {
                   visible: String(modelData.badge || "").length > 0
                   text: String(modelData.badge || "")
-                  color: String(modelData.badge || "") === "LIVE"
-                         ? youtube.colors.red
+                  color: String(modelData.badge || "") === "LIVE" ? youtube.colors.red
                          : (String(modelData.badge || "") === "CHANNEL" ? youtube.colors.aqua : youtube.colors.yellow)
                   font.family: youtube.ui.bodyFont
                   font.pixelSize: 9
@@ -587,18 +637,15 @@ Item {
                   fillMode: Image.PreserveAspectCrop
                   smooth: true
                 }
-
                 Text {
                   anchors.centerIn: parent
                   visible: !previewImage.visible
                   text: String(youtube.selectedRow.kind || "") === "channel" ? "◉" : "YT"
-                  color: String(youtube.selectedRow.kind || "") === "channel"
-                         ? youtube.colors.aqua : youtube.colors.yellow
+                  color: String(youtube.selectedRow.kind || "") === "channel" ? youtube.colors.aqua : youtube.colors.yellow
                   font.family: youtube.ui.bodyFont
                   font.bold: true
                   font.pixelSize: 42
                 }
-
                 Text {
                   anchors.centerIn: parent
                   visible: previewImage.visible && previewImage.status === Image.Loading
@@ -623,7 +670,6 @@ Item {
                 maximumLineCount: 4
                 elide: Text.ElideRight
               }
-
               Text {
                 Layout.fillWidth: true
                 visible: String(youtube.selectedRow.duration || "").length > 0
@@ -632,7 +678,6 @@ Item {
                 font.family: youtube.ui.bodyFont
                 font.pixelSize: 10
               }
-
               Text {
                 Layout.fillWidth: true
                 visible: String(youtube.selectedRow.channel || "").length > 0
@@ -654,11 +699,10 @@ Item {
                 font.pixelSize: 10
                 wrapMode: Text.Wrap
               }
-
               Text {
                 Layout.fillWidth: true
                 visible: youtube.channelView
-                text: "^S videos/streams · ^A deep videos"
+                text: "^S videos/streams · ^A deep videos · ^R force refresh"
                 color: youtube.colors.yellow
                 font.family: youtube.ui.bodyFont
                 font.pixelSize: 10
@@ -670,7 +714,6 @@ Item {
 
         RowLayout {
           Layout.fillWidth: true
-
           Text {
             Layout.fillWidth: true
             text: youtube.busy ? "Loading…" :
@@ -679,11 +722,12 @@ Item {
             font.family: youtube.ui.bodyFont
             font.pixelSize: 10
           }
-
           Text {
-            text: youtube.channelView
-                  ? "^S streams · ^A deep · Esc back · Enter open"
-                  : "^V videos · ^C channels · ^H history · ^L later · Enter"
+            text: youtube.normalMode
+                  ? "j/k · g/G · i insert · q/Esc back · Enter open"
+                  : (youtube.channelView
+                     ? "^S streams · ^A deep · ^R refresh · Esc normal · Enter"
+                     : "^V videos · ^C channels · ^H history · ^L later · ^R refresh · Esc normal")
             color: youtube.colors.gray
             font.family: youtube.ui.bodyFont
             font.pixelSize: 10

@@ -51,11 +51,11 @@ QtObject {
   readonly property int pickerRowSubtitleSize: 11
   readonly property int pickerFooterSize: 10
 
-  readonly property int youtubePickerMaxWidth: 1120
-  readonly property int youtubePickerMaxHeight: 680
-  readonly property int youtubePreviewWidth: 420
-  readonly property int youtubePreviewHeight: 236
-  readonly property int youtubeRowHeight: 64
+  readonly property int youtubePickerMaxWidth: 1360
+  readonly property int youtubePickerMaxHeight: 800
+  readonly property int youtubePreviewWidth: 500
+  readonly property int youtubePreviewHeight: 281
+  readonly property int youtubeRowHeight: 68
 
   readonly property int toastWidth: 390
   readonly property int toastMaxHeight: 520

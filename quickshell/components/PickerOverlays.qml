@@ -7,6 +7,9 @@ Item {
   required property var colors
   required property var ui
 
+  property string youtubeSelectionId: ""
+  property int youtubeSelectionIndex: 0
+
   QuickPicker {
     id: quickPicker
     shell: overlay.shell
@@ -26,6 +29,56 @@ Item {
     shell: overlay.shell
     colors: overlay.colors
     ui: overlay.ui
+  }
+
+  Connections {
+    target: youtubePicker
+
+    function onSelectedIndexChanged() {
+      if (!youtubePicker.rows || youtubePicker.rows.length === 0) {
+        overlay.youtubeSelectionId = ""
+        overlay.youtubeSelectionIndex = 0
+        return
+      }
+      var index = Math.max(0, Math.min(youtubePicker.rows.length - 1,
+                                       youtubePicker.selectedIndex))
+      var row = youtubePicker.rows[index] || ({})
+      overlay.youtubeSelectionId = String(row.id || "")
+      overlay.youtubeSelectionIndex = index
+    }
+
+    function onRowsChanged() {
+      if (!youtubePicker.open || !youtubePicker.rows || youtubePicker.rows.length === 0)
+        return
+
+      var wantedId = overlay.youtubeSelectionId
+      var fallbackIndex = overlay.youtubeSelectionIndex
+      if (!wantedId && fallbackIndex <= 0)
+        return
+
+      // YoutubePicker's process completion resets selectedIndex to zero after
+      // assigning rows. Restore on the next event-loop turn so background
+      // History/Watch Later enrichment and manual refreshes keep the user's
+      // current selection. A new query/source already resets our remembered
+      // selection while its rows are empty, so it still starts from row zero.
+      Qt.callLater(function() {
+        if (!youtubePicker.open || !youtubePicker.rows || youtubePicker.rows.length === 0)
+          return
+
+        var targetIndex = -1
+        if (wantedId) {
+          for (var i = 0; i < youtubePicker.rows.length; i++) {
+            if (String((youtubePicker.rows[i] || ({})).id || "") === wantedId) {
+              targetIndex = i
+              break
+            }
+          }
+        }
+        if (targetIndex < 0)
+          targetIndex = Math.min(fallbackIndex, youtubePicker.rows.length - 1)
+        youtubePicker.selectIndex(targetIndex)
+      })
+    }
   }
 
   Connections {

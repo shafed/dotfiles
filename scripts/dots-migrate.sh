@@ -94,7 +94,17 @@ if [ -e "$waybar_cache" ] || [ -L "$waybar_cache" ]; then
   note_pending "$waybar_cache is stale Waybar cache"
   if [ "$CHECK_ONLY" -eq 0 ]; then
     rm -rf "$waybar_cache"
-    echo "  removed stale Waybar cache"
+    echo "  removed stale $waybar_cache"
+  fi
+fi
+
+mimeapps_list="$config_home/mimeapps.list"
+if [ -e "$mimeapps_list" ] && [ ! -L "$mimeapps_list" ]; then
+  note_pending "$mimeapps_list exists and is not a symlink"
+  if [ "$CHECK_ONLY" -eq 0 ]; then
+    backup_path "$mimeapps_list"
+    rm "$mimeapps_list"
+    echo "  removed unmanaged $mimeapps_list so dots apply can relink it"
   fi
 fi
 

@@ -1,8 +1,9 @@
 #!/bin/sh
-# darkman hook: keep the visual theme dark/Gruvbox in both solar states.
+# darkman hook: use Gruvbox GTK only in the dark solar state.
 set -e
 
-FALLBACK_THEME="Adwaita-dark"
+DARK_FALLBACK_THEME="Adwaita-dark"
+LIGHT_THEME="Adwaita"
 
 theme_exists() {
   theme="$1"
@@ -23,20 +24,26 @@ first_existing_theme() {
 }
 
 case "$1" in
-dark | light) ;;
+dark)
+  gtk_theme="$(first_existing_theme \
+    Gruvbox-Material-Dark \
+    Gruvbox-Dark-Medium \
+    Gruvbox-Dark)"
+
+  if [ -z "$gtk_theme" ]; then
+    gtk_theme="$DARK_FALLBACK_THEME"
+    printf '%s\n' \
+      "darkman: no Gruvbox dark GTK theme installed; using $DARK_FALLBACK_THEME" >&2
+  fi
+
+  color_scheme="prefer-dark"
+  ;;
+light)
+  gtk_theme="$LIGHT_THEME"
+  color_scheme="prefer-light"
+  ;;
 *) exit 0 ;;
 esac
 
-gtk_theme="$(first_existing_theme \
-  Gruvbox-Material-Dark \
-  Gruvbox-Dark-Medium \
-  Gruvbox-Dark)"
-
-if [ -z "$gtk_theme" ]; then
-  gtk_theme="$FALLBACK_THEME"
-  printf '%s\n' \
-    "darkman: no Gruvbox dark GTK theme installed; using $FALLBACK_THEME" >&2
-fi
-
-gsettings set org.gnome.desktop.interface color-scheme "prefer-dark"
+gsettings set org.gnome.desktop.interface color-scheme "$color_scheme"
 gsettings set org.gnome.desktop.interface gtk-theme "$gtk_theme"

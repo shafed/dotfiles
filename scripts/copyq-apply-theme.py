@@ -66,6 +66,18 @@ def parse_theme(text: str) -> dict[str, str]:
     return values
 
 
+def ensure_section(lines: list[str], name: str) -> int:
+    """Return a section index, appending an empty section when CopyQ omitted it."""
+    header = f"[{name}]"
+    try:
+        return lines.index(header)
+    except ValueError:
+        if lines and lines[-1] != "":
+            lines.append("")
+        lines.append(header)
+        return len(lines) - 1
+
+
 def main() -> int:
     if not THEME_INI.exists():
         print(f"missing {THEME_INI}; run scripts/generate-theme.py first", file=sys.stderr)
@@ -77,11 +89,7 @@ def main() -> int:
     theme = parse_theme(THEME_INI.read_text())
     lines = CONF.read_text().splitlines()
 
-    try:
-        start = lines.index("[Theme]")
-    except ValueError:
-        print(f"{CONF} has no [Theme] section", file=sys.stderr)
-        return 1
+    start = ensure_section(lines, "Theme")
     end = len(lines)
     for i in range(start + 1, len(lines)):
         if lines[i].startswith("["):
@@ -140,12 +148,7 @@ def main() -> int:
             new_lines.insert(insert_at, f"{key}={value}")
             insert_at += 1
 
-    try:
-        options_start = new_lines.index("[Options]")
-    except ValueError:
-        print(f"{CONF} has no [Options] section", file=sys.stderr)
-        return 1
-
+    options_start = ensure_section(new_lines, "Options")
     options_end = len(new_lines)
     for i in range(options_start + 1, len(new_lines)):
         if new_lines[i].startswith("["):

@@ -54,6 +54,11 @@ its bundled Font Awesome icons derive tint from the window background, and a
 teal-shifted background made those icons visibly blue. The bundled icon set is
 kept because system icon themes do not cover all CopyQ actions.
 
+CopyQ owns `copyq.conf` as mutable runtime state and rewrites loaded multi-line
+CSS as quoted values containing literal `\n` escapes. The live-theme merger emits
+that same representation and replaces existing managed keys in place; otherwise
+CopyQ's normal save would create permanent generator drift after every apply.
+
 ## Telegram
 
 Telegram is independently solar-aware. `telegram/generate-theme.py` builds a

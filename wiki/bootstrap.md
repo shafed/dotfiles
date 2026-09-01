@@ -37,13 +37,15 @@ Recommended fresh-machine sequence:
 
 The current provisioning backend intentionally supports Arch only. Official Arch
 and AUR packages are installed together through an existing `yay` using one
-`yay -Syu <packages...>` transaction. The full sync/upgrade is intentional: it
-prevents partial upgrades such as a new Qt library being installed against an
-older glibc. `--needed` is deliberately not used. `yay` itself is the small
-bootstrap prerequisite that must already exist before package provisioning;
-isolated CLI tools use `uv tool`. Declared system prerequisites such as
-NetworkManager/BlueZ/power-profiles-daemon are enabled with systemd. Other distro
-backends are deferred until another real machine needs them.
+`yay -S <packages...>` transaction. Provisioning installs only the declared
+missing packages: it does not refresh package databases or upgrade the rest of
+the system, and `--needed` is deliberately not used. Full system upgrades remain
+an explicit separate operation (`yay -Syu`) when the user wants one. `yay`
+itself is the small bootstrap prerequisite that must already exist before
+package provisioning; isolated CLI tools use `uv tool`. Declared system
+prerequisites such as NetworkManager/BlueZ/power-profiles-daemon are enabled
+with systemd. Other distro backends are deferred until another real machine
+needs them.
 
 Desired state comes from `profiles/*.toml` plus a small machine selector in
 `machines/<hostname>.toml` (falling back to `machines/default.toml`). Packages,

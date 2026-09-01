@@ -135,6 +135,14 @@ Variants {
         }
 
         ClickButton {
+          property string eventLabel: bars.system.calendar.barLabel(bars.shell.clockNow)
+          visible: eventLabel.length > 0
+          label: eventLabel
+          active: bars.shell.openPanel === "calendar"
+          onPressed: bars.shell.openCalendar()
+        }
+
+        ClickButton {
           label: Qt.formatDateTime(bars.shell.clockNow, "ddd HH:mm")
           active: bars.shell.openPanel === "calendar"
           onPressed: bars.shell.openCalendar()

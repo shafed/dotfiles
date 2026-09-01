@@ -54,8 +54,9 @@ pre-yay exception to the normal rule that Arch/AUR application packages go
 through yay.
 
 Isolated CLI tools use `uv tool`. Declared system prerequisites such as
-NetworkManager/BlueZ/power-profiles-daemon are enabled with systemd. Other distro
-backends are deferred until another real machine needs them.
+NetworkManager, BlueZ, TLP and TLP's power-profile D-Bus daemon are enabled with
+systemd. Other distro backends are deferred until another real machine needs
+them.
 
 Desired state comes from `profiles/*.toml` plus a small machine selector in
 `machines/<hostname>.toml` (falling back to `machines/default.toml`). Packages,

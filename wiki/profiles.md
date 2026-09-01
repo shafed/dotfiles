@@ -16,8 +16,12 @@ logic. `base` owns shared shell/editor tools. `desktop` adds the graphical
 Hyprland/Quickshell stack and desktop-wide networking state. Bluetooth is a
 separate `bluetooth` profile because a desktop machine does not imply Bluetooth
 hardware. `laptop` includes both `desktop` and `bluetooth`, then adds only
-laptop-specific battery, power-profile and brightness requirements. `ai` remains
-a small workload extension point. `documents`, `development`, `networking` and
+laptop-specific battery, TLP power-profile and brightness requirements. The
+`hp-envy-x360-13-ay0xxx` hardware profile extends it with the exact AMD Renoir
+microcode, AMDGPU/Realtek firmware and Mesa/RADV userspace drivers used by
+`arch-laptop`; it deliberately avoids unrelated firmware families and
+out-of-tree drivers for devices already supported by the kernel. `ai` remains a
+small workload extension point. `documents`, `development`, `networking` and
 `storage` keep workload and filesystem tools out of the universal base, while
 `printing` owns the CUPS/SANE stack and the Canon MG3600 driver.
 The machine-only `hardware-shafed` profile pins the Intel i7-6700 microcode and
@@ -43,6 +47,8 @@ Capabilities are descriptive facts used to explain or extend state. Current
 examples include `base`, `desktop`, `bluetooth`, `laptop`, `battery` and `ai`.
 Machine-specific facts belong in `machines/`; shared application configuration
 should stay in profiles unless a machine genuinely needs a different value.
+`machines/arch-laptop.toml` selects the model-specific hardware profile instead
+of letting this hostname silently fall back to the desktop-only default.
 
 A Bluetooth-equipped desktop can select both profiles, for example
 `profiles = ["desktop", "bluetooth"]` in its machine file or temporarily with
@@ -60,9 +66,9 @@ generators are rendered in a temporary HOME. `--json` exposes the same plan for
 Quickshell or agents. Each dependency/prerequisite declaration carries a reason
 so doctor/provision can explain why it exists instead of only naming a package.
 Most dependencies are detected by their executable command. Package collections
-without a unique executable, such as LibreOffice language resources and TeX
-Live collections, use `check = "package"` and are checked directly in the local
-pacman database.
+without a unique executable, such as firmware, microcode, graphics drivers,
+LibreOffice language resources and TeX Live collections, use `check = "package"`
+and are checked directly in the local pacman database.
 
 `dots apply` uses the same state engine and converges both missing desired state
 and unambiguous repo-owned leftovers from profiles that are no longer selected.

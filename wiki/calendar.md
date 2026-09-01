@@ -49,8 +49,11 @@ require running `vdirsyncer discover google_calendar` again.
 ## Quickshell behavior
 
 `CalendarService.qml` reads the next eight days from `khal` as JSON every two
-minutes. It keeps setup/failure states local to the shell and can request the
-oneshot systemd sync from the calendar panel's refresh button.
+minutes. `khal list --json` emits one compact JSON array per queried day, so the
+service parses each non-empty output line and flattens those daily arrays before
+normalizing and sorting the events. It keeps setup/failure states local to the
+shell and can request the oneshot systemd sync from the calendar panel's refresh
+button.
 
 The clock still opens the existing Calendar panel. Days containing events are
 marked in the month grid and the panel shows the next four upcoming events.

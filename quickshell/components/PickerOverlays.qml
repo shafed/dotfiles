@@ -10,6 +10,11 @@ Item {
   property string youtubeSelectionId: ""
   property int youtubeSelectionIndex: 0
 
+  function clearYoutubeSelectionMemory() {
+    youtubeSelectionId = ""
+    youtubeSelectionIndex = 0
+  }
+
   QuickPicker {
     id: quickPicker
     shell: overlay.shell
@@ -34,10 +39,13 @@ Item {
   Connections {
     target: youtubePicker
 
+    function onQueryChanged() {
+      overlay.clearYoutubeSelectionMemory()
+    }
+
     function onSelectedIndexChanged() {
       if (!youtubePicker.rows || youtubePicker.rows.length === 0) {
-        overlay.youtubeSelectionId = ""
-        overlay.youtubeSelectionIndex = 0
+        overlay.clearYoutubeSelectionMemory()
         return
       }
       var index = Math.max(0, Math.min(youtubePicker.rows.length - 1,
@@ -48,7 +56,11 @@ Item {
     }
 
     function onRowsChanged() {
-      if (!youtubePicker.open || !youtubePicker.rows || youtubePicker.rows.length === 0)
+      if (!youtubePicker.rows || youtubePicker.rows.length === 0) {
+        overlay.clearYoutubeSelectionMemory()
+        return
+      }
+      if (!youtubePicker.open)
         return
 
       var wantedId = overlay.youtubeSelectionId
@@ -59,8 +71,8 @@ Item {
       // YoutubePicker's process completion resets selectedIndex to zero after
       // assigning rows. Restore on the next event-loop turn so background
       // History/Watch Later enrichment and manual refreshes keep the user's
-      // current selection. A new query/source already resets our remembered
-      // selection while its rows are empty, so it still starts from row zero.
+      // current selection. A new query/source clears the remembered selection,
+      // so a genuinely new result set still starts from row zero.
       Qt.callLater(function() {
         if (!youtubePicker.open || !youtubePicker.rows || youtubePicker.rows.length === 0)
           return

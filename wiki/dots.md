@@ -96,17 +96,22 @@ Package installation is intentionally outside normal apply. `dots provision`
 reads the same profile package and system-prerequisite declarations, calculates
 one action list, then either shows or executes that list.
 
-`dots provision --dry-run` is the required safe preview. It prints exact pacman,
-AUR, `uv tool` and `systemctl enable --now` commands and executes none of them.
-If the declared installer is unavailable or unsupported, provision reports a
-blocker and stops instead of guessing. `--yes` skips the interactive confirmation
-for the real run; `--json` exposes the dry-run/action plan for automation.
+`dots provision --dry-run` is the required safe preview. It prints the exact
+`yay -Syu`, `uv tool` and `systemctl enable --now` commands and executes none of
+them. If the declared installer is unavailable or unsupported, provision reports
+a blocker and stops instead of guessing. `--yes` skips the interactive
+confirmation for the real run; `--json` exposes the dry-run/action plan for
+automation.
 
-The supported installation methods are deliberately only the ones currently
-used by manifests: Arch repository packages via pacman, AUR via an installed
-`paru` or `yay`, isolated CLI tools via `uv tool`, and declared system services
-via systemctl. Other backends should be added only when a real manifest requires
-them.
+Both packages marked `manager = "pacman"` and packages marked `manager = "aur"`
+are installed by one existing `yay` process. When at least one Arch package is
+missing, provision runs one `yay -Syu <all-missing-arch-packages...>` transaction
+before `uv tool` installs. The `-yu` part is mandatory: provisioning must never
+perform an Arch partial upgrade. `--needed` is intentionally omitted. `yay`
+itself remains a bootstrap prerequisite rather than something provision tries
+to install recursively. Isolated CLI tools still use `uv tool`, and declared
+system services use systemctl. Other backends should be added only when a real
+manifest requires them.
 
 The intended fresh-machine flow is:
 

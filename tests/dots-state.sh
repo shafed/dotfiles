@@ -52,21 +52,31 @@ desktop_order, desktop = module.desired_for(context, ["desktop"])
 assert desktop_order == ["base", "desktop"]
 assert "desktop" in desktop["capabilities"]
 assert "bluetooth" not in desktop["capabilities"]
-assert "bluetoothctl" not in {item["command"] for item in desktop["packages"]}
+assert "bluetoothctl" not in {item.get("command") for item in desktop["packages"]}
 assert not any(item.get("name") == "bluetooth.service" for item in desktop["prerequisites"])
 assert "battery" not in desktop["capabilities"]
-assert "powerprofilesctl" not in {item["command"] for item in desktop["packages"]}
+assert "tlpctl" not in {item.get("command") for item in desktop["packages"]}
 
 bluetooth_order, bluetooth = module.desired_for(context, ["desktop", "bluetooth"])
 assert bluetooth_order == ["base", "desktop", "bluetooth"]
 assert {"desktop", "bluetooth"} <= set(bluetooth["capabilities"])
-assert "bluetoothctl" in {item["command"] for item in bluetooth["packages"]}
+assert "bluetoothctl" in {item.get("command") for item in bluetooth["packages"]}
 assert any(item.get("name") == "bluetooth.service" for item in bluetooth["prerequisites"])
 
 laptop_order, laptop = module.desired_for(context, ["laptop"])
 assert laptop_order == ["base", "desktop", "bluetooth", "laptop"]
 assert {"desktop", "bluetooth", "laptop", "battery"} <= set(laptop["capabilities"])
-assert {"powerprofilesctl", "brightnessctl"} <= {item["command"] for item in laptop["packages"]}
+assert {"tlp-stat", "tlpctl", "brightnessctl"} <= {item.get("command") for item in laptop["packages"]}
+assert {"tlp.service", "tlp-pd.service"} <= {item.get("name") for item in laptop["prerequisites"]}
+
+hardware_order, hardware = module.desired_for(context, ["hp-envy-x360-13-ay0xxx"])
+assert hardware_order == ["base", "desktop", "bluetooth", "laptop", "hp-envy-x360-13-ay0xxx"]
+assert {"amd-renoir", "realtek-rtl8822ce"} <= set(hardware["capabilities"])
+hardware_packages = {item["package"] for item in hardware["packages"]}
+assert {"amd-ucode", "linux-firmware-amdgpu", "linux-firmware-realtek", "mesa", "vulkan-radeon"} <= hardware_packages
+assert all(item.get("check") == "package" for item in hardware["packages"] if item["package"] in {
+    "amd-ucode", "linux-firmware-amdgpu", "linux-firmware-realtek", "mesa", "vulkan-radeon"
+})
 assert not (root / "profiles/gaming.toml").exists()
 PY
 

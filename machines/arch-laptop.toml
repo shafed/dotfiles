@@ -1,4 +1,4 @@
 [machine]
-description = "Personal laptop"
-profiles = ["laptop", "documents", "development", "networking", "storage"]
+description = "HP ENVY x360 Convertible 13-ay0xxx"
+profiles = ["hp-envy-x360-13-ay0xxx", "documents", "development", "networking", "storage"]
 capabilities = []

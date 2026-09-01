@@ -1,20 +1,33 @@
 [profile]
-description = "Desktop profile plus laptop-only power, brightness and Bluetooth controls"
+description = "Desktop profile plus TLP power, brightness and Bluetooth controls"
 includes = ["desktop", "bluetooth"]
 capabilities = ["laptop", "battery"]
 
 [[prerequisites]]
 kind = "system-service"
-name = "power-profiles-daemon.service"
+name = "tlp.service"
 required = true
-reason = "laptop power profile controls need the system daemon"
+reason = "TLP must apply power settings and charge thresholds at boot"
+
+[[prerequisites]]
+kind = "system-service"
+name = "tlp-pd.service"
+required = true
+reason = "Quickshell power profile controls need TLP's compatible D-Bus daemon"
 
 [[packages]]
-command = "powerprofilesctl"
-package = "power-profiles-daemon"
+command = "tlp-stat"
+package = "tlp"
 manager = "pacman"
 required = true
-reason = "laptop power profile capability"
+reason = "laptop power management and battery charge thresholds"
+
+[[packages]]
+command = "tlpctl"
+package = "tlp-pd"
+manager = "pacman"
+required = true
+reason = "TLP profile switching through the power-profiles D-Bus API"
 
 [[packages]]
 command = "brightnessctl"

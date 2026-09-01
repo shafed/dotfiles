@@ -106,6 +106,14 @@ required = true
 reason = "top bar, panels and desktop shell"
 
 [[packages]]
+command = "ttf-nerd-fonts-symbols"
+package = "ttf-nerd-fonts-symbols"
+manager = "pacman"
+check = "package"
+required = true
+reason = "monochrome icon glyphs used by the Quickshell top bar"
+
+[[packages]]
 command = "wpctl"
 package = "wireplumber"
 manager = "pacman"

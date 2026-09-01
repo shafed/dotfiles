@@ -1,7 +1,7 @@
 ---
 title: kitty
 type: component
-updated: 2026-08-14
+updated: 2026-09-01
 covers:
   - kitty/
 ---
@@ -31,6 +31,10 @@ The settings that carry a reason worth knowing:
   unix:/tmp/kitty-{kitty_pid}`) exists **for** the session pickers and QAT
   panels, which drive kitty via `kitten @`. Turning it off breaks
   [scripts-pickers](scripts-pickers.md) and [sessions](sessions.md), not just convenience.
+- **Terminal notifications are filtered globally** (`filter_notification all`):
+  CLI agents such as Codex and Claude Code use kitty's notification protocol,
+  and their completion prompts were unwanted. This does not disable desktop
+  notifications from applications outside kitty.
 - **`kitty_mod+i`** opens scrollback in an nvim pager via
   `scripts/kitty-scrollback-nvim.sh`. ⚠️ It trims trailing blank lines from
   **two** independent sources of padding — kitty's `@screen_scrollback` returns

@@ -1,0 +1,44 @@
+[profile]
+description = "Hardware support for the HP ENVY x360 13-ay0xxx (AMD Renoir and Realtek RTL8822CE)"
+includes = ["laptop"]
+capabilities = ["amd-renoir", "realtek-rtl8822ce"]
+
+[[packages]]
+command = "amd-ucode"
+package = "amd-ucode"
+manager = "pacman"
+check = "package"
+required = true
+reason = "CPU microcode updates for the AMD Renoir processor"
+
+[[packages]]
+command = "linux-firmware-amdgpu"
+package = "linux-firmware-amdgpu"
+manager = "pacman"
+check = "package"
+required = true
+reason = "firmware required by the Renoir amdgpu kernel driver"
+
+[[packages]]
+command = "linux-firmware-realtek"
+package = "linux-firmware-realtek"
+manager = "pacman"
+check = "package"
+required = true
+reason = "firmware required by the RTL8822CE Wi-Fi and Realtek Bluetooth devices"
+
+[[packages]]
+command = "mesa"
+package = "mesa"
+manager = "pacman"
+check = "package"
+required = true
+reason = "OpenGL and video acceleration userspace driver for the Renoir Radeon GPU"
+
+[[packages]]
+command = "vulkan-radeon"
+package = "vulkan-radeon"
+manager = "pacman"
+check = "package"
+required = true
+reason = "RADV Vulkan userspace driver for the Renoir Radeon GPU"

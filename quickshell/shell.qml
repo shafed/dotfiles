@@ -92,6 +92,18 @@ ShellRoot {
     return colors.fgBright
   }
 
+  function aiLimitWarning() {
+    var rows = state.agents || []
+    for (var i = 0; i < rows.length; i++) {
+      var limits = rows[i].limits || []
+      for (var j = 0; j < limits.length; j++) {
+        var used = Number(limits[j].percent)
+        if (!isNaN(used) && Math.max(0, Math.min(1, used)) >= 0.70) return true
+      }
+    }
+    return false
+  }
+
   function formatAgentsLastUpdated() {
     if (agents.lastUpdatedMs <= 0)
       return agents.refreshing ? "updating..." : "never"
@@ -166,6 +178,7 @@ ShellRoot {
     if (openPanel === "network") system.network.refresh()
     if (openPanel === "updates") system.updates.refresh()
     if (openPanel === "agents") agents.refresh()
+    if (openPanel === "notifications") notifications.markRead()
   }
 
   function updateLayout(layout) {

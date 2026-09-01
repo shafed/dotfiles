@@ -1,7 +1,7 @@
 ---
 title: quickshell
 type: component
-updated: 2026-08-31
+updated: 2026-09-01
 covers:
   - quickshell/shell.qml
   - quickshell/components/
@@ -68,7 +68,21 @@ Latency-sensitive state stays inside Quickshell:
   `PwObjectTracker`; changing the default output and stream volume no longer
   shells out to `wpctl`;
 - Bluetooth uses `Quickshell.Bluetooth` directly;
-- battery and power profiles use `Quickshell.Services.UPower` directly;
+- battery and power profiles use `Quickshell.Services.UPower` directly; its
+  normalized `0..1` charge is converted to the displayed `0..100` percentage,
+  and profile writes reach TLP through `tlp-pd`'s compatible D-Bus API;
+- the top bar identifies audio, mute, battery and charging with monochrome
+  `Symbols Nerd Font` glyphs instead of spending horizontal space on `VOL`,
+  `MUTE` and `BAT`; numeric percentages remain in the normal bar font, battery
+  fill follows the charge in ten-percent steps, and only the visually high
+  unmuted-speaker and battery glyphs use a two-pixel downward correction while
+  the mute glyph remains on the normal baseline;
+- routine healthy state stays quiet: layout, battery and clock remain visible;
+  audio appears only while muted, network only while disconnected, Bluetooth
+  only with a connected device, AI at 70% usage or higher, and notifications
+  only for DND or an unread count; opening Notifications marks its persisted
+  unread counter as read, while every hidden panel remains reachable from the
+  `Apps+W+E` system overview;
 - brightness is sampled from the kernel backlight file inside
   `DesktopServices` because Quickshell 0.3.1 has no brightness service and
   sysfs does not provide a reliable change event on every driver;

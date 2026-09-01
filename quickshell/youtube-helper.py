@@ -28,12 +28,8 @@ ANSI_RE = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
 def run(args, timeout=30, env=None):
     try:
         proc = subprocess.run(
-            [str(arg) for arg in args],
-            text=True,
-            capture_output=True,
-            timeout=timeout,
-            check=False,
-            env=env,
+            [str(arg) for arg in args], text=True, capture_output=True,
+            timeout=timeout, check=False, env=env,
         )
         return proc.returncode, proc.stdout.strip(), proc.stderr.strip()
     except Exception as exc:
@@ -54,10 +50,9 @@ def load_usage():
         return counts
     try:
         for line in USAGE_FILE.read_text(errors="ignore").splitlines():
-            parts = line.rsplit("\t", 1)
-            if len(parts) != 2:
+            ident, sep, raw_count = line.rpartition("\t")
+            if not sep:
                 continue
-            ident, raw_count = parts
             try:
                 counts[ident] = max(0, int(raw_count))
             except ValueError:
@@ -79,12 +74,11 @@ def record_usage(ident):
 
 
 def fuzzy_positions(text, query):
-    """Return fzf-like character positions for visible highlighting."""
     value = str(text or "")
     hay = value.casefold()
     positions = set()
-    for raw_term in str(query or "").casefold().split():
-        term = raw_term.strip()
+    for term in str(query or "").casefold().split():
+        term = term.strip()
         if not term:
             continue
         direct = hay.find(term)
@@ -113,10 +107,8 @@ def decorate_rows(rows, query=""):
         count = usage.get(str(item.get("id") or ""), 0)
         bonus = FREQUENCY_WEIGHT * math.log2(count + 1) if query and count > 0 else 0.0
         weighted.append((base_rank - bonus, base_rank, item, count))
-
     if query:
         weighted.sort(key=lambda item: (item[0], item[1]))
-
     result = []
     for _, _, item, count in weighted:
         item["usage"] = count
@@ -137,54 +129,38 @@ def video_badge(title, display=""):
 
 def clean_video_title(title):
     value = clean(title)
-    value = value.replace("  ● LIVE", "").replace(" ● LIVE", "")
-    value = value.replace("  (was live)", "").replace(" (was live)", "")
-    return value.strip()
+    return value.replace("  ● LIVE", "").replace(" ● LIVE", "").replace(
+        "  (was live)", ""
+    ).replace(" (was live)", "").strip()
 
 
 def video_row(ident, title, duration="", channel="", display=""):
     ident = clean(ident)
     return {
-        "id": f"video:{ident}",
-        "kind": "video",
-        "videoId": ident,
+        "id": f"video:{ident}", "kind": "video", "videoId": ident,
         "title": clean_video_title(title) or ident,
         "subtitle": " · ".join(part for part in (clean(duration), clean(channel)) if part),
-        "duration": clean(duration),
-        "channel": clean(channel),
+        "duration": clean(duration), "channel": clean(channel),
         "badge": video_badge(title, display),
         "thumbnail": f"https://i.ytimg.com/vi/{ident}/hqdefault.jpg" if ident else "",
     }
 
 
 def channel_row(ident, handle, title):
-    ident = clean(ident)
-    handle = clean(handle)
+    ident, handle = clean(ident), clean(handle)
     title = clean(title) or handle or ident
     target = handle if handle.startswith("@") else ident
     return {
-        "id": f"channel:{target}",
-        "kind": "channel",
-        "target": target,
-        "title": title,
-        "subtitle": handle,
-        "duration": "",
-        "channel": "",
-        "badge": "CHANNEL",
-        "thumbnail": "",
+        "id": f"channel:{target}", "kind": "channel", "target": target,
+        "title": title, "subtitle": handle, "duration": "", "channel": "",
+        "badge": "CHANNEL", "thumbnail": "",
     }
 
 
 def page_row(ident, title, subtitle, badge):
     return {
-        "id": ident,
-        "kind": "page",
-        "title": title,
-        "subtitle": subtitle,
-        "duration": "",
-        "channel": "",
-        "badge": badge,
-        "thumbnail": "",
+        "id": ident, "kind": "page", "title": title, "subtitle": subtitle,
+        "duration": "", "channel": "", "badge": badge, "thumbnail": "",
     }
 
 
@@ -209,8 +185,7 @@ def parse_channel_rows(text):
         cols = ANSI_RE.sub("", raw).split("\t")
         if len(cols) < 2:
             continue
-        ident = cols[0]
-        title = cols[1]
+        ident, title = cols[:2]
         duration = cols[2] if len(cols) > 2 else ""
         if ident:
             rows.append(video_row(ident, title, duration))
@@ -225,8 +200,7 @@ def fuzzy_score(text, query):
     direct = hay.find(q)
     if direct >= 0:
         return 10000 - direct * 10 - len(hay)
-    pos = -1
-    gap = 0
+    pos, gap = -1, 0
     for char in q:
         nxt = hay.find(char, pos + 1)
         if nxt < 0:
@@ -242,10 +216,9 @@ def filter_rows(rows, query):
         return rows
     ranked = []
     for index, row in enumerate(rows):
-        text = " ".join(
-            str(row.get(key, ""))
-            for key in ("title", "subtitle", "channel", "duration", "badge")
-        )
+        text = " ".join(str(row.get(key, "")) for key in (
+            "title", "subtitle", "channel", "duration", "badge"
+        ))
         score = fuzzy_score(text, query)
         if score >= 0:
             ranked.append((score, -index, row))
@@ -254,8 +227,7 @@ def filter_rows(rows, query):
 
 
 def dedupe(rows):
-    seen = set()
-    result = []
+    seen, result = set(), []
     for row in rows:
         ident = row.get("id")
         if not ident or ident in seen:
@@ -278,15 +250,24 @@ def search_rows(source, query):
     if not YOUTUBE.exists():
         return []
     rc, text, _ = run(["bash", YOUTUBE, "--ytsearch", source, query], timeout=20)
-    if rc != 0 and not text:
-        return []
-    return dedupe(parse_shared_rows(text))[:40]
+    return dedupe(parse_shared_rows(text))[:40] if rc == 0 or text else []
 
 
-def feed_rows(source, query):
+def unlink_quiet(path):
+    try:
+        path.unlink()
+    except FileNotFoundError:
+        pass
+    except OSError:
+        pass
+
+
+def feed_rows(source, query, force=False):
     CACHE.mkdir(parents=True, exist_ok=True)
     cache_file = CACHE / ("quickshell-history.tsv" if source == "history" else "quickshell-watchlater.tsv")
-    if not query.strip() and cache_file.exists():
+    if force:
+        unlink_quiet(cache_file)
+    elif not query.strip() and cache_file.exists():
         try:
             if time.time() - cache_file.stat().st_mtime > 30:
                 cache_file.unlink()
@@ -294,14 +275,12 @@ def feed_rows(source, query):
             pass
     subcommand = "--ythistory" if source == "history" else "--ytwatchlater"
     rc, text, _ = run(["bash", YOUTUBE, subcommand, cache_file, query], timeout=45)
-    if rc != 0 and not text:
-        return []
-    return dedupe(parse_shared_rows(text))
+    return dedupe(parse_shared_rows(text)) if rc == 0 or text else []
 
 
 def channel_base(target):
     target = clean(target)
-    if target.startswith("http://") or target.startswith("https://"):
+    if target.startswith(("http://", "https://")):
         base = target
     elif target.startswith("@"):
         base = f"https://www.youtube.com/{target}"
@@ -312,7 +291,7 @@ def channel_base(target):
     return re.sub(r"/(videos|streams)/?$", "", base.rstrip("/"))
 
 
-def channel_rows(source, query, target, deep=False):
+def channel_rows(source, query, target, deep=False, force=False):
     base = channel_base(target)
     if not base:
         return []
@@ -322,25 +301,24 @@ def channel_rows(source, query, target, deep=False):
     digest = hashlib.sha1(base.encode("utf-8")).hexdigest()[:16]
     suffix = "deep" if deep and tab == "videos" else tab
     cache_file = CACHE / f"quickshell-channel-{digest}.{suffix}.tsv"
+    if force:
+        unlink_quiet(cache_file)
     env = os.environ.copy()
     env["YOUTUBE_FZF_LIMIT"] = str(limit)
     rc, text, _ = run(
         ["bash", YOUTUBE, "--yttab", tab, base, cache_file],
-        timeout=90 if deep else 35,
-        env=env,
+        timeout=90 if deep else 35, env=env,
     )
-    if rc != 0 and not text:
-        return []
-    return filter_rows(parse_channel_rows(text), query)
+    return filter_rows(parse_channel_rows(text), query) if rc == 0 or text else []
 
 
-def list_rows(source, query="", target="", deep=False):
+def list_rows(source, query="", target="", deep=False, force=False):
     if source in ("videos", "channels"):
         rows = search_rows(source, query)
     elif source in ("history", "later"):
-        rows = feed_rows(source, query)
+        rows = feed_rows(source, query, force)
     elif source in ("channel-videos", "channel-streams"):
-        rows = channel_rows(source, query, target, deep)
+        rows = channel_rows(source, query, target, deep, force)
     else:
         rows = []
     return decorate_rows(rows, query)
@@ -350,19 +328,13 @@ def open_url(url):
     browser = os.environ.get("DOTFILES_BROWSER_BIN", "helium-browser")
     if not shutil.which("hyprctl") or not LIB.exists():
         try:
-            subprocess.Popen(
-                [browser, url],
-                stdin=subprocess.DEVNULL,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                start_new_session=True,
-            )
+            subprocess.Popen([browser, url], stdin=subprocess.DEVNULL,
+                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                             start_new_session=True)
             return True
         except Exception:
             return False
-
-    script = r"""
-source "$1"
+    script = r'''source "$1"
 url="$2"
 ws=4
 if [[ -n "$(browser_window_off_workspace "$ws")" ]]; then
@@ -371,15 +343,10 @@ else
   switch_to_workspace_for_browser "$ws"
   open_browser_url "$url"
   move_browser_when_up "$ws"
-fi
-"""
-    subprocess.Popen(
-        ["bash", "-lc", script, "_", str(LIB), url],
-        stdin=subprocess.DEVNULL,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        start_new_session=True,
-    )
+fi'''
+    subprocess.Popen(["bash", "-lc", script, "_", str(LIB), url],
+                     stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                     stderr=subprocess.DEVNULL, start_new_session=True)
     return True
 
 
@@ -403,9 +370,8 @@ def open_search(source, query):
     if source == "later":
         return open_url("https://www.youtube.com/playlist?list=WL")
     encoded = urllib.parse.quote(query)
-    if source == "channels":
-        return open_url(f"https://www.youtube.com/results?search_query={encoded}&sp=EgIQAg%3D%3D")
-    return open_url(f"https://www.youtube.com/results?search_query={encoded}")
+    suffix = "&sp=EgIQAg%3D%3D" if source == "channels" else ""
+    return open_url(f"https://www.youtube.com/results?search_query={encoded}{suffix}")
 
 
 def main():
@@ -415,7 +381,8 @@ def main():
         query = sys.argv[3] if len(sys.argv) > 3 else ""
         target = sys.argv[4] if len(sys.argv) > 4 else ""
         deep = len(sys.argv) > 5 and sys.argv[5] == "deep"
-        emit(list_rows(source, query, target, deep))
+        force = len(sys.argv) > 6 and sys.argv[6] == "force"
+        emit(list_rows(source, query, target, deep, force))
     elif command == "open":
         emit({"ok": bool(open_ident(sys.argv[2] if len(sys.argv) > 2 else ""))})
     elif command == "record":

@@ -71,7 +71,11 @@ ColumnLayout {
 
     ClickButton {
       label: "Google ↗"
-      onPressed: view.shell.run(["xdg-open", "https://calendar.google.com/calendar/u/0/r"])
+      onPressed: view.shell.run([
+        view.shell.home + "/github/dotfiles/scripts/open-url.sh",
+        "https://calendar.google.com/calendar/u/0/r",
+        "Google Calendar"
+      ])
     }
 
     ClickButton { label: "‹"; onPressed: view.shell.shiftCalendarMonth(-1) }

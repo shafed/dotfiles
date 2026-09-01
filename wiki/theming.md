@@ -19,8 +19,8 @@ covers:
 
 The desktop base uses **Gruvbox Material Dark Medium**, anchored to `#282828`
 background / `#d4be98` foreground. Neovim's gruvbox-material setup remains the
-visual reference. Most application surfaces stay dark; Telegram, wallpaper and
-Helium deliberately react to the solar state.
+visual reference. Most application surfaces stay dark; GTK, Telegram, wallpaper
+and Helium deliberately react to the solar state.
 
 ## Palette source of truth
 
@@ -259,8 +259,11 @@ python3 helium/switch-gruvbox-theme.py dark
 
 ## Light/dark scope
 
-GTK, Kitty, Hyprlock, Waybar, Quickshell, Yazi, CopyQ and Claude Code stay pinned
-dark. Solar-state exceptions are:
+GTK now follows the solar state: `darkman/scripts/gtk` applies an installed
+Gruvbox dark theme (falling back to `Adwaita-dark`) in dark mode, and switches to
+light `Adwaita` with `prefer-light` in light mode. Kitty, Hyprlock, Waybar,
+Quickshell, Yazi, CopyQ and Claude Code stay pinned dark. Other solar-state
+exceptions are:
 
 1. Hyprland wallpaper — `darkman/scripts/wallpaper` switches light/dark images
    through hyprpaper IPC;

@@ -1,7 +1,7 @@
 ---
 title: kitty
 type: component
-updated: 2026-09-01
+updated: 2026-09-02
 covers:
   - kitty/
 ---
@@ -63,8 +63,14 @@ the kitten always toggled.
 
 ## QAT panels (quick-access-terminal)
 
-Drop-down overlay panels hosting the fzf pickers in [scripts-pickers](scripts-pickers.md) and
-the session pickers in `kitty/scripts/` ([sessions](sessions.md)). Their config
-(`quick-access-terminal-center.conf`) carries **another full copy of the gruvbox
-palette** via `kitty_override` — one of the duplication sites
-[theming](theming.md) warns about.
+Drop-down overlay panels host the fzf pickers in [scripts-pickers](scripts-pickers.md),
+the session pickers in `kitty/scripts/` ([sessions](sessions.md)), and the
+`Super+N` nvim scratch editor ([scripts-scratch](scripts-scratch.md)). Picker and
+session panels use `quick-access-terminal-center.conf`, which carries another
+full copy of the gruvbox palette via `kitty_override` — one of the duplication
+sites [theming](theming.md) warns about.
+
+The scratch editor deliberately uses a separate
+`quick-access-terminal-scratch.conf`: it inherits normal `kitty.conf` colors,
+is larger (`140x40`), nearly opaque (`0.97`), and sets `app_id nvim-scratch` so
+Hyprland can target only that layer surface for blur/dimming.

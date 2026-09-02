@@ -193,9 +193,12 @@ Full map in [keymap](keymap.md); only the surprises here.
   apps layer instead, where Q sits under the thumb.
 - **`Ctrl-h/j/k/l` is not a Hyprland binding at all** — it lives in kitty via
   `pass_keys.py`, which gives nvim and fzf first refusal ([kitty](kitty.md)).
-- `SUPER, N` launches the self-pasting nvim QAT panel through
-  `scripts/nvim-scratch-toggle.sh`; the native Quickshell scratch remains a
-  manual `dots-shell scratch` route ([scripts-scratch](scripts-scratch.md)).
+- `SUPER, N` launches the large focused nvim QAT panel through
+  `scripts/nvim-scratch-toggle.sh`. Its Wayland namespace `nvim-scratch` gets
+  `blur` and `dim_around` from `hypr/modules/rules.lua`; exiting nvim copies the
+  draft to the clipboard but deliberately does not auto-paste it. The native
+  Quickshell scratch remains a manual `dots-shell scratch` route
+  ([scripts-scratch](scripts-scratch.md)).
 - **XF86 volume/mute/backlight keys live in `hypr/modules/binds.lua`.** Kanata's
   apps-layer system chords only emit those standard keycodes; Hyprland remains
   the single owner of the `wpctl`/`brightnessctl` actions. Keep these bindings

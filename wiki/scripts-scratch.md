@@ -13,36 +13,26 @@ covers:
   - hypr/modules/rules.lua
 ---
 
-# Scratch note — focused nvim clipboard panel
+# Scratch note — fullscreen nvim clipboard panel
 
-`SUPER+N` launches the active nvim QAT through `nvim-scratch-toggle.sh`. It is a
-large centered writing surface rather than a picker-sized panel: the dedicated
-`kitty/quick-access-terminal-scratch.conf` uses `140x40`, opacity `0.97`, and
-`app_id nvim-scratch`. That app id becomes the Wayland layer namespace, allowing
-`hypr/modules/rules.lua` to apply `blur` and `dim_around` only to this scratch
-panel without changing the other QAT pickers.
+`SUPER+N` launches the active nvim QAT through `nvim-scratch-toggle.sh`. The
+dedicated `kitty/quick-access-terminal-scratch.conf` uses `edge center`, so the
+panel covers the whole display. Its background is fully opaque; there is no
+scratch-specific Hyprland blur or dim rule.
 
 Re-triggering `Super+N` hides/shows the same QAT instance, so the draft survives
 a temporary hide. `nvim-scratch-run.sh` starts nvim in insert mode and writes the
 fixed `~/.cache/nvim-scratch.md` on `VimLeavePre`, including exits through the
 fast `:q!` mappings.
 
-`nvim-scratch-toggle.sh --hide` is a hide-only route for other desktop UI. It
-first checks whether the `nvim-scratch` layer is actually mapped and only then
-toggles the QAT, so invoking it cannot accidentally open a hidden scratch. It
-also bypasses `launch_qat`, avoiding an unrelated keyboard-layout switch while
-another UI is being opened.
-
-`Super+V` / `dots-shell clipboard` uses that hide-only route before toggling
-CopyQ. This removes the scratch layer's blur/dim while the clipboard window is
-visible, but leaves the nvim process and draft alive; `Super+N` restores the same
-draft afterwards.
-
 When nvim exits, `nvim-scratch-quit.sh` copies the note to the Wayland clipboard
 with `wl-copy`, clears the scratch file, and closes the panel. It deliberately
 **does not synthesize a paste or send keys to the previously focused window**;
-the user decides when and where to paste the clipboard contents. This avoids an
-unexpected paste when the target field or focus changed while editing.
+the user decides when and where to paste the clipboard contents.
+
+CopyQ has no special integration with the nvim QAT. `Super+V` simply toggles
+CopyQ through `dots-shell clipboard`; the scratch panel is not automatically
+hidden or modified for it.
 
 ## Optional Quickshell behavior
 

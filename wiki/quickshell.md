@@ -78,6 +78,8 @@ Latency-sensitive state stays inside Quickshell:
   unmuted-speaker and battery glyphs use a two-pixel downward correction while
   the mute glyph remains on the normal baseline;
 - routine healthy state stays quiet: layout, battery and clock remain visible;
+  the shared clock snapshot uses a one-shot timer aligned to the next exact
+  minute boundary, avoiding both visible lag and unnecessary per-second wakeups;
   audio appears only while muted, network only while disconnected, Bluetooth
   only with a connected device, AI at 70% usage or higher, and notifications
   only for DND or an unread count; opening Notifications marks its persisted

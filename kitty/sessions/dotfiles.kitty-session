@@ -2,6 +2,6 @@ layout splits
 
 cd ~/github/dotfiles
 
-launch --title "dotfiles" /bin/zsh -i -c 'nvim "+lua require(\"persistence\").load()"; exec zsh'
+launch --title "dotfiles" /bin/zsh -i -c 'exec zsh'
 focus
 focus_os_window

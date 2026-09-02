@@ -1,7 +1,9 @@
 hl.config({
   cursor = {
-    -- Hardware workaround: removing this makes the cursor invisible/corrupted.
-    no_hardware_cursors = true,
+    -- 2 = auto: Hyprland now renders a correct hardware cursor here (verified
+    -- 2026-09-02), so screenshots no longer need the software-cursor-then-
+    -- toggle-to-hardware dance kanata/screenshot-*.sh used to do.
+    no_hardware_cursors = 2,
   },
 
   -- XWayland can't do fractional scaling on the 1.6x laptop panel. Keep the

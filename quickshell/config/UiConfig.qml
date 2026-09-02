@@ -69,5 +69,4 @@ QtObject {
   readonly property int toastTimeoutMs: 8000
   readonly property int fullRefreshMs: 15000
   readonly property int brightnessPollMs: 150
-  readonly property int clockRefreshMs: 30000
 }

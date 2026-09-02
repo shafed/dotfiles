@@ -60,6 +60,11 @@ ShellRoot {
            a.getDate() === b.getDate()
   }
 
+  function msUntilNextMinute() {
+    var minuteMs = 60000
+    return minuteMs - Date.now() % minuteMs
+  }
+
   function shiftCalendarMonth(delta) {
     calendarMonth = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + delta, 1)
   }
@@ -273,10 +278,14 @@ ShellRoot {
   ListModel { id: toastModel }
 
   Timer {
-    interval: ui.clockRefreshMs
-    repeat: true
+    id: clockTimer
+    interval: root.msUntilNextMinute()
     running: true
-    onTriggered: root.clockNow = new Date()
+    onTriggered: {
+      root.clockNow = new Date()
+      interval = root.msUntilNextMinute()
+      restart()
+    }
   }
 
   Timer {

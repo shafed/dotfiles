@@ -95,25 +95,29 @@ sideBarBadgeBg: GB_YELLOW;
 sideBarBadgeBgMuted: GB_BG_MUTED;
 sideBarBadgeFg: GB_BG_HARD;
 
-// Voice messages. Telegram exposes unread media only as the small dot after
-// the duration; it does not expose a separate palette state for the whole
-// idle waveform. Keep the waveform neutral and make that unread dot obvious.
-// The dot shares msgFileInBg with the incoming play button, so the button uses
-// the same accent as a necessary limitation of the theme format.
+// Voice messages. The played waveform now uses a strong directional accent
+// while the unplayed waveform stays neutral, so playback progress is readable
+// at a glance. Selected/hovered states use the paired accent instead of reusing
+// the normal color. Telegram exposes unread media only as the small dot after
+// the duration; that dot shares msgFileInBg with the incoming play button.
 msgFileInBg: GB_YELLOW;
 msgFileInBgOver: GB_ORANGE;
-msgFileInBgSelected: GB_YELLOW;
+msgFileInBgSelected: GB_ORANGE;
 msgFileOutBg: GB_BLUE;
 msgFileOutBgOver: GB_AQUA;
-msgFileOutBgSelected: GB_BLUE;
-msgWaveformInActive: GB_FG_SOFT;
-msgWaveformInActiveSelected: GB_FG_BRIGHT;
+msgFileOutBgSelected: GB_AQUA;
+msgWaveformInActive: GB_YELLOW;
+msgWaveformInActiveSelected: GB_ORANGE;
 msgWaveformInInactive: GB_GRAY;
 msgWaveformInInactiveSelected: GB_GRAY_DIM;
-msgWaveformOutActive: GB_FG_SOFT;
-msgWaveformOutActiveSelected: GB_FG_BRIGHT;
+msgWaveformOutActive: GB_AQUA;
+msgWaveformOutActiveSelected: GB_BLUE;
 msgWaveformOutInactive: GB_GRAY;
 msgWaveformOutInactiveSelected: GB_GRAY_DIM;
+mediaInFg: GB_FG_SOFT;
+mediaInFgSelected: GB_FG_BRIGHT;
+mediaOutFg: GB_FG_SOFT;
+mediaOutFgSelected: GB_FG_BRIGHT;
 """
 
 

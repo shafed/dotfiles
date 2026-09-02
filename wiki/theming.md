@@ -1,7 +1,7 @@
 ---
 title: theming
 type: topic
-updated: 2026-09-01
+updated: 2026-09-02
 covers:
   - colors.toml
   - scripts/generate-theme.py
@@ -66,16 +66,20 @@ Gruvbox night variant and a warmer olive/taupe day variant. Telegram-specific
 daylight values live in that generator rather than recoloring the shared desktop
 palette.
 
-The desktop profile keeps one stable runtime path:
+The file imported manually in Telegram is generated inside the repository:
 
 ```text
-$XDG_DATA_HOME/dotfiles/telegram/current.tdesktop-theme
+telegram/current.tdesktop-theme
 ```
 
-Import that file in Telegram and press **Apply Theme** once. Telegram watches the
-loaded local theme path, so `darkman/scripts/telegram` can rewrite the same file
-between day and night without touching `tdata` or automating UI clicks. See
-[telegram](telegram.md) for bootstrap details.
+It is gitignored build/runtime state. The wrapper also keeps
+`$XDG_DATA_HOME/dotfiles/telegram/current.tdesktop-theme` as a profile-state
+mirror so `dots plan/apply` can verify deterministic generator output without
+managing a generated file in the checkout. Import the repository copy and press
+**Apply Theme** once. Telegram watches that local path, so
+`darkman/scripts/telegram` rewrites the same inode between day and night without
+touching `tdata` or automating UI clicks. See [telegram](telegram.md) for
+bootstrap details.
 
 The wallpaper source is the tracked binary `telegram/background.png`. The
 Telegram generator embeds that PNG verbatim into both variants; it does not
@@ -85,8 +89,10 @@ the supported way to change the chat background.
 
 Telegram's theme API cannot independently recolor an unread stopped voice message
 versus a listened stopped message; the unread state is the small duration dot.
-The theme therefore keeps the waveform neutral and uses the active variant's
-accent for the shared play-button/unread-dot surface.
+Playback progress therefore carries the stronger semantic contrast instead:
+incoming played waveform is yellow, outgoing played waveform is aqua, selected
+states use their paired orange/blue accents, and the unplayed part stays neutral
+gray.
 
 ## Helium: exact Gruvbox light/dark extension theme
 

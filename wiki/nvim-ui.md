@@ -127,12 +127,3 @@ re-created the session, opening a fresh tab that re-ran the session file (e.g.
 the new tab). Fixed by adding `--add-to-session .` to the `launch`, which tags
 the window with the source window's session. Same class of fix as `kitty_mod+t`
 in [sessions](sessions.md).
-
-## Restarting nvim (`:Restart`, `<leader>R`)
-
-`:Restart` (bound to `<leader>R`, `keymaps.lua`) saves all buffers, spawns a
-fresh nvim in the current directory as a **detached kitty window** via
-`kitten @ launch --type=window --cwd=<dir> nvim`, then quits the current
-instance. Detached so the new process survives this nvim exiting (a plain
-`jobstart` child would be killed on `:qa`). The new window opens in the same
-kitty tab/session — handy after `:Lazy` config edits when a reload isn't enough.

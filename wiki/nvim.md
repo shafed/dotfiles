@@ -15,7 +15,7 @@ which LazyVim behavior was overridden and why.
 - **[nvim-ui](nvim-ui.md)** — the base setup and everything about windows: the
   winbar buffer indicator (replacing bufferline), zen mode as a Hyprland
   fullscreen rather than a float, lazygit sizing, the companion kitty terminal
-  on `<M-t>`, and `:Restart`.
+  on `<M-t>`.
 - **[nvim-obsidian](nvim-obsidian.md)** — the vault side: training-logbook
   keymaps, periodic review of daily notes, vault snippets and dictionaries.
 - **[nvim-clipboard](nvim-clipboard.md)** — why `clipboard=""` is deliberate and

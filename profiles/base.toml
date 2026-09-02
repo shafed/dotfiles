@@ -74,6 +74,13 @@ required = true
 reason = "terminal used by sessions and launchers"
 
 [[packages]]
+command = "tmux"
+package = "tmux"
+manager = "pacman"
+required = true
+reason = "terminal multiplexer available on every machine"
+
+[[packages]]
 command = "nvim"
 package = "neovim"
 manager = "pacman"

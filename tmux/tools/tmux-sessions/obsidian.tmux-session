@@ -1,3 +1,0 @@
-dir ~/github/obsidian
-cmd git pull && nvim
-keys s

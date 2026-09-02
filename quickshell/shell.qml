@@ -241,7 +241,6 @@ ShellRoot {
   }
 
   Component.onCompleted: {
-    run(["pkill", "-x", "waybar"])
     hydrateNotifications()
   }
 
@@ -272,11 +271,6 @@ ShellRoot {
 
   ListModel { id: historyModel }
   ListModel { id: toastModel }
-
-  Process {
-    running: true
-    command: ["bash", "-lc", "for i in $(seq 1 20); do pkill -x waybar >/dev/null 2>&1 || true; sleep 0.5; done"]
-  }
 
   Timer {
     interval: ui.clockRefreshMs

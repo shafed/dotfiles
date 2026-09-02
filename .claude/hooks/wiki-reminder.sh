@@ -30,7 +30,7 @@ esac
 
 # Only react to config areas that have wiki coverage.
 case "$rel" in
-kanata/* | hypr/* | scripts/* | zsh/* | kitty/* | nvim/* | waybar/* | yazi/* | darkman/*) ;;
+kanata/* | hypr/* | scripts/* | zsh/* | kitty/* | nvim/* | yazi/* | darkman/*) ;;
 *) exit 0 ;;
 esac
 

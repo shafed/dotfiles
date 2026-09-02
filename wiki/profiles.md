@@ -1,7 +1,7 @@
 ---
 title: profiles
 type: topic
-updated: 2026-09-01
+updated: 2026-09-02
 covers:
   - profiles/
   - machines/
@@ -12,7 +12,9 @@ covers:
 # Profiles and desired machine state
 
 Profiles describe *what a machine should be* rather than duplicating bootstrap
-logic. `base` owns shared shell/editor tools. `desktop` adds the graphical
+logic. `base` owns shared shell/editor tools, including required `tmux` on every
+machine; kitty native sessions remain the primary local session workflow.
+`desktop` adds the graphical
 Hyprland/Quickshell stack and desktop-wide networking state. Bluetooth is a
 separate `bluetooth` profile because a desktop machine does not imply Bluetooth
 hardware. `laptop` includes both `desktop` and `bluetooth`, then adds only

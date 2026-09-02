@@ -1,7 +1,7 @@
 ---
 title: nvim
 type: moc
-updated: 2026-08-31
+updated: 2026-09-02
 covers:
   - nvim/
 ---
@@ -31,6 +31,12 @@ which LazyVim behavior was overridden and why.
 Arch and in CI), even though Neovim itself runs LuaJIT. Keep config syntax valid
 under both: in particular, do not reassign numeric/generic `for` control
 variables, which Lua 5.4 treats as constant.
+
+`nvim/.luarc.json` whitelists `LazyVim` and `Snacks` (alongside `vim`) in
+`diagnostics.globals` — both are injected into `_G` at runtime by the LazyVim
+distro and Snacks.nvim, so lua_ls would otherwise flag them as undefined
+globals wherever plugin config calls them directly (e.g.
+`LazyVim.format.enabled` in `conform.lua`, `Snacks.*` in `mini-files.lua`).
 
 ## LSP / other exclusions
 

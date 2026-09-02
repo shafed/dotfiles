@@ -86,4 +86,15 @@ hl.window_rule({
   center = true,
 })
 
+hl.layer_rule({
+  -- SUPER+N scratch is a dedicated kitty layer surface. Dim the surrounding
+  -- desktop and blur what remains visible through its slightly translucent
+  -- background without affecting the other QAT picker panels.
+  name = "nvim scratch focus",
+  match = { namespace = "^nvim-scratch$" },
+
+  blur = true,
+  dim_around = true,
+})
+
 hl.workspace_rule({ workspace = "2", on_created_empty = browser })

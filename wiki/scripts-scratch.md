@@ -27,6 +27,17 @@ a temporary hide. `nvim-scratch-run.sh` starts nvim in insert mode and writes th
 fixed `~/.cache/nvim-scratch.md` on `VimLeavePre`, including exits through the
 fast `:q!` mappings.
 
+`nvim-scratch-toggle.sh --hide` is a hide-only route for other desktop UI. It
+first checks whether the `nvim-scratch` layer is actually mapped and only then
+toggles the QAT, so invoking it cannot accidentally open a hidden scratch. It
+also bypasses `launch_qat`, avoiding an unrelated keyboard-layout switch while
+another UI is being opened.
+
+`Super+V` / `dots-shell clipboard` uses that hide-only route before toggling
+CopyQ. This removes the scratch layer's blur/dim while the clipboard window is
+visible, but leaves the nvim process and draft alive; `Super+N` restores the same
+draft afterwards.
+
 When nvim exits, `nvim-scratch-quit.sh` copies the note to the Wayland clipboard
 with `wl-copy`, clears the scratch file, and closes the panel. It deliberately
 **does not synthesize a paste or send keys to the previously focused window**;

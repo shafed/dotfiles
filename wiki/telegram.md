@@ -1,7 +1,7 @@
 ---
 title: telegram
 type: component
-updated: 2026-09-01
+updated: 2026-09-02
 covers:
   - telegram/
   - darkman/scripts/telegram
@@ -16,6 +16,8 @@ Telegram is the deliberate exception to the desktop's otherwise dark-only applic
 The daylight treatment is applied to the whole Telegram palette, not only message bubbles. Its core surfaces are `#34352f` / `#41423b` / `#4b4c44` / `#55564d`, main text is `#f3f0e6`, strong text is `#fffaf0`, and small metadata is `#d8d4c8`. The compose field deliberately uses the strong foreground so newly typed text matches the rest of the bright UI instead of retaining the warmer main-text color. Incoming bubbles use `#41423b`, outgoing bubbles `#5b5c52`; warm yellow/orange and muted aqua/green accents keep the Gruvbox relationship without changing `colors.toml`.
 
 The `dark` solar state deliberately keeps the original Gruvbox Material Dark Medium Telegram treatment instead of inheriting daylight contrast tweaks. Normal message text uses the warm shared foreground `#d4be98`, incoming bubbles use `#32302f`, and message metadata returns to the dimmer Gruvbox gray. Selected states can still use the brighter Gruvbox foreground. Daylight-only readability changes must remain variant-local so the night palette never drifts toward white text again.
+
+Voice messages intentionally use higher semantic contrast than ordinary metadata. For incoming voice messages the played waveform is yellow and its selected state is orange; outgoing playback uses aqua with blue for the selected state. The unplayed waveform stays neutral gray, play-button selected/hover states switch to the paired accent, and the duration text uses the stronger foreground. This separation is shared by day and night variants so playback progress remains obvious instead of blending into the bubble.
 
 `telegram/generate-theme.py` renders both variants from the same base renderer. Normal generation writes local day/night palettes and archives; those outputs are build artifacts and are not tracked. The live target is one stable file at `$XDG_DATA_HOME/dotfiles/telegram/current.tdesktop-theme`.
 

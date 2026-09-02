@@ -1,7 +1,7 @@
 ---
 title: scripts-scratch
 type: component
-updated: 2026-08-30
+updated: 2026-09-02
 covers:
   - quickshell/components/ScratchOverlay.qml
   - quickshell/dots-shell
@@ -11,13 +11,13 @@ covers:
   - scripts/nvim-scratch-quit.sh
 ---
 
-# Scratch note — self-pasting Quickshell overlay
+# Scratch note — self-pasting nvim panel
 
-`SUPER+N` now toggles `components/ScratchOverlay.qml`. The active path no longer
-starts Kitty, a QAT panel or nvim; the old `nvim-scratch-*.sh` scripts remain
-only as a manual fallback/reference implementation.
+`SUPER+N` launches the nvim QAT through `nvim-scratch-toggle.sh`. The native
+Quickshell `components/ScratchOverlay.qml` remains available through the manual
+`dots-shell scratch` command, but it does not own the hotkey.
 
-## Active behavior
+## Optional Quickshell behavior
 
 `dots-shell scratch` records the currently focused Hyprland window address
 before opening the overlay and passes it to the Quickshell `scratch` IPC target.
@@ -38,10 +38,9 @@ implementation without the QAT process/cgroup machinery.
 If the recorded target no longer exists, the text has still been placed on the
 clipboard; the focus/paste step simply cannot target that vanished window.
 
-## Why the old implementation was complicated
+## Why the active nvim implementation is complicated
 
-The legacy scripts are intentionally kept because they document two useful QAT
-gotchas even though `Super+N` no longer uses them:
+The nvim scripts account for two QAT gotchas:
 
 1. A Kitty quick-access panel is an exclusive layer-shell surface, so synthetic
    `wtype` input sent before the panel disappears is consumed by the panel.
@@ -50,11 +49,11 @@ gotchas even though `Super+N` no longer uses them:
    `nvim-scratch-quit.sh` therefore had to launch its paste helper via
    `systemd-run --user --collect`.
 
-Those constraints disappear from the active Quickshell implementation because
+Those constraints disappear from the optional Quickshell implementation because
 the long-running shell owns the overlay itself and can dispatch paste only after
 making the surface invisible.
 
-The fallback files keep their former roles: `nvim-scratch-toggle.sh` launches the
+The active files keep their former roles: `nvim-scratch-toggle.sh` launches the
 QAT/editor, `nvim-scratch-run.sh` autosaves the fixed scratch file even through
 `:q!`, and `nvim-scratch-quit.sh` performs the detached focus/paste sequence and
-kills the legacy panel. They are not referenced by the current Hyprland bind.
+kills the panel. `hypr/modules/binds.lua` invokes the toggle script directly.

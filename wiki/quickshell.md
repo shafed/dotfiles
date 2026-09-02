@@ -1,7 +1,7 @@
 ---
 title: quickshell
 type: component
-updated: 2026-09-01
+updated: 2026-09-02
 covers:
   - quickshell/shell.qml
   - quickshell/components/
@@ -22,10 +22,10 @@ in the long-running QML process; a general Python snapshot/backend is deliberate
 avoided so UI state and actions do not cross a Python/JSON IPC boundary.
 
 Active desktop-facing pickers for Applications, Bookmarks, Projects, open Kitty
-Sessions and YouTube belong to Quickshell. Clipboard history belongs to CopyQ;
-`Super+N` also
-uses a native Quickshell scratch editor instead of a terminal QAT. Data and
-ranking contracts remain separate from the bar; see
+Sessions and YouTube belong to Quickshell. Clipboard history belongs to CopyQ.
+Quickshell also retains a native scratch editor reachable through
+`dots-shell scratch`, while `Super+N` opens the nvim QAT. Data and ranking
+contracts remain separate from the bar; see
 [quickshell-pickers](quickshell-pickers.md).
 
 ## Runtime QML
@@ -189,10 +189,10 @@ started in QApplication mode and every `display()` call silently fails with
 `Cannot display PlatformMenuEntry as quickshell was not started in
 QApplication mode` in the logs — tray clicks then do nothing.
 
-`components/ScratchOverlay.qml` is a focused multiline editor. `Esc` hides while
+`components/ScratchOverlay.qml` is an optional focused multiline editor. `Esc` hides while
 preserving the draft and `Ctrl+Enter` closes, copies and pastes back into the
-window that was focused before scratch opened. Details and the retained legacy
-nvim/QAT fallback are in [scripts-scratch](scripts-scratch.md).
+window that was focused before scratch opened. The active `Super+N` nvim/QAT
+route and this optional overlay are described in [scripts-scratch](scripts-scratch.md).
 
 `Super+F1` runs `dots-shell hotkeys`, which toggles
 `components/HotkeysPanel.qml`. It is a centered fullscreen overlay using the

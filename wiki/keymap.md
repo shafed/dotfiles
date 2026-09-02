@@ -1,7 +1,7 @@
 ---
 title: keymap
 type: topic
-updated: 2026-08-31
+updated: 2026-09-02
 covers:
   - kanata/config.kbd
   - hypr/hyprland.lua
@@ -80,7 +80,7 @@ keys go to Hyprland, and workspace chords arrive as normal Super+digit events.
 Hyprland owns the direct desktop-shell bindings while kanata provides the
 thumb-layer routes above. `Super+F1` toggles the searchable Hotkeys panel,
 `Super+Space` opens Applications, `Super+V` opens Clipboard and `Super+N`
-toggles the self-pasting Quickshell scratch editor. `Super+Shift+A/W/B/P/I/U/N`
+opens the self-pasting nvim scratch panel. `Super+Shift+A/W/B/P/I/U/N`
 open Audio, Network, Bluetooth, Power, Agents, Updates and Notifications
 respectively. `apps+w+e` toggles the compact system overview through
 `dots-shell system`; every overview destination also has the adjacent-key apps

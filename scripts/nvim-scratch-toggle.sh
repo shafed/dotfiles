@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Toggle a floating kitty+nvim scratchpad for jotting a note and pasting it
 # into whatever window had focus before the scratchpad opened. Bound to
-# SUPER+N in hypr/hyprland.conf. Uses the same quick-access-terminal (QAT)
+# SUPER+N in hypr/modules/binds.lua. Uses the same quick-access-terminal (QAT)
 # mechanism as the fzf pickers (see lib.sh): re-sending the same launch
 # command toggles visibility instead of spawning a second panel, and the
 # nvim process (and its unsaved buffer) survives a hide.

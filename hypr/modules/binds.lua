@@ -4,8 +4,8 @@ local fileManager = "dolphin"
 local home = os.getenv("HOME") or "~"
 local shellCtl = home .. "/.config/quickshell/dots-shell"
 
--- Quickshell owns desktop-facing launchers, pickers, scratch and system panels.
--- The old terminal/fzf QAT scripts remain only as standalone fallbacks.
+-- Quickshell owns desktop-facing launchers, pickers and system panels.
+-- Scratch deliberately stays in the nvim QAT so Super+N opens the real editor.
 hl.bind(mainMod .. " + V", hl.dsp.exec_cmd(shellCtl .. " clipboard"))
 hl.bind(mainMod .. " + F1", hl.dsp.exec_cmd(shellCtl .. " hotkeys"))
 hl.bind(mainMod .. " + SHIFT + A", hl.dsp.exec_cmd(shellCtl .. " panel audio"))
@@ -17,7 +17,7 @@ hl.bind(mainMod .. " + SHIFT + U", hl.dsp.exec_cmd(shellCtl .. " panel updates")
 hl.bind(mainMod .. " + SHIFT + N", hl.dsp.exec_cmd(shellCtl .. " panel notifications"))
 
 hl.bind("SUPER + Home", hl.dsp.exec_cmd("systemctl suspend && hyprlock"))
-hl.bind(mainMod .. " + N", hl.dsp.exec_cmd(shellCtl .. " scratch"))
+hl.bind(mainMod .. " + N", hl.dsp.exec_cmd("~/github/dotfiles/scripts/nvim-scratch-toggle.sh"))
 
 hl.bind(mainMod .. " + period", hl.dsp.exec_cmd("pkill -USR2 -x handy"))
 -- Example binds, see https://wiki.hypr.land/Configuring/Basics/Binds/ for more

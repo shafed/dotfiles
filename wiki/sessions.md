@@ -1,7 +1,7 @@
 ---
 title: sessions
 type: topic
-updated: 2026-08-31
+updated: 2026-09-02
 covers:
   - kitty/sessions
   - kitty/scripts
@@ -10,8 +10,8 @@ covers:
 
 # sessions — native kitty sessions
 
-How they're driven: [kanata](kanata.md), [keymap](keymap.md). Why tmux was
-dropped at all: [decisions](decisions.md).
+How they're driven: [kanata](kanata.md), [keymap](keymap.md). Why tmux is no
+longer configured here: [decisions](decisions.md).
 
 ## What replaced tmux
 
@@ -24,6 +24,9 @@ The one tmux convenience that had to be rebuilt by hand is layout persistence.
 `dotfiles`/`projects` sessions call `require("persistence").load()` to emulate
 "press s on the start screen". ⚠️ The `obsidian` and daily-note sessions
 deliberately do **not** — see the daily-note gotcha below for what goes wrong.
+
+Tmux itself can still be launched occasionally, but there is no tracked tmux
+configuration or integration: those sessions use tmux's built-in defaults.
 
 ## How kanata drives sessions
 

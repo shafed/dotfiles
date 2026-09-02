@@ -1,7 +1,7 @@
 ---
 title: index
 type: index
-updated: 2026-09-01
+updated: 2026-09-02
 ---
 
 # Dotfiles wiki — index
@@ -46,7 +46,8 @@ rules: [../CLAUDE.md](../CLAUDE.md) (`AGENTS.md` symlinks to it).
 
 - **[keymap](keymap.md)** — single source of truth for hotkeys: how kanata,
   hypr, and kitty divide the keyboard without colliding.
-- **[sessions](sessions.md)** — native kitty sessions after the tmux removal.
+- **[sessions](sessions.md)** — managed kitty sessions; occasional tmux runs
+  with its built-in defaults.
 - **[theming](theming.md)** — `colors.toml` source-of-truth, generated Gruvbox
   surfaces, and what darkman does and does not switch.
 

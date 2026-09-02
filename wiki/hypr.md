@@ -48,10 +48,8 @@ particular laptop.
   rebuilding one monolithic failure domain.
 - **`hyprctl dispatch` now evaluates its args as Lua.** The legacy form
   (`hyprctl dispatch workspace 3`, `killactive`, `dpms`) fails with a syntax
-  error, which in a script, kanata action, or waybar button is a **silent
-  no-op**. All repo call sites use `hl.dsp.*`. ⚠️ This is why waybar must be
-  `waybar-git` — the 0.15.0 release still emits legacy dispatches, so clicking a
-  workspace does nothing ([waybar](waybar.md)).
+  error, which in a script or kanata action is a **silent no-op**. All repo call
+  sites use `hl.dsp.*`.
 - **OpenWhispr is isolated from the tracked config.** Since 1.9.2 the app
   recognizes Lua configs and automatically writes `openwhispr-binds.lua` plus
   a matching `pcall(require, ...)` into `hyprland.lua`. It is therefore launched

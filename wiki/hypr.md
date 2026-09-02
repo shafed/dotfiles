@@ -62,9 +62,14 @@ particular laptop.
   orphan-process gotcha in [sessions](sessions.md). The login
   `hl.on("hyprland.start", ...)` hook stays a bare `exec` on purpose: no main
   kitty exists yet to attach to.
-- **`no_hardware_cursors = true`** works around an invisible/corrupted cursor on
-  this hardware. It lives in `hypr/machine/appearance.lua`; not cosmetic —
-  don't remove it as cleanup.
+- **`no_hardware_cursors`** lives in `hypr/machine/appearance.lua`. Was pinned
+  to `true` (forced software cursor) as a workaround for an invisible/corrupted
+  hardware cursor on this GPU/driver combo. **2026-09-02:** re-tested and
+  hardware cursors now render correctly, so it's set to `2` (auto) instead —
+  this also let [kanata](kanata.md)'s screenshot scripts drop a whole
+  cursor-mode-toggle workaround (grim no longer needs help excluding the
+  cursor). If a corrupted/invisible cursor ever reappears (driver or Hyprland
+  regression), that's the setting to flip back to `true` first.
 - **`kb_layout = us,ru`, but kanata drives the switching**, not Hyprland; only
   the two layouts are registered here. `hyprland-per-window-layout` runs on top.
   See [kanata](kanata.md), [keymap](keymap.md).

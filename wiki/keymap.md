@@ -80,7 +80,8 @@ keys go to Hyprland, and workspace chords arrive as normal Super+digit events.
 Hyprland owns the direct desktop-shell bindings while kanata provides the
 thumb-layer routes above. `Super+F1` toggles the searchable Hotkeys panel,
 `Super+Space` opens Applications, `Super+V` opens Clipboard and `Super+N`
-opens the self-pasting nvim scratch panel. `Super+Shift+A/W/B/P/I/U/N`
+opens the large focused nvim scratch panel; exiting nvim copies the draft to the
+clipboard but does not paste it automatically. `Super+Shift+A/W/B/P/I/U/N`
 open Audio, Network, Bluetooth, Power, Agents, Updates and Notifications
 respectively. `apps+w+e` toggles the compact system overview through
 `dots-shell system`; every overview destination also has the adjacent-key apps

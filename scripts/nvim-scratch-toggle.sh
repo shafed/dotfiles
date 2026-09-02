@@ -20,6 +20,19 @@ run_script="$script_dir/nvim-scratch-run.sh"
 quit_script="$script_dir/nvim-scratch-quit.sh"
 scratch_qat_config="$HOME/github/dotfiles/kitty/quick-access-terminal-scratch.conf"
 
+# Consumers such as CopyQ need to get the scratch layer out of the way without
+# risking a hidden scratch being opened. Detect the mapped layer first, then use
+# toggle_qat directly so this hide-only path also avoids launch_qat's keyboard-
+# layout switch.
+if [[ "${1:-}" == "--hide" ]]; then
+  if command -v hyprctl >/dev/null 2>&1 && command -v jq >/dev/null 2>&1 \
+    && hyprctl layers -j 2>/dev/null \
+      | jq -e '.. | objects | select(.namespace? == "nvim-scratch")' >/dev/null 2>&1; then
+    toggle_qat "$scratch_group"
+  fi
+  exit 0
+fi
+
 mkdir -p "$(dirname "$scratch_file")"
 touch "$scratch_file"
 

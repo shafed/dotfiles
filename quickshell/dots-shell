@@ -55,15 +55,11 @@ case "${1:-}" in
     # CopyQ's own window, not a Quickshell overlay — it has its own history,
     # search and paste handling, so there's nothing left for Quickshell to
     # own here beyond closing whatever picker is currently open first.
-    # If the nvim QAT scratch is visible, hide (do not close) it before CopyQ
-    # opens so the scratch layer's blur/dim does not affect the clipboard UI;
-    # the draft stays alive and Super+N restores it afterwards.
     # QT_QPA_PLATFORM=xcb matches the copyq shell alias (zsh/zshrc): the
     # client process that renders the toggled window needs it even though
     # copyq.service's headless server does not.
     close_hotkeys
     close_pickers
-    "$script_dir/../scripts/nvim-scratch-toggle.sh" --hide >/dev/null 2>&1 || true
     QT_QPA_PLATFORM=xcb copyq toggle >/dev/null 2>&1
     ;;
   projects|sessions)

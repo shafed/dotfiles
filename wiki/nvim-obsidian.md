@@ -1,7 +1,7 @@
 ---
 title: nvim-obsidian
 type: component
-updated: 2026-08-14
+updated: 2026-09-03
 covers:
   - nvim/lua/utils/obsidian.lua
   - nvim/lua/utils/review.lua
@@ -28,14 +28,13 @@ nvim is the editing side of the training logbook; generation and viewing are in
   into a single guarded runner that takes `{ silent = true }` for the
   auto-trigger.)
 - `<leader>lp` saves the buffer as
-  `~/github/obsidian/training/Full Body <текущий год>/YYYY-MM-DD-<h1>.md` (the H1 is
-  rewritten into a slug so the filename matches the heading) and **immediately
-  triggers** `~/github/dotfiles/scripts/generate_logbook.py` to regenerate
-  `logbook.html`. Prompts for the session date (`vim.ui.input`, defaults to
-  today, validated as `YYYY-MM-DD`) so a session logged late can be dated to
-  when it actually happened instead of the save date — the date drives both the
-  filename and the strict `^\d{4}-\d{2}-\d{2}-Day-\d+$` regex
-  `generate_logbook.py` uses to sort/parse sessions.
+  `~/github/obsidian/training/Full Body <текущий год>/YYYY-MM-DD-Training.md` and
+  rewrites the first H1, when present, to `YYYY-MM-DD-Training`. The filename no
+  longer depends on a `Day N`/H1 value. It prompts for the session date
+  (`vim.ui.input`, defaults to today, validated as `YYYY-MM-DD`) so a session
+  logged late can be dated to when the workout actually happened. The logbook
+  parser accepts the current `YYYY-MM-DD-Training` form and legacy
+  `YYYY-MM-DD-Day-N` files, so old sessions remain readable.
 - A separate keymap opens `logbook.html` via `xdg-open`.
 - `obsidian.push_with_cooldown()` — auto commit+push of the `~/github/obsidian` vault
   (an hour cooldown) so note edits get backed up without manual commits.

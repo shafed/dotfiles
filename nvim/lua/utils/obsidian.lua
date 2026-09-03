@@ -174,26 +174,7 @@ function M.save_training_note()
   local training_dir = vim.fn.expand(("~/github/obsidian/training/Full Body %s/"):format(os.date("%Y")))
 
   --------------------------------------------------------------------------
-  -- Extract H1 from the current file to use as training note filename
-  --------------------------------------------------------------------------
-  local h1_text = nil
-  for _, line in ipairs(vim.api.nvim_buf_get_lines(0, 0, 1, false)) do
-    local match = line:match("^#%s+(.+)$")
-    if match then
-      h1_text = vim.trim(match)
-      break
-    end
-  end
-
-  if not h1_text then
-    vim.notify("H1 heading not found in current file!", vim.log.levels.WARN)
-    return
-  end
-
-  --------------------------------------------------------------------------
-  -- Write current buffer contents to training/YYYY-MM-DD-<h1_text>.md
-  -- h1_text is the filename without extension, e.g. "Day 2"
-  -- training note slug: YYYY-MM-DD-Day-2 (date + h1 with spaces→dashes)
+  -- Training notes now use one fixed filename shape: YYYY-MM-DD-Training.md.
   -- Ask for the session date (defaults to today) so late log entries can
   -- be dated to when the workout actually happened.
   --------------------------------------------------------------------------
@@ -207,12 +188,13 @@ function M.save_training_note()
       return
     end
 
-    local h1_slug = h1_text:gsub("%s+", "-")
-    local training_slug = date_prefix .. "-" .. h1_slug
+    local training_slug = date_prefix .. "-Training"
     local training_filename = training_slug .. ".md"
     local training_path = training_dir .. training_filename
     local buf_lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
-    -- Replace H1 with training_slug so file's H1 matches its filename
+
+    -- Keep the document heading aligned with the fixed filename when an H1
+    -- exists, but do not require the source buffer's H1 to determine the name.
     for i, line in ipairs(buf_lines) do
       if line:match("^#%s+") then
         buf_lines[i] = "# " .. training_slug

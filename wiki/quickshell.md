@@ -1,7 +1,7 @@
 ---
 title: quickshell
 type: component
-updated: 2026-09-02
+updated: 2026-09-05
 covers:
   - quickshell/shell.qml
   - quickshell/components/
@@ -220,8 +220,13 @@ the compact `↻` control and from the shell refresh IPC. The header shows `Last
 updated: just now` and then minute/hour/day-relative age; the refresh control is
 disabled and dimmed while a refresh is running.
 
-Claude credentials are read from `CLAUDE_CONFIG_DIR` or `~/.claude`; the OAuth
-usage endpoint is requested directly from QML. Weekly follows the web Usage
+Claude credentials are read from `CLAUDE_CONFIG_DIR` or `~/.claude`. The OAuth
+usage endpoint is fetched via a `curl` subprocess (a Quickshell `Process` with
+stdin enabled, token piped in rather than passed as an argument so it never
+appears in `ps`), not QML's `XMLHttpRequest`: Qt's HTTP/2 client fails this
+specific request every time with `qt.network.http2: stream 1 finished with
+error: "Host requires authentication"`, even though the same request succeeds
+with `curl`, leaving the row permanently `stale`. Weekly follows the web Usage
 page's **All models** bucket: `seven_day` is preferred over
 `seven_day_oauth_apps`, with the OAuth-app bucket only as a fallback.
 

@@ -20,8 +20,8 @@ Item {
   property bool codexDone: true
   property var claudeFresh: ({ plan: "", limits: [] })
   property var codexFresh: ({ plan: "", limits: [] })
-  property var claudeRequest: null
   property string claudePlan: ""
+  property string pendingClaudeToken: ""
   property var codexAccount: ({})
   property var codexRateLimits: ({})
 
@@ -125,28 +125,29 @@ Item {
       return
     }
 
-    try {
-      var request = new XMLHttpRequest()
-      claudeRequest = request
-      request.open("GET", "https://api.anthropic.com/api/oauth/usage")
-      request.setRequestHeader("Authorization", "Bearer " + token)
-      request.setRequestHeader("anthropic-beta", "oauth-2025-04-20")
-      request.setRequestHeader("Accept", "application/json")
-      request.onreadystatechange = function() {
-        if (request.readyState !== 4 || service.claudeDone) return
-        if (request.status >= 200 && request.status < 300) {
-          try {
-            service.finishClaude(service.parseClaudeUsage(JSON.parse(request.responseText), service.claudePlan))
-            return
-          } catch (e) {}
-        }
-        service.finishClaude({ plan: service.claudePlan, limits: [] })
-      }
-      claudeTimeout.restart()
-      request.send()
-    } catch (e) {
-      finishClaude({ plan: claudePlan, limits: [] })
+    pendingClaudeToken = token
+    claudeTimeout.restart()
+    claudeProc.running = true
+  }
+
+  function handleClaudeStarted() {
+    claudeProc.write(pendingClaudeToken + "\n")
+    pendingClaudeToken = ""
+  }
+
+  function handleClaudeUsageOutput(text) {
+    var raw = String(text || "")
+    var marker = "HTTPSTATUS:"
+    var idx = raw.lastIndexOf(marker)
+    var status = idx >= 0 ? parseInt(raw.slice(idx + marker.length).trim(), 10) : 0
+    var body = idx >= 0 ? raw.slice(0, idx) : raw
+    if (status >= 200 && status < 300) {
+      try {
+        finishClaude(parseClaudeUsage(JSON.parse(body), claudePlan))
+        return
+      } catch (e) {}
     }
+    finishClaude({ plan: claudePlan, limits: [] })
   }
 
   function parseClaudeUsage(payload, plan) {
@@ -183,10 +184,7 @@ Item {
     if (claudeDone) return
     claudeDone = true
     claudeTimeout.stop()
-    if (claudeRequest) {
-      try { claudeRequest.onreadystatechange = null } catch (e) {}
-    }
-    claudeRequest = null
+    if (claudeProc.running) claudeProc.running = false
     claudeFresh = result || ({ plan: claudePlan, limits: [] })
     maybeFinalize()
   }
@@ -324,6 +322,24 @@ Item {
   }
 
   Process {
+    id: claudeProc
+    command: ["bash", "-lc",
+      "read -r token && curl -s --max-time 8 -w '\\nHTTPSTATUS:%{http_code}' " +
+      "-H \"Authorization: Bearer $token\" " +
+      "-H \"anthropic-beta: oauth-2025-04-20\" " +
+      "-H \"Accept: application/json\" " +
+      "https://api.anthropic.com/api/oauth/usage"]
+    stdinEnabled: true
+    stdout: StdioCollector {
+      waitForEnd: true
+      onStreamFinished: service.handleClaudeUsageOutput(text)
+    }
+    stderr: StdioCollector {}
+    onStarted: service.handleClaudeStarted()
+    onExited: if (!service.claudeDone) service.finishClaude({ plan: service.claudePlan, limits: [] })
+  }
+
+  Process {
     id: codexProc
     command: [service.home + "/.local/bin/codex", "-s", "read-only", "-a", "on-request", "app-server"]
     stdinEnabled: true
@@ -337,13 +353,8 @@ Item {
 
   Timer {
     id: claudeTimeout
-    interval: 8000
-    onTriggered: {
-      if (service.claudeRequest) {
-        try { service.claudeRequest.abort() } catch (e) {}
-      }
-      service.finishClaude({ plan: service.claudePlan, limits: [] })
-    }
+    interval: 10000
+    onTriggered: service.finishClaude({ plan: service.claudePlan, limits: [] })
   }
 
   Timer {

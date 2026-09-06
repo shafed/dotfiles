@@ -73,6 +73,40 @@ show_or_toggle_editor() {
     /usr/bin/env bash "$script_path" --run >/dev/null 2>&1
 }
 
+capture_field() {
+  local sentinel current i
+  sentinel="__nvim_textarea_${$}_${RANDOM}_$(date +%s%N)__"
+
+  # Super+Shift+E is still physically being released when Hyprland starts this
+  # script. Wait briefly so the synthetic Ctrl+A/C are not combined with the
+  # hotkey's still-held Super/Shift modifiers.
+  sleep 0.12
+
+  # Seed the clipboard with a unique value. Ctrl+C must replace it when the
+  # source field contains text; if it does not change after the polling window,
+  # the field is treated as empty. This is more reliable than clearing the
+  # clipboard and reading it after one fixed delay.
+  printf '%s' "$sentinel" | wl-copy
+  sleep 0.04
+
+  wtype -M ctrl -k a -m ctrl
+  sleep 0.08
+  wtype -M ctrl -k c -m ctrl
+
+  for i in {1..12}; do
+    current="$(wl-paste --no-newline 2>/dev/null || true)"
+    if [[ "$current" != "$sentinel" ]]; then
+      printf '%s' "$current" >"$text_file"
+      log "captured textarea (${#current} bytes)"
+      return 0
+    fi
+    sleep 0.05
+  done
+
+  : >"$text_file"
+  log "clipboard unchanged after copy; treating textarea as empty"
+}
+
 finish_editor() {
   local panel_pid="$PPID"
   local target="" layout="" text="" paste_ok=0
@@ -188,15 +222,7 @@ launch_editor() {
   jq -cn --arg address "$target" --arg class "$class" --argjson layout "$layout" \
     '{address:$address,class:$class,layout:$layout}' >"$target_file"
 
-  # Clear first so Ctrl+C on a genuinely empty input cannot leave an unrelated
-  # old clipboard value looking like the field contents.
-  wl-copy --clear 2>/dev/null || true
-  wtype -M ctrl -k a -k c -m ctrl
-  sleep 0.10
-  if ! wl-paste --no-newline >"$text_file" 2>/dev/null; then
-    : >"$text_file"
-  fi
-
+  capture_field
   log "captured textarea from $class $target"
 
   if ! show_or_toggle_editor; then

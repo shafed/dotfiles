@@ -226,7 +226,7 @@ Item {
     if (id === 2) {
       codexAccount = message && message.result && message.result.account ? message.result.account : ({})
       codexWrite({ id: 3, method: "account/rateLimits/read", params: {} })
-      codexTimeout.interval = 4000
+      codexTimeout.interval = 10000
       codexTimeout.restart()
       return
     }

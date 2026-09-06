@@ -89,12 +89,20 @@ finish_editor() {
     wl-copy --clear 2>/dev/null || true
   fi
 
+  # The QAT has exclusive layer-shell keyboard focus. Trying to focus Telegram
+  # while it is still visible can leave wtype events owned by the overlay.
+  # Toggle the existing instance out first, then restore the exact source window
+  # and only after focus has landed send the replacement keystrokes.
+  show_or_toggle_editor || true
+  sleep 0.18
+
   if focus_target "$target"; then
+    sleep 0.08
     # Replace the entire original field. For an empty result BackSpace is used
     # because pasting an empty clipboard does not reliably delete a selection
     # in every toolkit.
     wtype -M ctrl -k a -m ctrl
-    sleep 0.03
+    sleep 0.06
     if [[ -n "$text" ]]; then
       wtype -M ctrl -k v -m ctrl
     else
@@ -118,8 +126,9 @@ finish_editor() {
   fi
   rm -f "$target_file" "$pid_file"
 
-  # Terminate the QAT host after the editor exits, so the next invocation starts
-  # a fresh editor instead of reviving an empty hidden panel.
+  # The panel is hidden before refocus/paste; terminate its host after the
+  # replacement so the next invocation starts a fresh editor rather than
+  # reviving an empty hidden panel.
   kill "$panel_pid" 2>/dev/null || true
 }
 

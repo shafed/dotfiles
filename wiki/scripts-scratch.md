@@ -48,10 +48,12 @@ important because the main kitty window is pinned to workspace 1; the textarea
 panel therefore appears over the current display without switching workspaces.
 
 The launcher records the focused Hyprland window address and the current
-`kanata` layout, clears the Wayland clipboard, then sends `Ctrl+A`, `Ctrl+C`
-with `wtype`. Clearing first is intentional: copying from an empty text field
-otherwise leaves the previous clipboard value unchanged and would make that old
-text look like the field contents. The captured plain text is written to
+`kanata` layout, then waits briefly for the `Super+Shift+E` modifiers to be
+released before sending `Ctrl+A` and `Ctrl+C` as separate `wtype` operations.
+Before copying it seeds the Wayland clipboard with a unique sentinel and polls
+for that value to change for up to about half a second. This makes Telegram's
+asynchronous clipboard handoff reliable while still distinguishing a genuinely
+empty field from a failed/late copy. The captured plain text is written to
 `~/.cache/nvim-textarea/text.txt` and opened in the normal Neovim config in
 insert mode with the cursor at the end.
 
@@ -64,6 +66,7 @@ Every Neovim exit is treated as apply, including the fast mappings that execute
 script:
 
 - copies the edited text to the Wayland clipboard;
+- hides the exclusive-focus textarea QAT before trying to refocus the source;
 - focuses the exact Hyprland address recorded at launch;
 - sends `Ctrl+A` and pastes the result (or `BackSpace` for an empty result);
 - restores the `kanata` layout that was active before the editor opened;

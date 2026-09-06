@@ -1,26 +1,22 @@
 #!/usr/bin/env bash
-# Turn the currently focused GUI text field into a fullscreen Neovim editor.
+# Turn the currently focused GUI text field into a compact Neovim editor.
 #
 # Super+Shift+E (hypr/modules/binds.lua) selects/copies the current field,
-# opens it in the same fullscreen kitty QAT used by the scratch editor, and on
-# any Neovim exit focuses the original Hyprland window and replaces the field
-# with the edited text. Re-triggering the hotkey while the QAT exists only
-# hides/shows that same editor; it never recaptures a different field mid-edit.
+# opens it in a small layer-shell quick-access terminal on the current display,
+# and on any Neovim exit focuses the original Hyprland window and replaces the
+# field with the edited text. Re-triggering the hotkey while the editor exists
+# only hides/shows that same panel; it never recaptures a different field.
 
 set -euo pipefail
 
 script_path="$(readlink -f "${BASH_SOURCE[0]}")"
-script_dir="$(dirname "$script_path")"
-# shellcheck source=lib.sh
-source "$script_dir/lib.sh"
-
 cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/nvim-textarea"
 text_file="$cache_dir/text.txt"
 target_file="$cache_dir/target.json"
 pid_file="$cache_dir/editor.pid"
 log_file="$cache_dir/textarea.log"
 textarea_group="textarea"
-textarea_qat_config="$HOME/github/dotfiles/kitty/quick-access-terminal-scratch.conf"
+textarea_qat_config="$HOME/github/dotfiles/kitty/quick-access-terminal-textarea.conf"
 
 mkdir -p "$cache_dir"
 
@@ -63,6 +59,18 @@ focus_target() {
     sleep 0.05
   done
   return 1
+}
+
+show_or_toggle_editor() {
+  # Run the QAT directly instead of asking the main kitty window to launch it.
+  # The latter is pinned to ws1 in Hyprland and can pull the user away from the
+  # application being edited. A direct quick-access-terminal is a layer-shell
+  # surface, so it appears over the current display without changing workspace.
+  kitten quick-access-terminal \
+    --detach \
+    --config "$textarea_qat_config" \
+    --instance-group "$textarea_group" \
+    /usr/bin/env bash "$script_path" --run >/dev/null 2>&1
 }
 
 finish_editor() {
@@ -110,9 +118,8 @@ finish_editor() {
   fi
   rm -f "$target_file" "$pid_file"
 
-  # Same lifecycle as nvim-scratch-quit.sh: terminate the QAT host after the
-  # editor exits rather than merely hiding it, so the next invocation captures
-  # a fresh field.
+  # Terminate the QAT host after the editor exits, so the next invocation starts
+  # a fresh editor instead of reviving an empty hidden panel.
   kill "$panel_pid" 2>/dev/null || true
 }
 
@@ -131,26 +138,23 @@ launch_editor() {
   local dep window target class layout
 
   # If a textarea editor already exists, this is only a hide/show request.
-  # Capturing again here would overwrite its draft with the QAT's own window.
+  # Capturing again here would overwrite its draft with the panel's own text.
   if editor_alive; then
-    qat_config="$textarea_qat_config"
-    run_qat_panel "$textarea_group" /usr/bin/env bash "$script_path" --run >/dev/null 2>&1 || true
+    show_or_toggle_editor || true
     return 0
   fi
   rm -f "$pid_file" "$target_file"
 
-  for dep in hyprctl jq wtype wl-copy wl-paste; do
+  for dep in hyprctl jq wtype wl-copy wl-paste kitten; do
     if ! command -v "$dep" >/dev/null 2>&1; then
       notify "Missing dependency: $dep"
       return 1
     fi
   done
 
-  # QATs are hosted by the main kitty instance. Unlike session pickers this
-  # action should not create an unrelated kitty window just to edit a field.
-  if [[ -z "$(main_kitty_socket || true)" ]]; then
-    notify "Main kitty is not running"
-    return 0
+  if [[ ! -f "$textarea_qat_config" ]]; then
+    notify "Missing textarea QAT config: $textarea_qat_config"
+    return 1
   fi
 
   window="$(active_window_json)"
@@ -186,11 +190,7 @@ launch_editor() {
 
   log "captured textarea from $class $target"
 
-  # Do not use launch_qat(): it forces the keyboard to US before Neovim starts.
-  # Starting through run_qat_panel lets the existing Neovim layout autocmds see
-  # the application's current layout, while finish_editor restores it on exit.
-  qat_config="$textarea_qat_config"
-  if ! run_qat_panel "$textarea_group" /usr/bin/env bash "$script_path" --run; then
+  if ! show_or_toggle_editor; then
     log "failed to launch textarea QAT"
     notify "Could not open the Neovim textarea panel"
     rm -f "$target_file" "$pid_file"

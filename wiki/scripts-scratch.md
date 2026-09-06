@@ -4,6 +4,7 @@ type: component
 updated: 2026-09-06
 covers:
   - kitty/quick-access-terminal-scratch.conf
+  - kitty/quick-access-terminal-textarea.conf
   - quickshell/components/ScratchOverlay.qml
   - quickshell/dots-shell
   - quickshell/picker-helper.py
@@ -39,9 +40,12 @@ hidden or modified for it.
 ## External GUI textarea (`Super+Shift+E`)
 
 `scripts/nvim-textarea.sh` turns the currently focused GUI text field into a
-temporary fullscreen Neovim editor. It uses the same fullscreen QAT config as
-the scratch note but a separate `textarea` instance group, so `Super+N` and the
-textarea editor do not toggle each other.
+compact temporary Neovim editor. Unlike the fullscreen scratch note, textarea
+mode has its own `kitty/quick-access-terminal-textarea.conf`: a 90-column,
+12-line `center-sized` layer-shell panel. It is launched directly with
+`kitten quick-access-terminal`, not through the main kitty OS window. This is
+important because the main kitty window is pinned to workspace 1; the textarea
+panel therefore appears over the current display without switching workspaces.
 
 The launcher records the focused Hyprland window address and the current
 `kanata` layout, clears the Wayland clipboard, then sends `Ctrl+A`, `Ctrl+C`
@@ -53,7 +57,7 @@ insert mode with the cursor at the end.
 
 Re-triggering `Super+Shift+E` while the editor process exists only hides/shows
 that same QAT. The launcher checks an editor PID before capture, so a re-trigger
-cannot accidentally replace the draft with text copied from the QAT itself.
+cannot accidentally replace the draft with text copied from the panel itself.
 
 Every Neovim exit is treated as apply, including the fast mappings that execute
 `:q!`: a `VimLeavePre` autocmd writes the temporary buffer first. On exit the
@@ -71,11 +75,6 @@ both in the clipboard and in `~/.cache/nvim-textarea/text.txt` for recovery.
 Kitty is rejected as a source window because `Ctrl+A` has terminal semantics
 there rather than selecting a GUI field. The bridge is intentionally plain-text
 only; rich formatting copied from Telegram/browser inputs is not preserved.
-
-The textarea route uses `run_qat_panel` rather than `launch_qat`. The latter
-forces the system layout to US before spawning a panel; bypassing that pre-switch
-lets the existing Neovim insert/normal layout autocmds see the application's
-current layout, while the recorded layout is explicitly restored after paste.
 
 ## Optional Quickshell behavior
 

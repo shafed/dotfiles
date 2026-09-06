@@ -270,7 +270,7 @@ vim.keymap.set("n", "<leader>lc", obsidian.copy_workout_table, { desc = "[P]Log 
 vim.keymap.set("n", "<leader>lp", obsidian.save_training_note, { desc = "[P]Log Paste: save training note" })
 
 vim.keymap.set("n", "<leader>lv", function()
-  local logbook = vim.fn.expand("~/.cache/logbook/logbook.html")
+  local logbook = vim.fn.expand("~/github/obsidian/training/logbook.html")
   if vim.fn.filereadable(logbook) == 0 then
     vim.notify("Logbook not found: " .. logbook, vim.log.levels.ERROR)
     return

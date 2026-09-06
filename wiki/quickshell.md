@@ -1,7 +1,7 @@
 ---
 title: quickshell
 type: component
-updated: 2026-09-05
+updated: 2026-09-06
 covers:
   - quickshell/shell.qml
   - quickshell/components/
@@ -234,6 +234,14 @@ Codex runs `codex ... app-server` as a Quickshell `Process` with stdin enabled.
 The service performs `initialize`, `account/read` and
 `account/rateLimits/read` as line-delimited JSON-RPC and bounds every phase with
 a timeout. There is no intermediary Python subprocess.
+
+`account/rateLimits/read` shares Codex's local app-server with any other Codex
+CLI process (e.g. an interactive session left open in a terminal); measured
+directly, three concurrent `codex app-server` instances all resolved that call
+in ~6.5s instead of the sub-second time seen with only one running. Its timeout
+is 10s (not the 4s used for the earlier `account/read` step) so a session left
+open elsewhere doesn't make the widget silently fall back to the stale cached
+row instead of waiting for the live number.
 
 Rows are cached at `~/.cache/dots-shell/agents.json`. Failed live refreshes keep
 previous limits visible and mark them `cached`; a successful refresh atomically

@@ -1,7 +1,7 @@
 ---
 title: scripts-scratch
 type: component
-updated: 2026-09-02
+updated: 2026-09-06
 covers:
   - kitty/quick-access-terminal-scratch.conf
   - quickshell/components/ScratchOverlay.qml
@@ -10,6 +10,8 @@ covers:
   - scripts/nvim-scratch-toggle.sh
   - scripts/nvim-scratch-run.sh
   - scripts/nvim-scratch-quit.sh
+  - scripts/nvim-textarea.sh
+  - hypr/modules/binds.lua
   - hypr/modules/rules.lua
 ---
 
@@ -33,6 +35,47 @@ the user decides when and where to paste the clipboard contents.
 CopyQ has no special integration with the nvim QAT. `Super+V` simply toggles
 CopyQ through `dots-shell clipboard`; the scratch panel is not automatically
 hidden or modified for it.
+
+## External GUI textarea (`Super+Shift+E`)
+
+`scripts/nvim-textarea.sh` turns the currently focused GUI text field into a
+temporary fullscreen Neovim editor. It uses the same fullscreen QAT config as
+the scratch note but a separate `textarea` instance group, so `Super+N` and the
+textarea editor do not toggle each other.
+
+The launcher records the focused Hyprland window address and the current
+`kanata` layout, clears the Wayland clipboard, then sends `Ctrl+A`, `Ctrl+C`
+with `wtype`. Clearing first is intentional: copying from an empty text field
+otherwise leaves the previous clipboard value unchanged and would make that old
+text look like the field contents. The captured plain text is written to
+`~/.cache/nvim-textarea/text.txt` and opened in the normal Neovim config in
+insert mode with the cursor at the end.
+
+Re-triggering `Super+Shift+E` while the editor process exists only hides/shows
+that same QAT. The launcher checks an editor PID before capture, so a re-trigger
+cannot accidentally replace the draft with text copied from the QAT itself.
+
+Every Neovim exit is treated as apply, including the fast mappings that execute
+`:q!`: a `VimLeavePre` autocmd writes the temporary buffer first. On exit the
+script:
+
+- copies the edited text to the Wayland clipboard;
+- focuses the exact Hyprland address recorded at launch;
+- sends `Ctrl+A` and pastes the result (or `BackSpace` for an empty result);
+- restores the `kanata` layout that was active before the editor opened;
+- clears the temporary text after a successful replacement and terminates the
+  textarea QAT.
+
+If the original window disappeared, nothing is pasted: the edited text remains
+both in the clipboard and in `~/.cache/nvim-textarea/text.txt` for recovery.
+Kitty is rejected as a source window because `Ctrl+A` has terminal semantics
+there rather than selecting a GUI field. The bridge is intentionally plain-text
+only; rich formatting copied from Telegram/browser inputs is not preserved.
+
+The textarea route uses `run_qat_panel` rather than `launch_qat`. The latter
+forces the system layout to US before spawning a panel; bypassing that pre-switch
+lets the existing Neovim insert/normal layout autocmds see the application's
+current layout, while the recorded layout is explicitly restored after paste.
 
 ## Optional Quickshell behavior
 

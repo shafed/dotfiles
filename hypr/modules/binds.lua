@@ -18,6 +18,7 @@ hl.bind(mainMod .. " + SHIFT + N", hl.dsp.exec_cmd(shellCtl .. " panel notificat
 
 hl.bind("SUPER + Home", hl.dsp.exec_cmd("systemctl suspend && hyprlock"))
 hl.bind(mainMod .. " + N", hl.dsp.exec_cmd("~/github/dotfiles/scripts/nvim-scratch-toggle.sh"))
+hl.bind(mainMod .. " + SHIFT + E", hl.dsp.exec_cmd("~/github/dotfiles/scripts/nvim-textarea.sh"))
 
 hl.bind(mainMod .. " + period", hl.dsp.exec_cmd("pkill -USR2 -x handy"))
 -- Example binds, see https://wiki.hypr.land/Configuring/Basics/Binds/ for more

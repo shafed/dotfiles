@@ -24,6 +24,15 @@ minimal markdown→HTML → render → assemble the page (`main`).
 
 Key decisions (from git evolution):
 
+- **Output location: inside the vault, deliberately** — `OUTPUT` defaults to
+  `training/logbook.html` (override with `LOGBOOK_OUTPUT`). This _used_ to
+  write to `~/.cache/logbook/` specifically to keep a 1MB+ generated blob out
+  of the vault's git history, but that meant `obsidian-sync.sh push`'s
+  `git add -A` never picked up fresh regenerations, and other devices (the
+  phone) were stuck on whatever was last committed while it briefly lived in
+  the vault (2026-07-21) — permanently stale, since nothing wrote there
+  anymore. Reverted 2026-09-06: the phone-sync requirement outweighs the git
+  noise from a large diff on every rebuild.
 - **Session filenames**: canonical session files use `YYYY-MM-DD-Training.md`. Legacy `YYYY-MM-DD-Day-N.md` files remain accepted for backward compatibility; new files should not encode weekly workout order in the filename.
 - **Mood via session YAML frontmatter** (`mood: bad|mid|great`), not an inline
   tag in the body — commit "Add session-level mood via YAML frontmatter." Mood
@@ -100,3 +109,9 @@ asynchronous):
 - `nvim-edit-handler.sh` ↔ the kitty obsidian session and its nvim (see
   [sessions](sessions.md)).
 - `generate_logbook.py` (generates links) ↔ `nvim-edit-handler.sh` (opens them).
+- `generate_logbook.py` writes into the vault ↔ `obsidian-sync.sh push`'s
+  `git add -A` carries the regenerated `training/logbook.html` to other
+  devices. `<leader>lr` (`obsidian.regenerate_logbook`) only rebuilds the
+  file locally — getting the update onto the phone still requires an
+  `obsidian-sync.sh push` (autopush on focus-lost, or manual) afterward.
+  `<leader>lv` opens `~/github/obsidian/training/logbook.html` directly.

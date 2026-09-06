@@ -70,9 +70,9 @@ exceeded`). Every caller of `runSearch` already guarantees the feed view is
 - **Split dates in search** (`c26e2dc`): `2026 06` matches `2026-06-*`.
 - **Exercise history** (`ce289e2`): clicking an exercise name → its history; the
   exercise list is sorted by last use, not alphabetically (`0a0133a`). The
-  "← all exercises" back-link (inside `#exdetail`) is placed before the
-  "Exercise history" `h2.eye` in the view markup, so it sits right under the
-  search bar/tabs instead of below the section heading.
+  "← all exercises" back-link lives inside `#exdetail`, after the "Exercise
+  history" `h2.eye` heading (briefly moved above it on 2026-09-06, reverted
+  same day).
 - `#search::-webkit-search-cancel-button` is disabled in CSS — Chromium-based
   mobile browsers (e.g. Samsung Internet) render their own native clear icon
   on `type="search"` inputs, which doubled up with the custom `.searchclear`

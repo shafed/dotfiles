@@ -630,6 +630,10 @@ h1{font:600 26px/1 'Georgia',serif;letter-spacing:-.01em;margin:0 0 6px}
 #search:hover{border-color:var(--soft)}
 #search:focus{outline:none;border-color:var(--accent);
   box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 22%,transparent)}
+/* kill the native type=search clear icon (webkit/Chromium mobile) so it
+   doesn't double up with our own .searchclear button */
+#search::-webkit-search-cancel-button,
+#search::-webkit-search-decoration{-webkit-appearance:none;appearance:none;display:none}
 .searchkbd{position:absolute;right:12px;font:500 11px/1 'Iosevka',ui-monospace,monospace;
   color:var(--soft);border:1px solid var(--line);background:var(--grid-alt);
   border-radius:5px;padding:3px 6px;pointer-events:none}
@@ -779,6 +783,12 @@ const tabs=[...document.querySelectorAll('.tab')];
 function showView(id){
   tabs.forEach(t=>t.setAttribute('aria-selected',t.dataset.v===id));
   document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===id));
+  // The search box is shared across both tabs -> whichever view you land on
+  // must reflect its current value immediately, even if it was last typed
+  // while the other tab was showing. A background sync only, so it leaves
+  // an already-open exercise detail alone.
+  if(id==='feed') runSearch(searchBox.value);
+  else if(id==='exercise') filterExercises(searchBox.value);
 }
 tabs.forEach(t=>t.addEventListener('click',()=>showView(t.dataset.v)));
 
@@ -822,8 +832,9 @@ const searchRows=sessions.map((el,order)=>{
   const text=el.textContent;
   const hay=normSearch(text);
   const hayWords=normSearchWords(text);
+  const words=hayWords.split(' ').filter(Boolean);
   const dateWords=normSearchWords(el.dataset.date||'');
-  return {el,order,hay,hayWords,dateWords,dateTokens:dateWords.split(' ').filter(Boolean)};
+  return {el,order,hay,hayWords,words,dateWords,dateTokens:dateWords.split(' ').filter(Boolean)};
 });
 function restoreFeedOrder(){
   searchRows.forEach(r=>feedList.appendChild(r.el));
@@ -838,9 +849,12 @@ function fuzzyToken(text, token){
   return j===token.length;
 }
 function fuzzyMatch(row, queryWords, tokens){
+  // Fuzzy-matches each token against individual words, not the whole card's
+  // text glued together -> a short query no longer subsequence-matches
+  // across unrelated exercise names/reps/dates just by chance.
   if(!queryWords) return false;
   if(row.hayWords.includes(queryWords)) return true;
-  return tokens.length>0 && tokens.every(t=>fuzzyToken(row.hay,t));
+  return tokens.length>0 && tokens.every(t=>row.words.some(w=>fuzzyToken(w,t)));
 }
 function searchScore(row, queryWords, tokens){
   let score=0;
@@ -888,9 +902,10 @@ function runSearch(q){
   highlightedRows.forEach(clearMarks);
   highlightedRows=[];
   if(q){
-    // search overrides the program filter
+    // search overrides the program filter. (Every caller already has the
+    // feed view active or is showView() itself switching into it -- calling
+    // showView('feed') here too would recurse back into runSearch.)
     curProgram='all'; setFilterSelected();
-    showView('feed');
     const queryWords=normSearchWords(q);
     const tokens=queryWords.split(/\\s+/).filter(Boolean);
     const hits=[];
@@ -913,7 +928,7 @@ function scheduleSearch(){
   searchTimer=setTimeout(()=>{
     searchTimer=0;
     if(exView.classList.contains('active')){
-      filterExercises(searchBox.value);
+      exerciseListSearch(searchBox.value);
     } else {
       runSearch(searchBox.value);
     }
@@ -930,7 +945,7 @@ searchClear.addEventListener('click',()=>{
   updateSearchClear();
   cancelDeferredWork();
   if(exView.classList.contains('active')){
-    filterExercises('');
+    exerciseListSearch('');
   } else {
     runSearch('');
   }
@@ -952,7 +967,7 @@ document.addEventListener('keydown',(e)=>{
     updateSearchClear();
     cancelDeferredWork();
     if(exView.classList.contains('active')){
-      filterExercises('');
+      exerciseListSearch('');
     } else {
       runSearch('');
     }
@@ -984,6 +999,13 @@ function openExercise(name){
 function closeExercise(){
   exDetail.style.display='none';
   exListWrap.style.display='block';
+}
+function exerciseListSearch(q){
+  // A new query while an exercise's history is open must return to the
+  // (now-filtered) list immediately -- otherwise the detail view keeps
+  // covering it and typing looks like it did nothing.
+  if(exDetail.style.display==='block') closeExercise();
+  filterExercises(q);
 }
 function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 
@@ -1099,8 +1121,8 @@ def main() -> int:
 </div>
 
 <div class="view" id="exercise">
-  <h2 class="eye">Exercise history</h2>
   <div id="exdetail" style="display:none"></div>
+  <h2 class="eye">Exercise history</h2>
   <div id="exall" class="exall">{ex_links}</div>
 </div>
 

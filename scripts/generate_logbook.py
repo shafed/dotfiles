@@ -1125,8 +1125,8 @@ def main() -> int:
 </div>
 
 <div class="view" id="exercise">
-  <div id="exdetail" style="display:none"></div>
   <h2 class="eye">Exercise history</h2>
+  <div id="exdetail" style="display:none"></div>
   <div id="exall" class="exall">{ex_links}</div>
 </div>
 

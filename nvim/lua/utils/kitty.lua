@@ -37,25 +37,28 @@ local function is_zoomed(tab)
   return tab ~= nil and tab.layout == "stack"
 end
 
-local function has_companion(tab)
-  return tab ~= nil and tab.windows and #tab.windows > 1
-end
-
--- The non-active window in the tab (the companion terminal, since nvim's own
--- window is always the active one when <M-t> is pressed from nvim). Matching
--- by id is used instead of `--match='not state:focused'`: in a stack layout
--- that negation is unreliable and can resolve to the active (nvim) window,
--- sending the cd text into the nvim buffer instead of the terminal.
-local function companion_window_id(tab)
+-- Do not treat arbitrary kitty splits (notably native Sidekick CLI windows) as
+-- the <M-t> companion. The companion is explicitly tagged when it is created.
+local function companion_window(tab)
   if not tab or not tab.windows then
     return nil
   end
   for _, win in ipairs(tab.windows) do
-    if not win.is_active then
-      return win.id
+    local env = win.env or {}
+    if env.NVIM_COMPANION == "1" then
+      return win
     end
   end
   return nil
+end
+
+local function has_companion(tab)
+  return companion_window(tab) ~= nil
+end
+
+local function companion_window_id(tab)
+  local win = companion_window(tab)
+  return win and win.id or nil
 end
 
 M.open = function(dir)
@@ -68,14 +71,17 @@ M.open = function(dir)
 
   if has_companion(tab) then
     if is_zoomed(tab) then
-      -- Zoomed -> unzoom, then jump to the other (companion) window.
+      -- Zoomed -> unzoom, then focus the exact companion window. Resolving by
+      -- id matters now that a tab can also contain Sidekick kitty windows.
       local companion_id = companion_window_id(tab)
       if auto_cd_to_new_dir and companion_id and vim.g.kitty_pane_dir ~= escaped_dir then
         vim.fn.system("kitten @ send-text --match=id:" .. companion_id .. " 'cd \"" .. escaped_dir .. "\"\n'")
         vim.g.kitty_pane_dir = escaped_dir
       end
       vim.fn.system("kitten @ action goto_layout splits")
-      vim.fn.system("kitten @ action neighboring_window right")
+      if companion_id then
+        vim.fn.system("kitten @ focus-window --match=id:" .. companion_id)
+      end
     else
       -- Not zoomed -> zoom the current window (stack layout).
       vim.fn.system("kitten @ action goto_layout stack")
@@ -91,11 +97,12 @@ M.open = function(dir)
     if tab and tab.layout ~= "splits" then
       vim.fn.system("kitten @ action goto_layout splits")
     end
-    -- --bias sets the new window's size to ~35% width on the right edge.
+    -- --bias sets the new window's size on the right edge. Tag it so later
+    -- <M-t> calls can distinguish it from Sidekick and other kitty splits.
     vim.fn.system(
       "kitten @ launch --location=vsplit --bias 49 --add-to-session . --cwd '"
         .. escaped_dir
-        .. "' --env DISABLE_PULL=1 zsh"
+        .. "' --env DISABLE_PULL=1 --env NVIM_COMPANION=1 zsh"
     )
   end
 end

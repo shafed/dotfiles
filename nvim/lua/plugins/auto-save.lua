@@ -75,6 +75,12 @@ return {
       -- return false: if it's not ok to be saved
       -- if set to `nil` then no specific condition is applied
       condition = function(buf)
+        -- Oil is an editable filesystem view. Autosaving it would apply pending
+        -- file operations just because a TextChanged/BufLeave event fired.
+        if vim.bo[buf].filetype == "oil" or vim.api.nvim_buf_get_name(buf):match("^oil://") then
+          return false
+        end
+
         -- Do not save when I'm in insert mode
         -- Do NOT ADD VISUAL MODE HERE or the cancel_deferred_save wont' work
         -- If I STAY in insert mode and switch to another app, like YouTube to

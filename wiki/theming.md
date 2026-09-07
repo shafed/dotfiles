@@ -1,7 +1,7 @@
 ---
 title: theming
 type: topic
-updated: 2026-09-02
+updated: 2026-09-07
 covers:
   - colors.toml
   - scripts/generate-theme.py
@@ -11,6 +11,7 @@ covers:
   - hypr/hyprsunset.conf
   - kitty/current-theme.conf
   - .claude/themes/gruvbox-material.json
+  - .opencode/themes/gruvbox-material.json
   - copyq/gruvbox.ini
   - quickshell/config/Colors.qml
 ---
@@ -40,7 +41,11 @@ python3 tests/helium-theme.py
 ```
 
 The main generator writes Kitty, Waybar, Hyprlock, shell colors, Quickshell,
-Claude Code, CopyQ and Yazi surfaces. Those remain pinned dark. Helium's two
+Claude Code, opencode, CopyQ and Yazi surfaces. Those remain pinned dark.
+opencode's theme keys are plain string references into the generated `defs`
+block (which mirrors `colors.toml` verbatim) rather than `{dark, light}` pairs,
+matching the dark-only convention here; `.opencode/tui.json` is a small static
+file (not generated) that selects `"theme": "gruvbox-material"`. Helium's two
 Chromium manifests are separate protocol mappings of `[colors]` and
 `[colors_light]`; `tests/helium-theme.py` guards their exact mapped colors.
 
@@ -121,7 +126,7 @@ used either. A `theme_toolbar` image behaves the same way — it fills the strip
 and the active tab together.
 
 So an extension theme cannot give the active tab its own fill. Whatever differs
-from the strip is the *unselected* tabs, which is why they used to be the ones
+from the strip is the _unselected_ tabs, which is why they used to be the ones
 that looked highlighted. The manifests therefore set
 
 ```text
@@ -134,7 +139,7 @@ instead: `tab_text` is `fg_bright` (`#1d2021` / `#fbf1c7`) against
 is derived as a blend of `background_tab` and `toolbar`, so making them equal
 also removes it.
 
-Helium's *default* theme does show a filled active tab (light mode: `#ffffff`
+Helium's _default_ theme does show a filled active tab (light mode: `#ffffff`
 strip, `#e8e8e8` active tab). That is not reproducible here — it comes from
 Chromium's generated Material 3 palette, where the strip and the active tab are
 separate roles, and installing any theme extension collapses both onto

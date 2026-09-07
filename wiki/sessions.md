@@ -1,11 +1,12 @@
 ---
 title: sessions
 type: topic
-updated: 2026-09-02
+updated: 2026-09-07
 covers:
   - kitty/sessions
   - kitty/scripts
   - scripts/kitty-new-window.sh
+  - tmux/tmux.conf
 ---
 
 # sessions — native kitty sessions
@@ -25,8 +26,16 @@ The one tmux convenience that had to be rebuilt by hand is layout persistence.
 "press s on the start screen". ⚠️ The `obsidian` and daily-note sessions
 deliberately do **not** — see the daily-note gotcha below for what goes wrong.
 
-Tmux itself can still be launched occasionally, but there is no tracked tmux
-configuration or integration: those sessions use tmux's built-in defaults.
+Tmux itself can still be launched occasionally — for example, as a genuinely
+external pane for tools like sidekick.nvim's CLI integration, since Neovim's
+own `:terminal` (libvterm) reflows resized alt-screen TUIs incorrectly and can
+corrupt them. [`../tmux/tmux.conf`](../tmux/tmux.conf) is tracked (via
+`config_dirs` in [`../profiles/base.toml`](../profiles/base.toml)) purely to
+fix truecolor: tmux defaults to `default-terminal "screen"`, which downgrades
+24-bit color to a washed-out 256-color approximation. `default-terminal
+"tmux-256color"` + `terminal-overrides ",*:RGB"` restores true 24-bit color
+passthrough. There is otherwise no tmux session/pane management here — no
+kitty-style integration, just this one option fix.
 
 ## How kanata drives sessions
 

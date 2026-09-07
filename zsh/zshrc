@@ -273,13 +273,9 @@ export FZF_DEFAULT_OPTS="
   --color=scrollbar:${GRUVBOX_GRAY_DIM},preview-scrollbar:${GRUVBOX_GRAY_DIM},label:${GRUVBOX_FG}
   --pointer='▌' --marker='┃' --scrollbar='▐▌'"
 
-# Kitty companion-pane toggle (mirrors nvim's <M-t>), see wiki/zsh.md.
-export KITTY_WINDOW_DIRECTION="right"
-
+# Kitty companion-pane toggle (the companion is always right of nvim).
 function kitty_other_window() {
-  local move=left
-  [[ $KITTY_WINDOW_DIRECTION == "right" ]] || move=up
-  kitten @ action neighboring_window "$move"
+  kitten @ action neighboring_window left
   kitten @ action goto_layout stack
 }
 zvm_define_widget kitty_other_window

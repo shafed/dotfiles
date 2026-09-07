@@ -1,4 +1,4 @@
--- Toggle a companion kitty terminal window (right or bottom) with zsh in the
+-- Toggle a companion kitty terminal window on the right with zsh in the
 -- directory of the current file, or in `dir` if provided. Ported from the
 -- original tmux implementation (linkarzu), adapted to kitty remote control.
 --
@@ -8,10 +8,6 @@
 --   * Companion exists, zoomed -> unzoom, jump to the other window, and
 --     (if auto_cd_to_new_dir) cd into the new directory when it changed.
 --
--- Reads vim.g.tmux_pane_direction:
---   "right" (default) -> vsplit (side-by-side)
---   anything else     -> hsplit (top/bottom)
-
 local M = {}
 
 -- Return the focused OS window's focused tab table (.layout, .windows).
@@ -64,9 +60,6 @@ end
 
 M.open = function(dir)
   local auto_cd_to_new_dir = true
-  local pane_direction = vim.g.tmux_pane_direction or "right"
-  local split_location = (pane_direction == "right") and "vsplit" or "hsplit"
-  local move = (pane_direction == "right") and "right" or "down"
 
   local file_dir = dir or vim.fn.expand("%:p:h")
   local escaped_dir = file_dir:gsub("'", "'\\''")
@@ -81,8 +74,8 @@ M.open = function(dir)
         vim.fn.system("kitten @ send-text --match=id:" .. companion_id .. " 'cd \"" .. escaped_dir .. "\"\n'")
         vim.g.kitty_pane_dir = escaped_dir
       end
-      vim.fn.system("kitten @ action goto_layout tall")
-      vim.fn.system("kitten @ action neighboring_window " .. move)
+      vim.fn.system("kitten @ action goto_layout splits")
+      vim.fn.system("kitten @ action neighboring_window right")
     else
       -- Not zoomed -> zoom the current window (stack layout).
       vim.fn.system("kitten @ action goto_layout stack")
@@ -95,18 +88,12 @@ M.open = function(dir)
     end
     -- Make sure the tab is in a split layout first; launching in stack would
     -- open the new window full-screen instead of to the side.
-    if tab and tab.layout ~= "tall" then
-      vim.fn.system("kitten @ action goto_layout tall")
+    if tab and tab.layout ~= "splits" then
+      vim.fn.system("kitten @ action goto_layout splits")
     end
-    -- --bias sets the new window's size: ~35% width for a vsplit (right edge),
-    -- ~30% height for an hsplit (bottom edge).
-    local bias = (pane_direction == "right") and 49 or 30
+    -- --bias sets the new window's size to ~35% width on the right edge.
     vim.fn.system(
-      "kitten @ launch --location="
-        .. split_location
-        .. " --bias "
-        .. bias
-        .. " --add-to-session . --cwd '"
+      "kitten @ launch --location=vsplit --bias 49 --add-to-session . --cwd '"
         .. escaped_dir
         .. "' --env DISABLE_PULL=1 zsh"
     )

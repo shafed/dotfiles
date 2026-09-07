@@ -30,7 +30,6 @@ Item {
   function normalize(value) {
     return String(value || "")
       .toLowerCase()
-      .replace(/\.desktop$/, "")
       .replace(/[._\-\s]/g, "")
   }
 
@@ -116,7 +115,7 @@ Item {
   }
 
   function shortId(entry) {
-    var raw = String((entry && entry.id) || "").replace(/\.desktop$/, "")
+    var raw = String((entry && entry.id) || "")
     var parts = raw.split(".")
     return normalize(parts.length ? parts[parts.length - 1] : raw)
   }
@@ -279,6 +278,7 @@ Item {
     var target = normalize(entry && entry.id)
     var shortTarget = shortId(entry)
     var nameTarget = normalize(entry && entry.name)
+    var startupTarget = normalize(entry && entry.startupClass)
 
     for (var i = 0; i < values.length; i++) {
       var top = values[i]
@@ -286,6 +286,8 @@ Item {
       if (!app) continue
       if (app === target || app === shortTarget || app === nameTarget ||
           (target && (app.endsWith(target) || target.endsWith(app))) ||
+          (startupTarget && (app === startupTarget ||
+                             app.endsWith(startupTarget) || startupTarget.endsWith(app))) ||
           (shortTarget.length > 3 && (app.endsWith(shortTarget) || shortTarget.endsWith(app))))
         return top
     }

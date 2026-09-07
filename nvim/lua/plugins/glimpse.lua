@@ -14,6 +14,9 @@ local function preview_cursor(buf)
   if not vim.api.nvim_buf_is_valid(buf) or vim.bo[buf].filetype ~= "oil" then
     return
   end
+  if vim.api.nvim_get_current_buf() ~= buf then
+    return
+  end
 
   local oil = require("oil")
   local glimpse = require("glimpse")

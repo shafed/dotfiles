@@ -119,6 +119,10 @@ return {
   opts = {
     default_file_explorer = true,
     delete_to_trash = true,
+    win_options = {
+      -- <Tab> multi-selection is rendered with extmark signs.
+      signcolumn = "yes",
+    },
     view_options = {
       show_hidden = true,
     },

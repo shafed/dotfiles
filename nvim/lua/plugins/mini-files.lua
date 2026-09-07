@@ -1,193 +1,4 @@
--- Percent-encode a filesystem path for inclusion in a file:// URI.
--- Encodes everything except unreserved chars and "/" so the URI round-trips
--- through the clipboard and is consumed correctly by other apps (Nautilus, etc.).
-local function path_to_uri(path)
-  local encoded = path:gsub("[^%w%-%.%_%~/]", function(c)
-    return string.format("%%%02X", string.byte(c))
-  end)
-  return "file://" .. encoded
-end
-
-local image_mime_by_ext = {
-  avif = "image/avif",
-  bmp = "image/bmp",
-  gif = "image/gif",
-  jpeg = "image/jpeg",
-  jpg = "image/jpeg",
-  png = "image/png",
-  tif = "image/tiff",
-  tiff = "image/tiff",
-  webp = "image/webp",
-}
-
-local function image_mime_type(path)
-  local stat = vim.uv.fs_stat(path)
-  if not stat or stat.type ~= "file" then
-    return nil
-  end
-
-  return image_mime_by_ext[vim.fn.fnamemodify(path, ":e"):lower()]
-end
-
-local function read_binary_file(path)
-  local fd, open_err = vim.uv.fs_open(path, "r", 438)
-  if not fd then
-    return nil, open_err
-  end
-
-  local stat, stat_err = vim.uv.fs_fstat(fd)
-  if not stat then
-    vim.uv.fs_close(fd)
-    return nil, stat_err
-  end
-
-  local data, read_err = vim.uv.fs_read(fd, stat.size, 0)
-  vim.uv.fs_close(fd)
-  if not data then
-    return nil, read_err
-  end
-
-  return data
-end
-
-local function copy_single_image_to_clipboard(path, mime)
-  local data, read_err = read_binary_file(path)
-  if not data then
-    return false, "Could not read image: " .. tostring(read_err)
-  end
-
-  local uri_blob = path_to_uri(path) .. "\r\n"
-  local copyq_cmd = {
-    "copyq",
-    "--start-server",
-    "copy",
-    mime,
-    "-",
-    "text/plain",
-    path,
-    "text/uri-list",
-    uri_blob,
-  }
-  local copyq_result = vim.system(copyq_cmd, { stdin = data, text = false }):wait()
-
-  if copyq_result.code == 0 then
-    return true
-  end
-
-  if vim.fn.executable("wl-copy") == 0 then
-    local err = copyq_result.stderr ~= "" and copyq_result.stderr or "copyq failed and wl-copy is unavailable"
-    return false, err
-  end
-
-  local wl_result = vim.system({ "wl-copy", "--type", mime }, { stdin = data, text = false }):wait()
-  if wl_result.code == 0 then
-    return true
-  end
-
-  local err = wl_result.stderr ~= "" and wl_result.stderr or copyq_result.stderr
-  return false, err
-end
-
--- Parse a clipboard blob into a list of filesystem paths. Accepts both the plain
--- paths we now copy (one per line) and the file:// URIs that other apps or older
--- copies may put on the clipboard. Handles CRLF or LF line endings, skips blank
--- and "#" comment lines (per RFC 2483), strips the file:// scheme when present,
--- percent-decodes, and drops any trailing slash so basenames resolve correctly.
-local function uri_list_to_paths(blob)
-  local paths = {}
-  for line in tostring(blob):gmatch("[^\r\n]+") do
-    if not line:match("^%s*#") then
-      local entry = line:gsub("^%s+", ""):gsub("%s+$", "")
-      if entry ~= "" then
-        local p = entry
-        -- Only percent-decode file:// URIs; bare paths are taken verbatim so a
-        -- literal "%" in a filename survives.
-        if p:match("^file://") then
-          p = p:gsub("^file://", ""):gsub("%%(%x%x)", function(h)
-            return string.char(tonumber(h, 16))
-          end)
-        end
-        p = p:gsub("/+$", "")
-        if p ~= "" then
-          table.insert(paths, p)
-        end
-      end
-    end
-  end
-  return paths
-end
-
--- Given a destination directory and a desired basename, return a path that does
--- not collide with an existing entry, appending an incrementing number ("name1",
--- "name2", ...) before the extension for files.
-local function nonconflicting_dest(dir, name)
-  local dest = dir .. "/" .. name
-  if vim.uv.fs_stat(dest) == nil then
-    return dest
-  end
-  local stem, ext = name:match("^(.*)(%.[^%.]+)$")
-  if not stem then
-    stem, ext = name, ""
-  end
-  local i = 1
-  while true do
-    local candidate = string.format("%s/%s%d%s", dir, stem, i, ext)
-    if vim.uv.fs_stat(candidate) == nil then
-      return candidate
-    end
-    i = i + 1
-  end
-end
-
--- Copy the given absolute paths to the system clipboard. A single image is copied
--- as image/* first, so browsers/Claude paste the bitmap instead of the file://
--- URI. Everything else gets BOTH text/plain and text/uri-list representations.
--- A single wl-copy process can only serve identical content across its MIME
--- types, so a uri-list copy leaks "file://..." into text/plain (bad for
--- Claude/terminal), while a plain copy offers no uri-list (so Telegram/Dolphin
--- paste text instead of the file/image).
--- CopyQ sets distinct content per MIME type in one command:
---   text/plain    -> bare paths   (Claude, browser, terminal, our paste handler)
---   text/uri-list -> file:// URIs (Telegram, Dolphin -> file/image paste)
-local function copy_paths_to_clipboard(paths)
-  if #paths == 0 then
-    vim.notify("No files selected", vim.log.levels.WARN)
-    return
-  end
-
-  local single_image_mime = #paths == 1 and image_mime_type(paths[1]) or nil
-  if single_image_mime then
-    local ok, err = copy_single_image_to_clipboard(paths[1], single_image_mime)
-    if ok then
-      vim.notify("Copied image:\n" .. vim.fn.fnamemodify(paths[1], ":t"), vim.log.levels.INFO)
-    else
-      vim.notify("Image copy failed: " .. tostring(err), vim.log.levels.ERROR)
-    end
-    return
-  end
-
-  local uris, names = {}, {}
-  for _, p in ipairs(paths) do
-    table.insert(uris, path_to_uri(p))
-    table.insert(names, vim.fn.fnamemodify(p, ":t"))
-  end
-  -- CopyQ wants uri-list lines CRLF-terminated (RFC 2483).
-  local uri_blob = table.concat(uris, "\r\n") .. "\r\n"
-  local result = vim.fn.system({
-    "copyq",
-    "--start-server",
-    "copy",
-    "text/plain",
-    table.concat(paths, "\n"),
-    "text/uri-list",
-    uri_blob,
-  })
-  if vim.v.shell_error ~= 0 then
-    vim.notify("Copy failed: " .. result, vim.log.levels.ERROR)
-  else
-    vim.notify(string.format("Copied %d item(s):\n%s", #paths, table.concat(names, "\n")), vim.log.levels.INFO)
-  end
-end
+local file_clipboard = require("utils.file_clipboard")
 
 -- mini.files' LSP file-operation hook (mini.nvim >= 0.18.0) assumes every
 -- `workspace.fileOperations` filter scheme is a string. Some servers advertise
@@ -398,6 +209,11 @@ end
 
 return {
   "nvim-mini/mini.files",
+  -- No longer the default explorer (see plugins/oil.lua) and its remaining
+  -- keys are all `ft = "minifiles"`-scoped, so nothing would trigger lazy
+  -- module-loading anymore. Load eagerly so it's still reachable via
+  -- `require("mini.files").open(...)`.
+  lazy = false,
   opts = {
     windows = {
       preview = true,
@@ -407,8 +223,9 @@ return {
     options = {
       -- Whether to use for editing directories
       permanent_delete = false,
-      -- Disabled by default in LazyVim because neo-tree is used for that
-      use_as_default_explorer = true,
+      -- oil.nvim is now the default explorer (see plugins/oil.lua); mini.files
+      -- stays configured and reachable via <leader>m*, just not on `gx`/netrw.
+      use_as_default_explorer = false,
     },
     -- Module mappings created only inside explorer.
     -- Use `''` (empty string) to not create one.
@@ -471,20 +288,6 @@ return {
   end,
   keys = {
     {
-      "<leader>e",
-      function()
-        require("mini.files").open(vim.api.nvim_buf_get_name(0), true)
-      end,
-      desc = "Open mini.files (Directory of Current File)",
-    },
-    {
-      "<leader>E",
-      function()
-        require("mini.files").open(vim.uv.cwd(), true)
-      end,
-      desc = "Open mini.files (cwd)",
-    },
-    {
       "<Tab>",
       function()
         local curr_entry = require("mini.files").get_fs_entry()
@@ -498,19 +301,19 @@ return {
       desc = "Toggle multi-select on entry",
     },
     {
-      "<leader>yy",
+      "yy",
       function()
         -- Prefer the ad-hoc multi-selection; fall back to the entry under cursor.
         local marked = Selection.paths()
         if #marked > 0 then
-          copy_paths_to_clipboard(marked)
+          file_clipboard.copy_paths(marked)
           Selection.clear()
           Selection.redraw(vim.api.nvim_get_current_buf())
           return
         end
         local curr_entry = require("mini.files").get_fs_entry()
         if curr_entry then
-          copy_paths_to_clipboard({ curr_entry.path })
+          file_clipboard.copy_paths({ curr_entry.path })
         else
           vim.notify("No file or directory selected", vim.log.levels.WARN)
         end
@@ -520,7 +323,7 @@ return {
     },
 
     {
-      "<leader>y",
+      "y",
       function()
         local mini_files = require("mini.files")
         local start_line = vim.fn.line("v")
@@ -536,7 +339,7 @@ return {
           end
         end
         vim.api.nvim_input("<Esc>")
-        copy_paths_to_clipboard(paths)
+        file_clipboard.copy_paths(paths)
       end,
       mode = "x",
       ft = "minifiles",
@@ -570,6 +373,7 @@ return {
           vim.notify("No file or directory selected", vim.log.levels.WARN)
         end
       end,
+      ft = "minifiles",
       noremap = true,
       silent = true,
       desc = "[P]Open with default app",
@@ -585,7 +389,7 @@ return {
       desc = "Preview image in float window",
     },
     {
-      "<leader>p",
+      "p",
       function()
         local mini_files = require("mini.files")
         local curr_entry = mini_files.get_fs_entry()
@@ -595,44 +399,8 @@ return {
         end
         local curr_dir = curr_entry.fs_type == "directory" and curr_entry.path
           or vim.fn.fnamemodify(curr_entry.path, ":h")
-        local output = vim.fn.system({ "wl-paste", "--no-newline", "--type", "text/uri-list" })
-        if vim.v.shell_error ~= 0 or output == "" then
-          vim.notify("Clipboard does not contain a valid file URI.", vim.log.levels.WARN)
-          return
-        end
-        local sources = uri_list_to_paths(output)
-        if #sources == 0 then
-          vim.notify("Could not parse any file path from clipboard.", vim.log.levels.WARN)
-          return
-        end
-
-        local pasted, errors = {}, {}
-        for _, source_path in ipairs(sources) do
-          local stat = vim.uv.fs_stat(source_path)
-          if not stat then
-            table.insert(errors, "Missing source: " .. source_path)
-          else
-            local dest_path = nonconflicting_dest(curr_dir, vim.fn.fnamemodify(source_path, ":t"))
-            local is_dir = stat.type == "directory"
-            -- -T: treat dest as the final name (never copy-into), required for the
-            -- auto-renamed destination to behave for both files and directories.
-            local copy_cmd = is_dir and { "cp", "-rT", source_path, dest_path }
-              or { "cp", "-T", source_path, dest_path }
-            local result = vim.fn.system(copy_cmd)
-            if vim.v.shell_error ~= 0 then
-              table.insert(errors, vim.fn.fnamemodify(source_path, ":t") .. ": " .. result)
-            else
-              table.insert(pasted, vim.fn.fnamemodify(dest_path, ":t"))
-            end
-          end
-        end
-
-        mini_files.synchronize()
-        if #pasted > 0 then
-          vim.notify(string.format("Pasted %d item(s):\n%s", #pasted, table.concat(pasted, "\n")), vim.log.levels.INFO)
-        end
-        if #errors > 0 then
-          vim.notify("Paste errors:\n" .. table.concat(errors, "\n"), vim.log.levels.ERROR)
+        if file_clipboard.paste_into(curr_dir) then
+          mini_files.synchronize()
         end
       end,
       ft = "minifiles",

@@ -18,6 +18,100 @@ local function go_up_parent()
   oil.open(target)
 end
 
+-- Oil does not have a built-in persistent multi-selection model for arbitrary
+-- entries. Keep a tiny path-based selection so it survives cursor movement and
+-- directory changes. <Tab> toggles the entry under the cursor; yy copies all
+-- selected paths, falling back to the current entry when nothing is selected.
+local Selection = {
+  ns = vim.api.nvim_create_namespace("OilMultiSelect"),
+  set = {},
+  order = {},
+}
+
+function Selection.clear()
+  Selection.set = {}
+  Selection.order = {}
+end
+
+function Selection.toggle(path)
+  if Selection.set[path] then
+    Selection.set[path] = nil
+    for i, selected in ipairs(Selection.order) do
+      if selected == path then
+        table.remove(Selection.order, i)
+        break
+      end
+    end
+  else
+    Selection.set[path] = true
+    table.insert(Selection.order, path)
+  end
+end
+
+function Selection.paths()
+  local paths = {}
+  for _, path in ipairs(Selection.order) do
+    table.insert(paths, path)
+  end
+  return paths
+end
+
+function Selection.redraw(buf)
+  if not (buf and vim.api.nvim_buf_is_valid(buf)) then
+    return
+  end
+  vim.api.nvim_buf_clear_namespace(buf, Selection.ns, 0, -1)
+
+  local oil = require("oil")
+  local dir = oil.get_current_dir(buf)
+  if not dir then
+    return
+  end
+
+  for lnum = 1, vim.api.nvim_buf_line_count(buf) do
+    local entry = oil.get_entry_on_line(buf, lnum)
+    if entry and entry.name ~= ".." then
+      local path = entry_path(dir, entry)
+      if Selection.set[path] then
+        vim.api.nvim_buf_set_extmark(buf, Selection.ns, lnum - 1, 0, {
+          sign_text = "●",
+          sign_hl_group = "OilDir",
+          priority = 100,
+        })
+      end
+    end
+  end
+end
+
+local function toggle_selection()
+  local oil = require("oil")
+  local entry = oil.get_cursor_entry()
+  if not entry or entry.name == ".." then
+    vim.notify("No file or directory selected", vim.log.levels.WARN)
+    return
+  end
+
+  local path = entry_path(oil.get_current_dir(), entry)
+  Selection.toggle(path)
+  Selection.redraw(0)
+  vim.cmd.normal({ "j", bang = true })
+end
+
+local function copy_selection_or_cursor()
+  local paths = Selection.paths()
+  if #paths == 0 then
+    local oil = require("oil")
+    local entry = oil.get_cursor_entry()
+    if not entry then
+      vim.notify("No file or directory selected", vim.log.levels.WARN)
+      return
+    end
+    paths = { entry_path(oil.get_current_dir(), entry) }
+  end
+
+  file_clipboard.copy_paths(paths)
+end
+
 return {
   "stevearc/oil.nvim",
   ---@module 'oil'
@@ -51,18 +145,16 @@ return {
       desc = "Open oil (cwd)",
     },
     {
-      "yy",
-      function()
-        local oil = require("oil")
-        local entry = oil.get_cursor_entry()
-        if not entry then
-          vim.notify("No file or directory selected", vim.log.levels.WARN)
-          return
-        end
-        file_clipboard.copy_paths({ entry_path(oil.get_current_dir(), entry) })
-      end,
+      "<Tab>",
+      toggle_selection,
       ft = "oil",
-      desc = "Copy file/directory under cursor to clipboard",
+      desc = "Toggle file/directory selection",
+    },
+    {
+      "yy",
+      copy_selection_or_cursor,
+      ft = "oil",
+      desc = "Copy selected files/directories to clipboard",
     },
     {
       "y",
@@ -103,4 +195,16 @@ return {
       desc = "Paste from clipboard",
     },
   },
+  config = function(_, opts)
+    require("oil").setup(opts)
+
+    vim.api.nvim_create_autocmd({ "BufEnter", "TextChanged", "TextChangedI" }, {
+      pattern = "oil://*",
+      callback = function(args)
+        vim.schedule(function()
+          Selection.redraw(args.buf)
+        end)
+      end,
+    })
+  end,
 }

@@ -1,7 +1,7 @@
 ---
 title: zsh
 type: component
-updated: 2026-08-31
+updated: 2026-09-07
 covers:
   - zsh/zshrc
   - zsh/zprofile
@@ -55,9 +55,9 @@ is eaten as a motion.
   only exists after the plugin is sourced.
 
 Because lazy loading is off, bindings are registered from **`zvm_after_init`**;
-`zvm_after_lazy_keybindings` never fires. `KITTY_WINDOW_DIRECTION` must stay in
-sync with `vim.g.tmux_pane_direction` in [nvim-ui](nvim-ui.md). See also
-[keymap](keymap.md), [sessions](sessions.md).
+`zvm_after_lazy_keybindings` never fires. The companion is always to the right,
+so the zsh-side toggle always returns left to nvim. See also [keymap](keymap.md),
+[sessions](sessions.md), and [nvim-ui](nvim-ui.md).
 
 If a `zvm_cursor_style` regex error ever appears on some terminal, set
 `ZVM_CURSOR_STYLE_ENABLED=false` — it is at its default (`true`) now.

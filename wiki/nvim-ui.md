@@ -1,7 +1,7 @@
 ---
 title: nvim-ui
 type: component
-updated: 2026-08-14
+updated: 2026-09-07
 covers:
   - nvim/lua/plugins/
   - nvim/lua/utils/winbar.lua
@@ -94,11 +94,16 @@ Parent: [nvim](nvim.md).
 ## Companion kitty terminal (`<M-t>`, `utils/kitty.lua`)
 
 `<M-t>` (`keymaps.lua`) calls `require("utils.kitty").open()`, which toggles a
-companion kitty terminal window (split right/bottom per
-`vim.g.tmux_pane_direction`) via `kitten @` remote control, `cd`-ing it into the
+companion kitty terminal window, always split to the right via `kitten @`
+remote control and `cd`-ing it into the
 current file's directory. This is unrelated to the kitty.conf-level split toggle
 mentioned as removed in [sessions](sessions.md) — that one is `C-S--`/`C-S-\`;
 this is nvim-driven and zoom/unzoom like the old tmux `resize-pane -Z`.
+
+⚠️ Gotcha: the non-zoomed layout must be `splits`, not `tall`. In `tall`, a
+subsequent `kitty_mod+enter` ignores its requested `--location=vsplit` and
+stacks extra terminals vertically in the right-hand area. Restoring `splits`
+makes repeated splits extend as columns to the right.
 
 ⚠️ Gotcha (fixed 2026-07-05, two rounds): when unzooming to cd the companion
 window into a new directory, the `cd` was sent with

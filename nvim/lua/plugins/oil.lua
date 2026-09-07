@@ -31,6 +31,14 @@ local Selection = {
 function Selection.clear()
   Selection.set = {}
   Selection.order = {}
+
+  -- Clear stale selection signs from every Oil buffer, not only the current
+  -- directory. This matters when entries were selected across directories.
+  for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+    if vim.api.nvim_buf_is_valid(buf) and vim.bo[buf].filetype == "oil" then
+      pcall(vim.api.nvim_buf_clear_namespace, buf, Selection.ns, 0, -1)
+    end
+  end
 end
 
 function Selection.toggle(path)
@@ -94,6 +102,8 @@ local function toggle_selection()
   local path = entry_path(oil.get_current_dir(), entry)
   Selection.toggle(path)
   Selection.redraw(0)
+
+  -- File-manager style selection: mark current item and advance to the next.
   vim.cmd.normal({ "j", bang = true })
 end
 
@@ -110,6 +120,42 @@ local function copy_selection_or_cursor()
   end
 
   file_clipboard.copy_paths(paths)
+
+  -- A copied selection is a completed operation, like selection in a normal
+  -- file manager. Do not leave old <Tab> marks active for the next copy.
+  Selection.clear()
+end
+
+local function copy_visual_selection()
+  local oil = require("oil")
+  local dir = oil.get_current_dir()
+  local start_line = vim.fn.line("v")
+  local end_line = vim.fn.line(".")
+  if start_line > end_line then
+    start_line, end_line = end_line, start_line
+  end
+
+  local paths = {}
+  for lnum = start_line, end_line do
+    local entry = oil.get_entry_on_line(0, lnum)
+    if entry and entry.name ~= ".." then
+      table.insert(paths, dir .. entry.name)
+    end
+  end
+
+  vim.api.nvim_input("<Esc>")
+  file_clipboard.copy_paths(paths)
+  Selection.clear()
+end
+
+local function paste_from_clipboard()
+  local oil = require("oil")
+  local dir = oil.get_current_dir()
+  local entry = oil.get_cursor_entry()
+  local dest = (entry and entry.type == "directory" and entry.name ~= "..") and (dir .. entry.name .. "/") or dir
+  if file_clipboard.paste_into(dest) then
+    require("oil.actions").refresh.callback({ force = true })
+  end
 end
 
 return {
@@ -129,6 +175,29 @@ return {
     keymaps = {
       ["q"] = { "actions.close", mode = "n" },
       ["<Esc>"] = { "actions.close", mode = "n" },
+
+      -- Keep these inside Oil's own buffer-local keymap setup. Defining them as
+      -- Lazy `keys` with ft = "oil" was racy and could lose to other mappings.
+      ["<Tab>"] = {
+        callback = toggle_selection,
+        mode = "n",
+        desc = "Toggle file/directory selection",
+      },
+      ["yy"] = {
+        callback = copy_selection_or_cursor,
+        mode = "n",
+        desc = "Copy selected files/directories to clipboard",
+      },
+      ["y"] = {
+        callback = copy_visual_selection,
+        mode = "x",
+        desc = "Copy selected files/directories to clipboard",
+      },
+      ["p"] = {
+        callback = paste_from_clipboard,
+        mode = "n",
+        desc = "Paste from clipboard",
+      },
     },
   },
   -- Optional dependencies
@@ -148,61 +217,25 @@ return {
       end,
       desc = "Open oil (cwd)",
     },
-    {
-      "<Tab>",
-      toggle_selection,
-      ft = "oil",
-      desc = "Toggle file/directory selection",
-    },
-    {
-      "yy",
-      copy_selection_or_cursor,
-      ft = "oil",
-      desc = "Copy selected files/directories to clipboard",
-    },
-    {
-      "y",
-      function()
-        local oil = require("oil")
-        local dir = oil.get_current_dir()
-        local start_line = vim.fn.line("v")
-        local end_line = vim.fn.line(".")
-        if start_line > end_line then
-          start_line, end_line = end_line, start_line
-        end
-        local paths = {}
-        for lnum = start_line, end_line do
-          local entry = oil.get_entry_on_line(0, lnum)
-          if entry and entry.name ~= ".." then
-            table.insert(paths, dir .. entry.name)
-          end
-        end
-        vim.api.nvim_input("<Esc>")
-        file_clipboard.copy_paths(paths)
-      end,
-      mode = "x",
-      ft = "oil",
-      desc = "Copy selected files/directories to clipboard",
-    },
-    {
-      "p",
-      function()
-        local oil = require("oil")
-        local dir = oil.get_current_dir()
-        local entry = oil.get_cursor_entry()
-        local dest = (entry and entry.type == "directory" and entry.name ~= "..") and (dir .. entry.name .. "/") or dir
-        if file_clipboard.paste_into(dest) then
-          require("oil.actions").refresh.callback({ force = true })
-        end
-      end,
-      ft = "oil",
-      desc = "Paste from clipboard",
-    },
   },
   config = function(_, opts)
     require("oil").setup(opts)
 
-    vim.api.nvim_create_autocmd({ "BufEnter", "TextChanged", "TextChangedI" }, {
+    -- OilEnter fires after the directory has actually rendered, so selection
+    -- signs are restored reliably when moving between already-open Oil buffers.
+    vim.api.nvim_create_autocmd("User", {
+      pattern = "OilEnter",
+      callback = function(args)
+        local buf = (args.data and args.data.buf) or vim.api.nvim_get_current_buf()
+        vim.schedule(function()
+          Selection.redraw(buf)
+        end)
+      end,
+    })
+
+    -- Also refresh marks after local buffer edits (renames/new entries) without
+    -- applying them; autosave is disabled for Oil in auto-save.lua.
+    vim.api.nvim_create_autocmd("TextChanged", {
       pattern = "oil://*",
       callback = function(args)
         vim.schedule(function()

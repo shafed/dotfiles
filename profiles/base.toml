@@ -2,7 +2,7 @@
 description = "CLI, editor and shared dotfiles used on every machine"
 includes = []
 capabilities = ["base"]
-config_dirs = ["kitty", "nvim", "yazi", "lazygit", "sioyek"]
+config_dirs = ["kitty", "nvim", "yazi", "lazygit", "sioyek", "tmux"]
 sources = ["scripts/sudo-notify.sh"]
 
 [[links]]

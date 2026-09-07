@@ -18,7 +18,7 @@ hl.bind(mainMod .. " + SHIFT + N", hl.dsp.exec_cmd(shellCtl .. " panel notificat
 
 hl.bind("SUPER + Home", hl.dsp.exec_cmd("systemctl suspend && hyprlock"))
 hl.bind(mainMod .. " + N", hl.dsp.exec_cmd("~/github/dotfiles/scripts/nvim-scratch-toggle.sh"))
-hl.bind(mainMod .. " + SHIFT + E", hl.dsp.exec_cmd("~/github/dotfiles/scripts/nvim-textarea.sh"))
+hl.bind(mainMod .. " + E", hl.dsp.exec_cmd("~/github/dotfiles/scripts/nvim-textarea.sh"))
 
 hl.bind(mainMod .. " + period", hl.dsp.exec_cmd("pkill -USR2 -x handy"))
 -- Example binds, see https://wiki.hypr.land/Configuring/Basics/Binds/ for more
@@ -32,7 +32,6 @@ hl.bind(
   mainMod .. " + F5",
   hl.dsp.exec_cmd("command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch 'hl.dsp.exit()'")
 )
-hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(fileManager))
 hl.bind(mainMod .. " + Y", hl.dsp.window.float({ action = "toggle" }))
 hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen())
 hl.bind(mainMod .. " + P", hl.dsp.window.pseudo()) -- dwindle
@@ -102,16 +101,8 @@ hl.bind(
   { locked = true, repeating = true }
 )
 
-hl.bind(
-  "XF86MonBrightnessUp",
-  hl.dsp.exec_cmd("brightnessctl -e4 -n2 set 5%+"),
-  { locked = true, repeating = true }
-)
-hl.bind(
-  "XF86MonBrightnessDown",
-  hl.dsp.exec_cmd("brightnessctl -e4 -n2 set 5%-"),
-  { locked = true, repeating = true }
-)
+hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd("brightnessctl -e4 -n2 set 5%+"), { locked = true, repeating = true })
+hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightnessctl -e4 -n2 set 5%-"), { locked = true, repeating = true })
 
 -- Requires playerctl
 hl.bind("XF86AudioNext", hl.dsp.exec_cmd("playerctl next"), { locked = true })

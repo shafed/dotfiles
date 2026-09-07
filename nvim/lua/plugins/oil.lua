@@ -101,9 +101,6 @@ local function toggle_selection()
   local path = entry_path(oil.get_current_dir(), entry)
   Selection.toggle(path)
   Selection.redraw(vim.api.nvim_get_current_buf())
-
-  -- File-manager style selection: toggle current item and advance to the next.
-  vim.cmd.normal({ "j", bang = true })
 end
 
 local function copy_selection_or_cursor()

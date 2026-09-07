@@ -46,6 +46,16 @@ destination = "{home}/.claude/themes/gruvbox-material.json"
 reason = "shared Claude theme"
 
 [[links]]
+source = ".opencode/themes/gruvbox-material.json"
+destination = "{config}/opencode/themes/gruvbox-material.json"
+reason = "shared opencode theme"
+
+[[links]]
+source = ".opencode/tui.json"
+destination = "{config}/opencode/tui.json"
+reason = "activate the shared opencode theme"
+
+[[links]]
 source = "dots"
 destination = "{home}/.local/bin/dots"
 reason = "install the dotfiles CLI"

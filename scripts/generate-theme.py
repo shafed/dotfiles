@@ -189,6 +189,37 @@ def render_claude(c: dict[str, str]) -> str:
     return json.dumps({"name": "gruvbox-material", "base": "dark", "overrides": overrides}, indent=2) + "\n"
 
 
+def render_opencode(c: dict[str, str]) -> str:
+    theme = {
+        "primary": "yellow", "secondary": "blue", "accent": "aqua",
+        "error": "red", "warning": "yellow", "success": "green", "info": "blue",
+        "text": "fg", "textMuted": "gray",
+        "background": "bg", "backgroundPanel": "bg_alt", "backgroundElement": "bg_soft",
+        "border": "bg_muted", "borderActive": "gray_dim", "borderSubtle": "bg_soft",
+        "diffAdded": "green", "diffRemoved": "red", "diffContext": "gray_dim",
+        "diffHunkHeader": "aqua", "diffHighlightAdded": "green", "diffHighlightRemoved": "red",
+        "diffAddedBg": "diff_added", "diffRemovedBg": "diff_removed", "diffContextBg": "bg",
+        "diffLineNumber": "gray",
+        "diffAddedLineNumberBg": "diff_added_dimmed", "diffRemovedLineNumberBg": "diff_removed_dimmed",
+        "markdownText": "fg", "markdownHeading": "yellow", "markdownLink": "blue",
+        "markdownLinkText": "aqua", "markdownCode": "blue", "markdownBlockQuote": "gray_dim",
+        # Keep in sync with the markdown_inline overrides in nvim/lua/plugins/colorscheme.lua.
+        "markdownEmph": "green", "markdownStrong": "orange",
+        "markdownHorizontalRule": "bg_muted", "markdownListItem": "yellow",
+        "markdownListEnumeration": "aqua", "markdownImage": "purple", "markdownImageText": "purple",
+        "markdownCodeBlock": "fg",
+        "syntaxComment": "gray", "syntaxKeyword": "red", "syntaxFunction": "green",
+        "syntaxVariable": "fg", "syntaxString": "green", "syntaxNumber": "purple",
+        "syntaxType": "yellow", "syntaxOperator": "orange", "syntaxPunctuation": "fg_soft",
+    }
+    payload = {
+        "$schema": "https://opencode.ai/theme.json",
+        "defs": c,
+        "theme": theme,
+    }
+    return json.dumps(payload, indent=2) + "\n"
+
+
 def render_copyq(c: dict[str, str]) -> str:
     return f"""[General]
 css_template_items=items
@@ -457,6 +488,7 @@ def generated_files(c: dict[str, str], mode: str = "dark") -> dict[Path, str]:
         ROOT / "scripts/generated-colors.sh": render_shell(c),
         ROOT / "quickshell/config/Colors.qml": render_shell_colors(c),
         ROOT / ".claude/themes/gruvbox-material.json": render_claude(c),
+        ROOT / ".opencode/themes/gruvbox-material.json": render_opencode(c),
         ROOT / "copyq/gruvbox.ini": render_copyq(c),
         ROOT / "yazi/flavors/gruvbox-dark.yazi/flavor.toml": render_yazi(c),
     }

@@ -105,6 +105,7 @@ check_tests() {
   bash tests/dots-machine.sh || return
   bash tests/telegram-theme.sh || return
   bash tests/copyq-theme.sh || return
+  python3 tests/palette-helper.py || return
 }
 
 run_check() {

@@ -40,8 +40,6 @@ BROWSER_FAVICONS_DB = Path(
 BOOKMARK_FILES = [
     DOTFILES / "bookmarks/bookmarks.tsv",
     HOME / "dotfiles-private/bookmarks/bookmarks.tsv",
-    BROWSER_BOOKMARKS_FILE,
-    BROWSER_BOOKMARKS_FALLBACK,
 ]
 RECENT_FILE = CACHE_DIR / "recent.tsv"
 USAGE_FILE = CACHE_DIR / "usage.tsv"
@@ -58,7 +56,12 @@ MISS_RETRY_SECONDS = 24 * 60 * 60
 def live_bookmarks():
     rows = []
     seen = set()
-    for path in BOOKMARK_FILES:
+    browser_file = (
+        BROWSER_BOOKMARKS_FILE
+        if BROWSER_BOOKMARKS_FILE.exists()
+        else BROWSER_BOOKMARKS_FALLBACK
+    )
+    for path in [*BOOKMARK_FILES, browser_file]:
         if not path.exists():
             continue
         try:

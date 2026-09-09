@@ -32,6 +32,12 @@ return {
         enabled = true,
         view = "mini",
       },
+      routes = {
+        {
+          filter = { event = "notify", kind = "debug", find = "^tobira:" },
+          opts = { skip = true },
+        },
+      },
       lsp = {
         message = {
           -- Messages shown by lsp servers

@@ -26,16 +26,18 @@ The one tmux convenience that had to be rebuilt by hand is layout persistence.
 "press s on the start screen". ⚠️ The `obsidian` and daily-note sessions
 deliberately do **not** — see the daily-note gotcha below for what goes wrong.
 
-Tmux itself can still be launched occasionally — for example, as a genuinely
-external pane for tools like sidekick.nvim's CLI integration, since Neovim's
-own `:terminal` (libvterm) reflows resized alt-screen TUIs incorrectly and can
-corrupt them. [`../tmux/tmux.conf`](../tmux/tmux.conf) is tracked (via
-`config_dirs` in [`../profiles/base.toml`](../profiles/base.toml)) purely to
-fix truecolor: tmux defaults to `default-terminal "screen"`, which downgrades
-24-bit color to a washed-out 256-color approximation. `default-terminal
-"tmux-256color"` + `terminal-overrides ",*:RGB"` restores true 24-bit color
-passthrough. There is otherwise no tmux session/pane management here — no
-kitty-style integration, just this one option fix.
+Sidekick's CLI integration prefers a native kitty split beside Neovim. Its
+`show`/`hide` operations move that window between the Neovim tab and a separate
+kitty tab, so hiding does not terminate the agent; prompt/context/send/session
+selection remain Sidekick-owned. Tmux remains configured as Sidekick's fallback
+outside kitty and keeps pre-existing tmux-backed sessions discoverable.
+
+[`../tmux/tmux.conf`](../tmux/tmux.conf) is tracked (via `config_dirs` in
+[`../profiles/base.toml`](../profiles/base.toml)) purely to fix truecolor:
+tmux defaults to `default-terminal "screen"`, which downgrades 24-bit color to
+a washed-out 256-color approximation. `default-terminal "tmux-256color"` +
+`terminal-overrides ",*:RGB"` restores true 24-bit color passthrough. There is
+otherwise no tmux session/pane management here.
 
 ## How kanata drives sessions
 

@@ -286,6 +286,8 @@ end, { desc = "[P]Logbook View: open HTML" })
 -- Regenerate the training logbook HTML (shared helper in utils/obsidian.lua)
 vim.keymap.set("n", "<leader>lr", obsidian.regenerate_logbook, { desc = "[P]Logbook Reload: rebuild HTML" })
 
+vim.keymap.set("n", "<leader>go", obsidian.push_now, { desc = "[P]Push Obsidian Vault" })
+
 -- Grug
 vim.keymap.set(
   { "v", "n" },

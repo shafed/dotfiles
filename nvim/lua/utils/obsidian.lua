@@ -1,9 +1,35 @@
--- Obsidian vault helpers for saving training notes and exporting workout
--- tables (used by <leader>l*).
+-- Obsidian vault helpers for manually pushing the vault, saving training notes
+-- and exporting workout tables (used by <leader>go and <leader>l*).
 
 local M = {}
 
+local SYNC_SCRIPT = vim.fn.expand("~/github/dotfiles/scripts/obsidian-sync.sh")
+local VAULT_PATH = vim.fn.expand("~/github/obsidian")
+local LOG_FILE = vim.fn.stdpath("cache") .. "/obsidian-sync-push.log"
 local LOGBOOK_SCRIPT = vim.fn.expand("~/github/dotfiles/scripts/generate_logbook.py")
+
+local function in_vault()
+  return vim.fn.getcwd():find(VAULT_PATH, 1, true) ~= nil
+end
+
+-- Keep the manual push detached so it can finish if nvim or its kitty tab is
+-- closed immediately after the keymap is used.
+function M.push_now()
+  if not in_vault() then
+    print("Not in Obsidian Vault")
+    return false
+  end
+
+  vim.cmd("silent! wa")
+  local cmd = string.format(
+    "setsid %s push >>%s 2>&1 </dev/null &",
+    vim.fn.shellescape(SYNC_SCRIPT),
+    vim.fn.shellescape(LOG_FILE)
+  )
+  vim.fn.jobstart({ "sh", "-c", cmd }, { detach = true })
+  print("Obsidian Vault: pushing in background (" .. LOG_FILE .. ")")
+  return true
+end
 
 -- Copy workout data from last markdown table to clipboard
 function M.copy_workout_table()

@@ -284,4 +284,4 @@ command = "notify-send"
 package = "libnotify"
 manager = "pacman"
 required = false
-reason = "best-effort desktop notifications in sudo-notify.sh and nvim-edit-handler.sh"
+reason = "best-effort desktop notifications in sudo-notify.sh, nvim-edit-handler.sh and obsidian-sync.sh"

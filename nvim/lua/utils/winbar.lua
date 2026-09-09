@@ -11,9 +11,9 @@ local M = {}
 M.zen_active = false
 
 -- Colors match gruvbox-material "medium" background (StatusLine/WinBar bg,
--- Fg/Grey foregrounds).
+-- Fg/Grey foregrounds). Aqua is the recurring UI accent.
 local function set_highlights()
-  vim.api.nvim_set_hl(0, "WinBarCount", { fg = "#d8a657", bg = "#32302f", bold = true })
+  vim.api.nvim_set_hl(0, "WinBarCount", { fg = "#89b482", bg = "#32302f", bold = true })
   vim.api.nvim_set_hl(0, "WinBarFile", { fg = "#ddc7a1", bg = "#32302f", bold = true })
   vim.api.nvim_set_hl(0, "WinBarPath", { fg = "#928374", bg = "#32302f" })
 end

@@ -1,7 +1,7 @@
 ---
 title: sessions
 type: topic
-updated: 2026-09-07
+updated: 2026-09-09
 covers:
   - kitty/sessions
   - kitty/scripts
@@ -86,9 +86,10 @@ environment.
 
 ## Vault sessions
 
-The `obsidian` session pulls the vault before launching nvim
-([scripts-misc](scripts-misc.md) covers `obsidian-sync.sh` itself), and
-`daily-notes.sh` generates a throwaway per-day session file.
+The `obsidian` session launches nvim without running a sync command;
+`daily-notes.sh` likewise generates a throwaway per-day session file and opens
+the note directly. Vault synchronization is handled outside kitty through
+Syncthing/NAS and the current Git workflow.
 
 ⚠️ Gotcha (why the daily note never calls `persistence.load()`, settled
 2026-07-26): the journal directory is shared by every note, and persistence

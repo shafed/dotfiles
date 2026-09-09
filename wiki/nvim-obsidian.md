@@ -1,7 +1,7 @@
 ---
 title: nvim-obsidian
 type: component
-updated: 2026-09-03
+updated: 2026-09-09
 covers:
   - nvim/lua/utils/obsidian.lua
   - nvim/lua/utils/review.lua
@@ -36,8 +36,6 @@ nvim is the editing side of the training logbook; generation and viewing are in
   parser accepts the current `YYYY-MM-DD-Training` form and legacy
   `YYYY-MM-DD-Day-N` files, so old sessions remain readable.
 - A separate keymap opens `logbook.html` via `xdg-open`.
-- `obsidian.push_with_cooldown()` — auto commit+push of the `~/github/obsidian` vault
-  (an hour cooldown) so note edits get backed up without manual commits.
 - `nvim-edit-handler.sh` in [scripts](scripts.md) — the reverse link: the
   logbook opens a note for editing in nvim.
 
@@ -53,8 +51,8 @@ artifact in the vault:
 - Untouched template notes are omitted, and YAML/meta-bind boilerplate is
   stripped so the combined buffer emphasizes what was actually written.
 - Month-sized reviews also summarize the most-edited markdown files from the
-  vault's git history. The vault is already auto-committed, so git provides a
-  useful attention signal without adding review metadata to notes.
+  vault's git history, providing a useful attention signal without adding
+  review metadata to notes.
 
 There is deliberately no yearly shortcut: flattening 365 daily notes into one
 buffer is not a useful reading surface, while `:Review [days]` still permits

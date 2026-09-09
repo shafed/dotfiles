@@ -1,7 +1,7 @@
 ---
 title: scripts-logbook
 type: component
-updated: 2026-09-06
+updated: 2026-09-09
 covers:
   - scripts/generate_logbook.py
   - scripts/nvim-edit-handler.sh
@@ -109,9 +109,8 @@ asynchronous):
 - `nvim-edit-handler.sh` ↔ the kitty obsidian session and its nvim (see
   [sessions](sessions.md)).
 - `generate_logbook.py` (generates links) ↔ `nvim-edit-handler.sh` (opens them).
-- `generate_logbook.py` writes into the vault ↔ `obsidian-sync.sh push`'s
-  `git add -A` carries the regenerated `training/logbook.html` to other
-  devices. `<leader>lr` (`obsidian.regenerate_logbook`) only rebuilds the
-  file locally — getting the update onto the phone still requires an
-  `obsidian-sync.sh push` (autopush on focus-lost, or manual) afterward.
+- `generate_logbook.py` writes into the vault, so the vault's Syncthing/NAS
+  synchronization carries the regenerated `training/logbook.html` to other
+  devices. `<leader>lr` (`obsidian.regenerate_logbook`) only rebuilds the file
+  locally.
   `<leader>lv` opens `~/github/obsidian/training/logbook.html` directly.

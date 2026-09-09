@@ -1,7 +1,7 @@
 ---
 title: scripts-misc
 type: component
-updated: 2026-08-31
+updated: 2026-09-09
 covers:
   - scripts/watch-downloads.sh
   - scripts/sudo-notify.sh
@@ -58,26 +58,11 @@ terminal goes unnoticed. Design:
 
 ## obsidian-sync.sh
 
-Shared git sync for `~/github/obsidian`.
-
-- `pull` — `git pull --rebase --autostash`.
-- `push` — runs that pull first, then `git add -A`, commits any changes, and
-  pushes. Pull-before-commit keeps remote edits and removed lines from being
-  overwritten by a stale local copy when the changes do not conflict.
-- If the rebase leaves an actual Git conflict, sync stops before staging it.
-- Pull and push share one vault-specific `flock` so overlapping Neovim events
-  cannot race over the Git index.
-
-Android's Termux helper should use the same simple order: pull/rebase first,
-then add → commit → push.
-
-Call sites:
-[`../kitty/sessions/obsidian.kitty-session`](../kitty/sessions/obsidian.kitty-session)
-and `daily-notes.sh` (pull side, see below and [sessions](sessions.md)),
-[`../nvim/lua/utils/obsidian.lua`](../nvim/lua/utils/obsidian.lua) (push side —
-`push_with_cooldown` for frequent events and detached `push_now` for exit
-events; the latter ignores the cooldown so a recent focus-loss push does not eat
-the last opportunity to start syncing before Neovim exits).
+Retired standalone git sync for `~/github/obsidian`. It remains available for
+reference/manual recovery, but dotfiles no longer invoke it: the vault is
+synchronized through Syncthing/NAS and its current Git workflow. In particular,
+kitty sessions do not pull on entry and Neovim does not commit or push on focus
+loss or exit.
 
 ## daily-notes.sh
 
@@ -86,8 +71,8 @@ Opens today's daily note in nvim inside a **per-day kitty session**
 `~/github/obsidian/journal/<YYYY-MM-DD-Weekday>.md` — the folder is flat, so the path
 must stay in sync with `daily_notes_folder` in the vault's `.moxide.toml`.
 
-On first entry it does `obsidian-sync.sh pull`, then opens straight into the
-note (`nvim "+norm G" <full_path>`) — deliberately **no** `persistence.load()`.
+On first entry it opens straight into the note
+(`nvim "+norm G" <full_path>`) — deliberately **no** `persistence.load()`.
 Earlier versions tried combining the two for a "reopen last layout" convenience,
 but the journal directory is shared by every daily note, so persistence could
 restore an older multi-tab layout instead of showing today's note. See

@@ -34,7 +34,12 @@ return {
             color = { fg = "#ff9e64" },
           },
         },
-        lualine_z = { "location" },
+        lualine_z = {
+          {
+            "location",
+            color = { fg = "#89b482", gui = "bold" },
+          },
+        },
       },
     },
   },

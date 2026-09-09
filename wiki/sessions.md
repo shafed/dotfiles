@@ -26,11 +26,11 @@ The one tmux convenience that had to be rebuilt by hand is layout persistence.
 "press s on the start screen". ⚠️ The `obsidian` and daily-note sessions
 deliberately do **not** — see the daily-note gotcha below for what goes wrong.
 
-Sidekick's CLI integration prefers a native kitty split beside Neovim. Its
-`show`/`hide` operations move that window between the Neovim tab and a separate
-kitty tab, so hiding does not terminate the agent; prompt/context/send/session
-selection remain Sidekick-owned. Tmux remains configured as Sidekick's fallback
-outside kitty and keeps pre-existing tmux-backed sessions discoverable.
+Sidekick's CLI integration runs the agent in tmux for persistence, but presents
+it as a native kitty split beside Neovim. Closing that kitty window (including
+`C-.` from inside the CLI) only detaches the tmux client; Sidekick opens a new
+client onto the same session next time. Prompt/context/send/session selection
+remain Sidekick-owned. Tmux is also the fallback presentation outside kitty.
 
 [`../tmux/tmux.conf`](../tmux/tmux.conf) is tracked (via `config_dirs` in
 [`../profiles/base.toml`](../profiles/base.toml)) purely to fix truecolor:

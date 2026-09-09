@@ -58,11 +58,11 @@ terminal goes unnoticed. Design:
 
 ## obsidian-sync.sh
 
-Retired standalone git sync for `~/github/obsidian`. It remains available for
-reference/manual recovery, but dotfiles no longer invoke it: the vault is
-synchronized through Syncthing/NAS and its current Git workflow. In particular,
-kitty sessions do not pull on entry and Neovim does not commit or push on focus
-loss or exit.
+Manual git sync for `~/github/obsidian`, invoked only by Neovim's `<leader>go`.
+The automatic call sites are retired: kitty sessions do not pull on entry and
+Neovim does not commit or push on focus loss or exit. Routine synchronization
+is handled through Syncthing/NAS; the keymap remains available for an explicit
+Git pull, commit and push when needed.
 
 ## daily-notes.sh
 

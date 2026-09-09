@@ -36,6 +36,8 @@ nvim is the editing side of the training logbook; generation and viewing are in
   parser accepts the current `YYYY-MM-DD-Training` form and legacy
   `YYYY-MM-DD-Day-N` files, so old sessions remain readable.
 - A separate keymap opens `logbook.html` via `xdg-open`.
+- `<leader>go` explicitly pulls, commits and pushes the vault through
+  `obsidian-sync.sh`; there is no sync on focus loss or editor exit.
 - `nvim-edit-handler.sh` in [scripts](scripts.md) — the reverse link: the
   logbook opens a note for editing in nvim.
 

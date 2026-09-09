@@ -28,10 +28,10 @@ if [[ ! -f "$full_path" ]]; then
 EOF
 fi
 
-# One kitty session per day, named after the note. On first use: pull the vault,
-# then always open straight into the note (cursor on the last line, +norm G) --
-# deliberately no persistence.load(), so a stale restored layout from a
-# previous day in this same folder never gets in the way.
+# One kitty session per day, named after the note. Always open straight into
+# the note (cursor on the last line, +norm G) -- deliberately no
+# persistence.load(), so a stale restored layout from a previous day in this
+# same folder never gets in the way.
 
 kitty_session_dir="${XDG_CACHE_HOME:-$HOME/.cache}/kitty-sessions"
 mkdir -p "$kitty_session_dir"
@@ -40,7 +40,7 @@ session_file="${kitty_session_dir}/daily-${note_name}.kitty-session"
 cat >"$session_file" <<EOF
 layout splits
 cd ${note_dir}
-launch --title "${note_name}" zsh -ic '~/github/dotfiles/scripts/obsidian-sync.sh pull && nvim "+norm G" ${full_path}; exec zsh'
+launch --title "${note_name}" zsh -ic 'nvim "+norm G" ${full_path}; exec zsh'
 focus
 focus_os_window
 EOF

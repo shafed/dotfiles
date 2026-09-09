@@ -1,70 +1,9 @@
--- Obsidian vault helpers: auto commit+push of ~/github/obsidian, saving training
--- notes and exporting workout tables (used by <leader>l* and <leader>go).
---
--- Push is fully detached rather than a plain nvim job: jobstart() children
--- are killed when nvim exits unless `detach = true`, and even detached, a
--- lingering stdout/stderr pipe can still make nvim's own quit wait on the
--- job (see :h jobstart() `detach`). So the command itself backgrounds via
--- `setsid ... &` and redirects to a log file -- the wrapper process jobstart
--- sees exits almost instantly (closing its pipes), while the actual git
--- push keeps running in its own session, immune to both nvim exiting and
--- the kitty tab closing right after. Net effect: push never adds a delay to
--- quitting nvim, on any of its trigger events.
+-- Obsidian vault helpers for saving training notes and exporting workout
+-- tables (used by <leader>l*).
 
 local M = {}
 
-local SYNC_SCRIPT = vim.fn.expand("~/github/dotfiles/scripts/obsidian-sync.sh")
-local VAULT_PATH = vim.fn.expand("~/github/obsidian")
-local LOG_FILE = vim.fn.stdpath("cache") .. "/obsidian-sync-push.log"
 local LOGBOOK_SCRIPT = vim.fn.expand("~/github/dotfiles/scripts/generate_logbook.py")
-
-local function in_vault()
-  return vim.fn.getcwd():find(VAULT_PATH, 1, true) ~= nil
-end
-
-local function push(silent)
-  vim.cmd("silent! wa")
-  local cmd = string.format(
-    "setsid %s push %s >>%s 2>&1 </dev/null &",
-    vim.fn.shellescape(SYNC_SCRIPT),
-    silent and "silent" or "",
-    vim.fn.shellescape(LOG_FILE)
-  )
-  vim.fn.jobstart({ "sh", "-c", cmd }, { detach = true })
-end
-
--- Cooldown so alt-tabbing (FocusLost) doesn't spam commits/pushes.
-local last_push_time = 0
-local PUSH_COOLDOWN = 3600
-
-function M.push_with_cooldown()
-  if not in_vault() then
-    return
-  end
-  local now = os.time()
-  if now - last_push_time < PUSH_COOLDOWN then
-    return
-  end
-  last_push_time = now
-  push(true)
-end
-
--- Always pushes, ignoring the cooldown -- used right before nvim actually
--- exits, so a push mid-cooldown-window doesn't eat the one that actually
--- mattered. Returns false when cwd is not inside the vault.
-function M.push_now(silent)
-  if not in_vault() then
-    if not silent then
-      print("Not in Obsidian Vault")
-    end
-    return false
-  end
-  push(silent)
-  if not silent then
-    print("Obsidian Vault: pushing in background (" .. LOG_FILE .. ")")
-  end
-  return true
-end
 
 -- Copy workout data from last markdown table to clipboard
 function M.copy_workout_table()

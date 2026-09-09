@@ -22,11 +22,10 @@ from urllib.parse import quote
 TRAINING_DIR = Path(
     os.environ.get("LOGBOOK_ROOT", "~/github/obsidian/training")
 ).expanduser()
-# Written straight into the vault (not a separate cache) so
-# `obsidian-sync.sh push`'s `git add -A` picks it up and carries it to other
-# devices (e.g. the phone) automatically. Trade-off: a large diff in the
-# vault's git history on every rebuild -- accepted deliberately so the
-# logbook doesn't go stale on devices other than the one that generated it.
+# Written straight into the vault (not a separate cache) so vault
+# synchronization carries it to other devices (e.g. the phone) automatically.
+# Trade-off: a large diff in the vault's git history on every rebuild --
+# accepted deliberately so the logbook doesn't go stale on other devices.
 OUTPUT = Path(
     os.environ.get("LOGBOOK_OUTPUT", str(TRAINING_DIR / "logbook.html"))
 ).expanduser()

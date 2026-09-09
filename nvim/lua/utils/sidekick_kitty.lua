@@ -2,7 +2,10 @@ local M = {}
 
 local Backend = {}
 Backend.__index = Backend
-Backend.priority = 10
+Backend.priority = 100
+
+local PANE_FORMAT =
+  "#{session_id}:#{pane_id}:#{pane_pid}:#{session_name}:#{?pane_current_path,#{pane_current_path},#{pane_start_path}}"
 
 local patched = false
 
@@ -25,22 +28,18 @@ local function kitty_windows(match)
   if match then
     vim.list_extend(args, { "--match", match })
   end
-
   local code, out = run(args)
   if code ~= 0 then
     return {}
   end
-
   local ok, data = pcall(vim.json.decode, out)
   if not ok or type(data) ~= "table" then
     return {}
   end
-
   local windows = {}
   for _, os_window in ipairs(data) do
     for _, tab in ipairs(os_window.tabs or {}) do
       for _, win in ipairs(tab.windows or {}) do
-        win._sidekick_tab_id = tab.id
         windows[#windows + 1] = win
       end
     end
@@ -49,14 +48,7 @@ local function kitty_windows(match)
 end
 
 local function window_for_id(id)
-  return kitty_windows("id:" .. tostring(id))[1]
-end
-
-local function same_tab(left, right)
-  if not left or not right then
-    return false
-  end
-  return left._sidekick_tab_id == right._sidekick_tab_id
+  return id and kitty_windows("id:" .. tostring(id))[1] or nil
 end
 
 local function local_sidekick_windows()
@@ -64,7 +56,6 @@ local function local_sidekick_windows()
   if not source then
     return {}
   end
-
   local windows = {}
   for _, win in ipairs(kitty_windows("var:sidekick_nvim=1")) do
     local env = win.env or {}
@@ -75,39 +66,57 @@ local function local_sidekick_windows()
   return windows
 end
 
+local function kitty_window_for_mux(mux_session)
+  for _, win in ipairs(local_sidekick_windows()) do
+    if (win.env or {}).SIDEKICK_TMUX_SESSION == mux_session then
+      return win
+    end
+  end
+end
+
+local function tmux_source(mux_session)
+  local code, out = run({ "tmux", "show-options", "-v", "-t", mux_session, "@sidekick_kitty_source" })
+  return code == 0 and vim.trim(out or "") or nil
+end
+
 local function available()
-  return source_window_id() ~= nil and vim.fn.executable("kitten") == 1
+  return source_window_id() ~= nil and vim.fn.executable("kitten") == 1 and vim.fn.executable("tmux") == 1
 end
 
 local function maybe_disable_watch()
   if #local_sidekick_windows() > 0 then
     return
   end
-
   local ok, Terminal = pcall(require, "sidekick.cli.terminal")
   if ok and not vim.tbl_isempty(Terminal.terminals or {}) then
     return
   end
-
   require("sidekick.cli.watch").disable()
+end
+
+local function add_tool_cmd(cmd, tool)
+  for key, value in pairs(tool.env or {}) do
+    if value == false then
+      vim.list_extend(cmd, { "-u", key })
+    else
+      vim.list_extend(cmd, { "-e", key .. "=" .. tostring(value) })
+    end
+  end
+  vim.list_extend(cmd, tool.cmd)
 end
 
 function Backend:init()
   self.external = true
-  self.priority = 10
-  self.mux_session = self.mux_session or "kitty"
+  self.priority = 100
+  self.mux_session = self.mux_session or self.sid
 end
 
-function Backend:start()
+function Backend:open()
   if not available() then
-    error("Sidekick kitty backend requires Neovim to run inside kitty")
+    error("Sidekick kitty backend requires Neovim inside kitty and tmux")
   end
-
   local source = assert(source_window_id())
-
-  -- Kitty only honors vsplit/hsplit placement in the splits layout.
   run({ "kitten", "@", "action", "goto_layout", "splits" })
-
   local cmd = {
     "kitten",
     "@",
@@ -134,61 +143,75 @@ function Backend:start()
     "SIDEKICK_CWD=" .. self.cwd,
     "--env",
     "SIDEKICK_SOURCE_WINDOW_ID=" .. source,
+    "--env",
+    "SIDEKICK_TMUX_SESSION=" .. self.mux_session,
   }
-
   if vim.v.servername ~= "" then
     vim.list_extend(cmd, { "--env", "NVIM=" .. vim.v.servername })
   end
-
-  for key, value in pairs(self.tool.env or {}) do
-    if value == false then
-      vim.list_extend(cmd, { "--env", key })
-    else
-      vim.list_extend(cmd, { "--env", key .. "=" .. tostring(value) })
-    end
-  end
-
-  vim.list_extend(cmd, self.tool.cmd)
-
+  vim.list_extend(cmd, { "tmux", "attach-session", "-t", self.mux_session })
   local code, out = run(cmd)
   if code ~= 0 then
-    error("Failed to launch Sidekick CLI in kitty: " .. vim.trim(out or ""))
+    error("Failed to launch Sidekick tmux session in kitty: " .. vim.trim(out or ""))
   end
-
   local id = tonumber(vim.trim(out or ""))
   if not id then
     error("kitty did not return a window id for Sidekick CLI")
   end
-
   self.kitty_window_id = id
-  self.id = "kitty " .. id
-  self.started = true
-  self.external = true
-
   local win = window_for_id(id)
-  if win then
-    self.pids = win.pid and { win.pid } or nil
-    self.mux_session = win.created_in_session_name or "kitty"
+  if win and win.pid then
+    self.pids = vim.list_extend(vim.deepcopy(self.pids or {}), { win.pid })
   end
-
   local Config = require("sidekick.config")
   if Config.cli.watch then
     require("sidekick.cli.watch").enable()
   end
 end
 
-function Backend:attach() end
+function Backend:start()
+  if not available() then
+    error("Sidekick kitty backend requires Neovim inside kitty and tmux")
+  end
+  local Tmux = require("sidekick.cli.session.tmux")
+  local cmd = { "tmux", "new-session", "-dP", "-F", PANE_FORMAT, "-s", self.sid, "-c", self.cwd }
+  add_tool_cmd(cmd, self.tool)
+  local pane = Tmux.panes({ cmd = cmd, notify = true })[1]
+  if not pane then
+    error("Failed to create tmux session for Sidekick CLI")
+  end
+  self.id = "kitty " .. pane.pid
+  self.mux_session = pane.session_name
+  self.tmux_pane_id = pane.id
+  self.tmux_pid = pane.pid
+  self.pids = { pane.pid }
+  self.started = true
+  local source = assert(source_window_id())
+  run({ "tmux", "set-option", "-q", "-t", self.mux_session, "@sidekick_kitty_source", source })
+  run({ "tmux", "set-option", "-q", "-t", self.mux_session, "status", "off" })
+  run({ "tmux", "set-option", "-q", "-t", self.mux_session, "detach-on-destroy", "on" })
+  self:open()
+end
+
+function Backend:attach()
+  local win = kitty_window_for_mux(self.mux_session)
+  if win then
+    self.kitty_window_id = win.id
+  else
+    self:open()
+  end
+end
 
 function Backend:detach()
   vim.schedule(maybe_disable_watch)
 end
 
 function Backend:is_running()
-  return self.kitty_window_id ~= nil and window_for_id(self.kitty_window_id) ~= nil
+  return window_for_id(self.kitty_window_id) ~= nil
 end
 
 function Backend:is_hidden()
-  return not same_tab(window_for_id(self.kitty_window_id), window_for_id(source_window_id()))
+  return window_for_id(self.kitty_window_id) == nil
 end
 
 function Backend:is_focused()
@@ -199,25 +222,10 @@ function Backend:is_focused()
 end
 
 function Backend:show(focus)
-  if not self.kitty_window_id then
-    return
+  if self:is_hidden() then
+    self:open()
   end
-
-  local source = source_window_id()
-  if source and self:is_hidden() then
-    run({ "kitten", "@", "goto-layout", "--match", "window_id:" .. source, "splits" })
-    run({
-      "kitten",
-      "@",
-      "detach-window",
-      "--match",
-      "id:" .. self.kitty_window_id,
-      "--target-tab",
-      "window_id:" .. source,
-    })
-  end
-
-  local target = focus == false and source or self.kitty_window_id
+  local target = focus == false and source_window_id() or self.kitty_window_id
   if target then
     run({ "kitten", "@", "focus-window", "--match", "id:" .. target })
   end
@@ -228,93 +236,42 @@ function Backend:focus()
 end
 
 function Backend:hide()
-  if not self.kitty_window_id or self:is_hidden() then
-    return
-  end
-
-  run({
-    "kitten",
-    "@",
-    "detach-window",
-    "--match",
-    "id:" .. self.kitty_window_id,
-    "--target-tab",
-    "new",
-    "--stay-in-tab",
-  })
-
-  local source = source_window_id()
-  if source then
-    run({ "kitten", "@", "focus-window", "--match", "id:" .. source })
+  if self.kitty_window_id then
+    run({ "kitten", "@", "close-window", "--match", "id:" .. self.kitty_window_id })
+    self.kitty_window_id = nil
   end
 end
 
 function Backend:close()
-  if self.kitty_window_id then
-    run({ "kitten", "@", "close-window", "--match", "id:" .. self.kitty_window_id })
-  end
+  self:hide()
 end
 
 function Backend:send(text)
-  if not self.kitty_window_id then
-    return
-  end
-
-  run({
-    "kitten",
-    "@",
-    "send-text",
-    "--match",
-    "id:" .. self.kitty_window_id,
-    "--bracketed-paste=auto",
-    "--stdin",
-  }, text)
+  require("sidekick.cli.session.tmux").send(self, text)
 end
 
 function Backend:submit()
-  if self.kitty_window_id then
-    run({ "kitten", "@", "send-key", "--match", "id:" .. self.kitty_window_id, "enter" })
-  end
+  require("sidekick.cli.session.tmux").submit(self)
 end
 
 function Backend:dump()
-  if not self.kitty_window_id then
-    return nil
-  end
-
-  local code, out = run({
-    "kitten",
-    "@",
-    "get-text",
-    "--match",
-    "id:" .. self.kitty_window_id,
-    "--extent=all",
-    "--ansi",
-  })
-  return code == 0 and out or nil
+  return require("sidekick.cli.session.tmux").dump(self)
 end
 
 function Backend:sessions()
-  local Config = require("sidekick.config")
+  local Tmux = require("sidekick.cli.session.tmux")
+  local source = source_window_id()
   local ret = {}
-
-  for _, win in ipairs(local_sidekick_windows()) do
-    local env = win.env or {}
-    local tool = env.SIDEKICK_TOOL
-    if tool and Config.cli.tools[tool] then
-      ret[#ret + 1] = {
-        id = "kitty " .. win.id,
-        cwd = env.SIDEKICK_CWD or win.cwd,
-        tool = tool,
-        pids = win.pid and { win.pid } or nil,
-        kitty_window_id = win.id,
-        mux_session = win.created_in_session_name or "kitty",
-        external = true,
-        started = true,
-      }
+  for _, session in ipairs(Tmux.sessions()) do
+    if tmux_source(session.mux_session) == source then
+      local win = kitty_window_for_mux(session.mux_session)
+      session.id = "kitty " .. session.tmux_pid
+      session.kitty_window_id = win and win.id or nil
+      session.external = true
+      session.started = true
+      ret[#ret + 1] = session
     end
   end
-
   return ret
 end
 
@@ -331,16 +288,32 @@ function M.setup()
     return
   end
   patched = true
-
   local Session = require("sidekick.cli.session")
   local State = require("sidekick.cli.state")
   local Cli = require("sidekick.cli")
-
   Session.register("kitty", Backend)
 
-  -- Sidekick normally chooses only terminal/tmux/zellij for a brand-new
-  -- session. Seed a kitty session before its normal attach path so all the
-  -- existing Sidekick context/send/prompt actions keep working unchanged.
+  -- Sidekick intentionally keeps a bare "start new tool" entry beside every
+  -- external session. For this backend that defeats automatic reopen: after
+  -- C-. the persistent tmux session and a duplicate new tool both match. A
+  -- kitty session in the current cwd is the resumable form of that same entry.
+  local original_get = State.get
+  State.get = function(filter)
+    local states = original_get(filter)
+    local kitty_sids = {}
+    for _, state in ipairs(states) do
+      if state.session and state.session.backend == "kitty" then
+        kitty_sids[state.session.sid] = true
+      end
+    end
+    return vim.tbl_filter(function(state)
+      return state.session ~= nil or not kitty_sids[Session.sid({ tool = state.tool.name })]
+    end, states)
+  end
+
+  -- New sessions use tmux for persistence but are presented in a native kitty
+  -- split. Detached tmux sessions discovered by Backend:sessions() keep all
+  -- normal Sidekick context, prompt, send and selection behavior.
   local original_attach = State.attach
   State.attach = function(state, opts)
     opts = opts or {}
@@ -348,8 +321,17 @@ function M.setup()
       state = vim.tbl_extend("force", {}, state, {
         session = Session.new({ tool = state.tool.name, backend = "kitty" }),
       })
+    elseif state.session.backend == "tmux" then
+      local source = assert(source_window_id())
+      run({ "tmux", "set-option", "-q", "-t", state.session.mux_session, "@sidekick_kitty_source", source })
+      state = vim.tbl_extend("force", {}, state, {
+        session = Session.new(vim.tbl_extend("force", {}, state.session, {
+          backend = "kitty",
+          external = true,
+          id = "kitty " .. state.session.tmux_pid,
+        })),
+      })
     end
-
     local ret, attached = original_attach(state, opts)
     if ret.session and ret.session.backend == "kitty" and opts.show and ret.session:is_running() then
       ret.session:show(opts.focus ~= false)
@@ -357,17 +339,15 @@ function M.setup()
     return ret, attached
   end
 
-  -- Stock window actions only know how to manipulate Neovim terminal windows.
-  -- A hidden kitty session is kept alive in its own tab and moved back beside
-  -- the source Neovim window when shown again.
   Cli.toggle = function(opts)
     opts = normalize_opts(opts)
     State.with(function(state, attached)
       if state.session and state.session.backend == "kitty" then
-        if attached or state.session:is_hidden() then
+        if attached then
           state.session:show(opts.focus ~= false)
         else
           state.session:hide()
+          State.detach(state)
         end
         return
       end
@@ -380,11 +360,7 @@ function M.setup()
       if state.terminal:is_open() and opts.focus ~= false then
         state.terminal:focus()
       end
-    end, {
-      all = opts.all,
-      attach = true,
-      filter = opts.filter,
-    })
+    end, { all = opts.all, attach = true, filter = opts.filter })
   end
 
   Cli.focus = function(opts)
@@ -409,40 +385,31 @@ function M.setup()
       else
         state.terminal:focus()
       end
-    end, {
-      all = opts.all,
-      attach = true,
-      filter = opts.filter,
-      focus = false,
-      show = true,
-    })
+    end, { all = opts.all, attach = true, filter = opts.filter, focus = false, show = true })
+  end
+
+  local function hide(state)
+    if state.session and state.session.backend == "kitty" then
+      state.session:hide()
+      State.detach(state)
+    elseif state.terminal then
+      state.terminal:hide()
+    end
   end
 
   Cli.hide = function(opts)
     opts = normalize_opts(opts)
-    State.with(function(state)
-      if state.session and state.session.backend == "kitty" then
-        state.session:hide()
-      elseif state.terminal then
-        state.terminal:hide()
-      end
-    end, {
-      all = opts.all,
-      filter = opts.filter,
-    })
+    State.with(hide, { all = opts.all, filter = opts.filter })
   end
 
   Cli.close = function(opts)
     opts = normalize_opts(opts)
     State.with(function(state)
       if state.session and state.session.backend == "kitty" then
-        state.session:close()
+        state.session:hide()
       end
       State.detach(state)
-    end, {
-      all = opts.all,
-      filter = opts.filter,
-    })
+    end, { all = opts.all, filter = opts.filter })
   end
 end
 

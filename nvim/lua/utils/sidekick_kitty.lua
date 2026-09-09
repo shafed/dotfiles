@@ -40,6 +40,7 @@ local function kitty_windows(match)
   for _, os_window in ipairs(data) do
     for _, tab in ipairs(os_window.tabs or {}) do
       for _, win in ipairs(tab.windows or {}) do
+        win._sidekick_tab_id = tab.id
         windows[#windows + 1] = win
       end
     end
@@ -49,6 +50,13 @@ end
 
 local function window_for_id(id)
   return kitty_windows("id:" .. tostring(id))[1]
+end
+
+local function same_tab(left, right)
+  if not left or not right then
+    return false
+  end
+  return left._sidekick_tab_id == right._sidekick_tab_id
 end
 
 local function local_sidekick_windows()
@@ -179,9 +187,71 @@ function Backend:is_running()
   return self.kitty_window_id ~= nil and window_for_id(self.kitty_window_id) ~= nil
 end
 
+function Backend:is_hidden()
+  return not same_tab(window_for_id(self.kitty_window_id), window_for_id(source_window_id()))
+end
+
+function Backend:is_focused()
+  if not self.kitty_window_id then
+    return false
+  end
+  return #kitty_windows("id:" .. self.kitty_window_id .. " and state:focused") > 0
+end
+
+function Backend:show(focus)
+  if not self.kitty_window_id then
+    return
+  end
+
+  local source = source_window_id()
+  if source and self:is_hidden() then
+    run({ "kitten", "@", "goto-layout", "--match", "window_id:" .. source, "splits" })
+    run({
+      "kitten",
+      "@",
+      "detach-window",
+      "--match",
+      "id:" .. self.kitty_window_id,
+      "--target-tab",
+      "window_id:" .. source,
+    })
+  end
+
+  local target = focus == false and source or self.kitty_window_id
+  if target then
+    run({ "kitten", "@", "focus-window", "--match", "id:" .. target })
+  end
+end
+
 function Backend:focus()
+  self:show(true)
+end
+
+function Backend:hide()
+  if not self.kitty_window_id or self:is_hidden() then
+    return
+  end
+
+  run({
+    "kitten",
+    "@",
+    "detach-window",
+    "--match",
+    "id:" .. self.kitty_window_id,
+    "--target-tab",
+    "new",
+    "--stay-in-tab",
+  })
+
+  local source = source_window_id()
+  if source then
+    run({ "kitten", "@", "focus-window", "--match", "id:" .. source })
+  end
+end
+
+function Backend:close()
   if self.kitty_window_id then
-    run({ "kitten", "@", "focus-window", "--match", "id:" .. self.kitty_window_id })
+    run({ "kitten", "@", "close-window", "--match", "id:" .. self.kitty_window_id })
   end
 end
 
@@ -248,11 +318,12 @@ function Backend:sessions()
   return ret
 end
 
-local function filter_opts(opts)
+local function normalize_opts(opts)
   opts = type(opts) == "string" and { name = opts } or opts or {}
-  local filter = vim.deepcopy(opts.filter or {})
-  filter.name = opts.name or filter.name
-  return filter
+  opts = vim.deepcopy(opts)
+  opts.filter = opts.filter or {}
+  opts.filter.name = opts.name or opts.filter.name
+  return opts
 end
 
 function M.setup()
@@ -280,25 +351,23 @@ function M.setup()
     end
 
     local ret, attached = original_attach(state, opts)
-    if
-      ret.session
-      and ret.session.backend == "kitty"
-      and opts.show
-      and opts.focus ~= false
-      and ret.session:is_running()
-    then
-      ret.session:focus()
+    if ret.session and ret.session.backend == "kitty" and opts.show and ret.session:is_running() then
+      ret.session:show(opts.focus ~= false)
     end
     return ret, attached
   end
 
-  -- Stock toggle/focus only know how to manipulate Neovim terminal windows.
-  -- For a native kitty session these actions mean "focus that kitty window".
+  -- Stock window actions only know how to manipulate Neovim terminal windows.
+  -- A hidden kitty session is kept alive in its own tab and moved back beside
+  -- the source Neovim window when shown again.
   Cli.toggle = function(opts)
+    opts = normalize_opts(opts)
     State.with(function(state, attached)
       if state.session and state.session.backend == "kitty" then
-        if not attached then
-          state.session:focus()
+        if attached or state.session:is_hidden() then
+          state.session:show(opts.focus ~= false)
+        else
+          state.session:hide()
         end
         return
       end
@@ -308,19 +377,28 @@ function M.setup()
       if not attached then
         state.terminal:toggle()
       end
-      if state.terminal:is_open() then
+      if state.terminal:is_open() and opts.focus ~= false then
         state.terminal:focus()
       end
     end, {
+      all = opts.all,
       attach = true,
-      filter = filter_opts(opts),
+      filter = opts.filter,
     })
   end
 
   Cli.focus = function(opts)
+    opts = normalize_opts(opts)
     State.with(function(state)
       if state.session and state.session.backend == "kitty" then
-        state.session:focus()
+        if state.session:is_focused() then
+          local source = source_window_id()
+          if source then
+            run({ "kitten", "@", "focus-window", "--match", "id:" .. source })
+          end
+        else
+          state.session:focus()
+        end
         return
       end
       if not state.terminal then
@@ -332,10 +410,38 @@ function M.setup()
         state.terminal:focus()
       end
     end, {
+      all = opts.all,
       attach = true,
-      filter = filter_opts(opts),
+      filter = opts.filter,
       focus = false,
       show = true,
+    })
+  end
+
+  Cli.hide = function(opts)
+    opts = normalize_opts(opts)
+    State.with(function(state)
+      if state.session and state.session.backend == "kitty" then
+        state.session:hide()
+      elseif state.terminal then
+        state.terminal:hide()
+      end
+    end, {
+      all = opts.all,
+      filter = opts.filter,
+    })
+  end
+
+  Cli.close = function(opts)
+    opts = normalize_opts(opts)
+    State.with(function(state)
+      if state.session and state.session.backend == "kitty" then
+        state.session:close()
+      end
+      State.detach(state)
+    end, {
+      all = opts.all,
+      filter = opts.filter,
     })
   end
 end

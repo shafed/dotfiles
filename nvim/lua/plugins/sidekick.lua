@@ -3,7 +3,7 @@ return {
     "folke/sidekick.nvim",
     opts = {
       cli = {
-        mux = { enabled = true, create = "terminal" },
+        mux = { enabled = true, create = "split" },
         tools = {
           -- Claude Code drops to 256-colour whenever $TMUX is set, regardless
           -- of COLORTERM, FORCE_COLOR or terminfo RGB (its own tmux-truecolor
@@ -18,7 +18,10 @@ return {
     },
     config = function(_, opts)
       require("sidekick").setup(opts)
-      -- require("utils.sidekick_kitty").setup()
+      -- Prefer a native kitty split when Neovim is running inside kitty. The
+      -- configured mux remains the fallback elsewhere and keeps existing tmux
+      -- sessions discoverable.
+      require("utils.sidekick_kitty").setup()
 
       -- sidekick links its terminal window's background to NormalFloat
       -- (sidekick/cli/terminal.lua's winhighlight + config.lua's set_hl),

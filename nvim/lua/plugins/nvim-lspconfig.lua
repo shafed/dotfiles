@@ -62,6 +62,9 @@ return {
               -- [[ also ignores my marksman links ]]
               IgnoreLinkTitle = true,
             },
+            linters = {
+              UseTitleCase = false,
+            },
             excludePatterns = {
               vim.fn.expand("~/github/obsidian/notes/Day [123].md"),
               vim.fn.expand("~/github/obsidian/training/**/*.md"),

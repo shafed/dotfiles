@@ -6,6 +6,77 @@ local function entry_path(dir, entry)
   return entry.name == ".." and dir:sub(1, -2) or (dir .. entry.name)
 end
 
+-- Remember the last focused entry for every directory, similar to mini.files'
+-- tracked directory cursors. Store entry names instead of line numbers so the
+-- position survives sorting changes and files being inserted/removed.
+local CursorMemory = {
+  entries = {},
+}
+
+function CursorMemory.remember(buf)
+  if not (buf and vim.api.nvim_buf_is_valid(buf)) then
+    return
+  end
+
+  local oil = require("oil")
+  local dir = oil.get_current_dir(buf)
+  if not dir then
+    return
+  end
+
+  local win = vim.api.nvim_get_current_win()
+  if vim.api.nvim_win_get_buf(win) ~= buf then
+    return
+  end
+
+  local lnum = vim.api.nvim_win_get_cursor(win)[1]
+  local entry = oil.get_entry_on_line(buf, lnum)
+  if entry and entry.name ~= ".." then
+    CursorMemory.entries[dir] = entry.name
+  end
+end
+
+function CursorMemory.restore(buf)
+  if not (buf and vim.api.nvim_buf_is_valid(buf)) then
+    return
+  end
+
+  local oil = require("oil")
+  local dir = oil.get_current_dir(buf)
+  local wanted = dir and CursorMemory.entries[dir]
+  if not wanted then
+    return
+  end
+
+  local target_line
+  for lnum = 1, vim.api.nvim_buf_line_count(buf) do
+    local entry = oil.get_entry_on_line(buf, lnum)
+    if entry and entry.name == wanted then
+      target_line = lnum
+      break
+    end
+  end
+  if not target_line then
+    return
+  end
+
+  -- Oil can be visible in more than one window (notably with preview). Restore
+  -- only the actual explorer window showing this buffer; preview buffers are
+  -- different buffers and are therefore unaffected.
+  local current_win = vim.api.nvim_get_current_win()
+  if vim.api.nvim_win_is_valid(current_win) and vim.api.nvim_win_get_buf(current_win) == buf then
+    vim.api.nvim_win_set_cursor(current_win, { target_line, 0 })
+    return
+  end
+
+  for _, win in ipairs(vim.fn.win_findbuf(buf)) do
+    if vim.api.nvim_win_is_valid(win) then
+      vim.api.nvim_win_set_cursor(win, { target_line, 0 })
+      return
+    end
+  end
+end
+
 -- Oil does not have a built-in persistent multi-selection model for arbitrary
 -- entries. Keep a tiny path-based selection so it survives cursor movement and
 -- directory changes. <Tab> toggles the entry under the cursor; yy copies all
@@ -203,15 +274,26 @@ return {
   config = function(_, opts)
     require("oil").setup(opts)
 
-    -- OilEnter fires after the directory has actually rendered, so selection
-    -- highlights are restored reliably when moving between Oil buffers.
+    -- OilEnter fires after the directory has actually rendered, so restore its
+    -- last focused entry and then redraw persistent multi-selection highlights.
     vim.api.nvim_create_autocmd("User", {
       pattern = "OilEnter",
       callback = function(args)
         local buf = (args.data and args.data.buf) or vim.api.nvim_get_current_buf()
         vim.schedule(function()
+          CursorMemory.restore(buf)
           Selection.redraw(buf)
         end)
+      end,
+    })
+
+    -- Track the focused entry continuously, and once more before leaving the
+    -- Oil buffer so immediately entering a directory also records its parent
+    -- position even if no CursorMoved event happened first.
+    vim.api.nvim_create_autocmd({ "CursorMoved", "BufLeave" }, {
+      pattern = "oil://*",
+      callback = function(args)
+        CursorMemory.remember(args.buf)
       end,
     })
 

@@ -33,11 +33,11 @@ client onto the same session next time. Prompt/context/send/session selection
 remain Sidekick-owned. Tmux is also the fallback presentation outside kitty.
 
 [`../tmux/tmux.conf`](../tmux/tmux.conf) is tracked (via `config_dirs` in
-[`../profiles/base.toml`](../profiles/base.toml)) purely to fix truecolor:
-tmux defaults to `default-terminal "screen"`, which downgrades 24-bit color to
-a washed-out 256-color approximation. `default-terminal "tmux-256color"` +
-`terminal-overrides ",*:RGB"` restores true 24-bit color passthrough. There is
-otherwise no tmux session/pane management here.
+[`../profiles/base.toml`](../profiles/base.toml)) for Sidekick's terminal
+boundary: truecolor passthrough and tmux mouse scrollback. Mouse handling must
+stay enabled because tmux puts kitty in its alternate screen; otherwise kitty
+turns wheel events into Up/Down keys and the CLI walks command history. There
+is otherwise no tmux session/pane management here.
 
 ## How kanata drives sessions
 

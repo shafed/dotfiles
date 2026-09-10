@@ -3,7 +3,6 @@
 
 local M = {}
 
-local SYNC_SCRIPT = vim.fn.expand("~/github/dotfiles/scripts/obsidian-sync.sh")
 local VAULT_PATH = vim.fn.expand("~/github/obsidian")
 local LOG_FILE = vim.fn.stdpath("cache") .. "/obsidian-sync-push.log"
 local LOGBOOK_SCRIPT = vim.fn.expand("~/github/dotfiles/scripts/generate_logbook.py")
@@ -12,10 +11,9 @@ local function in_vault()
   return vim.fn.getcwd():find(VAULT_PATH, 1, true) ~= nil
 end
 
--- Candidate replacement for obsidian-sync.sh. It is deliberately not wired to
--- <leader>go yet: run push_git_once() once on the real vault before activation.
--- The same lock path is used by obsidian-git-view-sync, so manual writes cannot
--- race with automatic HEAD/index catch-up.
+-- Manual <leader>go implementation. The same lock path is used by
+-- obsidian-git-view-sync, so a manual commit/push cannot race with automatic
+-- HEAD/index catch-up.
 local MANUAL_PUSH_SCRIPT = [=[
 set -euo pipefail
 
@@ -80,10 +78,9 @@ GIT_TERMINAL_PROMPT=0 GIT_SSH_COMMAND="ssh -o BatchMode=yes" \
 printf '%s obsidian-manual-push: completed\n' "$(date '+%Y-%m-%dT%H:%M:%S%z')"
 ]=]
 
--- Test entrypoint for the future <leader>go implementation. This is not bound
--- to a key yet; after one successful real run, push_now() can be switched to it
--- and the legacy obsidian-sync.sh can be deleted.
-function M.push_git_once()
+-- Keep the manual push detached so it can finish if nvim or its kitty tab is
+-- closed immediately after the keymap is used.
+function M.push_now()
   if not in_vault() then
     print("Not in Obsidian Vault")
     return false
@@ -99,25 +96,6 @@ function M.push_git_once()
     return false
   end
 
-  print("Obsidian Vault: test manual push started (" .. LOG_FILE .. ")")
-  return true
-end
-
--- Keep the manual push detached so it can finish if nvim or its kitty tab is
--- closed immediately after the keymap is used.
-function M.push_now()
-  if not in_vault() then
-    print("Not in Obsidian Vault")
-    return false
-  end
-
-  vim.cmd("silent! wa")
-  local cmd = string.format(
-    "setsid %s push >>%s 2>&1 </dev/null &",
-    vim.fn.shellescape(SYNC_SCRIPT),
-    vim.fn.shellescape(LOG_FILE)
-  )
-  vim.fn.jobstart({ "sh", "-c", cmd }, { detach = true })
   print("Obsidian Vault: pushing in background (" .. LOG_FILE .. ")")
   return true
 end

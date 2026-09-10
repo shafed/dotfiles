@@ -1,11 +1,10 @@
 ---
 title: scripts-misc
 type: component
-updated: 2026-09-09
+updated: 2026-09-10
 covers:
   - scripts/watch-downloads.sh
   - scripts/sudo-notify.sh
-  - scripts/obsidian-sync.sh
   - scripts/daily-notes.sh
   - scripts/symlayout-watch.sh
   - scripts/open-url.sh
@@ -55,14 +54,6 @@ terminal goes unnoticed. Design:
 - Always `exec`s the real `/usr/bin/sudo` at the end regardless of the notify
   path, so behavior/exit code/stdio are byte-identical to calling sudo directly
   — this wrapper is meant to be fully transparent.
-
-## obsidian-sync.sh
-
-Manual git sync for `~/github/obsidian`, invoked only by Neovim's `<leader>go`.
-The automatic call sites are retired: kitty sessions do not pull on entry and
-Neovim does not commit or push on focus loss or exit. Routine synchronization
-is handled through Syncthing/NAS; the keymap remains available for an explicit
-Git pull, commit and push when needed.
 
 ## daily-notes.sh
 

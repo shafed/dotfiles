@@ -27,7 +27,10 @@ git_op_in_progress() {
      -d "$git_dir/rebase-apply" ]]
 }
 
-sync_once() {
+# Run each check in a subshell so fd 9, and therefore its flock, is always
+# released when this invocation returns. The long-lived watcher must never
+# retain the Git lock between checks.
+sync_once() (
   if [[ ! -d "$vault/.git" ]]; then
     log "blocked: vault is not a Git repository: $vault"
     return 90
@@ -116,7 +119,7 @@ sync_once() {
   fi
 
   return 0
-}
+)
 
 if [[ "${1:-}" == "--once" ]]; then
   sync_once

@@ -16,93 +16,54 @@ Parent: [nvim](nvim.md). Generation and viewing of the logbook itself is in
 
 ## Integration with the training logbook
 
-nvim is the editing side of the training logbook; generation and viewing are in
-[scripts](scripts.md), invocation from the editor is in [sessions](sessions.md).
+nvim is the editing side of the training logbook.
 
-- `<leader>lr` regenerates `logbook.html` and `<leader>lp`
-  (`obsidian.save_training_note`) regenerates it automatically after saving a
-  note. Both funnel through one shared helper — `obsidian.regenerate_logbook()`.
-  (They used to be two separate copies of the script invocation with divergent
-  error handling: `<leader>lr` checked the script existed and reported output,
-  while `save_training_note` ran it silently with no existence guard. Merged
-  into a single guarded runner that takes `{ silent = true }` for the
-  auto-trigger.)
+- `<leader>lr` regenerates `training/logbook.html` through
+  `obsidian.regenerate_logbook()`.
 - `<leader>lp` saves the buffer as
-  `~/github/obsidian/training/Full Body <текущий год>/YYYY-MM-DD-Training.md` and
-  rewrites the first H1, when present, to `YYYY-MM-DD-Training`. The filename no
-  longer depends on a `Day N`/H1 value. It prompts for the session date
-  (`vim.ui.input`, defaults to today, validated as `YYYY-MM-DD`) so a session
-  logged late can be dated to when the workout actually happened. The logbook
-  parser accepts the current `YYYY-MM-DD-Training` form and legacy
-  `YYYY-MM-DD-Day-N` files, so old sessions remain readable.
-- A separate keymap opens `logbook.html` via `xdg-open`.
-- `<leader>go` is an explicit manual Git escape hatch implemented directly in
+  `~/github/obsidian/training/Full Body <current year>/YYYY-MM-DD-Training.md`,
+  rewrites the first H1 to the same slug when an H1 exists, and regenerates the
+  logbook. The session date is prompted with `vim.ui.input`, defaults to today,
+  and must be `YYYY-MM-DD`.
+- `<leader>lv` opens `~/github/obsidian/training/logbook.html`.
+- `<leader>lc` copies the last workout table to the system clipboard in the
+  tab-separated shape expected by the external workout workflow.
+- `<leader>go` is an explicit manual Git escape hatch implemented in
   `lua/utils/obsidian.lua`. It saves buffers, takes the same lock as
-  `obsidian-git-view-sync`, fetches `origin/main`, refuses to commit while the
-  local Git metadata is behind or diverged, then runs `git add -A`, creates a
+  `obsidian-git-view-sync`, fetches `origin/main`, refuses to commit if local
+  Git metadata is behind or diverged, then stages the vault, creates a
   timestamped `Vault backup` commit when needed, and pushes. Routine file
-  synchronization remains Syncthing/NAS; there is no automatic PC commit/push.
-- `nvim-edit-handler.sh` in [scripts](scripts.md) — the reverse link: the
-  logbook opens a note for editing in nvim.
+  synchronization remains Syncthing/NAS; the PC does not auto-commit or
+  auto-push.
+- `nvim-edit-handler.sh` handles `nvim-edit://` links from the generated logbook
+  and opens the source training note in the kitty Obsidian session.
 
 ## Periodic review of daily notes
 
 `lua/utils/review.lua` turns daily notes into temporary read-only markdown
-buffers so reviews happen inside the editor without creating another generated
-artifact in the vault:
+buffers without creating review artifacts inside the vault:
 
-- `<leader>lw` reviews the previous 7 days and `<leader>lm` the previous 30;
-  `:Review [days]` provides an arbitrary window.
+- `<leader>lw` reviews the previous 7 days.
+- `<leader>lm` reviews the previous 30 days.
+- `:Review [days]` provides an arbitrary window.
 - `<leader>ld` collects the same calendar day from earlier years.
-- Untouched template notes are omitted, and YAML/meta-bind boilerplate is
-  stripped so the combined buffer emphasizes what was actually written.
-- Month-sized reviews also summarize the most-edited markdown files from the
-  vault's git history, providing a useful attention signal without adding
-  review metadata to notes.
+- Untouched template notes are omitted and YAML/meta-bind boilerplate is
+  stripped.
+- Month-sized reviews include the most-edited markdown files from Git history as
+  an attention signal.
 
-There is deliberately no yearly shortcut: flattening 365 daily notes into one
-buffer is not a useful reading surface, while `:Review [days]` still permits
-deliberate longer windows. Daily paths follow the vault's English `strftime`
-naming convention under `journal/YYYY/YYYY-MM-DD-Weekday.md`.
-
-⚠️ Gotcha: LazyVim core binds `<leader>l` directly to `:Lazy` (exact match, not
-a which-key group), which silently swallowed the `[P]Log` keys
-(`lc`/`lp`/`lv`/`lr`) above — the which-key `group` registration alone doesn't
-override it. Fixed in `keymaps.lua` by `vim.keymap.del("n", "<leader>l")` and
-remapping `:Lazy` to `<leader>L`.
-
-⚠️ Gotcha: `harper_ls` (grammar checking) is **disabled on training notes** —
-`excludePatterns` contains `~/github/obsidian/training/**/*.md` and `Day [123].md`.
-Reason: training notes are tables/abbreviations, and harper chokes on false
-positives. Commit `ef70575` ("recursive disable harper in training").
+Daily notes live under `journal/` with filenames shaped
+`YYYY-MM-DD-Weekday.md`.
 
 ## Snippets and spell
 
-- `snippets/` — LuaSnip snippets. Markdown vault templates live in
+- `snippets/` contains LuaSnip snippets. Markdown vault templates live in
   `markdown.lua`; LaTeX snippets live in `tex/*.lua` and `bib.lua`.
 - Vault note triggers are `;source`, `;project`, `;category`, `;meta`,
-  `;creator`, `;quote`, and `;daily`. The daily snippet derives its heading from
-  the filename and adds no metadata.
-- There's a `;date` snippet — inserts the current date in ISO format (commit
-  `2e4f335`).
-- LuaSnip **choice nodes** (`lua/plugins/luasnip.lua`): the picker
-  (`select_choice`) opens **automatically** whenever a choice node becomes the
-  active node — a `User LuasnipChoiceNodeEnter` autocmd (scheduled, guarded by
-  `choice_active()` so a fast Tab-past doesn't open it stale). `<C-u>`
-  (insert/select) reopens it manually; when no choice is active it falls back to
-  the built-in `<C-u>` (delete to start of line) via a noremap feedkeys. The
-  manual mapping deliberately is **not** an `expr` mapping: the picker is a
-  Snacks window, and `nvim_open_win` is forbidden during expr evaluation (E565).
-- `spell/` — custom EN+RU dictionaries.
-- `blink-cmp-dictionary` source (in `lua/plugins/blink.lua`) suggests
-  completions from `dictionaries/american-english.txt` (EN, 50k words) and
-  `dictionaries/russian-utf8.txt` (RU, 100k words), filtered via `fzf --filter`
-  for speed. `min_keyword_length = 2` and `max_items = 8` so short RU words
-  surface sooner and aren't crowded out by 3-item cap. Both wordlists are
-  **frequency-ordered** (most common word first: EN from
-  david47k/top-english-wordlists, RU from hingston/russian's Leeds Corpus list)
-  so common words rank first, not just alphabetically-first matches.
-  `get_command_args` overrides fzf's args to add `--tiebreak=index`, since fzf's
-  default tiebreak is match length — without this override, ties between
-  equal-quality matches would ignore frequency order and fall back to
-  shortest-string-wins.
+  `;creator`, `;quote`, and `;daily`.
+- `;date` inserts the current ISO date.
+- LuaSnip choice nodes open the choice picker automatically when they become
+  active; `<C-u>` reopens it while a choice is active.
+- `spell/` contains custom EN+RU dictionaries.
+- `blink-cmp-dictionary` uses the tracked English and Russian frequency-ordered
+  wordlists and `fzf --filter` for dictionary completions.

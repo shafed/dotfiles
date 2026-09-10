@@ -1,4 +1,4 @@
 [machine]
 description = "Primary desktop PC"
-profiles = ["desktop", "documents", "development", "networking", "storage", "printing", "hardware-shafed"]
+profiles = ["desktop", "obsidian", "documents", "development", "networking", "storage", "printing", "hardware-shafed"]
 capabilities = []

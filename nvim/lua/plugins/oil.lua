@@ -6,18 +6,6 @@ local function entry_path(dir, entry)
   return entry.name == ".." and dir:sub(1, -2) or (dir .. entry.name)
 end
 
--- Go up `vim.v.count1` parent directories in one step (`3h` == three `-`
--- presses without three separate buffer loads). Plain press behaves like
--- oil's default single-level parent nav.
-local function go_up_parent()
-  local oil = require("oil")
-  local target = oil.get_current_dir():sub(1, -2)
-  for _ = 1, vim.v.count1 do
-    target = vim.fn.fnamemodify(target, ":h")
-  end
-  oil.open(target)
-end
-
 -- Oil does not have a built-in persistent multi-selection model for arbitrary
 -- entries. Keep a tiny path-based selection so it survives cursor movement and
 -- directory changes. <Tab> toggles the entry under the cursor; yy copies all
@@ -165,6 +153,8 @@ return {
       show_hidden = true,
     },
     keymaps = {
+      ["H"] = { "actions.parent", mode = "n" },
+      ["L"] = "actions.select",
       ["q"] = { "actions.close", mode = "n" },
       ["<Esc>"] = { "actions.close", mode = "n" },
 
@@ -199,7 +189,7 @@ return {
   keys = {
     {
       "<leader>e",
-      "<cmd>Oil<cr>",
+      "<cmd>Oil --preview<cr>",
       desc = "Open oil (Directory of Current File)",
     },
     {

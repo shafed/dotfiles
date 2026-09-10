@@ -4,28 +4,23 @@
 local M = {}
 
 local VAULT_PATH = vim.fn.expand("~/github/obsidian")
-local LOG_FILE = vim.fn.stdpath("cache") .. "/obsidian-sync-push.log"
 local LOGBOOK_SCRIPT = vim.fn.expand("~/github/dotfiles/scripts/generate_logbook.py")
 
 local function in_vault()
   return vim.fn.getcwd():find(VAULT_PATH, 1, true) ~= nil
 end
 
--- Manual <leader>go implementation. The same lock path is used by
+-- Manual <leader>go implementation. The same runtime lock path is used by
 -- obsidian-git-view-sync, so a manual commit/push cannot race with automatic
 -- HEAD/index catch-up.
 local MANUAL_PUSH_SCRIPT = [=[
 set -euo pipefail
 
 vault="$1"
-log_file="$2"
 branch="${OBSIDIAN_GIT_BRANCH:-main}"
-cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/obsidian-sync"
-mkdir -p "$cache_dir" "$(dirname "$log_file")"
-lock_file="$cache_dir/lock$(printf '%s' "$vault" | md5sum | cut -c1-8)"
-
-exec >>"$log_file" 2>&1
-printf '%s obsidian-manual-push: started\n' "$(date '+%Y-%m-%dT%H:%M:%S%z')"
+runtime_dir="${XDG_RUNTIME_DIR:-/tmp/obsidian-git-${UID}}/obsidian-git"
+mkdir -p "$runtime_dir"
+lock_file="$runtime_dir/lock$(printf '%s' "$vault" | md5sum | cut -c1-8)"
 
 exec 9>"$lock_file"
 flock 9
@@ -34,7 +29,7 @@ cd "$vault"
 
 current_branch="$(git symbolic-ref -q --short HEAD 2>/dev/null || true)"
 if [[ "$current_branch" != "$branch" ]]; then
-  echo "blocked: current branch is '${current_branch:-detached}', expected '$branch'"
+  echo "blocked: current branch is '${current_branch:-detached}', expected '$branch'" >&2
   exit 23
 fi
 
@@ -44,42 +39,35 @@ if [[ -f "$git_dir/MERGE_HEAD" ||
       -f "$git_dir/REVERT_HEAD" ||
       -d "$git_dir/rebase-merge" ||
       -d "$git_dir/rebase-apply" ]]; then
-  echo "blocked: Git operation in progress"
+  echo "blocked: Git operation in progress" >&2
   exit 24
 fi
 
 GIT_TERMINAL_PROMPT=0 GIT_SSH_COMMAND="ssh -o BatchMode=yes" \
   git fetch --quiet origin "$branch"
 
-# Manual commit/push is allowed only when origin/main is already an ancestor of
-# local HEAD. If local HEAD is behind, Syncthing may already have delivered the
-# remote files while Git metadata still lags; committing in that state could
-# mislabel remote changes as local ones.
 if ! git merge-base --is-ancestor "origin/$branch" HEAD; then
   if git merge-base --is-ancestor HEAD "origin/$branch"; then
-    echo "blocked: local Git metadata is behind origin/$branch; wait for git-view-sync"
+    echo "blocked: local Git metadata is behind origin/$branch; wait for git-view-sync" >&2
     exit 20
   fi
-  echo "blocked: local $branch has diverged from origin/$branch"
+  echo "blocked: local $branch has diverged from origin/$branch" >&2
   exit 25
 fi
 
 git add -A
 
 if ! git diff --cached --quiet --; then
-  git commit -m "Vault backup: $(date '+%Y-%m-%d %H:%M:%S')"
-else
-  echo "nothing new to commit"
+  git commit --quiet -m "Vault backup: $(date '+%Y-%m-%d %H:%M:%S')"
 fi
 
 GIT_TERMINAL_PROMPT=0 GIT_SSH_COMMAND="ssh -o BatchMode=yes" \
-  git push origin "$branch"
-
-printf '%s obsidian-manual-push: completed\n' "$(date '+%Y-%m-%dT%H:%M:%S%z')"
+  git push --quiet origin "$branch"
 ]=]
 
 -- Keep the manual push detached so it can finish if nvim or its kitty tab is
--- closed immediately after the keymap is used.
+-- closed immediately after the keymap is used. While nvim remains open, report
+-- only a short success/error notification; no persistent push log is written.
 function M.push_now()
   if not in_vault() then
     print("Not in Obsidian Vault")
@@ -87,16 +75,44 @@ function M.push_now()
   end
 
   vim.cmd("silent! wa")
-  local job = vim.fn.jobstart(
-    { "bash", "-c", MANUAL_PUSH_SCRIPT, "obsidian-manual-push", VAULT_PATH, LOG_FILE },
-    { detach = true }
-  )
+
+  local output = {}
+  local function collect(_, data)
+    for _, line in ipairs(data or {}) do
+      if line ~= "" then
+        table.insert(output, line)
+      end
+    end
+  end
+
+  local job = vim.fn.jobstart({ "bash", "-c", MANUAL_PUSH_SCRIPT, "obsidian-manual-push", VAULT_PATH }, {
+    detach = true,
+    stdout_buffered = true,
+    stderr_buffered = true,
+    on_stdout = collect,
+    on_stderr = collect,
+    on_exit = function(_, code)
+      vim.schedule(function()
+        if code == 0 then
+          vim.notify("Obsidian Vault: pushed", vim.log.levels.INFO)
+          return
+        end
+
+        local detail = vim.trim(table.concat(output, "\n"))
+        if detail == "" then
+          detail = "exit " .. code
+        end
+        vim.notify("Obsidian Vault push failed:\n" .. detail, vim.log.levels.ERROR)
+      end)
+    end,
+  })
+
   if job <= 0 then
     vim.notify("Obsidian Vault: failed to start manual push", vim.log.levels.ERROR)
     return false
   end
 
-  print("Obsidian Vault: pushing in background (" .. LOG_FILE .. ")")
+  vim.notify("Obsidian Vault: pushing…", vim.log.levels.INFO)
   return true
 end
 

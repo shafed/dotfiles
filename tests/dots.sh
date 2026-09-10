@@ -108,6 +108,10 @@ grep -q 'eval "$("\$DOTFILES/dots" completion zsh)"' "$ROOT/zsh/zshrc"
 grep -q 'compdef _dots dots ds' "$ROOT/zsh/zshrc"
 [ ! -e "$ROOT/zsh/completions/_dots" ]
 [ ! -e "$ROOT/scripts/dots-stage.sh" ]
+[ -L "$ROOT/systemd/user/graphical-session.target.wants/copyq.service" ]
+[ ! -e "$ROOT/systemd/user/default.target.wants/copyq.service" ]
+grep -q '^PartOf=graphical-session.target$' "$ROOT/systemd/user/copyq.service"
+grep -q '^WantedBy=graphical-session.target$' "$ROOT/systemd/user/copyq.service"
 if "$ROOT/dots" stage >"$tmp/stage.out" 2>&1; then
   echo "removed stage command unexpectedly succeeded" >&2
   exit 1

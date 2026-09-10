@@ -10,11 +10,6 @@ source = "scripts/obsidian-git-view-sync.sh"
 destination = "{home}/.local/bin/obsidian-git-view-sync"
 reason = "keep local Obsidian Git metadata aligned with Syncthing-delivered files"
 
-[[links]]
-source = "systemd/user/obsidian-git-view-sync.service"
-destination = "{config}/systemd/user/obsidian-git-view-sync.service"
-reason = "run the Obsidian Git metadata watcher as a managed user service"
-
 [[packages]]
 command = "inotifywait"
 package = "inotify-tools"

@@ -1,7 +1,7 @@
 ---
 title: scripts-logbook
 type: component
-updated: 2026-09-09
+updated: 2026-09-10
 covers:
   - scripts/generate_logbook.py
   - scripts/nvim-edit-handler.sh
@@ -12,105 +12,52 @@ covers:
 Parent: [scripts](scripts.md). The editing side lives in [nvim](nvim.md); the
 kitty session it opens into is in [sessions](sessions.md).
 
-Markdown training sessions in `~/github/obsidian/training/` become a single generated
-`logbook.html`, with a reverse link back into nvim for editing a session.
+Markdown training sessions in `~/github/obsidian/training/` become one generated
+`training/logbook.html`, with links back into Neovim for editing source notes.
 
 ## generate_logbook.py
 
-Generates a **single self-contained** `logbook.html` from the markdown sessions
-in `~/github/obsidian/training/`. CSS+JS are inlined into the HTML, exercise
-data is injected as JSON (`__EXDATA__`). Structure: parse sessions/events →
-minimal markdown→HTML → render → assemble the page (`main`).
+Generates a self-contained `logbook.html` from the markdown sessions in the
+vault. CSS and JavaScript are inlined, exercise data is injected into the page,
+and the output stays inside the vault so Syncthing/NAS carries the regenerated
+file to other devices.
 
-Key decisions (from git evolution):
+Current behavior:
 
-- **Output location: inside the vault, deliberately** — `OUTPUT` defaults to
-  `training/logbook.html` (override with `LOGBOOK_OUTPUT`). This _used_ to
-  write to `~/.cache/logbook/` specifically to keep a 1MB+ generated blob out
-  of the vault's git history, but that meant `obsidian-sync.sh push`'s
-  `git add -A` never picked up fresh regenerations, and other devices (the
-  phone) were stuck on whatever was last committed while it briefly lived in
-  the vault (2026-07-21) — permanently stale, since nothing wrote there
-  anymore. Reverted 2026-09-06: the phone-sync requirement outweighs the git
-  noise from a large diff on every rebuild.
-- **Session filenames**: canonical session files use `YYYY-MM-DD-Training.md`. Legacy `YYYY-MM-DD-Day-N.md` files remain accepted for backward compatibility; new files should not encode weekly workout order in the filename.
-- **Mood via session YAML frontmatter** (`mood: bad|mid|great`), not an inline
-  tag in the body — commit "Add session-level mood via YAML frontmatter." Mood
-  is a property of the whole session, so it lives in the file header; parsed by
-  `MOOD_FM_RE`.
-- **Search evolution**: fuzzy (`f49a39f`) → ranked (`832326c`, weighted
-  `searchScore`: exact date match 10000, substring 8000, tokens 150/25/5) →
-  speed up (`f9594b3`) → debounce (`48314a5`). ⚠️ Gotcha: `input` is debounced
-  at **220ms** (`scheduleSearch`), and match highlighting (`highlight`, an
-  expensive TreeWalker) is deferred and capped at the top 50 results
-  (`scheduleHighlight`) — otherwise typing lags on a large feed.
-- **`fuzzyToken` is per-word, not per-card**: `fuzzyMatch` (feed search) tests
-  each query token against the individual words of a session (`row.words`),
-  never against the whole card's text glued into one string. Matching against
-  the glued blob let a short query subsequence-match almost any large card
-  (digits/dates never share letters with a word query, but two unrelated
-  _words_ concatenated can) — e.g. "bench" matched 145/241 sessions with only
-  19 containing the literal word. Keep new fuzzy matching scoped to one word
-  at a time.
-- **Search box is shared state across both tabs**: `showView()` re-runs
-  `runSearch`/`filterExercises` with the current `#search` value whenever you
-  switch tabs, so a query typed in one tab is reflected in the other without
-  retyping. ⚠️ Gotcha: `runSearch` must never call `showView('feed')` itself
-  (it used to, as a belt-and-braces default) — since `showView` now calls
-  `runSearch`, that becomes infinite recursion (`Maximum call stack size
-exceeded`). Every caller of `runSearch` already guarantees the feed view is
-  current before calling it.
-- **Search vs. open exercise detail**: typing a new query while an exercise's
-  history is open (`#exdetail` visible) goes through `exerciseListSearch()`,
-  which closes the detail before filtering — otherwise the (correctly
-  filtered) list updates invisibly behind the still-open detail card and
-  looks like search did nothing. Tab-switch syncing (above) intentionally
-  uses plain `filterExercises`/`runSearch` instead, so it does _not_ close an
-  open detail — only an active new-search keystroke should navigate away.
-- **Split dates in search** (`c26e2dc`): `2026 06` matches `2026-06-*`.
-- **Exercise history** (`ce289e2`): clicking an exercise name → its history; the
-  exercise list is sorted by last use, not alphabetically (`0a0133a`). The
-  "← all exercises" back-link lives inside `#exdetail`, after the "Exercise
-  history" `h2.eye` heading (briefly moved above it on 2026-09-06, reverted
-  same day).
-- `#search::-webkit-search-cancel-button` is disabled in CSS — Chromium-based
-  mobile browsers (e.g. Samsung Internet) render their own native clear icon
-  on `type="search"` inputs, which doubled up with the custom `.searchclear`
-  button.
-- **note-links / nvim-edit** (`fc30a5c`): in the feed and history — links
-  `nvim-edit://<percent-encoded absolute path>` that open the session's source
-  md file. Handled by `nvim-edit-handler.sh` (see below).
-- **Events** (`training/events.md`): one event = `YYYY-MM-DD: #bad|#neutral|
-#good text`. Prettier hard-wraps long lines, so `parse_events` treats a
-  non-empty, non-heading continuation line as the previous event's next line:
-  the break is kept (`\n`) and rendered as a visible `<br>` (WYSIWYG; a blank
-  line ends the block). A line that starts like an event but has a bad date or
-  unknown tag is warned about and skipped — never glued to the event above it.
+- Output defaults to `~/github/obsidian/training/logbook.html`; override with
+  `LOGBOOK_OUTPUT`.
+- Canonical session filenames are `YYYY-MM-DD-Training.md`. Legacy
+  `YYYY-MM-DD-Day-N.md` files remain readable.
+- Session mood is read from YAML frontmatter as `mood: bad|mid|great`.
+- Feed search ranks exact/substring/token matches and debounces input before
+  updating results.
+- Fuzzy matching is applied per word rather than across one concatenated card.
+- The search value is shared between feed and exercise-list views.
+- Typing a new query while exercise detail is open returns to the filtered
+  exercise list.
+- Date fragments such as `2026 06` match June 2026 sessions.
+- Exercise names open their history; the exercise list is ordered by last use.
+- `training/events.md` accepts entries shaped
+  `YYYY-MM-DD: #bad|#neutral|#good text`, including wrapped continuation lines.
+- Session links use `nvim-edit://<percent-encoded absolute path>` to open the
+  source markdown note.
 
-## nvim-edit-handler.sh — the `nvim-edit://` handler
+## nvim-edit-handler.sh
 
-Handles `nvim-edit://` links from the logbook (see [nvim](nvim.md),
-[sessions](sessions.md)). Opens the file in the kitty **obsidian** session as a
-new nvim tab.
+Handles `nvim-edit://` links from the logbook and opens the source markdown file
+in the kitty `obsidian` session.
 
-Design (a two-level fallback, because the kitty session and nvim are
-asynchronous):
-
-1. Via `kitty-zoxide-session.sh --named obsidian`, focuses/creates the obsidian
-   session in the **main** (non-floating) kitty — not in transient panels like
-   apps.sh.
-2. Prefers `nvim --remote-tab` over the nvim socket
-   (`$XDG_RUNTIME_DIR/nvim.<pid>.0`, the pid is searched with a ±5 delta since
-   the exact nvim pid is unstable); on failure falls back to `kitty send-text`
-   (`:tabedit` into a running nvim, or `nvim <file>` in a bare shell).
+It focuses or creates the main Obsidian kitty session through
+`kitty-zoxide-session.sh --named obsidian`, then prefers Neovim remote-tab over
+the active Neovim socket. If remote-tab is unavailable, it falls back to kitty
+`send-text` and opens the file in the running editor or shell.
 
 ## Connections
 
-- `nvim-edit-handler.sh` ↔ the kitty obsidian session and its nvim (see
-  [sessions](sessions.md)).
-- `generate_logbook.py` (generates links) ↔ `nvim-edit-handler.sh` (opens them).
-- `generate_logbook.py` writes into the vault, so the vault's Syncthing/NAS
-  synchronization carries the regenerated `training/logbook.html` to other
-  devices. `<leader>lr` (`obsidian.regenerate_logbook`) only rebuilds the file
-  locally.
-  `<leader>lv` opens `~/github/obsidian/training/logbook.html` directly.
+- `generate_logbook.py` writes `training/logbook.html` inside the vault.
+- `obsidian.regenerate_logbook()` invokes the generator from Neovim.
+- `<leader>lr` regenerates the logbook manually.
+- `<leader>lp` saves a training note and regenerates the logbook automatically.
+- `<leader>lv` opens the generated HTML.
+- `nvim-edit-handler.sh` opens source notes from `nvim-edit://` links.
+- Syncthing/NAS carries the generated HTML and source notes to other devices.

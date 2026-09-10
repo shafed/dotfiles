@@ -8,9 +8,9 @@ retry_interval="${OBSIDIAN_GIT_RETRY_INTERVAL:-60}"
 retry_window="${OBSIDIAN_GIT_RETRY_WINDOW:-900}"
 fallback_interval="${OBSIDIAN_GIT_FALLBACK_INTERVAL:-900}"
 
-cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/obsidian-sync"
-mkdir -p "$cache_dir"
-lock_file="$cache_dir/lock$(printf '%s' "$vault" | md5sum | cut -c1-8)"
+runtime_dir="${XDG_RUNTIME_DIR:-/tmp/obsidian-git-${UID}}/obsidian-git"
+mkdir -p "$runtime_dir"
+lock_file="$runtime_dir/lock$(printf '%s' "$vault" | md5sum | cut -c1-8)"
 
 log() {
   printf '%s obsidian-git-view-sync: %s\n' "$(date '+%Y-%m-%dT%H:%M:%S%z')" "$*"

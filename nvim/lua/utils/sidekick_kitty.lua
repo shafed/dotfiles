@@ -311,6 +311,21 @@ function M.setup()
     end, states)
   end
 
+  local function resume_single_kitty(opts)
+    local attached_filter = vim.tbl_extend("force", {}, opts.filter, { attached = true })
+    if #State.get(attached_filter) > 0 then
+      return false
+    end
+    local kitty = vim.tbl_filter(function(state)
+      return state.session and state.session.backend == "kitty"
+    end, State.get(opts.filter))
+    if #kitty ~= 1 then
+      return false
+    end
+    State.attach(kitty[1], { show = true, focus = opts.focus })
+    return true
+  end
+
   -- New sessions use tmux for persistence but are presented in a native kitty
   -- split. Detached tmux sessions discovered by Backend:sessions() keep all
   -- normal Sidekick context, prompt, send and selection behavior.
@@ -341,6 +356,9 @@ function M.setup()
 
   Cli.toggle = function(opts)
     opts = normalize_opts(opts)
+    if resume_single_kitty(opts) then
+      return
+    end
     State.with(function(state, attached)
       if state.session and state.session.backend == "kitty" then
         if attached then
@@ -365,6 +383,9 @@ function M.setup()
 
   Cli.focus = function(opts)
     opts = normalize_opts(opts)
+    if resume_single_kitty(opts) then
+      return
+    end
     State.with(function(state)
       if state.session and state.session.backend == "kitty" then
         if state.session:is_focused() then

@@ -1,7 +1,7 @@
 ---
 title: nvim-obsidian
 type: component
-updated: 2026-09-09
+updated: 2026-09-10
 covers:
   - nvim/lua/utils/obsidian.lua
   - nvim/lua/utils/review.lua
@@ -36,8 +36,12 @@ nvim is the editing side of the training logbook; generation and viewing are in
   parser accepts the current `YYYY-MM-DD-Training` form and legacy
   `YYYY-MM-DD-Day-N` files, so old sessions remain readable.
 - A separate keymap opens `logbook.html` via `xdg-open`.
-- `<leader>go` explicitly pulls, commits and pushes the vault through
-  `obsidian-sync.sh`; there is no sync on focus loss or editor exit.
+- `<leader>go` is an explicit manual Git escape hatch implemented directly in
+  `lua/utils/obsidian.lua`. It saves buffers, takes the same lock as
+  `obsidian-git-view-sync`, fetches `origin/main`, refuses to commit while the
+  local Git metadata is behind or diverged, then runs `git add -A`, creates a
+  timestamped `Vault backup` commit when needed, and pushes. Routine file
+  synchronization remains Syncthing/NAS; there is no automatic PC commit/push.
 - `nvim-edit-handler.sh` in [scripts](scripts.md) — the reverse link: the
   logbook opens a note for editing in nvim.
 

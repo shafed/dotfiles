@@ -182,13 +182,13 @@ not the raw binary, because Hyprland never activates `graphical-session.target`
 itself — without uwsm the systemd user manager never learns `WAYLAND_DISPLAY`,
 and user services needing the session start with a broken environment.
 
-⚠️ Gotcha: uwsm only protects services that **order themselves after**
-`graphical-session.target`. A `WantedBy=default.target` unit with no `After=`
-can start in the same instant `default.target` is reached and race uwsm's
-environment import. `copyq.service` did exactly this — crash-looping on "no Qt
-platform plugin" until it hit systemd's start limit — until
-`After=graphical-session.target` was added. Any user service touching the
-Wayland session needs that line, not just `WantedBy=`.
+⚠️ Gotcha: uwsm only protects services that are **started by**
+`graphical-session.target`. `After=` only orders units that are already in the
+same transaction; it does not make a service pulled in by `default.target` wait
+for a graphical session that starts later. `copyq.service` did exactly this —
+crash-looping on "no Qt platform plugin" until it hit systemd's start limit.
+Session-bound services need `WantedBy=graphical-session.target` as well as
+`After=graphical-session.target`; `PartOf=` also stops them with the session.
 
 ## Bindings worth knowing about
 

@@ -29,12 +29,14 @@ nvim is the editing side of the training logbook.
 - `<leader>lc` copies the last workout table to the system clipboard in the
   tab-separated shape expected by the external workout workflow.
 - `<leader>go` is an explicit manual Git escape hatch implemented in
-  `lua/utils/obsidian.lua`. It saves buffers, takes the same lock as
+  `lua/utils/obsidian.lua`. It saves buffers, takes the same runtime lock as
   `obsidian-git-view-sync`, fetches `origin/main`, refuses to commit if local
   Git metadata is behind or diverged, then stages the vault, creates a
-  timestamped `Vault backup` commit when needed, and pushes. Routine file
-  synchronization remains Syncthing/NAS; the PC does not auto-commit or
-  auto-push.
+  timestamped `Vault backup` commit when needed, and pushes. The job is detached
+  so it may finish after the editor closes. While Neovim remains open it shows
+  only short `pushing` / `pushed` or failure notifications; no persistent push
+  log is written. Routine file synchronization remains Syncthing/NAS; the PC
+  does not auto-commit or auto-push.
 - `nvim-edit-handler.sh` handles `nvim-edit://` links from the generated logbook
   and opens the source training note in the kitty Obsidian session.
 

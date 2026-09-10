@@ -13,6 +13,31 @@ local CursorMemory = {
   entries = {},
 }
 
+local function directory_key(dir)
+  return vim.fs.normalize(dir)
+end
+
+local function explorer_win(buf, preferred_win)
+  local function is_explorer(win)
+    return vim.api.nvim_win_is_valid(win) and vim.api.nvim_win_get_buf(win) == buf and not vim.wo[win].previewwindow
+  end
+
+  if preferred_win and is_explorer(preferred_win) then
+    return preferred_win
+  end
+
+  local current_win = vim.api.nvim_get_current_win()
+  if is_explorer(current_win) then
+    return current_win
+  end
+
+  for _, win in ipairs(vim.fn.win_findbuf(buf)) do
+    if is_explorer(win) then
+      return win
+    end
+  end
+end
+
 function CursorMemory.remember(buf, win)
   if not (buf and vim.api.nvim_buf_is_valid(buf)) then
     return
@@ -24,15 +49,15 @@ function CursorMemory.remember(buf, win)
     return
   end
 
-  win = win or vim.api.nvim_get_current_win()
-  if not (vim.api.nvim_win_is_valid(win) and vim.api.nvim_win_get_buf(win) == buf) then
+  win = explorer_win(buf, win)
+  if not win then
     return
   end
 
   local lnum = vim.api.nvim_win_get_cursor(win)[1]
   local entry = oil.get_entry_on_line(buf, lnum)
   if entry and entry.name ~= ".." then
-    CursorMemory.entries[dir] = entry.name
+    CursorMemory.entries[directory_key(dir)] = entry.name
   end
 end
 
@@ -43,7 +68,7 @@ function CursorMemory.restore(buf)
 
   local oil = require("oil")
   local dir = oil.get_current_dir(buf)
-  local wanted = dir and CursorMemory.entries[dir]
+  local wanted = dir and CursorMemory.entries[directory_key(dir)]
   if not wanted then
     return
   end
@@ -60,46 +85,44 @@ function CursorMemory.restore(buf)
     return
   end
 
-  -- Oil can be visible in more than one window (notably with preview). Restore
-  -- only the actual explorer window showing this buffer; preview buffers are
-  -- different buffers and are therefore unaffected.
-  local current_win = vim.api.nvim_get_current_win()
-  if vim.api.nvim_win_is_valid(current_win) and vim.api.nvim_win_get_buf(current_win) == buf then
-    vim.api.nvim_win_set_cursor(current_win, { target_line, 0 })
-    return
+  local win = explorer_win(buf)
+  if win then
+    vim.api.nvim_win_set_cursor(win, { target_line, 0 })
   end
-
-  for _, win in ipairs(vim.fn.win_findbuf(buf)) do
-    if vim.api.nvim_win_is_valid(win) then
-      vim.api.nvim_win_set_cursor(win, { target_line, 0 })
-      return
-    end
-  end
-end
-
--- With `Oil --preview`, a directory preview is itself another Oil buffer. Oil
--- already preserves a useful cursor in that preview window, but our first
--- implementation only remembered the focused explorer window. Capture the
--- preview cursor immediately before `actions.select`, so entering a directory
--- with L starts exactly where its preview was positioned.
-local function remember_directory_preview()
-  local preview_win = require("oil.util").get_preview_win()
-  if not (preview_win and vim.api.nvim_win_is_valid(preview_win)) then
-    return
-  end
-
-  local preview_buf = vim.api.nvim_win_get_buf(preview_win)
-  if not (vim.api.nvim_buf_is_valid(preview_buf) and vim.bo[preview_buf].filetype == "oil") then
-    return
-  end
-
-  CursorMemory.remember(preview_buf, preview_win)
 end
 
 local function select_with_cursor_memory()
   CursorMemory.remember(vim.api.nvim_get_current_buf())
-  remember_directory_preview()
-  require("oil.actions").select.callback()
+  require("oil.actions").select.callback({
+    callback = function(err)
+      if not err then
+        vim.schedule(function()
+          CursorMemory.restore(vim.api.nvim_get_current_buf())
+        end)
+      end
+    end,
+  })
+end
+
+local function parent_with_cursor_memory()
+  local oil = require("oil")
+  local buf = vim.api.nvim_get_current_buf()
+  local dir = oil.get_current_dir(buf)
+
+  CursorMemory.remember(buf)
+  if dir then
+    local child_dir = directory_key(dir)
+    local parent_dir = vim.fs.dirname(child_dir)
+    if parent_dir ~= child_dir then
+      CursorMemory.entries[directory_key(parent_dir)] = vim.fs.basename(child_dir)
+    end
+  end
+
+  oil.open(nil, nil, function()
+    vim.schedule(function()
+      CursorMemory.restore(vim.api.nvim_get_current_buf())
+    end)
+  end)
 end
 
 -- Oil does not have a built-in persistent multi-selection model for arbitrary
@@ -249,11 +272,15 @@ return {
       show_hidden = true,
     },
     keymaps = {
-      ["H"] = { "actions.parent", mode = "n" },
+      ["H"] = {
+        callback = parent_with_cursor_memory,
+        mode = "n",
+        desc = "Open parent and focus the directory just left",
+      },
       ["L"] = {
         callback = select_with_cursor_memory,
         mode = "n",
-        desc = "Open entry and preserve directory preview cursor",
+        desc = "Open entry and restore its directory cursor",
       },
       ["q"] = { "actions.close", mode = "n" },
       ["<Esc>"] = { "actions.close", mode = "n" },

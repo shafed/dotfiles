@@ -1,0 +1,30 @@
+[profile]
+description = "Obsidian vault synchronization helpers"
+includes = ["base"]
+capabilities = ["obsidian"]
+sources = ["scripts/obsidian-git-view-sync.sh"]
+services = ["obsidian-git-view-sync.service"]
+
+[[links]]
+source = "scripts/obsidian-git-view-sync.sh"
+destination = "{home}/.local/bin/obsidian-git-view-sync"
+reason = "keep local Obsidian Git metadata aligned with Syncthing-delivered files"
+
+[[links]]
+source = "systemd/user/obsidian-git-view-sync.service"
+destination = "{config}/systemd/user/obsidian-git-view-sync.service"
+reason = "run the Obsidian Git metadata watcher as a managed user service"
+
+[[packages]]
+command = "inotifywait"
+package = "inotify-tools"
+manager = "pacman"
+required = true
+reason = "watch the Obsidian vault for Syncthing-delivered filesystem changes"
+
+[[packages]]
+command = "flock"
+package = "util-linux"
+manager = "pacman"
+required = true
+reason = "serialize automatic metadata catch-up with manual Obsidian Git operations"

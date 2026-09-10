@@ -1,0 +1,14 @@
+[Unit]
+Description=Keep Obsidian Git metadata aligned with Syncthing-delivered files
+Wants=network-online.target
+After=network-online.target syncthing.service
+ConditionPathIsDirectory=%h/github/obsidian/.git
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/obsidian-git-view-sync
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

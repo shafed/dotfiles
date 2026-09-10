@@ -13,7 +13,7 @@ local CursorMemory = {
   entries = {},
 }
 
-function CursorMemory.remember(buf)
+function CursorMemory.remember(buf, win)
   if not (buf and vim.api.nvim_buf_is_valid(buf)) then
     return
   end
@@ -24,8 +24,8 @@ function CursorMemory.remember(buf)
     return
   end
 
-  local win = vim.api.nvim_get_current_win()
-  if vim.api.nvim_win_get_buf(win) ~= buf then
+  win = win or vim.api.nvim_get_current_win()
+  if not (vim.api.nvim_win_is_valid(win) and vim.api.nvim_win_get_buf(win) == buf) then
     return
   end
 
@@ -75,6 +75,31 @@ function CursorMemory.restore(buf)
       return
     end
   end
+end
+
+-- With `Oil --preview`, a directory preview is itself another Oil buffer. Oil
+-- already preserves a useful cursor in that preview window, but our first
+-- implementation only remembered the focused explorer window. Capture the
+-- preview cursor immediately before `actions.select`, so entering a directory
+-- with L starts exactly where its preview was positioned.
+local function remember_directory_preview()
+  local preview_win = require("oil.util").get_preview_win()
+  if not (preview_win and vim.api.nvim_win_is_valid(preview_win)) then
+    return
+  end
+
+  local preview_buf = vim.api.nvim_win_get_buf(preview_win)
+  if not (vim.api.nvim_buf_is_valid(preview_buf) and vim.bo[preview_buf].filetype == "oil") then
+    return
+  end
+
+  CursorMemory.remember(preview_buf, preview_win)
+end
+
+local function select_with_cursor_memory()
+  CursorMemory.remember(vim.api.nvim_get_current_buf())
+  remember_directory_preview()
+  require("oil.actions").select.callback()
 end
 
 -- Oil does not have a built-in persistent multi-selection model for arbitrary
@@ -225,7 +250,11 @@ return {
     },
     keymaps = {
       ["H"] = { "actions.parent", mode = "n" },
-      ["L"] = "actions.select",
+      ["L"] = {
+        callback = select_with_cursor_memory,
+        mode = "n",
+        desc = "Open entry and preserve directory preview cursor",
+      },
       ["q"] = { "actions.close", mode = "n" },
       ["<Esc>"] = { "actions.close", mode = "n" },
 

@@ -85,7 +85,6 @@ Variants {
         }
 
         ClickButton {
-          visible: bars.shell.aiLimitWarning()
           label: "AI"
           textColor: bars.shell.aiLimitColor()
           active: bars.shell.openPanel === "agents"

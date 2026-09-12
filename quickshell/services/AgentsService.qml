@@ -117,6 +117,7 @@ Item {
   }
 
   function refreshClaude() {
+    credentialsFile.reload()
     var login = claudeCredentials()
     claudePlan = claudePlanFrom(login)
     var token = String(login && login.accessToken ? login.accessToken : "")

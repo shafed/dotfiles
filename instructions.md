@@ -17,24 +17,6 @@ and look at the real output. Do not infer the shape from the flag name.
 
 Full procedure and the recurring traps: the `root-cause-first` skill.
 
-## Done means verified
-
-Never report work as done, working, fixed, or passing without having run the
-repo's verification command in this session and read its output.
-
-- Say which command you ran and its exit status.
-- If you did not run it, say that instead — "should work" and "the diff looks
-  right" are not results.
-- A test script that always fails is an absent gate, not a failing one
-  (`telegram-github-agent`'s `npm test` is `echo ... && exit 1`).
-
-Gates: `pulsar` → the exact string in `MIGRATION_STATE.json.verification_command`
-(the `-p 1` is load-bearing, not stylistic). `dotfiles` →
-`scripts/dots-check.sh shell lua python generated tests`. `adrop` →
-`make vet && make test`. `mirea-mcp` → `ruff check && pytest`.
-`telegram-morning-digest` → `pytest`. Elsewhere: find it in the manifest and
-record it in that repo's CLAUDE.md.
-
 ## Subagent output is a claim, not evidence
 
 Code returned by a subagent gets compiled and gated **by you, on the merged

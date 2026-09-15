@@ -4,7 +4,7 @@ includes = ["base"]
 capabilities = ["desktop"]
 config_dirs = ["hypr", "kanata", "quickshell", "darkman", "systemd"]
 sources = ["helium/apply-gruvbox-theme.py", "helium/switch-gruvbox-theme.py", "helium/gruvbox-dark/manifest.json", "helium/gruvbox-light/manifest.json", "scripts/dots-helium-generator.sh", "scripts/copyq-apply-theme.py", "scripts/dots-telegram-generator.sh", "telegram/generate-theme.py", "telegram/_palette_renderer.py", "telegram/background.png"]
-services = ["quickshell.service", "kanata.service", "darkman.service", "copyq.service", "google-calendar-sync.timer"]
+services = ["quickshell.service", "kanata.service", "darkman.service", "copyq.service", "syncthing.service", "google-calendar-sync.timer"]
 
 [[links]]
 source = "darkman/scripts"
@@ -186,6 +186,13 @@ package = "darkman"
 manager = "aur"
 required = true
 reason = "theme switching service"
+
+[[packages]]
+command = "syncthing"
+package = "syncthing"
+manager = "pacman"
+required = true
+reason = "continuous file synchronization backing the Obsidian vault and other synced folders"
 
 [[packages]]
 command = "rofimoji"

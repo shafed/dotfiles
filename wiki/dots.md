@@ -1,7 +1,7 @@
 ---
 title: dots
 type: topic
-updated: 2026-09-01
+updated: 2026-09-16
 covers:
   - dots
   - scripts/dots-state.py
@@ -187,8 +187,9 @@ Each verification run gets its own random temp HOME, so a generator's rendered
 output is normalized back to the real HOME before the two runs are diffed —
 otherwise every generator would look "not reproducible" purely from the temp
 dir name changing. That normalization covers both the plain temp-HOME string
-and the `{parent}/./{name}` form some generators emit deliberately (Helium's
-flags file uses it to dodge the browser's broken tilde sanitization); missing
+and the `{parent}/./{name}` form a generator may emit deliberately (the retired
+Helium flags generator used it to dodge the browser wrapper's broken tilde
+sanitization); missing
 either form reintroduces false "not reproducible" failures for that generator.
 
 `dots check generated` verifies tracked generation too. `dots check all` runs

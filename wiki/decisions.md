@@ -1,7 +1,7 @@
 ---
 title: decisions
 type: topic
-updated: 2026-08-31
+updated: 2026-09-16
 ---
 
 # decisions — major decisions and rejected alternatives
@@ -200,6 +200,23 @@ Key "why it's done this way" page. Each entry:
 - Trade-off: `yt-dlp` does not know a `helium` browser name, so the YouTube
   picker uses the Chromium cookie extractor pointed at Helium's profile. See
   [scripts-pickers](scripts-pickers.md), [hypr](hypr.md), [keymap](keymap.md).
+
+### Helium follows GTK instead of an exact extension theme (2026-09-16)
+
+- **Decision**: Helium uses Chromium's GTK appearance mode and recolors live
+  from `darkman/scripts/gtk`. The exact Gruvbox extension theme, its CDP
+  live-reload switcher, the `helium-theme` generator and
+  `darkman/scripts/helium` were removed.
+- **Reason**: live reload needed a permanent `--remote-debugging-port`, and an
+  open DevTools port made Cloudflare's bot check loop forever. A clean profile
+  with only `--load-extension` passed, so the port was the trigger.
+- **Rejected**: a native-messaging helper extension switching themes through
+  `chrome.management`. Tested: Chromium keeps only one theme installed, and
+  re-enabling a theme does not re-read its manifest; `chrome.theme.update()` is
+  Firefox-only. Keeping exact themes with restart-only switching was the
+  fallback.
+- **Cost**: colors come from the GTK theme, not `colors.toml`; `Gruvbox-Light`
+  is warmer than the old daylight palette. See [theming](theming.md).
 
 ### kitty native sessions; unconfigured tmux remains available (2026-06, clarified 2026-09-02)
 

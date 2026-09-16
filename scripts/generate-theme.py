@@ -474,9 +474,8 @@ rules = [
 
 
 def generated_files(c: dict[str, str], mode: str = "dark") -> dict[Path, str]:
-    # Only Helium switches palettes today. The tracked desktop surfaces remain
-    # intentionally dark, so light mode is a validation-only build here; Helium
-    # renders its runtime manifest directly from the same colors.toml table.
+    # The tracked desktop surfaces remain intentionally dark, so light mode is a
+    # validation-only build of [colors_light] with no generated consumer.
     if mode == "light":
         return {}
     if mode != "dark":

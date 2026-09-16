@@ -3,7 +3,7 @@ description = "Hyprland desktop session and graphical integrations"
 includes = ["base"]
 capabilities = ["desktop"]
 config_dirs = ["hypr", "kanata", "quickshell", "darkman", "systemd"]
-sources = ["helium/apply-gruvbox-theme.py", "helium/switch-gruvbox-theme.py", "helium/gruvbox-dark/manifest.json", "helium/gruvbox-light/manifest.json", "scripts/dots-helium-generator.sh", "scripts/copyq-apply-theme.py", "scripts/dots-telegram-generator.sh", "telegram/generate-theme.py", "telegram/_palette_renderer.py", "telegram/background.png"]
+sources = ["scripts/copyq-apply-theme.py", "scripts/dots-telegram-generator.sh", "telegram/generate-theme.py", "telegram/_palette_renderer.py", "telegram/background.png"]
 services = ["quickshell.service", "kanata.service", "darkman.service", "copyq.service", "syncthing.service", "google-calendar-sync.timer"]
 
 [[links]]
@@ -20,12 +20,6 @@ reason = "Google Calendar CalDAV sync configuration; OAuth secrets remain local 
 source = "khal/config"
 destination = "{config}/khal/config"
 reason = "read synchronized calendar vdirs for the Quickshell calendar service"
-
-[[generators]]
-name = "helium-theme"
-apply = ["bash", "scripts/dots-helium-generator.sh"]
-outputs = ["{config}/helium-browser-flags.conf", "{data}/dotfiles/helium-gruvbox"]
-reason = "load the exact Gruvbox extension theme and let darkman reload its light/dark manifest live"
 
 [[generators]]
 name = "copyq-live-config"

@@ -40,8 +40,8 @@ diff_removed_dimmed = "#3d0100"
 diff_added_word = "#044700"
 diff_removed_word = "#5c0200"
 
-# Exact daylight palette used by Helium's light theme and available to the
-# shared generator in --mode light checks.
+# Daylight palette with no generated consumer yet; validated by the shared
+# generator in --mode light checks.
 [colors_light]
 bg_hard = "#f2efe8"
 bg = "#fbfaf7"

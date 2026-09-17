@@ -23,6 +23,11 @@ vim.opt.scrolloff = 8
 vim.opt.swapfile = false
 vim.opt.cursorline = true
 
+-- Python host for remote plugins (molten-nvim needs pynvim + jupyter_client
+-- here). Isolated venv, not system python: Arch's system python is
+-- externally-managed (PEP 668) and blocks a bare `pip install`.
+vim.g.python3_host_prog = vim.fn.expand("~/.venvs/nvim/bin/python")
+
 -- убрать clipboard из постоянной синхронизации
 vim.opt.clipboard = ""
 

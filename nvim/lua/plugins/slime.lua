@@ -17,5 +17,13 @@ return {
       end,
       desc = "[P]Run: open Scilab REPL (then :SlimeConfig once)",
     },
+    {
+      "<leader>ri",
+      function()
+        vim.cmd("vsplit | terminal ipython")
+        vim.cmd("startinsert")
+      end,
+      desc = "[P]Run: open IPython REPL (then :SlimeConfig once)",
+    },
   },
 }

@@ -11,6 +11,10 @@ return {
     { "<leader>crp", "<cmd>CRProjects<cr>", desc = "[P]Code Runner: edit projects json" },
   },
   opts = {
-    -- your config (mode, filetype, ...) goes here
+    filetype = {
+      -- Keeps the Scilab window open after the script runs (needed to see
+      -- plots and inspect variables), unlike the headless -nw flag.
+      scilab = "scilab -f $file",
+    },
   },
 }

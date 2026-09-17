@@ -1,0 +1,11 @@
+[profile]
+description = "Coursework tooling that the editor setup expects"
+includes = ["base"]
+capabilities = ["study"]
+
+[[packages]]
+command = "scilab"
+package = "scilab-bin"
+manager = "aur"
+required = true
+reason = "run and send code to Scilab for the modelling-packages course"

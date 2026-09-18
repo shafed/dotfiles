@@ -5,7 +5,8 @@ return {
     vim.g.vimtex_view_method = "sioyek"
     vim.g.vimtex_compiler_latexmk_engines = { _ = "-lualatex" }
     vim.g.vimtex_compiler_latexmk = {
-      out_dir = "build",
+      out_dir = "/home/shafed/.texfiles/",
+      aux_dir = "/home/shafed/.texfiles/",
     }
   end,
 }

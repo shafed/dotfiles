@@ -2,6 +2,6 @@ layout splits
 
 cd ~/Downloads
 
-launch --title "downloads" /bin/zsh -i -c 'nvim; exec zsh'
+launch --title "downloads" /bin/zsh -i -c 'nvim -c "Oil --preview"; exec zsh'
 focus
 focus_os_window

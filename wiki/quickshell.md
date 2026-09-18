@@ -1,7 +1,7 @@
 ---
 title: quickshell
 type: component
-updated: 2026-09-06
+updated: 2026-09-18
 covers:
   - quickshell/shell.qml
   - quickshell/components/
@@ -272,3 +272,11 @@ If startup fails:
 ```sh
 journalctl --user -u quickshell.service -n 100 --no-pager -o cat
 ```
+
+⚠️ Gotcha: an `environment.d/*.conf` change does not reach Quickshell, or
+anything it launches (the Applications picker's children), until it's
+restarted — `systemctl --user restart quickshell.service` — because it was
+already running when the file was added and `systemd --user` only applies
+`environment.d` at manager startup. See
+[hypr](hypr.md#javaswing-renders-blank-on-hyprland) for why this file exists
+at all (Java/Swing apps launched through the picker rendering blank).

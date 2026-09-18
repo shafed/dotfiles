@@ -1,7 +1,7 @@
 ---
 title: hypr
 type: component
-updated: 2026-09-02
+updated: 2026-09-18
 covers:
   - hypr/hyprland.lua
   - hypr/modules/*.lua
@@ -11,6 +11,7 @@ covers:
   - hypr/hyprsunset.conf
   - hypr/wallpapers/
   - darkman/scripts/wallpaper
+  - environment.d/*.conf
 ---
 
 # hypr
@@ -244,3 +245,30 @@ leaves those surfaces unscaled and crisp, and each toolkit scales itself:
 ⚠️ Gotcha: `QT_QPA_PLATFORM=wayland` is not a guarantee — Happ still renders via
 XWayland. Verify with `hyprctl clients` (`xwayland: true`) and don't chase why;
 force xcb plus `QT_SCALE_FACTOR` in the `.desktop`.
+
+### Java/Swing renders blank on Hyprland
+
+⚠️ Gotcha: Java AWT/Swing assumes a reparenting window manager. On Hyprland
+(non-reparenting) this shows as a completely blank window — the content area
+never paints, menus and panels included, not just missing decorations.
+Verified directly on Scilab's `scinotes`: both the SciNotes editor and its
+console window came up empty; a same-delay A/B with the fix below painted
+the full UI. Fix: `_JAVA_AWT_WM_NONREPARENTING=1`, set in **two** places
+because two different launch paths need it —
+
+- `hypr/modules/env.lua` (`hl.env`) reaches anything Hyprland itself spawns —
+  a terminal, or an `exec`/keybind command;
+- `environment.d/10-java.conf` reaches anything started through
+  `systemd --user` instead — the Quickshell Applications picker and any
+  `.desktop` entry — since those get their environment from the systemd user
+  manager, not from Hyprland's child-process environment.
+
+⚠️ Gotcha: `environment.d/*.conf` is read by `systemd --user` only at manager
+startup. Adding or editing a file there does **not** retroactively reach
+units that were already running — verified directly: `systemctl --user
+show-environment` picked up the new variable immediately, but
+`/proc/<pid>/environ` of an already-running unit (Quickshell) still lacked
+it. Any long-running unit started before the change needs `systemctl --user
+restart <unit>` (or a full relogin) to actually see a new `environment.d`
+value — see [quickshell](quickshell.md#maintenance) for the concrete case
+(Quickshell's Applications picker launching apps with a stale environment).

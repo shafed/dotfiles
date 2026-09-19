@@ -85,5 +85,3 @@ hl.window_rule({
   size = { 760, 620 },
   center = true,
 })
-
-hl.workspace_rule({ workspace = "2", on_created_empty = browser })

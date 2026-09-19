@@ -23,7 +23,7 @@ which LazyVim behavior was overridden and why.
   image handling.
 - **[nvim-layout](nvim-layout.md)** — how the Russian layout is kept from
   breaking normal mode: the autocmd layout switch, the langmap safety net,
-  bilingual flash, and Cyrillic case folding in snacks pickers.
+  bilingual flash, and opt-in Cyrillic case folding for snacks pickers.
 - **[nvim-telegram](nvim-telegram.md)** — the Telegram client plugin: why the
   API keys live outside this repo and which upstream bugs the config patches
   around.

@@ -6,7 +6,7 @@ covers:
   - nvim/lua/config/options.lua
   - nvim/lua/config/autocmds.lua
   - nvim/lua/plugins/flash.lua
-  - nvim/lua/plugins/snacks-cyrillic.lua
+  - nvim/lua/utils/cyrillic_matcher.lua
 ---
 
 # nvim — Russian layout in normal mode
@@ -79,12 +79,21 @@ normal mode:
     `t` or `е`, and `;`/`,` repeats inherit it since they reuse the same
     builder.
 
-## Cyrillic in snacks pickers (`plugins/snacks-cyrillic.lua`)
+## Cyrillic in snacks pickers (`utils/cyrillic_matcher.lua`)
 
 snacks' matcher folds case with Lua `string.lower`, which only knows ASCII, so
 smartcase silently degrades into case-sensitive search for Cyrillic: `жор`
-misses "Предмет Жоры" while `Жор` finds it. Every picker is affected — chats,
-files, grep — not just Russian chat titles.
+misses "Предмет Жоры" while `Жор` finds it. Every picker has the flaw — chats,
+files, grep.
+
+It is fixed **per picker, not globally**: only a matcher built inside
+`M.with()` opts in, and the only caller is the Telegram chat picker (see
+[nvim-telegram](nvim-telegram.md)). Deliberate — the layout twin below appends
+an alternative to every Latin token, which is welcome when hunting a Russian
+chat title but is noise in a file or grep picker, where patterns are Latin by
+nature. The mark is set while `Matcher.new` runs and cleared right after; that
+works because the picker builds its matcher synchronously inside `pick()` and
+keeps it until close.
 
 No option fixes it: `smartcase`/`ignorecase` are booleans feeding that same
 ASCII-only `:lower()`. So the patch (added 2026-09-19, snacks at `882c996`,
@@ -100,7 +109,8 @@ still refuses to match `transcriber bot`. A Latin token additionally gets its
 replaced, so `;jhf` finds "Жора" without switching layout and a literal `;jhf`
 would still match too.
 
-⚠️ Gotcha: same monkey-patch fragility as flash above. The patch checks that
-`init`/`_match` are still functions and warns instead of applying if snacks
-renames them — startup survives, but Cyrillic search quietly reverts to
-case-sensitive, which reads as "the picker stopped finding my chats".
+⚠️ Gotcha: same monkey-patch fragility as flash above, over `Matcher.new`,
+`init` and `_match`. The patch checks all three are still functions and warns
+instead of applying if snacks renames them — startup survives, but Cyrillic
+search quietly reverts to case-sensitive, which reads as "the picker stopped
+finding my chats".

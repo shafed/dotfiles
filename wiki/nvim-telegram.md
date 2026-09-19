@@ -63,6 +63,15 @@ chats found` while the server is perfectly healthy and the account is
 names still exist — a rename makes the wrapper silently stop applying, and the
 first symptom is the session vanishing again.
 
+## Cyrillic chat search
+
+The chat picker is the one place that opts into Cyrillic-aware matching, so
+`жор` finds "Предмет Жоры" and a Latin-typed `;jhf` finds "Жора". The wrapper
+sits on **both** `groups.show_groups_picker` and `ui.show_groups_picker`:
+`ui.lua` copies the reference at load time and `tools.lua` calls it through
+`ui`, so patching only one table would leave every `@`-tool picker unfixed.
+Mechanics and why it is opt-in rather than global: [nvim-layout](nvim-layout.md).
+
 ## Chat list
 
 The all-chats view already exists upstream: `@` inside the chat window opens the

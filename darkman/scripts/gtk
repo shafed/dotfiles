@@ -1,10 +1,9 @@
 #!/bin/sh
-# darkman hook: follow the solar state with Gruvbox GTK themes. Helium runs in
-# its GTK appearance mode, so this also recolors the browser live.
+# darkman hook: follow the solar state — Gruvbox GTK in dark, stock Adwaita in light.
 set -e
 
 DARK_FALLBACK_THEME="Adwaita-dark"
-LIGHT_FALLBACK_THEME="Adwaita"
+LIGHT_THEME="Adwaita"
 
 theme_exists() {
   theme="$1"
@@ -40,14 +39,7 @@ dark)
   color_scheme="prefer-dark"
   ;;
 light)
-  gtk_theme="$(first_existing_theme Gruvbox-Light)"
-
-  if [ -z "$gtk_theme" ]; then
-    gtk_theme="$LIGHT_FALLBACK_THEME"
-    printf '%s\n' \
-      "darkman: no Gruvbox light GTK theme installed; using $LIGHT_FALLBACK_THEME" >&2
-  fi
-
+  gtk_theme="$LIGHT_THEME"
   color_scheme="prefer-light"
   ;;
 *) exit 0 ;;

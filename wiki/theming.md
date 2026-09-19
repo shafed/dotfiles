@@ -96,22 +96,15 @@ incoming played waveform is yellow, outgoing played waveform is aqua, selected
 states use their paired orange/blue accents, and the unplayed part stays neutral
 gray.
 
-## Helium: GTK appearance mode
+## Helium: default theme
 
-Helium runs in Chromium's **GTK** appearance mode (Settings → Appearance →
-Theme → GTK; profile pref `extensions.theme.system_theme = 1`). Its tab strip and
-toolbar take their colors from the current GTK theme, and Helium repaints live
-when `darkman/scripts/gtk` changes `gtk-theme` / `color-scheme` — no restart,
-no extension, no launch flags. The mode is a one-time manual profile setting;
-dots does not manage Helium's `Preferences`.
+Helium uses Chromium's **default** theme (profile pref
+`extensions.theme.system_theme = 0`, no extension theme). It does not follow the
+GTK theme or the solar state, and dots does not manage Helium's `Preferences`.
+GTK mode (Settings → Appearance → Theme → GTK) recolors it live from
+`darkman/scripts/gtk`, but it is not enabled.
 
-Colors are therefore whatever the GTK theme paints, not `colors.toml` values.
-Measured on 2026-09-16: `Gruvbox-Material-Dark` gives `#3c3836` for the tab
-strip and toolbar; `Gruvbox-Light` gives the classic yellow beige `#ebdbb2`,
-warmer than the old daylight palette. The focus ring stays Chromium's default
-blue.
-
-### Why not an extension theme (removed 2026-09-16)
+### Why not an extension theme (removed 2026-09-16; GTK mode dropped later)
 
 Helium used to load exact Gruvbox extension-theme manifests and reload them on
 darkman transitions through CDP (`Extensions.loadUnpacked`). That required a
@@ -134,8 +127,8 @@ Do not reintroduce `--remote-debugging-port` in `helium-browser-flags.conf`.
 
 GTK now follows the solar state: `darkman/scripts/gtk` applies an installed
 Gruvbox dark theme (falling back to `Adwaita-dark`) in dark mode, and
-`Gruvbox-Light` (falling back to `Adwaita`) with `prefer-light` in light mode.
-Helium follows through its GTK appearance mode. Kitty, Hyprlock, Waybar,
+stock `Adwaita` with `prefer-light` in light mode (no custom light GTK theme).
+Helium keeps its default theme. Kitty, Hyprlock, Waybar,
 Quickshell, Yazi, CopyQ and Claude Code stay pinned dark. Other solar-state
 exceptions are:
 

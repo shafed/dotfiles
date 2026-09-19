@@ -6,6 +6,51 @@ local function entry_path(dir, entry)
   return entry.name == ".." and dir:sub(1, -2) or (dir .. entry.name)
 end
 
+-- Binary formats nvim can only show as garbage. Opening these hands them to the
+-- desktop's default application (imv, zathura, ...) instead of loading them
+-- into a buffer. Text-ish formats like .svg stay with nvim on purpose.
+local EXTERNAL_EXTENSIONS = {
+  avif = true,
+  bmp = true,
+  gif = true,
+  heic = true,
+  ico = true,
+  jpeg = true,
+  jpg = true,
+  pdf = true,
+  png = true,
+  tif = true,
+  tiff = true,
+  webp = true,
+}
+
+-- Path of the entry under the cursor when it should go to an external viewer,
+-- nil otherwise. Remote adapters (ssh://) have no local dir, so they fall
+-- through to Oil's own select.
+local function external_open_target()
+  local oil = require("oil")
+  local entry = oil.get_cursor_entry()
+  if not entry or entry.type == "directory" or entry.name == ".." then
+    return nil
+  end
+
+  local ext = entry.name:match("%.([^.]+)$")
+  if not (ext and EXTERNAL_EXTENSIONS[ext:lower()]) then
+    return nil
+  end
+
+  local dir = oil.get_current_dir()
+  return dir and (dir .. entry.name) or nil
+end
+
+local function open_externally(path)
+  if vim.ui.open then
+    vim.ui.open(path)
+  else
+    vim.fn.jobstart({ "xdg-open", path }, { detach = true })
+  end
+end
+
 -- Remember the last focused entry for every directory, similar to mini.files'
 -- tracked directory cursors. Store entry names instead of line numbers so the
 -- position survives sorting changes and files being inserted/removed.
@@ -92,6 +137,12 @@ function CursorMemory.restore(buf)
 end
 
 local function select_with_cursor_memory()
+  local external = external_open_target()
+  if external then
+    open_externally(external)
+    return
+  end
+
   CursorMemory.remember(vim.api.nvim_get_current_buf())
   require("oil.actions").select.callback({
     callback = function(err)
@@ -278,6 +329,11 @@ return {
         desc = "Open parent and focus the directory just left",
       },
       ["L"] = {
+        callback = select_with_cursor_memory,
+        mode = "n",
+        desc = "Open entry and restore its directory cursor",
+      },
+      ["<CR>"] = {
         callback = select_with_cursor_memory,
         mode = "n",
         desc = "Open entry and restore its directory cursor",

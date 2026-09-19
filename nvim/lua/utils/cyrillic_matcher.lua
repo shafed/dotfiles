@@ -1,14 +1,19 @@
+-- Case-insensitive Cyrillic search for snacks pickers that ask for it.
+--
 -- snacks' matcher folds case with Lua string.lower, which only knows ASCII, so
 -- smartcase silently degrades into case-sensitive search for Cyrillic: "жор"
--- misses "Предмет Жоры" while "Жор" finds it (matcher.lua:341 and :523). Fold
--- Cyrillic case ourselves, and let a Latin-typed pattern match Cyrillic text
--- through the QWERTY/ЙЦУКЕН layout, so ";jhf" finds "Жора".
+-- misses "Предмет Жоры" while "Жор" finds it. No option fixes this — smartcase
+-- and ignorecase are booleans feeding that same ASCII-only :lower().
+--
+-- Opt-in per picker: only a matcher built inside M.with() is affected, so file
+-- and grep pickers keep stock behaviour.
+local M = {}
 
 local CASE_OFFSET = 0x20
 
 -- Lowercases Cyrillic only; ASCII is left alone so snacks keeps its own
--- smartcase behaviour. Byte length is preserved, so match positions stay valid
--- and highlighting does not drift.
+-- smartcase ("Trans" still refuses to match "transcriber bot"). Byte length is
+-- preserved, so match positions stay valid and highlighting does not drift.
 local function cyrillic_lower(s)
   if not s:find("\208", 1, true) then
     return s
@@ -39,8 +44,8 @@ local function to_cyrillic(s)
 end
 
 -- The matcher ANDs space-separated tokens and treats a bare "|" as "the next
--- token is an alternative" (matcher.lua:236), so pair every Latin token with
--- its layout twin instead of replacing it.
+-- token is an alternative", so append the ЙЦУКЕН twin instead of replacing the
+-- token: ";jhf" then finds "Жора" while a literal ";jhf" still matches too.
 local function with_layout_alternatives(pattern)
   local tokens = {}
   for _, token in ipairs(vim.split(vim.trim(pattern), " +")) do
@@ -56,24 +61,47 @@ local function with_layout_alternatives(pattern)
   return table.concat(tokens, " ")
 end
 
-local function patch_matcher()
-  local ok, Matcher = pcall(require, "snacks.picker.core.matcher")
-  if not ok or type(Matcher) ~= "table" or Matcher.cyrillic_patched then
+local patched = false
+local marking = false
+
+local function patch()
+  if patched then
     return
   end
-  local orig_init, orig_match = Matcher.init, Matcher._match
-  if type(orig_init) ~= "function" or type(orig_match) ~= "function" then
-    vim.notify("snacks matcher changed; Cyrillic patch skipped", vim.log.levels.WARN)
+  patched = true
+  local ok, Matcher = pcall(require, "snacks.picker.core.matcher")
+  if not ok or type(Matcher) ~= "table" then
+    return
+  end
+  local orig_new, orig_init, orig_match = Matcher.new, Matcher.init, Matcher._match
+  if type(orig_new) ~= "function" or type(orig_init) ~= "function" or type(orig_match) ~= "function" then
+    vim.notify("snacks matcher changed; Cyrillic search not applied", vim.log.levels.WARN)
     return
   end
 
+  Matcher.new = function(opts)
+    local matcher = orig_new(opts)
+    if marking then
+      matcher.opts.cyrillic = true
+    end
+    return matcher
+  end
+
   function Matcher:init(pattern)
+    if not self.opts.cyrillic then
+      return orig_init(self, pattern)
+    end
     return orig_init(self, cyrillic_lower(with_layout_alternatives(pattern)))
   end
 
   function Matcher:_match(item, mods)
     local text = item.text
-    if not mods.ignorecase or type(text) ~= "string" or not text:find("\208", 1, true) then
+    if
+      not self.opts.cyrillic
+      or not mods.ignorecase
+      or type(text) ~= "string"
+      or not text:find("\208", 1, true)
+    then
       return orig_match(self, item, mods)
     end
     if item.cyrillic_src ~= text then
@@ -87,15 +115,20 @@ local function patch_matcher()
     end
     return result
   end
-
-  Matcher.cyrillic_patched = true
 end
 
-return {
-  "folke/snacks.nvim",
-  optional = true,
-  opts = function(_, opts)
-    patch_matcher()
-    return opts
-  end,
-}
+-- Runs fn with any picker it opens marked for Cyrillic matching. The matcher is
+-- built synchronously inside pick() and lives until the picker closes, so the
+-- mark only has to survive this call.
+function M.with(fn)
+  patch()
+  marking = true
+  local ok, result = pcall(fn)
+  marking = false
+  if not ok then
+    error(result, 0)
+  end
+  return result
+end
+
+return M

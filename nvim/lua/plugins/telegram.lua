@@ -119,6 +119,23 @@ return {
       return http_get_slow("/chats/saved")
     end
 
+    -- snacks' matcher can only fold ASCII case, so Cyrillic chat titles match
+    -- their exact case only: "жор" misses "Предмет Жоры". Opt just this picker
+    -- in (which also lets a Latin-typed ";jhf" find "Жора"); file and grep
+    -- pickers keep stock matching. See utils/cyrillic_matcher.lua.
+    local cyrillic = require("utils.cyrillic_matcher")
+    local groups = require("telegram.groups")
+    local orig_show_picker = groups.show_groups_picker
+    local function show_picker(on_select, custom_items)
+      return cyrillic.with(function()
+        return orig_show_picker(on_select, custom_items)
+      end)
+    end
+    groups.show_groups_picker = show_picker
+    -- ui.lua copied the reference at load time, and tools.lua calls it through
+    -- ui, so patching only `groups` would miss every @-tool picker.
+    require("telegram.ui").show_groups_picker = show_picker
+
     local orig_stop_server = server.stop_server
     server.stop_server = function()
       graceful_stop()

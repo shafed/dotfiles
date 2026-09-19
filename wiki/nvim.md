@@ -1,7 +1,7 @@
 ---
 title: nvim
 type: moc
-updated: 2026-09-02
+updated: 2026-09-19
 covers:
   - nvim/
 ---
@@ -22,8 +22,11 @@ which LazyVim behavior was overridden and why.
   which explicit mappings do system-clipboard interop, plus mini.files file and
   image handling.
 - **[nvim-layout](nvim-layout.md)** — how the Russian layout is kept from
-  breaking normal mode: the autocmd layout switch, the langmap safety net, and
-  bilingual flash.
+  breaking normal mode: the autocmd layout switch, the langmap safety net,
+  bilingual flash, and Cyrillic case folding in snacks pickers.
+- **[nvim-telegram](nvim-telegram.md)** — the Telegram client plugin: why the
+  API keys live outside this repo and which upstream bugs the config patches
+  around.
 
 ## Lua validation
 

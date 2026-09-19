@@ -1,11 +1,12 @@
 ---
 title: nvim-layout
 type: component
-updated: 2026-08-14
+updated: 2026-09-19
 covers:
   - nvim/lua/config/options.lua
   - nvim/lua/config/autocmds.lua
   - nvim/lua/plugins/flash.lua
+  - nvim/lua/plugins/snacks-cyrillic.lua
 ---
 
 # nvim — Russian layout in normal mode
@@ -77,3 +78,29 @@ normal mode:
     untouched) so `fy` lands on either `y` or `н`, `dtt` deletes up to either
     `t` or `е`, and `;`/`,` repeats inherit it since they reuse the same
     builder.
+
+## Cyrillic in snacks pickers (`plugins/snacks-cyrillic.lua`)
+
+snacks' matcher folds case with Lua `string.lower`, which only knows ASCII, so
+smartcase silently degrades into case-sensitive search for Cyrillic: `жор`
+misses "Предмет Жоры" while `Жор` finds it. Every picker is affected — chats,
+files, grep — not just Russian chat titles.
+
+No option fixes it: `smartcase`/`ignorecase` are booleans feeding that same
+ASCII-only `:lower()`. So the patch (added 2026-09-19, snacks at `882c996`,
+which is upstream HEAD) wraps `Matcher.init`/`Matcher._match` and folds Cyrillic
+case itself, by byte rather than via `vim.fn.tolower` — the VimL call would fire
+per item on every keystroke. Case folding preserves byte length (`А-П` shifts
+the low byte, `Р-Я` moves to the `\209` lead byte), so match positions stay
+valid and highlighting does not drift.
+
+Latin is deliberately left untouched, which keeps snacks' own smartcase: `Trans`
+still refuses to match `transcriber bot`. A Latin token additionally gets its
+ЙЦУКЕН twin appended through the matcher's own `|` OR syntax rather than being
+replaced, so `;jhf` finds "Жора" without switching layout and a literal `;jhf`
+would still match too.
+
+⚠️ Gotcha: same monkey-patch fragility as flash above. The patch checks that
+`init`/`_match` are still functions and warns instead of applying if snacks
+renames them — startup survives, but Cyrillic search quietly reverts to
+case-sensitive, which reads as "the picker stopped finding my chats".

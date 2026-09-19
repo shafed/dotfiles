@@ -1,7 +1,7 @@
 ---
 title: telegram
 type: component
-updated: 2026-09-02
+updated: 2026-09-19
 covers:
   - telegram/
   - darkman/scripts/telegram
@@ -10,6 +10,9 @@ covers:
 ---
 
 # telegram — day/night theme decisions
+
+This page is about the **desktop app's** palettes. The Telegram client that runs
+inside Neovim is [nvim-telegram](nvim-telegram.md).
 
 Telegram is the deliberate exception to the desktop's otherwise dark-only application palette. Bright ambient light made the original near-black Gruvbox Telegram surface feel muddy even when the numerical contrast ratio was acceptable, so the `light` solar state uses a Telegram-only muted olive/taupe palette inspired by the warm landscape wallpaper rather than a conventional white theme.
 

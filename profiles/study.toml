@@ -9,3 +9,10 @@ package = "scilab-bin"
 manager = "aur"
 required = true
 reason = "run and send code to Scilab for the modelling-packages course"
+
+[[packages]]
+command = "jupytext"
+package = "jupytext"
+manager = "uv-tool"
+required = true
+reason = "jupytext.nvim opens .ipynb as py:percent text and writes it back on save"

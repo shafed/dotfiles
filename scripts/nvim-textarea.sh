@@ -17,10 +17,29 @@ pid_file="$cache_dir/editor.pid"
 log_file="$cache_dir/textarea.log"
 textarea_group="textarea"
 textarea_qat_config="$HOME/github/dotfiles/kitty/quick-access-terminal-textarea.conf"
+mods_helper="$(dirname "$script_path")/wait-mods-released.py"
 
 mkdir -p "$cache_dir"
 
 log() { printf '[%s] %s\n' "$(date '+%F %T')" "$*" >>"$log_file"; }
+
+# Hyprland starts this script while the hotkey's own Super is still physically
+# down, and a synthetic Ctrl+A then arrives as Super+Ctrl+A: the application
+# ignores it, the capture reads back empty, and Ctrl+V would trigger the
+# Super+V bind instead of pasting. wtype cannot clear physical modifiers, so
+# every synthetic chord waits for the real keys to come up first.
+wait_for_modifiers() {
+  local rc=0
+  python3 "$mods_helper" 1.5 || rc=$?
+  case "$rc" in
+  0) ;;
+  2) log "modifiers still held after 1.5s; sending keys anyway" ;;
+  *)
+    log "cannot read key state (rc=$rc); falling back to a fixed delay"
+    sleep 0.12
+    ;;
+  esac
+}
 
 notify() {
   command -v notify-send >/dev/null 2>&1 || return 0
@@ -77,10 +96,7 @@ capture_field() {
   local sentinel current i
   sentinel="__nvim_textarea_${$}_${RANDOM}_$(date +%s%N)__"
 
-  # Super+Shift+E is still physically being released when Hyprland starts this
-  # script. Wait briefly so the synthetic Ctrl+A/C are not combined with the
-  # hotkey's still-held Super/Shift modifiers.
-  sleep 0.12
+  wait_for_modifiers
 
   # Seed the clipboard with a unique value. Ctrl+C must replace it when the
   # source field contains text; if it does not change after the polling window,
@@ -134,6 +150,7 @@ finish_editor() {
 
   if focus_target "$target"; then
     sleep 0.08
+    wait_for_modifiers
     if [[ "$captured" == "true" ]]; then
       # Replace the entire original field. For an empty result BackSpace is
       # used because pasting an empty clipboard does not reliably delete a

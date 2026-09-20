@@ -105,14 +105,16 @@ capture_field() {
 
   : >"$text_file"
   log "clipboard unchanged after copy; treating textarea as empty"
+  return 1
 }
 
 finish_editor() {
   local panel_pid="$PPID"
-  local target="" layout="" text="" paste_ok=0
+  local target="" layout="" text="" paste_ok=0 captured="true"
 
   [[ -f "$target_file" ]] && target="$(jq -r '.address // empty' "$target_file" 2>/dev/null || true)"
   [[ -f "$target_file" ]] && layout="$(jq -r '.layout // empty' "$target_file" 2>/dev/null || true)"
+  [[ -f "$target_file" ]] && captured="$(jq -r 'if .captured == false then "false" else "true" end' "$target_file" 2>/dev/null || echo true)"
   [[ -f "$text_file" ]] && text="$(<"$text_file")"
 
   # Keep the final text in the clipboard too. This both powers the synthetic
@@ -132,18 +134,26 @@ finish_editor() {
 
   if focus_target "$target"; then
     sleep 0.08
-    # Replace the entire original field. For an empty result BackSpace is used
-    # because pasting an empty clipboard does not reliably delete a selection
-    # in every toolkit.
-    wtype -M ctrl -k a -m ctrl
-    sleep 0.06
-    if [[ -n "$text" ]]; then
-      wtype -M ctrl -k v -m ctrl
+    if [[ "$captured" == "true" ]]; then
+      # Replace the entire original field. For an empty result BackSpace is
+      # used because pasting an empty clipboard does not reliably delete a
+      # selection in every toolkit.
+      wtype -M ctrl -k a -m ctrl
+      sleep 0.06
+      if [[ -n "$text" ]]; then
+        wtype -M ctrl -k v -m ctrl
+      else
+        wtype -k BackSpace
+      fi
+      log "replaced textarea in $target"
     else
-      wtype -k BackSpace
+      # Capture saw no text: the field was empty or Ctrl+A/C never reached it.
+      # Never Ctrl+A/BackSpace on that guess, it could wipe a real draft; only
+      # insert new text at the cursor.
+      [[ -n "$text" ]] && wtype -M ctrl -k v -m ctrl
+      log "capture was empty; inserted at cursor without select-all (${#text} bytes)"
     fi
     paste_ok=1
-    log "replaced textarea in $target"
   else
     log "target window unavailable: ${target:-<none>}"
     notify "Target window is gone; edited text is left in the clipboard and $text_file"
@@ -173,7 +183,7 @@ run_editor() {
   # mappings, so every way of leaving this temporary editor means "apply".
   # text.txt deliberately avoids the markdown mkview/loadview autocmds, which
   # would otherwise restore a cursor position from an earlier textarea use.
-  nvim "+normal! G$" +startinsert "+autocmd VimLeavePre * silent! write" -- "$text_file"
+  nvim "+normal! G$" +startinsert! "+autocmd VimLeavePre * silent! write" -- "$text_file"
   finish_editor
 }
 
@@ -222,7 +232,9 @@ launch_editor() {
   jq -cn --arg address "$target" --arg class "$class" --argjson layout "$layout" \
     '{address:$address,class:$class,layout:$layout}' >"$target_file"
 
-  capture_field
+  if ! capture_field; then
+    jq '.captured = false' "$target_file" >"$target_file.tmp" && mv "$target_file.tmp" "$target_file"
+  fi
   log "captured textarea from $class $target"
 
   if ! show_or_toggle_editor; then

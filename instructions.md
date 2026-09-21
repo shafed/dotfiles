@@ -53,3 +53,7 @@ and cannot explain is a bug you are about to commit.
 
 Prefer a symlink over a copy — a copy rots silently, a symlink cannot. If a
 repo needs both `CLAUDE.md` and `AGENTS.md`, one is a symlink to the other.
+
+## Shell tools
+
+If better use `rg` , `fd` , `eza`.

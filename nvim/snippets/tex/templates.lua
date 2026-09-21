@@ -425,4 +425,137 @@ return {
       }
     )
   ),
+
+  s(
+    { trig = "mirea_practice", dscr = "MIREA practice report — Автоматизация инженерных расчётов" },
+    fmta(
+      [=[
+\documentclass[a4paper,12pt]{article}
+
+\usepackage{fontspec}
+\setmainfont{Times New Roman}
+\setmonofont{DejaVu Sans Mono}[Scale=0.85]
+\usepackage[russian]{babel}
+\usepackage{graphicx, float}
+\usepackage{geometry}
+\geometry{left=3cm,right=1.5cm,top=2cm,bottom=2cm}
+\usepackage{setspace}
+\onehalfspacing
+\setlength{\parindent}{1.25cm}
+
+\usepackage{amsmath}
+\usepackage{minted}
+\usepackage{csquotes}
+\usepackage[hidelinks]{hyperref}
+\usepackage[labelsep=period]{caption}
+\usepackage{titlesec}
+\titleformat{\section}{\normalfont\large\bfseries\raggedright\hyphenpenalty=10000\exhyphenpenalty=10000}{\thesection}{1em}{}
+\setminted{fontsize=\footnotesize,frame=lines,breaklines=true}
+\setlength{\emergencystretch}{3em}
+
+\begin{document}
+
+\begin{titlepage}
+\thispagestyle{empty}
+\begin{center}
+
+\includegraphics[width=0.18\textwidth]{../../assets/gerb.png}
+
+\vspace{0.5cm}
+
+{\small МИНОБРНАУКИ РОССИИ}
+
+\vspace{0.3cm}
+
+{\small
+Федеральное государственное бюджетное образовательное учреждение\\
+высшего профессионального образования
+}
+
+\vspace{0.3cm}
+
+{\large \textbf{\enquote{МИРЭА --- Российский технологический университет}}}
+
+{\normalsize РТУ МИРЭА}
+
+\vspace{0.5cm}
+
+{\normalsize Институт искусственного интеллекта}\\
+{\normalsize Кафедра автоматических систем}
+
+\vspace{2cm}
+
+{\Large \textbf{ОТЧЕТ ПО ПРАКТИЧЕСКОМУ ЗАДАНИЮ № <>}}
+
+\vspace{0.4cm}
+
+{\large по дисциплине}
+
+{\large \textbf{\enquote{Автоматизация инженерных расчетов}}}
+
+\vspace{0.4cm}
+
+{\large Вариант <>}
+
+\vspace{2.5cm}
+
+\begin{tabular}{ll}
+Выполнил студент группы КВБО-11-25 & Шапаренко Ф.А. \\
+Принял                            & Ниженец Т.В.   \\
+\end{tabular}
+
+\vfill
+
+Практическое задание выполнил: \enquote{<>} <> <> г.\\
+\enquote{Зачтено} \rule{1cm}{0.4pt} <> г.
+
+\vspace{1cm}
+
+Москва <>
+
+\end{center}
+\end{titlepage}
+
+\section{Цель работы}
+
+<>
+
+\end{document}
+    ]=],
+      {
+        i(1, "№"),
+        i(2, "27"),
+        f(function()
+          return os.date("%d")
+        end),
+        f(function()
+          local months = {
+            "января",
+            "февраля",
+            "марта",
+            "апреля",
+            "мая",
+            "июня",
+            "июля",
+            "августа",
+            "сентября",
+            "октября",
+            "ноября",
+            "декабря",
+          }
+          return months[tonumber(os.date("%m"))]
+        end),
+        f(function()
+          return os.date("%Y")
+        end),
+        f(function()
+          return os.date("%Y")
+        end),
+        f(function()
+          return os.date("%Y")
+        end),
+        i(3, "цель"),
+      }
+    )
+  ),
 }

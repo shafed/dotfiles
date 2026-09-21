@@ -41,6 +41,11 @@ destination = "{home}/.claude/hooks/no-coauthor.sh"
 reason = "shared Claude hook"
 
 [[links]]
+source = ".claude/hooks/session-memory.sh"
+destination = "{home}/.claude/hooks/session-memory.sh"
+reason = "shared Claude hook"
+
+[[links]]
 source = ".claude/themes/gruvbox-material.json"
 destination = "{home}/.claude/themes/gruvbox-material.json"
 reason = "shared Claude theme"
@@ -285,3 +290,9 @@ package = "libnotify"
 manager = "pacman"
 required = false
 reason = "best-effort desktop notifications in sudo-notify.sh and nvim-edit-handler.sh"
+
+[[generators]]
+name = "claude-user-hooks"
+apply = ["python3", "scripts/claude-apply-hooks.py"]
+outputs = ["{home}/.claude/settings.json"]
+reason = "register the shared Claude hooks in the settings file Claude Code owns and rewrites itself"

@@ -1,7 +1,7 @@
 ---
 title: index
 type: index
-updated: 2026-09-02
+updated: 2026-09-21
 ---
 
 # Dotfiles wiki — index
@@ -57,6 +57,9 @@ rules: [../CLAUDE.md](../CLAUDE.md) (`AGENTS.md` symlinks to it).
   layout.
 - **[cli-agents](cli-agents.md)** — sharing config between Claude Code, Codex,
   and opencode without writing it twice.
+- **[memory](memory.md)** — what an agent knows before the first prompt: the
+  SessionStart hook, why the content lives in the private vault, and the two
+  registration traps.
 
 ## Decisions
 

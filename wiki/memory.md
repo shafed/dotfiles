@@ -57,6 +57,20 @@ not dropping the entry.
 | `~/.claude/settings.json`      | `session-memory.sh` | every local project |
 | `<repo>/.claude/settings.json` | `… --remote-only`   | web sessions        |
 
+Registered repo-side in all four repositories a web session gets: `dotfiles`,
+`obsidian`, `study`, `21-algorithms-data-structures`. Only this repo calls the
+script by `$CLAUDE_PROJECT_DIR`; the other three reach it as a sibling checkout,
+`$CLAUDE_PROJECT_DIR/../dotfiles/.claude/hooks/…`, which resolves under both
+layouts — `~/github/<repo>` on the machine and `/home/user/<repo>` in a
+container — and tests the path first so a missing checkout is a silent no-op
+rather than a hook error.
+
+⚠️ **Gotcha**: a web session therefore needs **both** `dotfiles` (the script)
+and `obsidian` (the content) in its repository scope. With either one missing
+the session starts with no memory and says nothing about it — the hook cannot
+distinguish "not configured" from "nothing to load", and treating it as an error
+would break every session that legitimately has no vault.
+
 ⚠️ **Gotcha**: hook entries from the user level and the project level **merge,
 they do not override**. Registered plainly in both places, the hook fires twice
 inside a repo that also registers it, and the whole memory lands in context

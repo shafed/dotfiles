@@ -206,3 +206,73 @@ vim.api.nvim_create_autocmd("BufWinEnter", {
     end)
   end,
 })
+
+-- Java: creating a new .java file under a project inserts an IntelliJ-style
+-- skeleton — `package` derived from the path relative to the project root
+-- (src/main/java/practice_1/x -> package practice_1.x), class name from the
+-- filename. Files outside any project root are left untouched.
+local function java_skeleton()
+  local file = vim.fn.expand("%:p")
+  local root = vim.fs.root(file, {
+    "pom.xml",
+    "build.gradle",
+    "build.gradle.kts",
+    "settings.gradle",
+    "settings.gradle.kts",
+    "build.xml",
+    ".idea",
+    "src",
+  })
+  if not root then
+    return
+  end
+
+  local rel = vim.fs.relpath(root, file)
+  local name = rel and rel:match("([^/]+)%.java$")
+  -- A Java class name must start with a letter; otherwise leave the file alone.
+  if not name or not name:match("^%a") then
+    return
+  end
+
+  local pkg
+  for _, prefix in ipairs({ "src/main/java/", "src/test/java/", "src/" }) do
+    if rel:sub(1, #prefix) == prefix then
+      local dir = rel:sub(#prefix + 1):match("(.*)/[^/]+$")
+      if dir then
+        pkg = dir:gsub("/", ".")
+      end
+      break
+    end
+  end
+
+  local lines = {}
+  if pkg then
+    table.insert(lines, "package " .. pkg .. ";")
+    table.insert(lines, "")
+  end
+  table.insert(lines, "public class " .. name .. " {")
+  table.insert(lines, "")
+  table.insert(lines, "}")
+
+  vim.api.nvim_buf_set_lines(0, 0, -1, false, lines)
+  vim.api.nvim_win_set_cursor(0, { #lines - 1, 0 })
+end
+
+-- Plain new file (e.g. :e new.java, nvim new.java).
+vim.api.nvim_create_autocmd("BufNewFile", {
+  pattern = "*.java",
+  callback = java_skeleton,
+})
+
+-- Tools that create the empty file on disk first, then import the buffer with
+-- :edit — oil.nvim (mutator create -> cache.create_and_store_entry then edit),
+-- shell touch, etc. Those fire BufRead, not BufNewFile, so only fill when the
+-- buffer is genuinely empty.
+vim.api.nvim_create_autocmd("BufReadPost", {
+  pattern = "*.java",
+  callback = function()
+    if vim.fn.line("$") == 1 and vim.fn.getline(1) == "" then
+      java_skeleton()
+    end
+  end,
+})

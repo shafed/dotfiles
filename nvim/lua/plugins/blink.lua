@@ -29,6 +29,9 @@ return {
 
     opts.sources = vim.tbl_deep_extend("force", opts.sources or {}, {
       default = { "lsp", "path", "snippets", "buffer", "dictionary" },
+      per_filetype = {
+        java = { "lsp", "snippets" },
+      },
       providers = {
         lsp = {
           name = "lsp",
@@ -36,6 +39,7 @@ return {
           module = "blink.cmp.sources.lsp",
           min_keyword_length = 0,
           score_offset = 90,
+          fallbacks = {},
         },
         path = {
           name = "Path",

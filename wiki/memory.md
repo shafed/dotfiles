@@ -59,13 +59,19 @@ not dropping the entry.
 | `~/.claude/settings.json`      | `session-memory.sh` | every local project |
 | `<repo>/.claude/settings.json` | `… --remote-only`   | web sessions        |
 
-Registered repo-side in all four repositories a web session gets: `dotfiles`,
-`obsidian`, `study`, `21-algorithms-data-structures`. Only this repo calls the
-script by `$CLAUDE_PROJECT_DIR`; the other three reach it as a sibling checkout,
-`$CLAUDE_PROJECT_DIR/../dotfiles/.claude/hooks/…`, which resolves under both
-layouts — `~/github/<repo>` on the machine and `/home/user/<repo>` in a
-container — and tests the path first so a missing checkout is a silent no-op
+Registered repo-side in `dotfiles`, `obsidian` and `study`. Only this repo calls
+the script by `$CLAUDE_PROJECT_DIR`; the other two reach it as a sibling
+checkout, `$CLAUDE_PROJECT_DIR/../dotfiles/.claude/hooks/…`, which resolves
+under both layouts — `~/github/<repo>` on the machine and `/home/user/<repo>` in
+a container — and tests the path first so a missing checkout is a silent no-op
 rather than a hook error.
+
+**`21-algorithms-data-structures` is deliberately left out**, although a web
+session reaches it too. It is coursework shared with an instructor, so agent
+configuration does not belong in it. Registering it there was proposed and
+rejected; do not add it back as an oversight. A session started in that
+repository simply gets no memory, which is the same silent no-op as any other
+unconfigured repository.
 
 ⚠️ **Gotcha**: a web session therefore needs **both** `dotfiles` (the script)
 and `obsidian` (the content) in its repository scope. With either one missing

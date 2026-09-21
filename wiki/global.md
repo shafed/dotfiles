@@ -1,7 +1,7 @@
 ---
 title: global
 type: topic
-updated: 2026-08-31
+updated: 2026-09-21
 covers:
   - instructions.md
   - .claude/skills/commit/SKILL.md
@@ -19,8 +19,8 @@ way".
 ## Global agent instructions (`instructions.md`)
 
 `instructions.md` at the repo root is the **single source** of what every CLI
-agent loads in every project. `dots apply` symlinks it under the name each
-tool expects: `~/.claude/CLAUDE.md`, `~/.config/opencode/AGENTS.md`,
+agent loads in every project. `dots apply` symlinks it under the name each tool
+expects: `~/.claude/CLAUDE.md`, `~/.config/opencode/AGENTS.md`,
 `~/.codex/AGENTS.md`.
 
 - **Why the source file is named `instructions.md`**: it lives inside this repo,
@@ -29,12 +29,12 @@ tool expects: `~/.claude/CLAUDE.md`, `~/.config/opencode/AGENTS.md`,
   `CLAUDE.md` in subdirectories; opencode/Codex read `AGENTS.md`). A neutral
   name avoids duplication. What each tool reads is set by the **symlink name**,
   not the source name.
-- **It is now a single rule, not a ruleset** (2026-08-14): the file used to carry
-  ~70 lines of general coding rules and this repo's `CLAUDE.md` another ~103.
-  Both were deleted in `1add5fc`; a Context7 MCP block that briefly replaced them
-  was cut too, because the Context7 server already injects that guidance itself
-  and the rest of it was step-by-step tool-use instruction — the category
-  Anthropic removed wholesale for Opus 5. What remains is one line: no
+- **It is now a single rule, not a ruleset** (2026-08-14): the file used to
+  carry ~70 lines of general coding rules and this repo's `CLAUDE.md` another
+  ~103. Both were deleted in `1add5fc`; a Context7 MCP block that briefly
+  replaced them was cut too, because the Context7 server already injects that
+  guidance itself and the rest of it was step-by-step tool-use instruction — the
+  category Anthropic removed wholesale for Opus 5. What remains is one line: no
   `Co-Authored-By`. Rationale for cutting rather than growing these files —
   [decisions](decisions.md).
 - Anything that does survive here is loaded into context in **every session of
@@ -48,19 +48,18 @@ tool expects: `~/.claude/CLAUDE.md`, `~/.config/opencode/AGENTS.md`,
   Ask for everything and filter in a second pass instead.
 
 All three symlinks and the hook script are in place again as of 2026-08-14, and
-`instructions.md` is tracked once more. ⚠️ **The one piece still missing is the
-hook's registration** in `~/.claude/settings.json` — the script is linked but
-nothing invokes it, so the guard never fires (see below for why that file is
-the one thing `dots apply` cannot repair).
+`instructions.md` is tracked once more. The registration that used to be missing
+is now applied too, by the `claude-user-hooks` generator — see
+[memory](memory.md) for how it works and why that file cannot be a symlink.
 
 ### The one rule that was also enforced, not just stated
 
 Of the old rules only **no `Co-Authored-By`** was mechanically checkable, so it
 got a second, hard layer:
 [../.claude/hooks/no-coauthor.sh](../.claude/hooks/no-coauthor.sh) denies any
-`git commit` whose message carries an attribution footer. The script still
-exists in the repo; it is currently unlinked and unregistered (table above), so
-nothing enforces it right now.
+`git commit` whose message carries an attribution footer. `base.toml` links it
+to `~/.claude/hooks/` and the `claude-user-hooks` generator registers it, so
+`dots apply` now delivers the guard whole instead of only half of it.
 
 - **Why a hook and not just the sentence**: prose competes for attention and
   loses it on a long task. Which rules earn this treatment —
@@ -68,11 +67,16 @@ nothing enforces it right now.
 - **Why it belongs in `~/.claude/settings.json`, not the repo's**: the rule is
   global, so registering it repo-side would both under-cover (other projects)
   and double-fire here.
-- ⚠️ **Gotcha**: the `hooks` block in `~/.claude/settings.json` is **not tracked
-  by this repo** — that file holds machine state (plugins, marketplaces) and is
-  a real file, not a symlink. `dots apply` restores the script but not its
-  registration; on a fresh machine the block has to be re-added by hand. This is
-  exactly how it went missing here.
+- ⚠️ **Gotcha**: `~/.claude/settings.json` is a real file, never a symlink.
+  Claude Code writes it itself — it creates and edits the file when a `/config`
+  option stored in user settings changes, such as the theme — so a symlink would
+  be fighting the application for ownership of the file. (Plugins, MCP servers
+  and the global config keys live in a _different_ file, `~/.claude.json`, which
+  Claude Code maintains for itself; an earlier version of this page named them
+  here, which was wrong.) That is why the registration is merged in by a
+  generator rather than linked: see [memory](memory.md). Before that generator
+  existed the block had to be re-added by hand, which is exactly how it went
+  missing here.
 - The guard only sees an agent's `Bash` calls. A commit typed directly in a
   terminal bypasses it — which is the escape hatch if a human co-author ever
   genuinely needs crediting.
@@ -80,9 +84,10 @@ nothing enforces it right now.
 ## Commit convention and the `/commit` skill
 
 - Commit subjects in this repo are `component: subject` — the component is the
-  **first path segment** of what changed (`nvim/lua/config/keymaps.lua` → `nvim`;
-  root files → `repo`). English, imperative, ≤ 72 chars, no `feat:`/`chore:`
-  type prefixes. Rationale and the full rules live in the skill itself:
+  **first path segment** of what changed (`nvim/lua/config/keymaps.lua` →
+  `nvim`; root files → `repo`). English, imperative, ≤ 72 chars, no
+  `feat:`/`chore:` type prefixes. Rationale and the full rules live in the skill
+  itself:
   [../.claude/skills/commit/SKILL.md](../.claude/skills/commit/SKILL.md).
 - `/commit` splits the working tree **one commit per component**, `wiki/` always
   separate — which is how the [AGENTS.md](../AGENTS.md) "wiki commits are their
@@ -96,9 +101,10 @@ nothing enforces it right now.
   [decisions](decisions.md).
 
 - All three CLI agents pick it up, and it stays project-scoped in all three:
-  Claude Code and opencode read `.claude/skills/`, Codex reads `.agents/skills/`.
-  Those are two copies of the same procedure with different frontmatter — see
-  [bootstrap](bootstrap.md) for why, and for the gotcha about editing both.
+  Claude Code and opencode read `.claude/skills/`, Codex reads
+  `.agents/skills/`. Those are two copies of the same procedure with different
+  frontmatter — see [bootstrap](bootstrap.md) for why, and for the gotcha about
+  editing both.
 
 ⚠️ **Gotcha**: the skill is untracked-blind by design, so it cannot commit
 itself, or any other new file. First-time additions need a manual `git add`.

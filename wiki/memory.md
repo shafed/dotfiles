@@ -5,6 +5,8 @@ updated: 2026-09-21
 covers:
   - .claude/hooks/session-memory.sh
   - .claude/settings.json
+  - scripts/claude-apply-hooks.py
+  - profiles/base.toml
 ---
 
 # Memory that survives a session
@@ -79,30 +81,33 @@ exactly one of the two ever fires. A lock keyed on the session id was rejected
 for this: both registrations fire within the same instant, so the guard would
 have needed a timing window, and a timing window fails silently.
 
-⚠️ **Gotcha**: the `hooks` block in `~/.claude/settings.json` is **not tracked
-by this repo** — the same trap that left `no-coauthor.sh` unregistered for
-months ([global](global.md)). `dots apply` restores the script but never its
-registration; on a fresh machine the local half has to be re-added by hand:
+The local half is applied by `dots`, not by hand.
+[../profiles/base.toml](../profiles/base.toml) links the script to
+`~/.claude/hooks/session-memory.sh` and runs the `claude-user-hooks` generator,
+[../scripts/claude-apply-hooks.py](../scripts/claude-apply-hooks.py), which
+merges the registration into `~/.claude/settings.json`. The same generator
+registers `no-coauthor.sh`, which had been linked but never registered for
+months ([global](global.md)).
 
-```json
-{
-  "hooks": {
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"$HOME/github/dotfiles/.claude/hooks/session-memory.sh\""
-          }
-        ]
-      }
-    ]
-  }
-}
-```
+**Why a generator and not a symlink.** Claude Code owns that file: it creates
+and edits it whenever a `/config` option stored in user settings changes, such
+as the theme. A symlink would either be clobbered by that write or make every
+`dots apply` fight the application for the file — the same reasoning that keeps
+`~/.config/copyq` out of the tracked links, in
+[../scripts/copyq-apply-theme.py](../scripts/copyq-apply-theme.py) and
+[theming](theming.md). So the generator merges only the hook entries this repo
+owns and leaves theme, model and permission rules alone.
 
-Until that block exists, memory works in web sessions and silently does nothing
-in the terminal.
+⚠️ **Gotcha**: `dots plan` runs a generator **twice** against a copy and rejects
+it with "same generator input produced different outputs" if the two runs
+differ. Anything timestamped, randomized or order-unstable added to
+`claude-apply-hooks.py` breaks `dots plan` for the whole repo, not just for this
+generator.
+
+Ownership is keyed on the **script a hook calls**, not on the exact command
+string, so an older hand-written registration pointing at the same script
+through a different path is replaced rather than duplicated. A registration of
+anything else on the same event is left where it is.
 
 ## What the hook deliberately does not do
 

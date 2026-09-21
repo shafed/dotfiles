@@ -58,3 +58,7 @@ text/x-go=nvim-open.desktop
 text/x-lua=nvim-open.desktop
 text/x-ruby=nvim-open.desktop
 application/x-perl=nvim-open.desktop
+x-scheme-handler/tonsite=org.telegram.desktop.desktop
+
+[Added Associations]
+x-scheme-handler/tonsite=org.telegram.desktop.desktop;

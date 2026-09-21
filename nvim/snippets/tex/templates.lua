@@ -436,18 +436,15 @@ return {
 \setmainfont{Times New Roman}
 \setmonofont{DejaVu Sans Mono}[Scale=0.85]
 \usepackage[russian]{babel}
-\usepackage{graphicx, float}
+\usepackage{graphicx}
 \usepackage{geometry}
 \geometry{left=3cm,right=1.5cm,top=2cm,bottom=2cm}
 \usepackage{setspace}
 \onehalfspacing
 \setlength{\parindent}{1.25cm}
 
-\usepackage{amsmath}
 \usepackage{minted}
 \usepackage{csquotes}
-\usepackage[hidelinks]{hyperref}
-\usepackage[labelsep=period]{caption}
 \usepackage{titlesec}
 \titleformat{\section}{\normalfont\large\bfseries\raggedright\hyphenpenalty=10000\exhyphenpenalty=10000}{\thesection}{1em}{}
 \setminted{fontsize=\footnotesize,frame=lines,breaklines=true}
@@ -506,19 +503,20 @@ return {
 
 \vfill
 
-Практическое задание выполнил: \enquote{<>} <> <> г.\\
-\enquote{Зачтено} \rule{1cm}{0.4pt} <> г.
-
-\vspace{1cm}
-
 Москва <>
 
 \end{center}
 \end{titlepage}
 
-\section{Цель работы}
+\noindent\textbf{Тема:} <>
 
-<>
+\section*{Листинг программы}
+
+\inputminted{scilab}{<>}
+
+\section*{Результат работы программы}
+
+\inputminted{text}{output.txt}
 
 \end{document}
     ]=],
@@ -526,35 +524,10 @@ return {
         i(1, "№"),
         i(2, "27"),
         f(function()
-          return os.date("%d")
-        end),
-        f(function()
-          local months = {
-            "января",
-            "февраля",
-            "марта",
-            "апреля",
-            "мая",
-            "июня",
-            "июля",
-            "августа",
-            "сентября",
-            "октября",
-            "ноября",
-            "декабря",
-          }
-          return months[tonumber(os.date("%m"))]
-        end),
-        f(function()
           return os.date("%Y")
         end),
-        f(function()
-          return os.date("%Y")
-        end),
-        f(function()
-          return os.date("%Y")
-        end),
-        i(3, "цель"),
+        i(3, "ТЕМА ЗАДАНИЯ"),
+        i(4, "../practice-1.sce"),
       }
     )
   ),

@@ -16,3 +16,10 @@ package = "jupytext"
 manager = "uv-tool"
 required = true
 reason = "jupytext.nvim opens .ipynb as py:percent text and writes it back on save"
+
+[[packages]]
+command = "mvn"
+package = "maven"
+manager = "pacman"
+required = true
+reason = "build and run the Maven-based Java coursework in 21-algorithms-data-structures"

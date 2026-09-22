@@ -56,6 +56,11 @@ destination = "{config}/opencode/themes/gruvbox-material.json"
 reason = "shared opencode theme"
 
 [[links]]
+source = "codex/themes/gruvbox-material.tmTheme"
+destination = "{home}/.codex/themes/gruvbox-material.tmTheme"
+reason = "Codex syntax theme generated from the shared palette"
+
+[[links]]
 source = ".opencode/tui.json"
 destination = "{config}/opencode/tui.json"
 reason = "activate the shared opencode theme"

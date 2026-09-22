@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+import plistlib
 import sys
 import tomllib
 
@@ -218,6 +219,37 @@ def render_opencode(c: dict[str, str]) -> str:
         "theme": theme,
     }
     return json.dumps(payload, indent=2) + "\n"
+
+
+def render_codex(c: dict[str, str]) -> str:
+    """TextMate syntax colors for the Codex terminal UI."""
+    rules = [
+        ("Comment", "comment", "gray"),
+        ("Keyword", "keyword, storage", "red"),
+        ("String", "string", "green"),
+        ("Number", "constant.numeric", "purple"),
+        ("Constant", "constant.language, constant.character", "purple"),
+        ("Function", "entity.name.function, support.function", "green"),
+        ("Type", "entity.name.type, entity.name.class, support.type", "yellow"),
+        ("Variable", "variable, entity.name.variable", "fg"),
+        ("Operator", "keyword.operator", "orange"),
+        ("Punctuation", "punctuation", "fg_soft"),
+        ("Tag", "entity.name.tag", "red"),
+        ("Attribute", "entity.other.attribute-name", "yellow"),
+        ("Inserted", "markup.inserted, diff.inserted", "green"),
+        ("Deleted", "markup.deleted, diff.deleted", "red"),
+        ("Changed", "markup.changed, diff.changed", "yellow"),
+    ]
+    theme = {
+        "name": "Gruvbox Material",
+        "settings": [
+            {"settings": {"background": c["bg"], "foreground": c["fg"],
+                          "caret": c["fg"], "selection": c["bg_hover"]}},
+            *({"name": name, "scope": scope, "settings": {"foreground": c[color]}}
+              for name, scope, color in rules),
+        ],
+    }
+    return plistlib.dumps(theme, sort_keys=False).decode()
 
 
 def render_copyq(c: dict[str, str]) -> str:
@@ -488,6 +520,7 @@ def generated_files(c: dict[str, str], mode: str = "dark") -> dict[Path, str]:
         ROOT / "quickshell/config/Colors.qml": render_shell_colors(c),
         ROOT / ".claude/themes/gruvbox-material.json": render_claude(c),
         ROOT / ".opencode/themes/gruvbox-material.json": render_opencode(c),
+        ROOT / "codex/themes/gruvbox-material.tmTheme": render_codex(c),
         ROOT / "copyq/gruvbox.ini": render_copyq(c),
         ROOT / "yazi/flavors/gruvbox-dark.yazi/flavor.toml": render_yazi(c),
     }

@@ -31,4 +31,25 @@ return {
       java = "java $file",
     },
   },
+  init = function()
+    -- The run output is a plain :terminal buffer (filetype "crunner"), so
+    -- neither q nor Esc do anything by default: both are just keystrokes
+    -- sent to the job while it's running. Scoped to crunner only, so a
+    -- nested terminal (vim/fzf/etc. run from <leader>rr) keeps Esc as-is.
+    -- First Esc leaves terminal-job mode for Normal mode, same as always;
+    -- a second Esc (now in Normal mode) closes the window, same as q.
+    --
+    -- code_runner.nvim sets filetype = "crunner" one line *after* it calls
+    -- termopen(), so a TermOpen callback still sees the buffer's old
+    -- filetype. FileType fires exactly when "crunner" is actually set, so
+    -- that's the event to hook, not TermOpen.
+    vim.api.nvim_create_autocmd("FileType", {
+      pattern = "crunner",
+      callback = function(ev)
+        vim.keymap.set("t", "<Esc>", "<C-\\><C-n>", { buffer = ev.buf })
+        vim.keymap.set("n", "<Esc>", "<cmd>RunClose<cr>", { buffer = ev.buf })
+        vim.keymap.set("n", "q", "<cmd>RunClose<cr>", { buffer = ev.buf })
+      end,
+    })
+  end,
 }

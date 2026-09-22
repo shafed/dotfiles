@@ -1,7 +1,7 @@
 ---
 title: theming
 type: topic
-updated: 2026-09-16
+updated: 2026-09-22
 covers:
   - colors.toml
   - scripts/generate-theme.py
@@ -11,6 +11,7 @@ covers:
   - kitty/current-theme.conf
   - .claude/themes/gruvbox-material.json
   - .opencode/themes/gruvbox-material.json
+  - codex/themes/gruvbox-material.tmTheme
   - copyq/gruvbox.ini
   - quickshell/config/Colors.qml
 ---
@@ -40,7 +41,12 @@ python3 scripts/generate-theme.py --mode light --check
 ```
 
 The main generator writes Kitty, Waybar, Hyprlock, shell colors, Quickshell,
-Claude Code, opencode, CopyQ and Yazi surfaces. Those remain pinned dark.
+Claude Code, Codex, opencode, CopyQ and Yazi surfaces. Those remain pinned dark.
+Codex reads the generated TextMate theme from `~/.codex/themes/` through the
+base-profile symlink. Set `tui.theme = "gruvbox-material"` in the mutable user
+`~/.codex/config.toml` (or choose it with `/theme`). Codex applies this palette
+to syntax highlighting in code blocks and diffs; the theme does not define a
+complete UI palette.
 opencode's theme keys are plain string references into the generated `defs`
 block (which mirrors `colors.toml` verbatim) rather than `{dark, light}` pairs,
 matching the dark-only convention here; `.opencode/tui.json` is a small static

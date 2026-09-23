@@ -85,3 +85,17 @@ hl.window_rule({
   size = { 760, 620 },
   center = true,
 })
+
+hl.window_rule({
+  -- Scilab's Console and SciNotes editor share the same class as every
+  -- plot window it opens (figure(1), figure(2), ...). All of those graphic
+  -- windows report the same initialTitle "Graphic window number 0" at map
+  -- time (the visible title is renamed to "...number N" afterwards), which
+  -- is what distinguishes them from the Console/SciNotes windows here.
+  name = "scilab graphic windows float",
+  match = { class = "^Scilab$", title = "^Graphic window number 0$" },
+
+  float = true,
+  size = { "60%", "60%" },
+  center = true,
+})

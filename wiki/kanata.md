@@ -221,9 +221,10 @@ full-screen path doesn't pay the region-select cost.
 
 The region path freezes the screen (`hyprpicker -r -z`) before selection so
 transient content is captured at keypress time instead of continuing to move
-while framing the area. It still sleeps ~0.2s after starting and after killing
-that freeze — unrelated to cursor rendering, just letting hyprpicker's
-freeze/teardown actually land before `slurp`/`grim` run against it.
+while framing the area. `grim` captures that frozen frame before `hyprpicker`
+closes: hover-only surfaces such as Helium's tab sidebar disappear when the
+pointer leaves them during selection. The 0.2s startup delay lets the frozen
+surface appear before `slurp` runs.
 
 ⚠️ **No longer true, kept as a warning:** both scripts used to source a
 `screenshot-cursor.sh` that toggled `cursor.no_hardware_cursors` between

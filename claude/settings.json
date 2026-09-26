@@ -146,5 +146,10 @@
       "No routine-under-<user>/-prefix qualifiers found"
     ]
   },
-  "voiceEnabled": true
+  "voiceEnabled": true,
+  "attribution": {
+    "commit": "",
+    "pr": "",
+    "sessionUrl": false
+  }
 }

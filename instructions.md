@@ -15,7 +15,8 @@ Never let a hypothesis become the silent premise of an edit.
 Before writing code that consumes an external tool's output, run the tool once
 and look at the real output. Do not infer the shape from the flag name.
 
-Full procedure and the recurring traps: the `root-cause-first` skill.
+After the fix, re-run the command that showed the failure and read its output.
+A fix is not verified by reading the diff.
 
 ## Subagent output is a claim, not evidence
 

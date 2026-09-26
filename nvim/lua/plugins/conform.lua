@@ -31,6 +31,8 @@ vim.api.nvim_create_autocmd({ "FocusLost", "BufLeave" }, {
 return {
   "stevearc/conform.nvim",
   opts = {
+    -- .claude/hooks/format.sh mirrors the markdown and tex entries for agent
+    -- edits; keep the two in step
     formatters_by_ft = {
       python = { "ruff_format", "ruff_organize_imports" },
       markdown = { "prettier" },

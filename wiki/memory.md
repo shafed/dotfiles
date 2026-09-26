@@ -1,11 +1,11 @@
 ---
 title: memory
 type: topic
-updated: 2026-09-21
+updated: 2026-09-26
 covers:
   - .claude/hooks/session-memory.sh
   - .claude/settings.json
-  - scripts/claude-apply-hooks.py
+  - claude/settings.json
   - profiles/base.toml
 ---
 
@@ -89,31 +89,16 @@ have needed a timing window, and a timing window fails silently.
 
 The local half is applied by `dots`, not by hand.
 [../profiles/base.toml](../profiles/base.toml) links the script to
-`~/.claude/hooks/session-memory.sh` and runs the `claude-user-hooks` generator,
-[../scripts/claude-apply-hooks.py](../scripts/claude-apply-hooks.py), which
-merges the registration into `~/.claude/settings.json`. The same generator
-registers `no-coauthor.sh`, which had been linked but never registered for
-months ([global](global.md)).
+`~/.claude/hooks/session-memory.sh`, and the registration sits in the tracked
+[../claude/settings.json](../claude/settings.json), which `base.toml` links to
+`~/.claude/settings.json`. The same file registers `no-coauthor.sh` and
+`format.sh`.
 
-**Why a generator and not a symlink.** Claude Code owns that file: it creates
-and edits it whenever a `/config` option stored in user settings changes, such
-as the theme. A symlink would either be clobbered by that write or make every
-`dots apply` fight the application for the file — the same reasoning that keeps
-`~/.config/copyq` out of the tracked links, in
-[../scripts/copyq-apply-theme.py](../scripts/copyq-apply-theme.py) and
-[theming](theming.md). So the generator merges only the hook entries this repo
-owns and leaves theme, model and permission rules alone.
-
-⚠️ **Gotcha**: `dots plan` runs a generator **twice** against a copy and rejects
-it with "same generator input produced different outputs" if the two runs
-differ. Anything timestamped, randomized or order-unstable added to
-`claude-apply-hooks.py` breaks `dots plan` for the whole repo, not just for this
-generator.
-
-Ownership is keyed on the **script a hook calls**, not on the exact command
-string, so an older hand-written registration pointing at the same script
-through a different path is replaced rather than duplicated. A registration of
-anything else on the same event is left where it is.
+Until 2026-09-26 a `claude-user-hooks` generator merged these registrations
+into a real `~/.claude/settings.json`, on the assumption that Claude Code's own
+writes to that file would clobber a symlink. A probe showed Claude Code writes
+through the link, so the generator was removed — the evidence and the new
+gotchas are in [global](global.md).
 
 ## What the hook deliberately does not do
 

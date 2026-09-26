@@ -1,11 +1,12 @@
 ---
 title: global
 type: topic
-updated: 2026-09-21
+updated: 2026-09-26
 covers:
   - instructions.md
   - .claude/skills/commit/SKILL.md
   - .claude/hooks/no-coauthor.sh
+  - claude/settings.json
 ---
 
 # Global — decisions outside the config components
@@ -49,8 +50,9 @@ expects: `~/.claude/CLAUDE.md`, `~/.config/opencode/AGENTS.md`,
 
 All three symlinks and the hook script are in place again as of 2026-08-14, and
 `instructions.md` is tracked once more. The registration that used to be missing
-is now applied too, by the `claude-user-hooks` generator — see
-[memory](memory.md) for how it works and why that file cannot be a symlink.
+lives in the tracked [../claude/settings.json](../claude/settings.json), which
+`base.toml` links to `~/.claude/settings.json` — see below for why a link is
+safe after all.
 
 ### The one rule that was also enforced, not just stated
 
@@ -58,8 +60,8 @@ Of the old rules only **no `Co-Authored-By`** was mechanically checkable, so it
 got a second, hard layer:
 [../.claude/hooks/no-coauthor.sh](../.claude/hooks/no-coauthor.sh) denies any
 `git commit` whose message carries an attribution footer. `base.toml` links it
-to `~/.claude/hooks/` and the `claude-user-hooks` generator registers it, so
-`dots apply` now delivers the guard whole instead of only half of it.
+to `~/.claude/hooks/` and the tracked `claude/settings.json` registers it, so
+`dots apply` delivers the guard whole instead of only half of it.
 
 - **Why a hook and not just the sentence**: prose competes for attention and
   loses it on a long task. Which rules earn this treatment —
@@ -67,16 +69,27 @@ to `~/.claude/hooks/` and the `claude-user-hooks` generator registers it, so
 - **Why it belongs in `~/.claude/settings.json`, not the repo's**: the rule is
   global, so registering it repo-side would both under-cover (other projects)
   and double-fire here.
-- ⚠️ **Gotcha**: `~/.claude/settings.json` is a real file, never a symlink.
-  Claude Code writes it itself — it creates and edits the file when a `/config`
-  option stored in user settings changes, such as the theme — so a symlink would
-  be fighting the application for ownership of the file. (Plugins, MCP servers
-  and the global config keys live in a _different_ file, `~/.claude.json`, which
-  Claude Code maintains for itself; an earlier version of this page named them
-  here, which was wrong.) That is why the registration is merged in by a
-  generator rather than linked: see [memory](memory.md). Before that generator
-  existed the block had to be re-added by hand, which is exactly how it went
-  missing here.
+- **`~/.claude/settings.json` is a symlink** to
+  [../claude/settings.json](../claude/settings.json) (2026-09-26). Claude Code
+  writes this file itself when a `/config` option stored in user settings
+  changes, such as the theme, and an earlier version of this page assumed that
+  write would clobber a link, so a `claude-user-hooks` generator merged the
+  hook registrations into a real file instead. That assumption was tested and
+  is wrong: with `CLAUDE_CONFIG_DIR` pointing at a directory whose
+  `settings.json` was a symlink, Claude Code 2.1.283 wrote `"theme": "light"`
+  from the first-run theme picker **through** the link, and the link survived.
+  The generator was removed; hooks are now registered in the tracked file.
+  Re-run that probe after a major Claude Code update.
+- ⚠️ **Gotcha**: since the file is tracked, whatever Claude Code writes into it —
+  a theme switch, an "always allow" rule — shows up as a diff in this **public**
+  repo. Read `git diff claude/settings.json` before committing it; one-off
+  permission approvals (tool paths, local ports) do not belong here. (Plugins,
+  MCP servers and the global config keys live in a _different_ file,
+  `~/.claude.json`, which stays untracked.)
+- ⚠️ **Gotcha**: `claude/` at the repo root, not `.claude/`. `.claude/` is this
+  repo's own project config; linking the user settings to
+  `.claude/settings.json` would load the same hooks twice in every session
+  started here.
 - The guard only sees an agent's `Bash` calls. A commit typed directly in a
   terminal bypasses it — which is the escape hatch if a human co-author ever
   genuinely needs crediting.
